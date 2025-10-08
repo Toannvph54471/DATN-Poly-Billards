@@ -3,25 +3,49 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Chạy seeder
-     */
-    public function run(): void
+    public function run()
     {
-        // Fake 10 user ngẫu nhiên
-        User::factory()->count(10)->create();
+        $now = Carbon::now();
 
-        // Tạo thêm 1 user admin thật
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'phone' => '0123456789',
-            'role' => 'Admin',
-            'password' => bcrypt('admin123'),
+        DB::table('users')->insert([
+            [
+                'name'       => 'Admin System',
+                'email'      => 'admin111@example.com',
+                'phone'      => '0123456789',
+                'role'       => 'admin',         // hoặc 1 nếu bạn dùng int
+                'password'   => Hash::make('password123'), // mã hoá mật khẩu
+                'status'     => 'active',        // hoặc 1/0
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name'       => 'Người Dùng 1',
+                'email'      => 'user1@example.com',
+                'phone'      => '0987654321',
+                'role'       => 'member',
+                'password'   => Hash::make('user123456'),
+                'status'     => 'active',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name'       => 'Người Dùng 2',
+                'email'      => 'user2@example.com',
+                'phone'      => '0912345678',
+                'role'       => 'member',
+                'password'   => Hash::make('user123456'),
+                'status'     => 'inactive',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            // thêm bao nhiêu user bạn muốn...
         ]);
     }
 }
