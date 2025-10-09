@@ -1,8 +1,30 @@
 <?php
 
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\EmployeeShiftController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\TableController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ComboController;
+use App\Http\Controllers\ComboItemController;
+use App\Http\Controllers\BillController;
+use App\Http\Controllers\BillDetailController;
+use App\Http\Controllers\BillTimeUsageController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\DailyReportController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
+// Authentication Routes (Laravel 12 sử dụng Laravel Breeze/Fortify)
 Route::get('/', function () {
     return view('home');
 });
