@@ -2,24 +2,27 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Table extends Model
+class Table extends BaseModel
 {
-    use HasFactory;
+    const TYPE_STANDARD = 'standard';
+    const TYPE_VIP = 'vip';
+    const TYPE_COMPETITION = 'competition';
 
-    protected $table = 'tables';
+    const STATUS_AVAILABLE = 'available';
+    const STATUS_OCCUPIED = 'occupied';
+    const STATUS_MAINTENANCE = 'maintenance';
+    const STATUS_RESERVED = 'reserved';
 
     protected $fillable = [
         'table_number',
+        'table_name', 
         'type',
         'status',
-        'hourly_rate'
-    ];
-
-    protected $casts = [
-        'hourly_rate' => 'decimal:2'
+        'hourly_rate',
+        'description',
+        'position',
+        'created_by',
+        'updated_by'
     ];
 
     // Relationships
@@ -28,55 +31,44 @@ class Table extends Model
         return $this->hasMany(Bill::class);
     }
 
+    public function currentBill()
+    {
+        return $this->hasOne(Bill::class)->ofMany([
+            'id' => 'max',
+        ], function ($query) {
+            $query->whereIn('status', [Bill::STATUS_OPEN, Bill::STATUS_PLAYING]);
+        });
+    }
+
     public function reservations()
     {
         return $this->hasMany(Reservation::class);
     }
 
-    public function currentBill()
-    {
-        return $this->hasOne(Bill::class)->where('status', 'Open');
-    }
-
     // Scopes
     public function scopeAvailable($query)
     {
-        return $query->where('status', 'Available');
+        return $query->where('status', self::STATUS_AVAILABLE);
     }
 
-    public function scopeInUse($query)
+    public function scopeOccupied($query)
     {
-        return $query->where('status', 'InUse');
-    }
-
-    public function scopeVip($query)
-    {
-        return $query->where('type', 'VIP');
-    }
-
-    public function scopeRegular($query)
-    {
-        return $query->where('type', 'Regular');
+        return $query->where('status', self::STATUS_OCCUPIED);
     }
 
     // Methods
-    public function isAvailable()
+    public function isAvailable(): bool
     {
-        return $this->status === 'Available';
+        return $this->status === self::STATUS_AVAILABLE;
     }
 
-    public function isInUse()
+    public function markAsOccupied(): bool
     {
-        return $this->status === 'InUse';
+        return $this->update(['status' => self::STATUS_OCCUPIED]);
     }
 
-    public function markAsInUse()
+    public function markAsAvailable(): bool
     {
-        $this->update(['status' => 'InUse']);
-    }
-
-    public function markAsAvailable()
-    {
-        $this->update(['status' => 'Available']);
+        return $this->update(['status' => self::STATUS_AVAILABLE]);
     }
 }

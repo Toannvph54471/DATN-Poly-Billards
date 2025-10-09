@@ -2,27 +2,24 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class BillTimeUsage extends Model
+class BillTimeUsage extends BaseModel
 {
-    use HasFactory;
-
     protected $fillable = [
         'bill_id',
         'start_time',
         'end_time',
-        'duration_minutes',
-        'hourly_rate',
-        'total_price'
+        'duration',
+        'rate_per_hour',
+        'total_cost',
+        'created_by'
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
-        'hourly_rate' => 'decimal:2',
-        'total_price' => 'decimal:2'
+        'duration' => 'integer', // in minutes
+        'rate_per_hour' => 'decimal:2',
+        'total_cost' => 'decimal:2'
     ];
 
     // Relationships
@@ -32,15 +29,9 @@ class BillTimeUsage extends Model
     }
 
     // Methods
-    public function calculatePrice()
+    public function calculateCost(): float
     {
-        $hours = $this->duration_minutes / 60;
-        $this->total_price = $hours * $this->hourly_rate;
-        return $this->save();
-    }
-
-    public function getDurationInHours()
-    {
-        return $this->duration_minutes / 60;
+        $hours = $this->duration / 60;
+        return $hours * $this->rate_per_hour;
     }
 }

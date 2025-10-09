@@ -1,22 +1,27 @@
 <?php
 
 namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory; 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use  Notifiable, HasFactory;
+
+    const ROLE_ADMIN = 'admin';
+    const ROLE_MANAGER = 'manager';
+    const ROLE_EMPLOYEE = 'employee';
 
     protected $fillable = [
         'name',
-        'email', 
-        'phone',
-        'role_id',
+        'email',
         'password',
-        'status'
+        'phone',
+        'role',
+        'status',
+        'email_verified_at'
     ];
 
     protected $hidden = [
@@ -24,69 +29,41 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
-
     // Relationships
-    public function role()
+
+        public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
-    public function employee()
+    public function employees()
     {
-        return $this->hasOne(Employee::class);
+        return $this->hasMany(Employee::class);
     }
 
-    public function bills()
+    public function shifts()
     {
-        return $this->hasMany(Bill::class, 'staff_id');
+        return $this->hasMany(EmployeeShift::class);
     }
 
-    public function reservations()
+    public function attendances()
     {
-        return $this->hasMany(Reservation::class, 'created_by');
+        return $this->hasMany(Attendance::class);
     }
 
-    public function confirmedShifts()
+    // Helper methods
+    public function isAdmin(): bool
     {
-        return $this->hasMany(EmployeeShift::class, 'confirmed_by');
+        return $this->role && $this->role->slug === self::ROLE_ADMIN;
     }
 
-    public function confirmedAttendance()
+    public function isManager(): bool
     {
-        return $this->hasMany(Attendance::class, 'confirmed_by');
+        return $this->role && $this->role->slug === self::ROLE_MANAGER;
     }
 
-    // Scopes
-    public function scopeActive($query)
+    public function isEmployee(): bool
     {
-        return $query->where('status', 'Active');
-    }
-
-    // Methods
-    public function hasPermission($permissionName)
-    {
-        return $this->role->permissions()->where('name', $permissionName)->exists();
-    }
-
-    public function isAdmin()
-    {
-        return $this->role_id === 1;
-    }
-
-    public function isManager()
-    {
-        return $this->role_id === 2;
-    }
-
-    public function isStaff()
-    {
-        return $this->role_id === 3;
+        return $this->role && $this->role->slug === self::ROLE_EMPLOYEE;
     }
 }

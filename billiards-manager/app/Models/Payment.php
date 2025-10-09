@@ -2,25 +2,35 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Payment extends Model
+class Payment extends BaseModel
 {
-    use HasFactory;
+    const METHOD_CASH = 'cash';
+    const METHOD_CARD = 'card';
+    const METHOD_TRANSFER = 'transfer';
+    const METHOD_WALLET = 'wallet';
+
+    const STATUS_PENDING = 'pending';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_FAILED = 'failed';
+    const STATUS_REFUNDED = 'refunded';
 
     protected $fillable = [
+        'payment_code',
         'bill_id',
+        'customer_id',
         'amount',
-        'payment_method',
-        'transaction_id',
+        'method',
         'status',
-        'paid_at'
+        'payment_date',
+        'reference',
+        'notes',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
-        'paid_at' => 'datetime'
+        'payment_date' => 'datetime'
     ];
 
     // Relationships
@@ -29,31 +39,38 @@ class Payment extends Model
         return $this->belongsTo(Bill::class);
     }
 
-    // Scopes
-    public function scopeSuccessful($query)
+    public function customer()
     {
-        return $query->where('status', 'Success');
+        return $this->belongsTo(Customer::class);
+    }
+
+    // Scopes
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', self::STATUS_COMPLETED);
     }
 
     public function scopeToday($query)
     {
-        return $query->whereDate('created_at', today());
+        return $query->whereDate('payment_date', today());
+    }
+
+    public function scopeByMethod($query, $method)
+    {
+        return $query->where('method', $method);
     }
 
     // Methods
-    public function markAsSuccess()
+    public function markAsCompleted(): bool
     {
-        $this->update([
-            'status' => 'Success',
-            'paid_at' => now()
+        return $this->update([
+            'status' => self::STATUS_COMPLETED,
+            'payment_date' => now()
         ]);
-
-        // Update bill payment status
-        $this->bill->update(['payment_status' => 'Paid']);
     }
 
-    public function markAsFailed()
+    public function isCompleted(): bool
     {
-        $this->update(['status' => 'Failed']);
+        return $this->status === self::STATUS_COMPLETED;
     }
 }

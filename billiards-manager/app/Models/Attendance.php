@@ -2,25 +2,28 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Attendance extends Model
+class Attendance extends BaseModel
 {
-    use HasFactory;
+    const TYPE_CHECK_IN = 'check_in';
+    const TYPE_CHECK_OUT = 'check_out';
+    const TYPE_BREAK_START = 'break_start';
+    const TYPE_BREAK_END = 'break_end';
 
     protected $fillable = [
         'employee_id',
-        'check_in',
-        'check_out',
-        'status',
-        'confirmed_by',
-        'note'
+        'employee_shift_id',
+        'type',
+        'time',
+        'notes',
+        'latitude',
+        'longitude',
+        'created_by'
     ];
 
     protected $casts = [
-        'check_in' => 'datetime',
-        'check_out' => 'datetime'
+        'time' => 'datetime',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8'
     ];
 
     // Relationships
@@ -29,41 +32,30 @@ class Attendance extends Model
         return $this->belongsTo(Employee::class);
     }
 
-    public function confirmedBy()
+    public function employeeShift()
     {
-        return $this->belongsTo(User::class, 'confirmed_by');
+        return $this->belongsTo(EmployeeShift::class);
     }
 
     // Scopes
     public function scopeToday($query)
     {
-        return $query->whereDate('check_in', today());
+        return $query->whereDate('time', today());
     }
 
-    public function scopePresent($query)
+    public function scopeByEmployee($query, $employeeId)
     {
-        return $query->where('status', 'Present');
+        return $query->where('employee_id', $employeeId);
     }
 
     // Methods
-    public function getWorkHours()
+    public function isCheckIn(): bool
     {
-        if ($this->check_out) {
-            return $this->check_out->diffInMinutes($this->check_in) / 60;
-        }
-        return 0;
+        return $this->type === self::TYPE_CHECK_IN;
     }
 
-    public function isLate()
+    public function isCheckOut(): bool
     {
-        $employeeShift = $this->employee->shifts()
-            ->whereDate('shift_date', $this->check_in->toDateString())
-            ->first();
-
-        if ($employeeShift && $employeeShift->shift) {
-            return $this->check_in->format('H:i') > $employeeShift->shift->start_time->format('H:i');
-        }
-
-        return false;
+        return $this->type === self::TYPE_CHECK_OUT;
     }
 }

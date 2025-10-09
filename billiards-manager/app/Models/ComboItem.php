@@ -2,20 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class ComboItem extends Model
+class ComboItem extends BaseModel
 {
-    use HasFactory;
-
     protected $fillable = [
         'combo_id',
         'product_id',
         'quantity',
-        'is_required',
-        'choice_group',
-        'max_choices'
+        'unit_price',
+        'created_by'
+    ];
+
+    protected $casts = [
+        'quantity' => 'integer',
+        'unit_price' => 'decimal:2'
     ];
 
     // Relationships
@@ -29,19 +28,9 @@ class ComboItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-    // Scopes
-    public function scopeRequired($query)
+    // Methods
+    public function getTotalPrice(): float
     {
-        return $query->where('is_required', true);
-    }
-
-    public function scopeOptional($query)
-    {
-        return $query->where('is_required', false);
-    }
-
-    public function scopeByChoiceGroup($query, $group)
-    {
-        return $query->where('choice_group', $group);
+        return $this->quantity * $this->unit_price;
     }
 }

@@ -2,28 +2,31 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class EmployeeShift extends Model
+class EmployeeShift extends BaseModel
 {
-    use HasFactory;
+    const STATUS_SCHEDULED = 'scheduled';
+    const STATUS_ACTIVE = 'active';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
         'employee_id',
         'shift_id',
         'shift_date',
-        'actual_start_time',
-        'actual_end_time', 
+        'check_in',
+        'check_out',
+        'actual_hours',
+        'notes',
         'status',
-        'confirmed_by',
-        'note'
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
         'shift_date' => 'date',
-        'actual_start_time' => 'datetime',
-        'actual_end_time' => 'datetime'
+        'check_in' => 'datetime',
+        'check_out' => 'datetime',
+        'actual_hours' => 'decimal:2'
     ];
 
     // Relationships
@@ -37,9 +40,9 @@ class EmployeeShift extends Model
         return $this->belongsTo(Shift::class);
     }
 
-    public function confirmedBy()
+    public function attendances()
     {
-        return $this->belongsTo(User::class, 'confirmed_by');
+        return $this->hasMany(Attendance::class);
     }
 
     // Scopes
@@ -48,22 +51,33 @@ class EmployeeShift extends Model
         return $query->whereDate('shift_date', today());
     }
 
-    public function scopeScheduled($query)
+    public function scopeActive($query)
     {
-        return $query->where('status', 'Scheduled');
-    }
-
-    public function scopeWorking($query)
-    {
-        return $query->where('status', 'Working');
+        return $query->where('status', self::STATUS_ACTIVE);
     }
 
     // Methods
-    public function getActualDuration()
+    public function checkIn(): bool
     {
-        if ($this->actual_start_time && $this->actual_end_time) {
-            return $this->actual_end_time->diffInMinutes($this->actual_start_time) / 60;
-        }
-        return 0;
+        return $this->update([
+            'check_in' => now(),
+            'status' => self::STATUS_ACTIVE
+        ]);
+    }
+
+    public function checkOut(): bool
+    {
+        $actualHours = $this->check_in ? $this->check_in->diffInHours(now()) : 0;
+        
+        return $this->update([
+            'check_out' => now(),
+            'actual_hours' => $actualHours,
+            'status' => self::STATUS_COMPLETED
+        ]);
+    }
+
+    public function isCheckedIn(): bool
+    {
+        return !is_null($this->check_in) && is_null($this->check_out);
     }
 }

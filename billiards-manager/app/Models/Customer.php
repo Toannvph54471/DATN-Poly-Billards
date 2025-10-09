@@ -2,25 +2,25 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Customer extends Model
+class Customer extends BaseModel
 {
-    use HasFactory;
+    const MEMBERSHIP_REGULAR = 'regular';
+    const MEMBERSHIP_VIP = 'vip';
+    const MEMBERSHIP_PREMIUM = 'premium';
 
     protected $fillable = [
         'name',
         'phone',
         'email',
-        'customer_type',
-        'total_visits',
+        'address',
+        'membership_type',
+        'balance',
+        'point',
         'total_spent',
-        'note'
-    ];
-
-    protected $casts = [
-        'total_spent' => 'decimal:2'
+        'visit_count',
+        'last_visit',
+        'created_by',
+        'updated_by'
     ];
 
     // Relationships
@@ -34,37 +34,38 @@ class Customer extends Model
         return $this->hasMany(Reservation::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     // Scopes
     public function scopeVip($query)
     {
-        return $query->where('customer_type', 'VIP');
+        return $query->where('membership_type', self::MEMBERSHIP_VIP);
     }
 
-    public function scopeRegular($query)
+    public function scopeByPhone($query, $phone)
     {
-        return $query->where('customer_type', 'Regular');
+        return $query->where('phone', $phone);
     }
 
     // Methods
-    public function incrementVisits()
+    public function isVip(): bool
     {
-        $this->increment('total_visits');
+        return $this->membership_type === self::MEMBERSHIP_VIP;
     }
 
-    public function addToTotalSpent($amount)
+    public function addBalance($amount): bool
     {
-        $this->increment('total_spent', $amount);
+        return $this->increment('balance', $amount);
     }
 
-    public function shouldBeVip()
+    public function deductBalance($amount): bool
     {
-        return $this->total_visits >= 10 || $this->total_spent >= 1000000;
-    }
-
-    public function promoteToVip()
-    {
-        if ($this->shouldBeVip() && $this->customer_type !== 'VIP') {
-            $this->update(['customer_type' => 'VIP']);
+        if ($this->balance >= $amount) {
+            return $this->decrement('balance', $amount);
         }
+        return false;
     }
 }

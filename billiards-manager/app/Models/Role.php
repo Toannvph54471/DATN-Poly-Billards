@@ -2,14 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Role extends Model
+class Role extends BaseModel
 {
-    use HasFactory;
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'permissions',
+        'created_by',
+        'updated_by'
+    ];
 
-    protected $fillable = ['name', 'description'];
+    protected $casts = [
+        'permissions' => 'array'
+    ];
 
     // Relationships
     public function users()
@@ -17,8 +23,19 @@ class Role extends Model
         return $this->hasMany(User::class);
     }
 
-    public function permissions()
+    // Methods
+    public function hasPermission($permission): bool
     {
-        return $this->belongsToMany(Permission::class, 'role_permissions');
+        return in_array($permission, $this->permissions ?? []);
+    }
+
+    public function addPermission($permission): bool
+    {   
+        $permissions = $this->permissions ?? [];
+        if (!in_array($permission, $permissions)) {
+            $permissions[] = $permission;
+            return $this->update(['permissions' => $permissions]);
+        }
+        return true;
     }
 }

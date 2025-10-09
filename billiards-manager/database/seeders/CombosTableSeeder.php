@@ -11,6 +11,7 @@ class CombosTableSeeder extends Seeder
     {
         DB::table('combos')->insert([
             [
+                'combo_code' => 'COMBO001',
                 'name' => 'Combo 2h + 2 nước',
                 'description' => 'Bao gồm 2 giờ chơi và 2 nước ngọt',
                 'price' => 140000,
@@ -19,7 +20,8 @@ class CombosTableSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now()
             ],
-            [
+            [   
+                'combo_code' => 'COMBO002',
                 'name' => 'Combo 3h VIP + snack',
                 'description' => 'Bao gồm 3 giờ chơi VIP và 1 snack',
                 'price' => 250000,

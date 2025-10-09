@@ -2,76 +2,69 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Combo extends Model
+class Combo extends BaseModel
 {
-    use HasFactory;
-
     protected $fillable = [
+        'combo_code',
         'name',
-        'description',
         'price',
-        'actual_value',
-        'status'
+        'discount_price',
+        'image',
+        'description',
+        'is_available',
+        'valid_from',
+        'valid_to',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
-        'actual_value' => 'decimal:2'
+        'discount_price' => 'decimal:2',
+        'is_available' => 'boolean',
+        'valid_from' => 'datetime',
+        'valid_to' => 'datetime'
     ];
 
     // Relationships
+    public function comboItems()
+    {
+        return $this->hasMany(ComboItem::class);
+    }
+
     public function billDetails()
     {
         return $this->hasMany(BillDetail::class);
     }
 
-    public function items()
-    {
-        return $this->hasMany(ComboItem::class);
-    }
-
-    public function products()
-    {
-        return $this->belongsToMany(Product::class, 'combo_items')
-            ->withPivot('quantity', 'is_required', 'choice_group', 'max_choices')
-            ->withTimestamps();
-    }
-
     // Scopes
-    public function scopeActive($query)
+    public function scopeAvailable($query)
     {
-        return $query->where('status', 'Active');
+        return $query->where('is_available', true)
+                    ->where(function($q) {
+                        $q->whereNull('valid_from')
+                          ->orWhere('valid_from', '<=', now());
+                    })
+                    ->where(function($q) {
+                        $q->whereNull('valid_to')
+                          ->orWhere('valid_to', '>=', now());
+                    });
     }
 
     // Methods
-    public function getSavingsAttribute()
+    public function getFinalPrice(): float
     {
-        return $this->actual_value - $this->price;
+        return $this->discount_price ?: $this->price;
     }
 
-    public function getSavingsPercentageAttribute()
+    public function isValid(): bool
     {
-        if ($this->actual_value > 0) {
-            return ($this->savings / $this->actual_value) * 100;
-        }
-        return 0;
-    }
-
-    public function getRequiredProducts()
-    {
-        return $this->items()->where('is_required', true)->get();
-    }
-
-    public function getChoiceGroups()
-    {
-        return $this->items()
-            ->where('is_required', false)
-            ->whereNotNull('choice_group')
-            ->select('choice_group', 'max_choices')
-            ->distinct()
-            ->get();
+        if (!$this->is_available) return false;
+        
+        $now = now();
+        if ($this->valid_from && $this->valid_from > $now) return false;
+        if ($this->valid_to && $this->valid_to < $now) return false;
+        
+        return true;
     }
 }

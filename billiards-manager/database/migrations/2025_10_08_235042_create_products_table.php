@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
+            $table->string('product_code')->unique();
             $table->string('name');
             $table->string('category'); // Drink, Food, Service
             $table->string('product_type')->default('Single'); // Single, Combo
