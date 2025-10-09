@@ -16,9 +16,9 @@ class UserSeeder extends Seeder
 
         DB::table('users')->insert([
             [
-                'name'       => 'Admin System',
-                'email'      => 'admin111@example.com',
-                'phone'      => '0123456789',
+                'name'       => 'Trường',
+                'email'      => 'truong@example.com',
+                'phone'      => '0795334989',
                 'role'       => 'admin',         // hoặc 1 nếu bạn dùng int
                 'password'   => Hash::make('password123'), // mã hoá mật khẩu
                 'status'     => 'active',        // hoặc 1/0
@@ -45,7 +45,6 @@ class UserSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
-            // thêm bao nhiêu user bạn muốn...
         ]);
     }
 }
