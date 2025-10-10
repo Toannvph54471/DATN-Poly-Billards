@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('tables', function (Blueprint $table) {
             $table->id();
             $table->string('table_number')->unique(); // B01, V01
+            $table->string('table_name'); // Bàn 1 , Bàn VIP 1
             $table->string('type'); // VIP, Regular
             $table->string('status')->default('Available'); // Available, InUse, Reserved, Maintenance
             $table->decimal('hourly_rate', 10, 2);

@@ -35,7 +35,7 @@ class UsersTableSeeder extends Seeder
                 'name' => 'Nhân Viên B',
                 'email' => 'staff@bida.com',
                 'phone' => '0909333333',
-                'role_id' => 3, // Staff
+                'role_id' => 3, // Employee
                 'password' => Hash::make('123456'),
                 'status' => 'Active',
                 'created_at' => now(),

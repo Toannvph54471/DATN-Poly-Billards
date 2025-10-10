@@ -2,59 +2,73 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Bill extends Model
+class Bill extends BaseModel
 {
-    use HasFactory;
+    const STATUS_OPEN = 'open';
+    const STATUS_PLAYING = 'playing';
+    const STATUS_PENDING_PAYMENT = 'pending_payment';
+    const STATUS_PAID = 'paid';
+    const STATUS_CANCELLED = 'cancelled';
+
+    const PAYMENT_CASH = 'cash';
+    const PAYMENT_CARD = 'card';
+    const PAYMENT_TRANSFER = 'transfer';
+    const PAYMENT_WALLET = 'wallet';
 
     protected $fillable = [
-        'bill_number',
-        'table_id',
+        'bill_code',
         'customer_id',
-        'staff_id',
+        'table_id',
+        'employee_id',
         'start_time',
         'end_time',
+        'total_time',
+        'table_price',
+        'product_total',
         'total_amount',
-        'discount_amount',
+        'discount',
         'final_amount',
         'payment_method',
         'payment_status',
         'status',
-        'note'
+        'notes',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
+        'table_price' => 'decimal:2',
+        'product_total' => 'decimal:2',
         'total_amount' => 'decimal:2',
-        'discount_amount' => 'decimal:2',
-        'final_amount' => 'decimal:2'
+        'discount' => 'decimal:2',
+        'final_amount' => 'decimal:2',
+        'total_time' => 'integer' // in minutes
     ];
 
     // Relationships
-    public function table()
-    {
-        return $this->belongsTo(Table::class);
-    }
-
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
 
-    public function staff()
+    public function table()
     {
-        return $this->belongsTo(User::class, 'staff_id');
+        return $this->belongsTo(Table::class);
     }
 
-    public function details()
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
+
+    public function billDetails()
     {
         return $this->hasMany(BillDetail::class);
     }
 
-    public function timeUsage()
+    public function billTimeUsages()
     {
         return $this->hasMany(BillTimeUsage::class);
     }
@@ -67,12 +81,12 @@ class Bill extends Model
     // Scopes
     public function scopeOpen($query)
     {
-        return $query->where('status', 'Open');
+        return $query->whereIn('status', [self::STATUS_OPEN, self::STATUS_PLAYING]);
     }
 
-    public function scopeClosed($query)
+    public function scopePaid($query)
     {
-        return $query->where('status', 'Closed');
+        return $query->where('status', self::STATUS_PAID);
     }
 
     public function scopeToday($query)
@@ -80,57 +94,37 @@ class Bill extends Model
         return $query->whereDate('created_at', today());
     }
 
-    public function scopePaid($query)
-    {
-        return $query->where('payment_status', 'Paid');
-    }
-
     // Methods
-    public function calculateTotal()
+    public function isOpen(): bool
     {
-        $productsTotal = $this->details()->where('is_combo_component', false)->sum('total_price');
-        $timeTotal = $this->timeUsage()->sum('total_price');
-        
-        $this->total_amount = $productsTotal + $timeTotal;
-        $this->final_amount = $this->total_amount - $this->discount_amount;
-        
-        return $this->save();
+        return in_array($this->status, [self::STATUS_OPEN, self::STATUS_PLAYING]);
     }
 
-    public function getPlayDuration()
+    public function isPaid(): bool
     {
-        return $this->timeUsage()->sum('duration_minutes');
+        return $this->status === self::STATUS_PAID;
     }
 
-    public function closeBill()
+    public function calculateTotalTime(): int
     {
-        $this->update([
-            'status' => 'Closed',
-            'end_time' => now()
+        if (!$this->start_time || !$this->end_time) {
+            return 0;
+        }
+        return $this->start_time->diffInMinutes($this->end_time);
+    }
+
+    public function calculateTableCharge(): float
+    {
+        $totalTime = $this->calculateTotalTime();
+        $hours = ceil($totalTime / 60);
+        return $hours * $this->table_price;
+    }
+
+    public function markAsPaid(): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_PAID,
+            'payment_status' => self::STATUS_PAID
         ]);
-
-        // Mark table as available
-        if ($this->table) {
-            $this->table->markAsAvailable();
-        }
-
-        // Update customer stats
-        if ($this->customer) {
-            $this->customer->incrementVisits();
-            $this->customer->addToTotalSpent($this->final_amount);
-            $this->customer->promoteToVip();
-        }
-    }
-
-    public function isOpen()
-    {
-        return $this->status === 'Open';
-    }
-
-    public static function generateBillNumber()
-    {
-        $latest = static::latest()->first();
-        $number = $latest ? (int) str_replace('HD', '', $latest->bill_number) + 1 : 1;
-        return 'HD' . str_pad($number, 3, '0', STR_PAD_LEFT);
     }
 }

@@ -2,32 +2,36 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class RolesTableSeeder extends Seeder
 {
     public function run()
     {
-        DB::table('roles')->insert([
+        $roles = [
             [
-                'name' => 'Admin', 
-                'description' => 'Quản trị hệ thống toàn quyền',
-                'created_at' => now(),
-                'updated_at' => now()
+                'name' => 'Quản trị viên',
+                'slug' => 'admin',
+                'description' => 'Toàn quyền hệ thống',
+                'permissions' => json_encode(config('permissions.role_permissions.admin'))
             ],
             [
-                'name' => 'Manager', 
-                'description' => 'Quản lý quán - giám sát vận hành',
-                'created_at' => now(),
-                'updated_at' => now()
+                'name' => 'Quản lý',
+                'slug' => 'manager', 
+                'description' => 'Quản lý cửa hàng',
+                'permissions' => json_encode(config('permissions.role_permissions.manager'))
             ],
             [
-                'name' => 'Staff', 
+                'name' => 'Nhân viên',
+                'slug' => 'employee',
                 'description' => 'Nhân viên phục vụ',
-                'created_at' => now(),
-                'updated_at' => now()
-            ],
-        ]);
+                'permissions' => json_encode(config('permissions.role_permissions.employee'))
+            ]
+        ];
+
+        foreach ($roles as $role) {
+            Role::create($role);
+        }
     }
 }

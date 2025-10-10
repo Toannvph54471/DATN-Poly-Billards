@@ -2,36 +2,41 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Payroll extends Model
+class Payroll extends BaseModel
 {
-    use HasFactory;
+    const STATUS_DRAFT = 'draft';
+    const STATUS_PENDING = 'pending';
+    const STATUS_PAID = 'paid';
+    const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
+        'payroll_code',
         'employee_id',
-        'period',
-        'total_hours',
+        'period_start',
+        'period_end',
         'base_salary',
         'overtime_hours',
         'overtime_pay',
         'bonus',
-        'penalty',
+        'deductions',
         'total_amount',
+        'payment_date',
         'status',
-        'paid_at'
+        'notes',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
-        'total_hours' => 'decimal:2',
         'base_salary' => 'decimal:2',
         'overtime_hours' => 'decimal:2',
         'overtime_pay' => 'decimal:2',
         'bonus' => 'decimal:2',
-        'penalty' => 'decimal:2',
+        'deductions' => 'decimal:2',
         'total_amount' => 'decimal:2',
-        'paid_at' => 'datetime'
+        'period_start' => 'date',
+        'period_end' => 'date',
+        'payment_date' => 'date'
     ];
 
     // Relationships
@@ -43,18 +48,31 @@ class Payroll extends Model
     // Scopes
     public function scopePaid($query)
     {
-        return $query->where('status', 'Paid');
+        return $query->where('status', self::STATUS_PAID);
     }
 
-    public function scopePeriod($query, $period)
+    public function scopePeriod($query, $start, $end)
     {
-        return $query->where('period', $period);
+        return $query->where('period_start', $start)
+                    ->where('period_end', $end);
     }
 
     // Methods
-    public function calculateTotalAmount()
+    public function calculateTotal(): float
     {
-        $this->total_amount = $this->base_salary + $this->overtime_pay + $this->bonus - $this->penalty;
-        return $this->total_amount;
+        return $this->base_salary + $this->overtime_pay + $this->bonus - $this->deductions;
+    }
+
+    public function markAsPaid(): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_PAID,
+            'payment_date' => now()
+        ]);
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->status === self::STATUS_PAID;
     }
 }

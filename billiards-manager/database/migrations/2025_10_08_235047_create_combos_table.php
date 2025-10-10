@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('combos', function (Blueprint $table) {
             $table->id();
+            $table->string('combo_code')->unique();
             $table->string('name');
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2);

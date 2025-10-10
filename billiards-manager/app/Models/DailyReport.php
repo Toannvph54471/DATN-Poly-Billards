@@ -2,70 +2,49 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class DailyReport extends Model
+class DailyReport extends BaseModel
 {
-    use HasFactory;
-
     protected $fillable = [
         'report_date',
-        'total_revenue',
-        'total_discount',
         'total_bills',
+        'total_revenue',
+        'table_revenue',
+        'product_revenue',
         'total_customers',
-        'average_bill_value'
+        'total_discount',
+        'average_bill_value',
+        'most_popular_table',
+        'most_sold_product',
+        'notes',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
         'report_date' => 'date',
         'total_revenue' => 'decimal:2',
+        'table_revenue' => 'decimal:2',
+        'product_revenue' => 'decimal:2',
         'total_discount' => 'decimal:2',
         'average_bill_value' => 'decimal:2'
     ];
 
     // Scopes
-    public function scopeToday($query)
+    public function scopeByDate($query, $date)
     {
-        return $query->where('report_date', today());
-    }
-
-    public function scopeThisWeek($query)
-    {
-        return $query->whereBetween('report_date', [now()->startOfWeek(), now()->endOfWeek()]);
+        return $query->where('report_date', $date);
     }
 
     public function scopeThisMonth($query)
     {
         return $query->whereYear('report_date', now()->year)
-            ->whereMonth('report_date', now()->month);
+                    ->whereMonth('report_date', now()->month);
     }
 
     // Methods
-    public static function generateForDate($date = null)
+    public function calculateAverageBill(): float
     {
-        $date = $date ?: today();
-
-        $bills = Bill::whereDate('created_at', $date)
-            ->where('status', 'Closed')
-            ->get();
-
-        $totalRevenue = $bills->sum('final_amount');
-        $totalDiscount = $bills->sum('discount_amount');
-        $totalBills = $bills->count();
-        $totalCustomers = $bills->filter(fn($bill) => $bill->customer_id)->count();
-        $averageBillValue = $totalBills > 0 ? $totalRevenue / $totalBills : 0;
-
-        return static::updateOrCreate(
-            ['report_date' => $date],
-            [
-                'total_revenue' => $totalRevenue,
-                'total_discount' => $totalDiscount,
-                'total_bills' => $totalBills,
-                'total_customers' => $totalCustomers,
-                'average_bill_value' => $averageBillValue
-            ]
-        );
+        if ($this->total_bills == 0) return 0;
+        return $this->total_revenue / $this->total_bills;
     }
 }

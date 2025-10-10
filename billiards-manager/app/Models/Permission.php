@@ -2,18 +2,26 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Permission extends Model
+class Permission extends BaseModel
 {
-    use HasFactory;
-
-    protected $fillable = ['name', 'description', 'module'];
+    protected $fillable = [
+        'name',
+        'slug',
+        'module',
+        'description',
+        'created_by',
+        'updated_by'
+    ];
 
     // Relationships
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_permissions');
+    }
+
+    // Scopes
+    public function scopeByModule($query, $module)
+    {
+        return $query->where('module', $module);
     }
 }

@@ -2,28 +2,36 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Product extends Model
+class Product extends BaseModel
 {
-    use HasFactory;
+    const TYPE_FOOD = 'food';
+    const TYPE_DRINK = 'drink';
+    const TYPE_OTHER = 'other';
+    const TYPE_SERVICE = 'service';
 
     protected $fillable = [
+        'product_code',
         'name',
+        'type',
         'category',
-        'product_type',
         'price',
         'cost_price',
         'stock_quantity',
-        'min_stock_level',
+        'min_stock',
         'unit',
-        'status'
+        'image',
+        'description',
+        'is_available',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
-        'cost_price' => 'decimal:2'
+        'cost_price' => 'decimal:2',
+        'stock_quantity' => 'integer',
+        'min_stock' => 'integer',
+        'is_available' => 'boolean'
     ];
 
     // Relationships
@@ -38,52 +46,44 @@ class Product extends Model
     }
 
     // Scopes
-    public function scopeActive($query)
+    public function scopeAvailable($query)
     {
-        return $query->where('status', 'Active');
+        return $query->where('is_available', true)
+                    ->where('stock_quantity', '>', 0);
     }
 
-    public function scopeDrinks($query)
+    public function scopeFood($query)
     {
-        return $query->where('category', 'Drink');
+        return $query->where('type', self::TYPE_FOOD);
     }
 
-    public function scopeFoods($query)
+    public function scopeDrink($query)
     {
-        return $query->where('category', 'Food');
-    }
-
-    public function scopeServices($query)
-    {
-        return $query->where('category', 'Service');
+        return $query->where('type', self::TYPE_DRINK);
     }
 
     public function scopeLowStock($query)
     {
-        return $query->whereRaw('stock_quantity <= min_stock_level');
+        return $query->whereRaw('stock_quantity <= min_stock');
     }
 
     // Methods
-    public function decreaseStock($quantity)
+    public function isLowStock(): bool
     {
-        $this->decrement('stock_quantity', $quantity);
+        return $this->stock_quantity <= $this->min_stock;
     }
 
-    public function increaseStock($quantity)
+    public function reduceStock($quantity): bool
     {
-        $this->increment('stock_quantity', $quantity);
-    }
-
-    public function isLowStock()
-    {
-        return $this->stock_quantity <= $this->min_stock_level;
-    }
-
-    public function getProfitMarginAttribute()
-    {
-        if ($this->cost_price > 0) {
-            return (($this->price - $this->cost_price) / $this->cost_price) * 100;
+        if ($this->stock_quantity >= $quantity) {
+            $this->decrement('stock_quantity', $quantity);
+            return true;
         }
-        return 0;
+        return false;
+    }
+
+    public function addStock($quantity): bool
+    {
+        return $this->increment('stock_quantity', $quantity);
     }
 }

@@ -2,105 +2,81 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class Reservation extends Model
+class Reservation extends BaseModel
 {
-    use HasFactory;
+    const STATUS_PENDING = 'pending';
+    const STATUS_CONFIRMED = 'confirmed';
+    const STATUS_CHECKED_IN = 'checked_in';
+    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_COMPLETED = 'completed';
 
     protected $fillable = [
-        'table_id',
+        'reservation_code',
         'customer_id',
-        'customer_name',
-        'customer_phone',
-        'reservation_time',
-        'duration',
-        'guest_count',
+        'table_id',
+        'reservation_date',
+        'start_time',
+        'end_time',
+        'number_of_people',
+        'special_requests',
+        'deposit_amount',
         'status',
-        'note',
-        'created_by'
+        'checked_in_time',
+        'checked_out_time',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
-        'reservation_time' => 'datetime'
+        'reservation_date' => 'date',
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+        'checked_in_time' => 'datetime',
+        'checked_out_time' => 'datetime',
+        'deposit_amount' => 'decimal:2',
+        'number_of_people' => 'integer'
     ];
 
     // Relationships
-    public function table()
-    {
-        return $this->belongsTo(Table::class);
-    }
-
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
 
-    public function createdBy()
+    public function table()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(Table::class);
+    }
+
+    public function bill()
+    {
+        return $this->hasOne(Bill::class);
     }
 
     // Scopes
-    public function scopePending($query)
-    {
-        return $query->where('status', 'Pending');
-    }
-
-    public function scopeConfirmed($query)
-    {
-        return $query->where('status', 'Confirmed');
-    }
-
     public function scopeToday($query)
     {
-        return $query->whereDate('reservation_time', today());
+        return $query->whereDate('reservation_date', today());
     }
 
     public function scopeUpcoming($query)
     {
-        return $query->where('reservation_time', '>=', now())
-            ->whereIn('status', ['Pending', 'Confirmed']);
+        return $query->where('reservation_date', '>=', today())
+                    ->whereIn('status', [self::STATUS_PENDING, self::STATUS_CONFIRMED]);
     }
 
     // Methods
-    public function confirm()
+    public function checkIn(): bool
     {
-        $this->update(['status' => 'Confirmed']);
-    }
-
-    public function checkIn()
-    {
-        $this->update(['status' => 'CheckedIn']);
-
-        // Create bill from reservation
-        $bill = Bill::create([
-            'bill_number' => Bill::generateBillNumber(),
-            'table_id' => $this->table_id,
-            'customer_id' => $this->customer_id,
-            'staff_id' => $this->created_by,
-            'start_time' => now(),
-            'status' => 'Open'
+        return $this->update([
+            'status' => self::STATUS_CHECKED_IN,
+            'checked_in_time' => now()
         ]);
-
-        return $bill;
     }
 
-    public function cancel()
+    public function isUpcoming(): bool
     {
-        $this->update(['status' => 'Cancelled']);
-        $this->table->markAsAvailable();
-    }
-
-    public function isExpired()
-    {
-        return $this->reservation_time->addMinutes($this->duration)->lt(now()) && 
-               $this->status === 'Pending';
-    }
-
-    public function getEndTimeAttribute()
-    {
-        return $this->reservation_time->addMinutes($this->duration);
+        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_CONFIRMED]) &&
+               $this->reservation_date >= today();
     }
 }
