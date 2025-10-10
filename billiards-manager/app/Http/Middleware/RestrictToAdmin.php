@@ -10,7 +10,7 @@ class RestrictToAdmin
 {
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check() && Auth::user()->role === 'admin') {
+        if (Auth::check() && in_array(Auth::user()->role->slug, ['admin', 'manager'])) {
             return $next($request);
         }
 
