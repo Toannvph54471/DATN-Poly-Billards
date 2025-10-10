@@ -1,36 +1,69 @@
 <?php
 
 namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable; // Dùng cho hệ thống auth
+use Illuminate\Database\Eloquent\Factories\HasFactory; 
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use  Notifiable, HasFactory;
 
-    // Tên bảng (nếu khác tên mặc định)
-    protected $table = 'users';
+    const ROLE_ADMIN = 'admin';
+    const ROLE_MANAGER = 'manager';
+    const ROLE_EMPLOYEE = 'employee';
 
-    // Các cột có thể gán hàng loạt
     protected $fillable = [
         'name',
         'email',
+        'password',
         'phone',
         'role',
-        'password',
-        'status'
+        'status',
+        'email_verified_at'
     ];
 
-    // Ẩn khi trả về JSON hoặc mảng
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    // Ép kiểu dữ liệu nếu cần
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    // Relationships
+
+        public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function employees()
+    {
+        return $this->hasMany(Employee::class);
+    }
+
+    public function shifts()
+    {
+        return $this->hasMany(EmployeeShift::class);
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    // Helper methods
+    public function isAdmin(): bool
+    {
+        return $this->role && $this->role->slug === self::ROLE_ADMIN;
+    }
+
+    public function isManager(): bool
+    {
+        return $this->role && $this->role->slug === self::ROLE_MANAGER;
+    }
+
+    public function isEmployee(): bool
+    {
+        return $this->role && $this->role->slug === self::ROLE_EMPLOYEE;
+    }
 }
