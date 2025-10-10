@@ -42,7 +42,6 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
-        // var_dump($id);die;
         // Validation cơ bản
         $request->validate([
             'name' => 'required|string|max:255',
