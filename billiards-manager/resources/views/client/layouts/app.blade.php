@@ -50,7 +50,7 @@
                                 <i class="fas fa-chevron-down ml-2 text-sm"></i>
                             </button>
                             <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg hidden">
-                                @if (Auth::user()->role === 'admin')
+                                @if (Auth::user()->isAdmin() || Auth::user()->isManager())
                                     <a href="{{ route('admin.users.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-amber-50">Quản trị</a>
                                 @endif
                                 <form method="POST" action="{{ route('logout') }}">
@@ -68,9 +68,6 @@
                             Đăng ký
                         </a>
                     @endauth
-
-                    <!-- Contact Button -->
-            
                 </div>
 
                 <!-- Mobile Menu Button -->
@@ -91,7 +88,7 @@
                     
                     @auth
                         <a href="#" class="text-gray-700 font-medium">{{ Auth::user()->name }}</a>
-                        @if (Auth::user()->role === 'admin')
+                        @if (Auth::user()->isAdmin() || Auth::user()->isManager())
                             <a href="{{ route('admin.users.index') }}" class="text-gray-700 hover:text-amber-600 font-medium">Quản trị</a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}">

@@ -35,8 +35,9 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
-            'role' => 'member', // Gán role mặc định là member
+            'role_id' => User::ROLE_EMPLOYEE, // Gán role_id mặc định là EMPLOYEE
             'password' => Hash::make($request->password),
+            'status' => 'active',
         ]);
 
         event(new Registered($user));
