@@ -7,6 +7,9 @@
     <title>@yield('title', 'F&B Management')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/abc123xyz.js" crossorigin="anonymous"></script>
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -116,11 +119,12 @@
                     <i class="fas fa-chart-pie w-6 mr-3"></i>
                     <span class="font-medium">Tổng quan</span>
                 </a>
-                <a href=""
-                    class="nav-item {{ request()->routeIs('sales.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-cash-register w-6 mr-3"></i>
-                    <span class="font-medium">Bán hàng</span>
+                <a href="{{ route('admin.tables.index') }}"
+                    class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
+                    <i class="fa-solid fa-table w-6 mr-3"></i>
+                    <span class="font-medium">Bàn Billards</span>
                 </a>
+            
                 <a href=""
                     class="nav-item {{ request()->routeIs('products.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-boxes w-6 mr-3"></i>
