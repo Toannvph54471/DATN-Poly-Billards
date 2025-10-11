@@ -48,7 +48,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <p class="text-gray-500 text-sm">Nhân viên</p>
-                    <p class="text-xl font-bold text-gray-800">{{ $staffCount }}</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $employeeCount }}</p>
                 </div>
                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                     <i class="fas fa-user-tie text-green-600"></i>
