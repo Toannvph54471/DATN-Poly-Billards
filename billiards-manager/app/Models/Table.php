@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Table extends BaseModel
 {
     const TYPE_STANDARD = 'standard';
@@ -12,10 +15,10 @@ class Table extends BaseModel
     const STATUS_OCCUPIED = 'occupied';
     const STATUS_MAINTENANCE = 'maintenance';
     const STATUS_RESERVED = 'reserved';
-
+    use HasFactory, SoftDeletes;
     protected $fillable = [
         'table_number',
-        'table_name', 
+        'table_name',
         'type',
         'status',
         'hourly_rate',
