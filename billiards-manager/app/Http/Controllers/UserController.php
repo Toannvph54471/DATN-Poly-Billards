@@ -37,11 +37,11 @@ class UserController extends Controller
 
         // --- Đếm số người dùng theo vai trò ---
         $adminRoleId = Role::where('slug', 'admin')->value('id');
-        $staffRoleId = Role::where('slug', 'staff')->value('id');
+        $employeeRoleId = Role::where('slug', 'employee')->value('id');
         $managerRoleId = Role::where('slug', 'manager')->value('id');
 
         $adminCount = $adminRoleId ? User::where('role_id', $adminRoleId)->count() : 0;
-        $staffCount = $staffRoleId ? User::where('role_id', $staffRoleId)->count() : 0;
+        $employeeCount = $employeeRoleId ? User::where('role_id', $employeeRoleId)->count() : 0;
         $managerCount = $managerRoleId ? User::where('role_id', $managerRoleId)->count() : 0;
 
         // --- Lấy danh sách người dùng ---
@@ -51,7 +51,7 @@ class UserController extends Controller
             'listUser',
             'totalUser',
             'adminCount',
-            'staffCount',
+            'employeeCount',
             'managerCount',
             'roles'
         ));
