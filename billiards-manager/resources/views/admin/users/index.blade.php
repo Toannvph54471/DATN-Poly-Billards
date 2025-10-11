@@ -1,310 +1,340 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Tổng quan - F&B Management')
+@section('title', 'Quản lý người dùng - F&B Management')
 
 @section('content')
-<!-- Page Header -->
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-gray-800">Tổng quan</h1>
-        <p class="text-gray-600">Thống kê và báo cáo tổng quan cửa hàng</p>
-    </div>
-    <div class="flex space-x-3">
-        <button class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-50 transition flex items-center">
-            <i class="fas fa-calendar-alt mr-2"></i>
-            Hôm nay
-            <i class="fas fa-chevron-down ml-2"></i>
-        </button>
-        <button class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
-            <i class="fas fa-download mr-2"></i>
-            Xuất báo cáo
-        </button>
-    </div>
-</div>
-
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-    <!-- Doanh thu -->
-    <div class="stat-card p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <p class="text-gray-500 text-sm">Doanh thu hôm nay</p>
-                <p class="text-2xl font-bold text-gray-800">12.850.000₫</p>
-            </div>
-            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-money-bill-wave text-blue-600 text-xl"></i>
-            </div>
-        </div>
-        <div class="flex items-center text-sm">
-            <i class="fas fa-arrow-up text-green-500 mr-1"></i>
-            <span class="text-green-500 font-medium">+12.5%</span>
-            <span class="text-gray-500 ml-1">so với hôm qua</span>
-        </div>
-    </div>
-
-    <!-- Đơn hàng -->
-    <div class="stat-card p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <p class="text-gray-500 text-sm">Tổng đơn hàng</p>
-                <p class="text-2xl font-bold text-gray-800">48</p>
-            </div>
-            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-shopping-cart text-green-600 text-xl"></i>
-            </div>
-        </div>
-        <div class="flex items-center text-sm">
-            <i class="fas fa-arrow-up text-green-500 mr-1"></i>
-            <span class="text-green-500 font-medium">+8.2%</span>
-            <span class="text-gray-500 ml-1">so với hôm qua</span>
-        </div>
-    </div>
-
-    <!-- Khách hàng -->
-    <div class="stat-card p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <p class="text-gray-500 text-sm">Khách hàng mới</p>
-                <p class="text-2xl font-bold text-gray-800">15</p>
-            </div>
-            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-users text-purple-600 text-xl"></i>
-            </div>
-        </div>
-        <div class="flex items-center text-sm">
-            <i class="fas fa-arrow-up text-green-500 mr-1"></i>
-            <span class="text-green-500 font-medium">+5.3%</span>
-            <span class="text-gray-500 ml-1">so với hôm qua</span>
-        </div>
-    </div>
-
-    <!-- Tồn kho -->
-    <div class="stat-card p-6">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <p class="text-gray-500 text-sm">Sản phẩm tồn</p>
-                <p class="text-2xl font-bold text-gray-800">23</p>
-            </div>
-            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <i class="fas fa-boxes text-orange-600 text-xl"></i>
-            </div>
-        </div>
-        <div class="flex items-center text-sm">
-            <i class="fas fa-arrow-down text-red-500 mr-1"></i>
-            <span class="text-red-500 font-medium">-3.1%</span>
-            <span class="text-gray-500 ml-1">so với hôm qua</span>
-        </div>
-    </div>
-</div>
-
-<!-- Charts & Tables -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <!-- Doanh thu chart -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-semibold">Doanh thu 7 ngày qua</h3>
-            <button class="text-blue-600 text-sm font-medium">Xem tất cả</button>
-        </div>
-        <div class="h-64">
-            <canvas id="revenueChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Top sản phẩm -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-lg font-semibold">Sản phẩm bán chạy</h3>
-            <button class="text-blue-600 text-sm font-medium">Xem tất cả</button>
-        </div>
-        <div class="space-y-4">
-            <!-- Product 1 -->
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-coffee text-blue-600"></i>
-                    </div>
-                    <div>
-                        <p class="font-medium">Cà phê đen</p>
-                        <p class="text-sm text-gray-500">Đã bán: 45</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="font-semibold">2.150.000₫</p>
-                    <p class="text-sm text-green-500">+15%</p>
-                </div>
-            </div>
-
-            <!-- Product 2 -->
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-mug-hot text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="font-medium">Trà sữa</p>
-                        <p class="text-sm text-gray-500">Đã bán: 38</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="font-semibold">1.850.000₫</p>
-                    <p class="text-sm text-green-500">+12%</p>
-                </div>
-            </div>
-
-            <!-- Product 3 -->
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <i class="fas fa-cookie text-purple-600"></i>
-                    </div>
-                    <div>
-                        <p class="font-medium">Bánh ngọt</p>
-                        <p class="text-sm text-gray-500">Đã bán: 28</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="font-semibold">1.250.000₫</p>
-                    <p class="text-sm text-green-500">+8%</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Orders -->
-<div class="bg-white rounded-xl shadow-sm p-6">
+    <!-- Page Header -->
     <div class="flex justify-between items-center mb-6">
-        <h3 class="text-lg font-semibold">Đơn hàng gần đây</h3>
-        <button class="text-blue-600 text-sm font-medium">Xem tất cả</button>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Quản lý người dùng</h1>
+            <p class="text-gray-600">Quản lý thông tin và phân quyền người dùng hệ thống</p>
+        </div>
+        <div>
+            <a href="{{ route('admin.roles.index') }}"
+                class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
+                <i class="fas fa-plus mr-2"></i>
+                Vai trò
+            </a>
+        </div>
     </div>
-    <div class="overflow-x-auto">
-        <table class="w-full">
-            <thead>
-                <tr class="border-b border-gray-200">
-                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">MÃ ĐƠN</th>
-                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">KHÁCH HÀNG</th>
-                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">THỜI GIAN</th>
-                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">TỔNG TIỀN</th>
-                    <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">TRẠNG THÁI</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Order 1 -->
-                <tr class="table-row border-b border-gray-100">
-                    <td class="py-3 px-4">
-                        <span class="font-medium text-blue-600">#DH001</span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="font-medium">Nguyễn Văn A</p>
-                            <p class="text-sm text-gray-500">0123456789</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <p class="text-sm">14:30 - 25/12/2024</p>
-                    </td>
-                    <td class="py-3 px-4">
-                        <p class="font-semibold">350.000₫</p>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="badge-success px-2 py-1 rounded-full text-xs font-medium">Hoàn thành</span>
-                    </td>
-                </tr>
 
-                <!-- Order 2 -->
-                <tr class="table-row border-b border-gray-100">
-                    <td class="py-3 px-4">
-                        <span class="font-medium text-blue-600">#DH002</span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="font-medium">Trần Thị B</p>
-                            <p class="text-sm text-gray-500">0987654321</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <p class="text-sm">13:15 - 25/12/2024</p>
-                    </td>
-                    <td class="py-3 px-4">
-                        <p class="font-semibold">520.000₫</p>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="badge-warning px-2 py-1 rounded-full text-xs font-medium">Đang xử lý</span>
-                    </td>
-                </tr>
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="stat-card p-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-gray-500 text-sm">Tổng người dùng</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $totalUser }}</p>
+                </div>
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-blue-600"></i>
+                </div>
+            </div>
+        </div>
 
-                <!-- Order 3 -->
-                <tr class="table-row border-b border-gray-100">
-                    <td class="py-3 px-4">
-                        <span class="font-medium text-blue-600">#DH003</span>
-                    </td>
-                    <td class="py-3 px-4">
-                        <div>
-                            <p class="font-medium">Lê Văn C</p>
-                            <p class="text-sm text-gray-500">0369852147</p>
-                        </div>
-                    </td>
-                    <td class="py-3 px-4">
-                        <p class="text-sm">12:45 - 25/12/2024</p>
-                    </td>
-                    <td class="py-3 px-4">
-                        <p class="font-semibold">280.000₫</p>
-                    </td>
-                    <td class="py-3 px-4">
-                        <span class="badge-danger px-2 py-1 rounded-full text-xs font-medium">Đã hủy</span>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="stat-card p-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-gray-500 text-sm">Quản trị viên</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $adminCount }}</p>
+                </div>
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-shield text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card p-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-gray-500 text-sm">Nhân viên</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $staffCount }}</p>
+                </div>
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-tie text-green-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card p-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-gray-500 text-sm">Quản lý</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $managerCount }}</p>
+                </div>
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-cog text-orange-600"></i>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
+
+    <!-- Phần filter cập nhật -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+        <form action="{{ route('admin.users.index') }}" method="GET">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" name="search" id="search" value="{{ request('search') }}"
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Email, số điện thoại...">
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                    <select name="status" id="status"
+                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="Active" {{ request('status') == 'Active' ? 'selected' : '' }}>Đang hoạt động
+                        </option>
+                        <option value="Inactive" {{ request('status') == 'Inactive' ? 'selected' : '' }}>Ngừng hoạt động
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Role Filter -->
+                <div>
+                    <label for="role_id" class="block text-sm font-medium text-gray-700 mb-1">Vai trò</label>
+                    <select name="role_id" id="role_id"
+                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        onchange="this.form.submit()">
+                        <option value="">Tất cả vai trò</option>
+                        @foreach ($roles as $role)
+                            <option value="{{ $role->id }}" {{ request('role_id') == $role->id ? 'selected' : '' }}>
+                                {{ $role->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+
+                <!-- Actions -->
+                <div class="flex items-end">
+                    <button type="submit"
+                        class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center w-full justify-center">
+                        <i class="fas fa-filter mr-2"></i>
+                        Lọc
+                    </button>
+                    <a href="{{ route('admin.users.index') }}"
+                        class="ml-2 bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center">
+                        <i class="fas fa-redo mr-2"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200">
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Người
+                            dùng</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Thông
+                            tin
+                            liên hệ</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Vai trò
+                        </th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Trạng
+                            thái</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Ngày tạo
+                        </th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Thao tác
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse($listUser as $user)
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-4 px-6">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <span class="text-blue-600 font-medium">
+                                                {{ substr($user->name, 0, 1) }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+                                        <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="text-sm text-gray-900">
+                                    @if ($user->phone)
+                                        <div class="flex items-center">
+                                            <i class="fas fa-phone text-gray-400 mr-2 text-xs"></i>
+                                            <span>{{ $user->phone }}</span>
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400">Chưa cập nhật</span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                @if ($user->role && $user->role->slug === 'admin')
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        <i class="fas fa-user-shield mr-1"></i>
+                                        {{ $user->role->name }}
+                                    </span>
+                                @elseif ($user->role && $user->role->slug === 'employee')
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-user-tie mr-1"></i>
+                                        {{ $user->role->name }}
+                                    </span>
+                                @elseif ($user->role && $user->role->slug === 'manager')
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i class="fas fa-user-cog mr-1"></i>
+                                        {{ $user->role->name }}
+                                    </span>
+                                @else
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas fa-user mr-1"></i>
+                                        Không xác định
+                                    </span>
+                                @endif
+                            </td>
+
+                            <td class="py-4 px-6">
+                                @if ($user->status == 'Active')
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-circle mr-1" style="font-size: 6px;"></i>
+                                        Đang hoạt động
+                                    </span>
+                                @else
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <i class="fas fa-circle mr-1" style="font-size: 6px;"></i>
+                                        Ngừng hoạt động
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="py-4 px-6 text-sm text-gray-500">
+                                {{ $user->created_at->format('d/m/Y') }}
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center space-x-2">
+                                    <a href="{{ route('admin.users.edit', $user->id) }}"
+                                        class="text-blue-600 hover:text-blue-900 transition" title="Chỉnh sửa">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="text-red-600 hover:text-red-900 transition"
+                                        title="Xóa" onclick="confirmDelete({{ $user->id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="py-8 px-6 text-center">
+                                <div class="flex flex-col items-center justify-center">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                                        <i class="fas fa-users text-gray-400 text-xl"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-1">Không có người dùng nào</h3>
+                                    <p class="text-gray-500 mb-4">Không tìm thấy người dùng phù hợp với tiêu chí tìm kiếm.
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if ($listUser->hasPages())
+            <div class="bg-white px-6 py-4 border-t border-gray-200">
+                {{ $listUser->links() }}
+            </div>
+        @endif
+    </div>
 @endsection
 
 @section('scripts')
-<script>
-    // Revenue Chart
-    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    const revenueChart = new Chart(revenueCtx, {
-        type: 'line',
-        data: {
-            labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
-            datasets: [{
-                label: 'Doanh thu (VNĐ)',
-                data: [8500000, 9200000, 10500000, 11200000, 9850000, 12850000, 11500000],
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
+    <script>
+        function confirmDelete(userId) {
+            Swal.fire({
+                title: 'Xác nhận xóa?',
+                text: "Bạn có chắc chắn muốn xóa người dùng này?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('delete-form-' + userId).submit();
                 }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return (value / 1000000).toFixed(0) + 'tr';
-                        }
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            }
+            });
         }
-    });
-</script>
+
+        // Auto submit form when filters change (optional)
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.getElementById('status');
+            const roleSelect = document.getElementById('role');
+
+            // Uncomment if you want auto-submit on filter change
+            /*
+            statusSelect.addEventListener('change', function() {
+                this.form.submit();
+            });
+            
+            roleSelect.addEventListener('change', function() {
+                this.form.submit();
+            });
+            */
+        });
+    </script>
 @endsection
+
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .table-row {
+        transition: background-color 0.2s ease;
+    }
+
+    .badge-success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+</style>

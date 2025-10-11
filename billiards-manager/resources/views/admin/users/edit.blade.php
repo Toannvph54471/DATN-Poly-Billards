@@ -23,6 +23,7 @@
             </button>
         </div>
     @endif
+
     <!-- Page Header -->
     <div class="flex justify-between items-center mb-6">
         <div>
@@ -52,8 +53,8 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Họ và tên *</label>
-                                <input type="text" name="name" value="{{ old('name', $user['name']) }}" required
-                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                <input type="text" name="name" value="{{ old('name', $user->name) }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500">
                                 @error('name')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
@@ -61,8 +62,8 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                                <input type="email" name="email" value="{{ old('email', $user['email']) }}" required
-                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500">
                                 @error('email')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
@@ -70,8 +71,8 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại *</label>
-                                <input type="text" name="phone" value="{{ old('phone', $user['phone']) }}" required
-                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500">
                                 @error('phone')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
@@ -88,38 +89,41 @@
                         </h3>
 
                         <div class="space-y-4">
+                            <!-- Vai trò -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Loại thành viên</label>
-                                <select name="role"
-                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                                    <option value="admin"
-                                        {{ old('role', $user['role']) == 'admin' ? 'selected' : '' }}>
-                                        Admin</option>
-                                    <option value="member" {{ old('role', $user['role']) == 'member' ? 'selected' : '' }}>
-                                        Thành viên</option>
-                                    <option value="employees" {{ old('role', $user['role']) == 'employees' ? 'selected' : '' }}>Nhân viên
-                                    </option>
+                                <label for="role_id" class="block text-sm font-medium text-gray-700 mb-2">Vai trò</label>
+                                <select name="role_id" id="role_id"
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500">
+                                    <option value="">Chọn vai trò</option>
+                                    @foreach ($roles as $role)
+                                        <option value="{{ $role->id }}"
+                                            {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
+                                            {{ $role->name }}
+                                        </option>
+                                    @endforeach
                                 </select>
+                                @error('role_id')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
 
+
+                            <!-- Trạng thái -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
                                 <select name="status"
-                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                                    <option value="active"
-                                        {{ old('status', $user['status']) == 'active' ? 'selected' : '' }}>Đang hoạt động
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500">
+                                    <option value="Active"
+                                        {{ old('status', $user->status) == 'Active' ? 'selected' : '' }}>Đang hoạt động
                                     </option>
-                                    <option value="inactive"
-                                        {{ old('status', $user['status']) == 'inactive' ? 'selected' : '' }}>Ngừng hoạt
-                                        động</option>
+                                    <option value="Inactive"
+                                        {{ old('status', $user->status) == 'Inactive' ? 'selected' : '' }}>Ngừng hoạt động
+                                    </option>
                                 </select>
+                                @error('status')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
                             </div>
-
-                            {{-- <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Địa chỉ</label>
-                                <input type="text" name="address" value="{{ old('address', $user['address']) }}"
-                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                            </div> --}}
                         </div>
                     </div>
                 </div>
@@ -130,26 +134,22 @@
                 <h4 class="text-sm font-semibold text-gray-700 mb-4">Thông tin hệ thống</h4>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                     <div class="flex flex-col">
-                        <span class="text-gray-500 text-xs uppercase tracking-wide mb-1">Ngày tham gia</span>
-                        <span class="text-gray-800 font-medium">{{ $user['created_at'] }}</span>
+                        <span class="text-gray-500 text-xs uppercase mb-1">Ngày tham gia</span>
+                        <span class="text-gray-800 font-medium">{{ $user->created_at->format('d/m/Y') }}</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-gray-500 text-xs uppercase tracking-wide mb-1">Tổng lượt chơi</span>
-                        <span class="text-gray-800 font-medium">{{ $user['total_visits'] }} Lượt</span>
+                        <span class="text-gray-500 text-xs uppercase mb-1">Tổng lượt chơi</span>
+                        <span class="text-gray-800 font-medium">{{ $user->total_visits ?? 0 }} lượt</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-gray-500 text-xs uppercase tracking-wide mb-1">ID thành viên</span>
-                        <span class="text-gray-800 font-medium">{{ $user['id'] }}</span>
+                        <span class="text-gray-500 text-xs uppercase mb-1">ID thành viên</span>
+                        <span class="text-gray-800 font-medium">{{ $user->id }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- Buttons -->
             <div class="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
-                <a href="{{ route('admin.users.index') }}"
-                    class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition font-medium">
-                    Hủy
-                </a>
                 <button type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition font-medium flex items-center">
                     <i class="fas fa-save mr-2"></i>Cập nhật
@@ -158,7 +158,7 @@
         </form>
     </div>
 
-    <!-- Thông báo lỗi validation -->
+    <!-- Hiển thị lỗi Validation -->
     @if ($errors->any())
         <div class="mt-6">
             <div class="bg-red-50 border border-red-200 rounded-lg p-4">

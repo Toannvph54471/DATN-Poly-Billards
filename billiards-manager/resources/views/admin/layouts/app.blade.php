@@ -111,7 +111,7 @@
 
             <!-- Navigation -->
             <nav class="p-4 space-y-1">
-                <a href="dashboard"
+                <a href="/dashboard"
                     class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-chart-pie w-6 mr-3"></i>
                     <span class="font-medium">Tổng quan</span>
