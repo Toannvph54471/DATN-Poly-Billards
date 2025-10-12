@@ -24,28 +24,40 @@ use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 
-// Authentication Routes (Laravel 12 sử dụng Laravel Breeze/Fortify)
+// Trang chủ
 Route::get('/', function () {
     return view('home');
 });
 
-// Route cho Admin và Manager
-Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+// =====================
+// 🧩 ADMIN ROUTES
+// =====================
+Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(function () {
     // Users
-    Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
-    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
-    Route::post('/users/{id}/update', [UserController::class, 'update'])->name('admin.users.update');
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::post('/users/{id}/update', [UserController::class, 'update'])->name('users.update');
+
     // Roles
-    Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
+    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+
     // Tables
-    Route::get('/tables', [TableController::class, 'index'])->name('admin.tables.index');
-    Route::delete('tables/{id}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
-    Route::get('tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
-    Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
-    Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
+    Route::get('/tables', [TableController::class, 'index'])->name('tables.index');
+    Route::delete('tables/{id}', [TableController::class, 'destroy'])->name('tables.destroy');
+    Route::get('tables/trashed', [TableController::class, 'trashed'])->name('tables.trashed');
+    Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('tables.restore');
+    Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('tables.forceDelete');
+
+    // 🧑‍💼 Employees
+    Route::resource('employees', EmployeeController::class);
+
+    // ⏰ Shifts
+    Route::resource('shifts', ShiftController::class);
 });
 
-// Route cho Employee
+// =====================
+// 👨‍🍳 EMPLOYEE ROUTES
+// =====================
 Route::prefix('employee')->middleware(['auth', 'employee'])->group(function () {
     Route::get('/dashboard', function () {
         return view('employee.dashboard');

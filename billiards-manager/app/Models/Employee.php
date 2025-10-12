@@ -2,86 +2,26 @@
 
 namespace App\Models;
 
-class Employee extends BaseModel
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Employee extends Model
 {
-    const POSITION_MANAGER = 'manager';
-    const POSITION_STAFF = 'staff';
-    const POSITION_CASHIER = 'cashier';
-    const POSITION_WAITER = 'waiter';
+    use HasFactory;
 
     protected $fillable = [
-        'employee_code',
-        'user_id',
-        'name',
-        'phone',
-        'email',
-        'address',
-        'position',
-        'salary_type',
-        'base_salary',
-        'start_date',
-        'end_date',
-        'is_active',
-        'created_by',
-        'updated_by'
+        'user_id', 'position', 'salary_rate', 'hire_date', 'status'
     ];
 
-    protected $casts = [
-        'base_salary' => 'decimal:2',
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'is_active' => 'boolean'
-    ];
-
-    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function employeeShifts()
+    public function shifts()
     {
-        return $this->hasMany(EmployeeShift::class);
-    }
-
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class);
-    }
-
-    public function bills()
-    {
-        return $this->hasMany(Bill::class);
-    }
-
-    public function payrolls()
-    {
-        return $this->hasMany(Payroll::class);
-    }
-
-    // Scopes
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    public function scopeByPosition($query, $position)
-    {
-        return $query->where('position', $position);
-    }
-
-    // Methods
-    public function isWorking(): bool
-    {
-        return $this->is_active && 
-               (!$this->end_date || $this->end_date >= now());
-    }
-
-    public function getCurrentShift()
-    {
-        return $this->employeeShifts()
-                    ->whereDate('shift_date', today())
-                    ->where('status', EmployeeShift::STATUS_ACTIVE)
-                    ->first();
+        return $this->belongsToMany(Shift::class, 'employee_shifts')
+            ->withPivot('shift_date', 'status', 'note', 'actual_start_time', 'actual_end_time')
+            ->withTimestamps();
     }
 }

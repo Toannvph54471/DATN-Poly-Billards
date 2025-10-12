@@ -150,6 +150,17 @@
                     <i class="fas fa-cog w-6 mr-3"></i>
                     <span class="font-medium">Cài đặt</span>
                 </a>
+                <a href="{{ route('admin.shifts.index') }}"
+    class="nav-item {{ request()->routeIs('admin.shifts.*') ? 'active' : '' }} flex items-center p-3">
+    <i class="fa-solid fa-clock w-6 mr-3"></i>
+    <span class="font-medium">Các ca làm</span>
+</a>
+        <a href="{{ route('admin.employees.index') }}"
+    class="nav-item {{ request()->routeIs('admin.employees.*') ? 'active' : '' }} flex items-center p-3">
+    <i class="fa-solid fa-user-tie w-6 mr-3"></i>
+    <span class="font-medium">Nhân viên</span>
+</a>
+
             </nav>
 
             <!-- Store Info -->
