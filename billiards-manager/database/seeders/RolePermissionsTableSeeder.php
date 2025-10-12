@@ -47,7 +47,7 @@ class RolePermissionsTableSeeder extends Seeder
         
         foreach ($staffPermissions as $permissionId) {
             DB::table('role_permissions')->insert([
-                'role_id' => 3, // Staff
+                'role_id' => 3, // Employee:
                 'permission_id' => $permissionId,
                 'created_at' => now()
             ]);

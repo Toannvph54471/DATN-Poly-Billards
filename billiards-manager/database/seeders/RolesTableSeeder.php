@@ -18,7 +18,7 @@ class RolesTableSeeder extends Seeder
             ],
             [
                 'name' => 'Quản lý',
-                'slug' => 'manager', 
+                'slug' => 'manager',
                 'description' => 'Quản lý cửa hàng',
                 'permissions' => json_encode(config('permissions.role_permissions.manager'))
             ],
