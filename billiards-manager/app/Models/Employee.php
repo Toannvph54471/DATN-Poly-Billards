@@ -2,35 +2,39 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 class Employee extends BaseModel
 {
+    use HasFactory;
+
     const POSITION_MANAGER = 'manager';
     const POSITION_STAFF = 'staff';
     const POSITION_CASHIER = 'cashier';
     const POSITION_WAITER = 'waiter';
 
     protected $fillable = [
-        'employee_code',
         'user_id',
+        'employee_code',
         'name',
         'phone',
         'email',
         'address',
         'position',
         'salary_type',
-        'base_salary',
+        'salary_rate',
         'start_date',
         'end_date',
-        'is_active',
+        'status',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'deleted_by'
     ];
 
     protected $casts = [
-        'base_salary' => 'decimal:2',
+        'salary_rate' => 'decimal:2',
         'start_date' => 'date',
         'end_date' => 'date',
-        'is_active' => 'boolean'
     ];
 
     // Relationships
@@ -62,7 +66,7 @@ class Employee extends BaseModel
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', 1);
     }
 
     public function scopeByPosition($query, $position)
@@ -73,7 +77,7 @@ class Employee extends BaseModel
     // Methods
     public function isWorking(): bool
     {
-        return $this->is_active && 
+        return $this->status === 1 &&
                (!$this->end_date || $this->end_date >= now());
     }
 
@@ -84,4 +88,18 @@ class Employee extends BaseModel
                     ->where('status', EmployeeShift::STATUS_ACTIVE)
                     ->first();
     }
+
+    // Setter cho salary_rate dựa trên salary_type
+    public function setSalaryRateAttribute($value)
+    {
+        if ($this->salary_type === 'monthly' && !$value) {
+            $this->attributes['salary_rate'] = 35000.00;
+        } elseif ($this->salary_type === 'hourly' && !$value) {
+            $this->attributes['salary_rate'] = 25000.00;
+        } else {
+            $this->attributes['salary_rate'] = $value;
+        }
+    }
+
+   
 }

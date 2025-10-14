@@ -11,7 +11,6 @@
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -120,44 +119,32 @@
                     <i class="fas fa-chart-pie w-6 mr-3"></i>
                     <span class="font-medium">Tổng quan</span>
                 </a>
-
                 <a href="{{ route('admin.tables.index') }}"
-                    class="nav-item {{ request()->routeIs('tables.*') ? 'active' : '' }} flex items-center p-3">
+                    class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
                     <i class="fa-solid fa-table w-6 mr-3"></i>
                     <span class="font-medium">Bàn Billards</span>
                 </a>
-
+            
                 <a href=""
                     class="nav-item {{ request()->routeIs('products.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-boxes w-6 mr-3"></i>
                     <span class="font-medium">Hàng hóa</span>
                 </a>
-
                 <a href="{{ route('admin.users.index') }}"
                     class="nav-item {{ request()->routeIs('customers.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-users w-6 mr-3"></i>
                     <span class="font-medium">Khách hàng</span>
                 </a>
-
-
-                <a href="{{ route('admin.employees.index') }}" 
-                    class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }} flex items-center px-4 py-3 text-white hover:text-white">
-                    <i class="fas fa-user-tie mr-3"></i>
-                    Nhân viên
-                </a>
-
                 <a href=""
                     class="nav-item {{ request()->routeIs('invoices.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-file-invoice-dollar w-6 mr-3"></i>
                     <span class="font-medium">Hóa đơn</span>
                 </a>
-
                 <a href=""
                     class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-chart-line w-6 mr-3"></i>
                     <span class="font-medium">Báo cáo</span>
                 </a>
-
                 <a href=""
                     class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-cog w-6 mr-3"></i>
@@ -166,7 +153,7 @@
             </nav>
 
             <!-- Store Info -->
-            <div class="absolute bottom-0 left-0 right-0 p-4">
+            <div class="absolute bottom-0 left-0 right-0 p-4  ">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                         <i class="fas fa-store text-white"></i>
@@ -198,18 +185,21 @@
                         <!-- Notifications -->
                         <button class="relative p-2 text-gray-600 hover:text-blue-600 transition">
                             <i class="fas fa-bell text-xl"></i>
-                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                            <span
+                                class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
                         </button>
 
                         <!-- Messages -->
                         <button class="relative p-2 text-gray-600 hover:text-blue-600 transition">
                             <i class="fas fa-envelope text-xl"></i>
-                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                            <span
+                                class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
                         </button>
 
                         <!-- User -->
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            <div
+                                class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                                 TD
                             </div>
                             <div class="hidden md:block">

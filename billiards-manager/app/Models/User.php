@@ -1,14 +1,14 @@
 <?php
 
 namespace App\Models;
-use Illuminate\Database\Eloquent\Factories\HasFactory; 
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-
 class User extends Authenticatable
 {
-    use  Notifiable, HasFactory;
+    use Notifiable, HasFactory;
 
     const ROLE_ADMIN = 'admin';
     const ROLE_MANAGER = 'manager';
@@ -21,7 +21,8 @@ class User extends Authenticatable
         'phone',
         'role_id',
         'status',
-        'email_verified_at'
+        'created_by',
+        'updated_by',
     ];
 
     protected $hidden = [
@@ -30,15 +31,14 @@ class User extends Authenticatable
     ];
 
     // Relationships
-
-        public function role()
+    public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
-    public function employees()
+    public function employee()
     {
-        return $this->hasMany(Employee::class);
+        return $this->hasOne(Employee::class, 'user_id');
     }
 
     public function shifts()
