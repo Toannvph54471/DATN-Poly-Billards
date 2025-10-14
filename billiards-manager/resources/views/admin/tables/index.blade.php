@@ -18,7 +18,7 @@
             <a href="{{ route('admin.tables.trashed') }}"
                 class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                 <i class="fas fa-plus mr-2"></i>
-                Danh sách xóa
+                Danh bàn ẩn
             </a>
         </div>
     </div>
@@ -306,7 +306,7 @@
                                         <button type="submit"
                                             class="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition flex items-center justify-center">
                                             <i class="fas fa-trash mr-1"></i>
-                                            Xóa Bàn
+                                            Ẩn Bàn
                                         </button>
                                     </form>
                                 </div>
@@ -347,7 +347,7 @@
     </div>
 @endsection
 
-{{-- @section('scripts')
+@section('scripts')
     <script>
         // Biến toàn cục để theo dõi trạng thái modal
         let isModalOpen = false;
@@ -631,7 +631,7 @@
             });
         });
     </script>
-@endsection --}}
+@endsection
 
 <style>
     .stat-card {
