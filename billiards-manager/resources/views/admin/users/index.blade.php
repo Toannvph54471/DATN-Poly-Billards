@@ -114,6 +114,7 @@
                     </select>
                 </div>
 
+
                 <!-- Actions -->
                 <div class="flex items-end">
                     <button type="submit"
@@ -208,17 +209,18 @@
                                     </span>
                                 @endif
                             </td>
+
                             <td class="py-4 px-6">
-                                @if ($user->status === 'Active')
+                                @if ($user->status == 'Active')
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        <i class="fas fa-check-circle mr-1"></i>
+                                        <i class="fas fa-circle mr-1" style="font-size: 6px;"></i>
                                         Đang hoạt động
                                     </span>
                                 @else
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        <i class="fas fa-times-circle mr-1"></i>
+                                        <i class="fas fa-circle mr-1" style="font-size: 6px;"></i>
                                         Ngừng hoạt động
                                     </span>
                                 @endif
@@ -284,6 +286,23 @@
                 }
             });
         }
+
+        // Auto submit form when filters change (optional)
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelect = document.getElementById('status');
+            const roleSelect = document.getElementById('role');
+
+            // Uncomment if you want auto-submit on filter change
+            /*
+            statusSelect.addEventListener('change', function() {
+                this.form.submit();
+            });
+            
+            roleSelect.addEventListener('change', function() {
+                this.form.submit();
+            });
+            */
+        });
     </script>
 @endsection
 

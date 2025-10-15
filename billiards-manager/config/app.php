@@ -117,7 +117,6 @@ return [
     | Supported drivers: "file", "cache"
     |
     */
-    'pagination' => 10, // Thêm cấu hình phân trang
 
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
