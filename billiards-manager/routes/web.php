@@ -32,34 +32,37 @@ Route::get('/', function () {
 // =====================
 // 🧩 ADMIN ROUTES
 // =====================
-Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Users
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
-    Route::post('/users/{id}/update', [UserController::class, 'update'])->name('users.update');
+    Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
+    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/users/{id}/update', [UserController::class, 'update'])->name('admin.users.update');
 
-    // Roles
-    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+    //Employees
+    Route::get('/employees', [EmployeeController::class, 'index'])->name('admin.employees.index');
+    Route::get('/employees/create', [EmployeeController::class, 'create'])->name('admin.employees.create');
+    Route::post('/employees', [EmployeeController::class, 'store'])->name('admin.employees.store');
+    Route::get('/employees/{id}', [EmployeeController::class, 'show'])->name('admin.employees.show');
+    Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('admin.employees.edit');
+    Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('admin.employees.update');
+    Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('admin.employees.destroy');
+    
+    
 
-    // Tables
-    Route::get('/tables', [TableController::class, 'index'])->name('tables.index');
-    Route::delete('tables/{id}', [TableController::class, 'destroy'])->name('tables.destroy');
-    Route::get('tables/trashed', [TableController::class, 'trashed'])->name('tables.trashed');
-    Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('tables.restore');
-    Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('tables.forceDelete');
-
-    // 🧑‍💼 Employees
-    Route::resource('employees', EmployeeController::class);
-
-    // ⏰ Shifts
-    Route::resource('shifts', ShiftController::class);
+Route::prefix('admin')->group(function () {
+    Route::get('/shifts', [ShiftController::class, 'index'])->name('admin.shifts.index');
+    Route::get('/shifts/{id}', [ShiftController::class, 'show'])->name('admin.shifts.show');
 });
 
-// =====================
-// 👨‍🍳 EMPLOYEE ROUTES
-// =====================
-Route::prefix('employee')->middleware(['auth', 'employee'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('employee.dashboard');
-    })->name('employee.dashboard');
+    // Roles
+    Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
+
+    // Tables
+    Route::get('/tables', [TableController::class, 'index'])->name('admin.tables.index');
+    Route::delete('tables/{id}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
+    Route::get('tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
+    Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
+    Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
+    // ⏰ Shifts
+    Route::resource('shifts', ShiftController::class);
 });

@@ -23,6 +23,11 @@ class Role extends BaseModel
         return $this->hasMany(User::class);
     }
 
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'role_permissions');
+    }
+
     // Methods
     public function hasPermission($permission): bool
     {
