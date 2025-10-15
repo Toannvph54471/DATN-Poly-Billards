@@ -59,6 +59,7 @@ class UserController extends Controller
             'roles'
         ));
     }
+    
     public function edit($id)
     {
         $user = User::findOrFail($id);

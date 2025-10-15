@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.admin')
 @section('title', 'Danh sách ca làm việc')
 
 @section('content')
@@ -181,7 +181,7 @@
     <!-- Shift Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         @foreach($shifts as $index => $shift)
-        <a href="{{ route('admin.shifts.show', $shift->id) }}" 
+        <a href="" 
             class="shift-card shift-{{ strtolower($shift->name) }} block">
             <div class="p-8 text-center relative z-10">
                 <!-- Icon -->
