@@ -59,6 +59,7 @@ class UserController extends Controller
             'roles'
         ));
     }
+
     public function edit($id)
     {
         $user = User::findOrFail($id);
@@ -68,60 +69,60 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255|unique:users,email,' . $id,
-        'phone' => 'required|string|max:15',
-        'role_id' => 'required|exists:roles,id',
-        'status' => 'required|in:Active,Inactive',
-    ]);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $id,
+            'phone' => 'required|string|max:15',
+            'role_id' => 'required|exists:roles,id',
+            'status' => 'required|in:Active,Inactive',
+        ]);
 
-    $user = User::findOrFail($id);
-    $oldRoleSlug = $user->role ? $user->role->slug : null;
-    $newRole = Role::findOrFail($request->role_id);
-    $newRoleSlug = $newRole->slug;
+        $user = User::findOrFail($id);
+        $oldRoleSlug = $user->role ? $user->role->slug : null;
+        $newRole = Role::findOrFail($request->role_id);
+        $newRoleSlug = $newRole->slug;
 
-    // Lấy vai trò hiện tại để giữ nguyên nếu là admin hoặc manager
-    $currentRoleId = $user->role_id;
+        // Lấy vai trò hiện tại để giữ nguyên nếu là admin hoặc manager
+        $currentRoleId = $user->role_id;
 
-    $user->update([
-        'name' => $request->name,
-        'email' => $request->email,
-        'phone' => $request->phone,
-        'role_id' => $newRoleSlug === User::ROLE_EMPLOYEE ? $request->role_id : $currentRoleId, // Giữ nguyên vai trò nếu không phải employee
-        'status' => $request->status,
-    ]);
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'role_id' => $newRoleSlug === User::ROLE_EMPLOYEE ? $request->role_id : $currentRoleId, // Giữ nguyên vai trò nếu không phải employee
+            'status' => $request->status,
+        ]);
 
-    // Đồng bộ với Employee chỉ khi vai trò là employee
-    if ($newRoleSlug === User::ROLE_EMPLOYEE) {
-        if (!$user->employee) {
-            Employee::create([
-                'user_id' => $user->id,
-                'employee_code' => 'EMP-' . Str::random(6),
-                'name' => $user->name,
-                'phone' => $user->phone,
-                'email' => $user->email,
-                'position' => 'staff',
-                'salary_type' => 'hourly',
-                'salary_rate' => 25000.00,
-                'start_date' => now(),
-                'status' => $request->status === 'Active' ? 0 : 1,
-            ]);
-        } else {
-            $user->employee->update([
-                'name' => $user->name,
-                'phone' => $user->phone,
-                'email' => $user->email,
-                'status' => $request->status === 'Active' ? 0 : 1,
-            ]);
+        // Đồng bộ với Employee chỉ khi vai trò là employee
+        if ($newRoleSlug === User::ROLE_EMPLOYEE) {
+            if (!$user->employee) {
+                Employee::create([
+                    'user_id' => $user->id,
+                    'employee_code' => 'EMP-' . Str::random(6),
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'email' => $user->email,
+                    'position' => 'staff',
+                    'salary_type' => 'hourly',
+                    'salary_rate' => 25000.00,
+                    'start_date' => now(),
+                    'status' => $request->status,
+                ]);
+            } else {
+                $user->employee->update([
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'email' => $user->email,
+                    'status' => $request->status,
+                ]);
+            }
+        } elseif ($oldRoleSlug === User::ROLE_EMPLOYEE && $newRoleSlug !== User::ROLE_EMPLOYEE) {
+            if ($user->employee) {
+                $user->employee->delete();
+            }
         }
-    } elseif ($oldRoleSlug === User::ROLE_EMPLOYEE && $newRoleSlug !== User::ROLE_EMPLOYEE) {
-        if ($user->employee) {
-            $user->employee->delete();
-        }
-    }
 
         return redirect()->route('admin.users.edit', $user->id)
             ->with('success', 'Cập nhật thông tin thành viên thành công!');
-        }
     }
+}

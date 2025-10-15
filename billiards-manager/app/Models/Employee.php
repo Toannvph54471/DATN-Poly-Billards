@@ -13,6 +13,9 @@ class Employee extends BaseModel
     const POSITION_CASHIER = 'cashier';
     const POSITION_WAITER = 'waiter';
 
+    const STATUS_ACTIVE = 0;
+    const STATUS_INACTIVE = 1;
+
     protected $fillable = [
         'user_id',
         'employee_code',
@@ -66,7 +69,7 @@ class Employee extends BaseModel
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('status', 1);
+        return $query->where('status', 0);
     }
 
     public function scopeByPosition($query, $position)
@@ -78,15 +81,15 @@ class Employee extends BaseModel
     public function isWorking(): bool
     {
         return $this->status === 1 &&
-               (!$this->end_date || $this->end_date >= now());
+            (!$this->end_date || $this->end_date >= now());
     }
 
     public function getCurrentShift()
     {
         return $this->employeeShifts()
-                    ->whereDate('shift_date', today())
-                    ->where('status', EmployeeShift::STATUS_ACTIVE)
-                    ->first();
+            ->whereDate('shift_date', today())
+            ->where('status', EmployeeShift::STATUS_ACTIVE)
+            ->first();
     }
 
     // Setter cho salary_rate dựa trên salary_type
@@ -101,5 +104,8 @@ class Employee extends BaseModel
         }
     }
 
-   
+    public function getRouteKeyName()
+    {
+        return 'id';
+    }
 }
