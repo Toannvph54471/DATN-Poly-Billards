@@ -23,7 +23,7 @@ class EmployeesTableSeeder extends Seeder
             'salary_type' => 'monthly', // Lương cứng
             'salary_rate' => 35000.00, // 35,000 VND/giờ
             'start_date' => '2024-01-15',
-            'status' => 'Active',
+            'status' => 'active',
             'created_by' => 'admin',
             'updated_by' => 'admin',
             'created_at' => now(),
@@ -42,7 +42,7 @@ class EmployeesTableSeeder extends Seeder
             'salary_type' => 'hourly', // Part-time
             'salary_rate' => 25000.00, // 25,000 VND/giờ
             'start_date' => '2024-02-01',
-            'status' => 'Active',
+            'status' => 'active',
             'created_by' => 'admin',
             'updated_by' => 'admin',
             'created_at' => now(),

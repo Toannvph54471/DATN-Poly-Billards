@@ -107,17 +107,16 @@
                                 @enderror
                             </div>
 
-
                             <!-- Trạng thái -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
                                 <select name="status"
                                     class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500">
                                     <option value="Active"
-                                        {{ old('status', $user->status) == 'Active' ? 'selected' : '' }}>Đang hoạt động
+                                        {{ old('status', $user->status) === 'Active' ? 'selected' : '' }}>Đang hoạt động
                                     </option>
                                     <option value="Inactive"
-                                        {{ old('status', $user->status) == 'Inactive' ? 'selected' : '' }}>Ngừng hoạt động
+                                        {{ old('status', $user->status) === 'Inactive' ? 'selected' : '' }}>Ngừng hoạt động
                                     </option>
                                 </select>
                                 @error('status')

@@ -33,7 +33,7 @@ Route::get('/', function () {
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
-    Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
+    Route::put('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
     Route::put('/users/{id}/update', [UserController::class, 'update'])->name('admin.users.update');
 
     //Employees
@@ -44,7 +44,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('admin.employees.edit');
     Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('admin.employees.update');
     Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('admin.employees.destroy');
-    
+
 
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');

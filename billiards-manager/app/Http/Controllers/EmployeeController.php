@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
@@ -26,19 +27,19 @@ class EmployeeController extends Controller
         }
 
         if ($request->has('status') && $request->status != '') {
-            $statusLower = strtolower($request->status);
-            $query->where('status', $statusLower === 'active' ? 0 : 1);
+            $query->where('status', $request->status);
         }
-
-        $employees = $query->with('user')->paginate(10);
+        
+        $employees = $query->paginate(10);
 
         $totalEmployees = Employee::count();
-        $activeEmployees = Employee::where('status', 0)->count();
-        $inactiveEmployees = Employee::where('status', 1)->count();
+        $activeEmployees = Employee::where('status', 'Active')->count();
+        $inactiveEmployees = Employee::where('status', 'Inactive')->count();
         $newEmployees = Employee::where('start_date', '>=', now()->subMonth())->count();
 
         return view('admin.employees.index', compact('employees', 'totalEmployees', 'activeEmployees', 'inactiveEmployees', 'newEmployees'));
     }
+
     public function create()
     {
         return view('admin.employees.create');
@@ -50,49 +51,77 @@ class EmployeeController extends Controller
             'employee_code' => 'required|unique:employees,employee_code',
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:15|unique:employees,phone|unique:users,phone',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users,email|unique:employees,email',
             'address' => 'nullable|string|max:500',
             'position' => 'required|in:manager,staff,cashier,waiter',
             'salary_type' => 'required|in:hourly,monthly',
             'salary_rate' => 'nullable|numeric|min:0',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
+            'status' => 'required|in:Active,Inactive',
         ]);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Tìm role employee
-        $role = Role::where('slug', User::ROLE_EMPLOYEE)->first();
-        if (!$role) {
-            Log::error('Role "employee" not found in roles table.');
-            return redirect()->back()->withErrors(['role' => 'Role "employee" not found.'])->withInput();
+        try {
+            DB::beginTransaction();
+
+            // Tìm role employee
+            $role = Role::where('slug', User::ROLE_EMPLOYEE)->first();
+            if (!$role) {
+                throw new \Exception('Role "employee" not found.');
+            }
+
+            // Tạo user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'role_id' => $role->id,
+                'password' => Hash::make('nhanvien'),
+                'status' => $request->status,
+            ]);
+
+            // Xác định salary_rate
+            $salaryRate = $request->salary_rate;
+            if (!$salaryRate) {
+                $salaryRate = $request->salary_type === 'monthly' ? 35000.00 : 25000.00;
+            }
+
+            // Tạo employee
+            $employee = Employee::create([
+                'user_id' => $user->id,
+                'employee_code' => $request->employee_code,
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'address' => $request->address,
+                'position' => $request->position,
+                'salary_type' => $request->salary_type,
+                'salary_rate' => $salaryRate,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'status' => $request->status,
+            ]);
+
+            DB::commit();
+
+            Log::info('Created new employee: ' . json_encode($employee));
+
+            return redirect()->route('admin.employees.index')
+                ->with('success', 'Nhân viên đã được thêm thành công.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating employee: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->withErrors(['error' => 'Có lỗi xảy ra: ' . $e->getMessage()])
+                ->withInput();
         }
-
-        // Tạo user
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'role_id' => $role->id,
-            'password' => Hash::make('nhanvien'),
-            'status' => 'Active',
-        ]);
-
-        // Tạo employee
-        $employeeData = $request->only(['employee_code', 'name', 'phone', 'email', 'address', 'position', 'salary_type', 'start_date', 'end_date']);
-        $employeeData['user_id'] = $user->id;
-        $employeeData['status'] = 0;
-        $employeeData['salary_rate'] = $request->salary_rate;
-
-        $employee = Employee::create($employeeData);
-
-        // Log để kiểm tra
-        Log::info('Created new employee: ' . json_encode($employee));
-
-        return redirect()->route('admin.employees.index')->with('success', 'Nhân viên đã được thêm thành công.');
     }
+
     public function show($id)
     {
         $employee = Employee::with('employeeShifts.shift')->findOrFail($id);
@@ -113,80 +142,105 @@ class EmployeeController extends Controller
             'employee_code' => 'required|unique:employees,employee_code,' . $id,
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:15|unique:employees,phone,' . $id . '|unique:users,phone,' . ($employee->user_id ?? 'NULL'),
-            'email' => 'required|email|unique:users,email,' . ($employee->user_id ?? 'NULL'),
+            'email' => 'required|email|unique:users,email,' . ($employee->user_id ?? 'NULL') . '|unique:employees,email,' . $id,
             'address' => 'nullable|string|max:500',
             'position' => 'required|in:manager,staff,cashier,waiter',
             'salary_type' => 'required|in:hourly,monthly',
-            'salary_rate' => 'required|numeric|min:0',
+            'salary_rate' => 'nullable|numeric|min:0',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'status' => 'required|in:0,1', // ĐÃ SỬA: chỉ cho phép 0 hoặc 1
+            'status' => 'required|in:Active,Inactive',
         ]);
 
         if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $employeeRole = Role::where('slug', User::ROLE_EMPLOYEE)->first();
+            if (!$employeeRole) {
+                throw new \Exception('Role "employee" not found.');
+            }
+
+            // Cập nhật user
+            if ($employee->user_id) {
+                $user = $employee->user;
+                $user->update([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'role_id' => $employeeRole->id,
+                    'status' => $request->status,
+                ]);
+            } else {
+                $user = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'phone' => $request->phone,
+                    'role_id' => $employeeRole->id,
+                    'password' => Hash::make('nhanvien'),
+                    'status' => $request->status,
+                ]);
+                $employee->user_id = $user->id;
+            }
+
+            // Cập nhật employee
+            $employee->update([
+                'employee_code' => $request->employee_code,
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'address' => $request->address,
+                'position' => $request->position,
+                'salary_type' => $request->salary_type,
+                'salary_rate' => $request->salary_rate,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'status' => $request->status,
+                'user_id' => $employee->user_id,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.employees.index')
+                ->with('success', 'Nhân viên đã được cập nhật thành công.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating employee: ' . $e->getMessage());
+
             return redirect()->back()
-                ->withErrors($validator)
-                ->withInput(); // QUAN TRỌNG: giữ lại dữ liệu đã nhập
+                ->withErrors(['error' => 'Có lỗi xảy ra: ' . $e->getMessage()])
+                ->withInput();
         }
-
-        // Tìm role employee
-        $employeeRole = Role::where('slug', User::ROLE_EMPLOYEE)->first();
-        if (!$employeeRole) {
-            return redirect()->back()->withErrors(['role' => 'Role "employee" not found.'])->withInput();
-        }
-
-        // Cập nhật user
-        if ($employee->user_id) {
-            $user = $employee->user;
-
-            $user->update([
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $request->phone,
-                'role_id' => $employeeRole->id, // LUÔN ĐẶT LÀ EMPLOYEE ROLE
-                'status' => $request->status == 0 ? 'Active' : 'Inactive', // SỬA LOGIC STATUS
-            ]);
-        } else {
-            // Tạo user mới nếu chưa có
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'phone' => $request->phone,
-                'role_id' => $employeeRole->id,
-                'password' => Hash::make(Str::random(8)),
-                'status' => $request->status == 0 ? 'Active' : 'Inactive',
-            ]);
-            $employee->user_id = $user->id;
-        }
-
-        // Cập nhật employee
-        $employee->update([
-            'employee_code' => $request->employee_code,
-            'name' => $request->name,
-            'phone' => $request->phone,
-            'email' => $request->email,
-            'address' => $request->address,
-            'position' => $request->position,
-            'salary_type' => $request->salary_type,
-            'salary_rate' => $request->salary_rate,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'status' => $request->status,
-            'user_id' => $employee->user_id,
-        ]);
-
-        return redirect()->route('admin.employees.index')
-            ->with('success', 'Nhân viên đã được cập nhật thành công.');
     }
 
     public function destroy($id)
     {
-        $employee = Employee::findOrFail($id);
-        if ($employee->user) {
-            $employee->user->delete(); // Xóa user liên kết
+        try {
+            DB::beginTransaction();
+
+            $employee = Employee::findOrFail($id);
+
+            if ($employee->user) {
+                $employee->user->delete();
+            }
+
+            $employee->delete();
+
+            DB::commit();
+
+            Log::info('Deleted employee: ' . json_encode($employee));
+
+            return redirect()->route('admin.employees.index')
+                ->with('success', 'Nhân viên đã được xóa thành công.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting employee: ' . $e->getMessage());
+
+            return redirect()->back()
+                ->with('error', 'Có lỗi xảy ra khi xóa nhân viên.');
         }
-        $employee->delete();
-        Log::info('Deleted employee: ' . json_encode($employee)); // Log để debug
-        return redirect()->route('admin.employees.index')->with('success', 'Nhân viên đã được xóa thành công.');
     }
 }
