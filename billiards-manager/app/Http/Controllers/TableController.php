@@ -35,6 +35,37 @@ class TableController extends Controller
             'availableCount' => Table::where('status', 'available')->count(),
         ]);
     }
+    // hien thi form sua 
+    public function edit($id){
+        $table = Table::findOrFail($id);
+        return view('admin.tables.test', compact('table'));
+        
+    }
+    // xu ly update thong tin ban
+    public function update(Request $request, $id)
+{
+    $request->validate([
+        'table_name' => 'required|string|max:255',
+        'table_number' => 'required|string|max:50',
+        'type' => 'required|string',
+        'hourly_rate' => 'required|numeric|min:0',
+        'status' => 'required|string',
+    ]);
+
+    $table = Table::findOrFail($id);
+    $table->update($request->only([
+        'table_name',
+        'table_number',
+        'type',
+        'hourly_rate',
+        'status',
+    ]));
+
+    return redirect()->route('admin.tables.index')
+        ->with('success', 'Cập nhật bàn thành công!');
+}
+
+    
     // Xóa mềm
     public function destroy($id)
     {
