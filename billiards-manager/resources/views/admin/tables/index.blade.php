@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('admin.layouts.app')
 
 @section('title', 'Quản lý bàn - Billiards Management')
 
@@ -240,8 +240,8 @@
                         <div class="p-4">
                             <div class="flex justify-between items-start mb-2">
                                 <div>
-                                    <h3 class="font-bold text-lg text-gray-900">Bàn {{ $table->table_number }}</h3>
-                                    <p class="text-gray-600 text-sm">{{ $table->table_name }}</p>
+                                    <h3 class="font-bold text-lg text-gray-900">Bàn {{ $table->table_name }}</h3>
+                                    <p class="text-gray-600 text-sm">{{ $table->table_number }}</p>
                                 </div>
                                 <div class="text-right">
                                     <span
@@ -419,16 +419,16 @@
                     Đóng
                 </button>
                 ${table.status === 'available' ? `
-                                            <button type="button" onclick="handleStartTable(${table.id})"
-                                                class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium hover:bg-gray-700 transition">
-                                                Bắt đầu
-                                            </button>
-                                            ` : table.status === 'in_use' ? `
-                                            <button type="button" onclick="handleStopTable(${table.id})"
-                                                class="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
-                                                Kết thúc
-                                            </button>
-                                            ` : ''}
+                                                    <button type="button" onclick="handleStartTable(${table.id})"
+                                                        class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium hover:bg-gray-700 transition">
+                                                        Bắt đầu
+                                                    </button>
+                                                    ` : table.status === 'in_use' ? `
+                                                    <button type="button" onclick="handleStopTable(${table.id})"
+                                                        class="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
+                                                        Kết thúc
+                                                    </button>
+                                                    ` : ''}
             </div>
         </div>
     `;

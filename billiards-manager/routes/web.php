@@ -23,14 +23,18 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 // Authentication Routes (Laravel 12 sử dụng Laravel Breeze/Fortify)
 Route::get('/', function () {
     return view('home');
 });
 
+
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+    
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');

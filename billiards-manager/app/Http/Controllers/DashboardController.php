@@ -18,8 +18,6 @@ class DashboardController extends Controller
         $totalTable = Table::query();
 
         return view('dashboard', [
-            'totalTable' => Table::count(),
-            'statusTable' => Table::where('status', 'avaliable')->count()
 
         ]);
     }
