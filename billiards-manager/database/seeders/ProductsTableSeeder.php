@@ -12,41 +12,41 @@ class ProductsTableSeeder extends Seeder
         $products = [
             // Dịch vụ thuê bàn theo giờ
             [
-            'product_code' => 'SERVICE001',
-            'name' => 'Giờ chơi bàn Standard',
-            'product_type' => Product::TYPE_SERVICE, // ← TYPE MỚI
-            'category' => 'Dịch vụ',
-            'price' => 50000,
-            'cost_price' => 0, // Không có chi phí
-            'stock_quantity' => 9999, // Không giới hạn
-            'min_stock_level' => 0,
-            'unit' => 'giờ',
-            'status' => 'Active',
-        ],
-        [
-            'product_code' => 'SERVICE002',
-            'name' => 'Giờ chơi bàn VIP',
-            'product_type' => Product::TYPE_SERVICE,
-            'category' => 'Dịch vụ',
-            'price' => 80000,
-            'cost_price' => 0,
-            'stock_quantity' => 9999,
-            'min_stock_level' => 0,
-            'unit' => 'giờ',
-            'status' => 'Active',
-        ],
-        [
-            'product_code' => 'SERVICE003',
-            'name' => 'Giờ chơi bàn Competition',
-            'product_type' => Product::TYPE_SERVICE,
-            'category' => 'Dịch vụ',
-            'price' => 100000,
-            'cost_price' => 0,
-            'stock_quantity' => 9999,
-            'min_stock_level' => 0,
-            'unit' => 'giờ',
-            'status' => 'Active',
-        ],
+                'product_code' => 'SERVICE001',
+                'name' => 'Giờ chơi bàn Standard',
+                'product_type' => Product::TYPE_SERVICE, // ← TYPE MỚI
+                'category' => 'Dịch vụ',
+                'price' => 50000,
+                'cost_price' => 0, // Không có chi phí
+                'stock_quantity' => 9999, // Không giới hạn
+                'min_stock_level' => 0,
+                'unit' => 'giờ',
+                'status' => 'Active',
+            ],
+            [
+                'product_code' => 'SERVICE002',
+                'name' => 'Giờ chơi bàn VIP',
+                'product_type' => Product::TYPE_SERVICE,
+                'category' => 'Dịch vụ',
+                'price' => 80000,
+                'cost_price' => 0,
+                'stock_quantity' => 9999,
+                'min_stock_level' => 0,
+                'unit' => 'giờ',
+                'status' => 'Active',
+            ],
+            [
+                'product_code' => 'SERVICE003',
+                'name' => 'Giờ chơi bàn Competition',
+                'product_type' => Product::TYPE_SERVICE,
+                'category' => 'Dịch vụ',
+                'price' => 100000,
+                'cost_price' => 0,
+                'stock_quantity' => 9999,
+                'min_stock_level' => 0,
+                'unit' => 'giờ',
+                'status' => 'Active',
+            ],
 
 
             // Đồ uống
@@ -74,7 +74,7 @@ class ProductsTableSeeder extends Seeder
                 'unit' => 'chai',
                 'status' => 'Active'
             ],
-            
+
             // Đồ ăn
             [
                 'product_code' => 'FOD001',
