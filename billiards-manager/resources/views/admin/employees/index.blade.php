@@ -1,4 +1,4 @@
-@extends('layouts.admin.app')
+@extends('layouts.admin')
 
 @section('title', 'Quản lý nhân viên - F&B Management')
 
