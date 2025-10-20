@@ -2,39 +2,42 @@
 
 namespace App\Models;
 
-class Product extends BaseModel
-{
-    const TYPE_FOOD = 'food';
-    const TYPE_DRINK = 'drink';
-    const TYPE_OTHER = 'other';
-    const TYPE_SERVICE = 'service';
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
+class Product extends Model
+{
+    use HasFactory;
+
+    protected $table = 'products';
+
+    
     protected $fillable = [
         'product_code',
         'name',
-        'type',
-        'category',
+        'category',         // Drink, Food, Service
+        'product_type',     // Single, Combo
         'price',
         'cost_price',
         'stock_quantity',
-        'min_stock',
-        'unit',
-        'image',
-        'description',
-        'is_available',
-        'created_by',
-        'updated_by'
+        'min_stock_level',
+        'unit',             // Chai, Lon, Giờ
+        'status',           // Active, Inactive
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'cost_price' => 'decimal:2',
         'stock_quantity' => 'integer',
-        'min_stock' => 'integer',
-        'is_available' => 'boolean'
+        'min_stock_level' => 'integer',
     ];
 
-    // Relationships
+
+    const STATUS_ACTIVE = 'Active';
+    const STATUS_INACTIVE = 'Inactive';
+    const TYPE_SINGLE = 'Single';
+    const TYPE_COMBO = 'Combo';
+
     public function billDetails()
     {
         return $this->hasMany(BillDetail::class);
@@ -45,33 +48,44 @@ class Product extends BaseModel
         return $this->hasMany(ComboItem::class);
     }
 
-    // Scopes
-    public function scopeAvailable($query)
+    // 🔍 Scopes
+
+
+    public function scopeActive($query)
     {
-        return $query->where('is_available', true)
-                    ->where('stock_quantity', '>', 0);
+        return $query->where('status', self::STATUS_ACTIVE);
     }
 
-    public function scopeFood($query)
+
+    public function scopeInactive($query)
     {
-        return $query->where('type', self::TYPE_FOOD);
+        return $query->where('status', self::STATUS_INACTIVE);
     }
 
-    public function scopeDrink($query)
-    {
-        return $query->where('type', self::TYPE_DRINK);
-    }
 
     public function scopeLowStock($query)
     {
-        return $query->whereRaw('stock_quantity <= min_stock');
+        return $query->whereColumn('stock_quantity', '<=', 'min_stock_level');
     }
 
-    // Methods
+
+    public function scopeCategory($query, $category)
+    {
+        return $query->where('category', $category);
+    }
+
+
+    public function isAvailable(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE && $this->stock_quantity > 0;
+    }
+
+
     public function isLowStock(): bool
     {
-        return $this->stock_quantity <= $this->min_stock;
+        return $this->stock_quantity <= $this->min_stock_level;
     }
+
 
     public function reduceStock($quantity): bool
     {
@@ -82,8 +96,10 @@ class Product extends BaseModel
         return false;
     }
 
+
     public function addStock($quantity): bool
     {
-        return $this->increment('stock_quantity', $quantity);
+        $this->increment('stock_quantity', $quantity);
+        return true;
     }
 }

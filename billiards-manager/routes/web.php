@@ -23,14 +23,18 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 // Authentication Routes (Laravel 12 sử dụng Laravel Breeze/Fortify)
 Route::get('/', function () {
     return view('home');
 });
 
+
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+    
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
@@ -55,4 +59,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
     Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
     Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
+
+    // Products
+    Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
+    Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
+    Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
+
 });

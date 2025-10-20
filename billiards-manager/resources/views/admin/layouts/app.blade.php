@@ -10,6 +10,13 @@
     <script src="https://kit.fontawesome.com/abc123xyz.js" crossorigin="anonymous"></script>
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {{-- CSRF --}}
+
+    <head>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+    </head>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -115,7 +122,7 @@
 
             <!-- Navigation -->
             <nav class="p-4 space-y-1">
-                <a href="/dashboard"
+                <a href=""
                     class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-chart-pie w-6 mr-3"></i>
                     <span class="font-medium">Tổng quan</span>
@@ -139,8 +146,7 @@
                     <span class="font-medium">Khách hàng</span>
                 </a>
 
-
-                <a href="{{ route('admin.employees.index') }}" 
+                <a href="{{ route('admin.employees.index') }}"
                     class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }} flex items-center px-4 py-3 text-white hover:text-white">
                     <i class="fas fa-user-tie mr-3"></i>
                     Nhân viên
@@ -156,6 +162,11 @@
                     class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-chart-line w-6 mr-3"></i>
                     <span class="font-medium">Báo cáo</span>
+                </a>
+                <a href="{{ route('admin.products.index') }}"
+                    class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
+                    <i class="fas fa-cubes text-white text-lg w-6 mr-3"></i>
+                    <span class="font-medium">Sản phẩm</span>
                 </a>
 
                 <a href=""
@@ -198,18 +209,21 @@
                         <!-- Notifications -->
                         <button class="relative p-2 text-gray-600 hover:text-blue-600 transition">
                             <i class="fas fa-bell text-xl"></i>
-                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                            <span
+                                class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
                         </button>
 
                         <!-- Messages -->
                         <button class="relative p-2 text-gray-600 hover:text-blue-600 transition">
                             <i class="fas fa-envelope text-xl"></i>
-                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                            <span
+                                class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
                         </button>
 
                         <!-- User -->
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            <div
+                                class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                                 TD
                             </div>
                             <div class="hidden md:block">
