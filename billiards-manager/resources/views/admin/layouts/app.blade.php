@@ -10,6 +10,13 @@
     <script src="https://kit.fontawesome.com/abc123xyz.js" crossorigin="anonymous"></script>
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {{-- CSRF --}}
+
+    <head>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+    </head>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -156,7 +163,7 @@
                     <i class="fas fa-chart-line w-6 mr-3"></i>
                     <span class="font-medium">Báo cáo</span>
                 </a>
-                <a href="{{ route("admin.products.index") }}"
+                <a href="{{ route('admin.products.index') }}"
                     class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-cubes text-white text-lg w-6 mr-3"></i>
                     <span class="font-medium">Sản phẩm</span>
