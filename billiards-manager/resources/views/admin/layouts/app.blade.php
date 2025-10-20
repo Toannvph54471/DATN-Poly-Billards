@@ -7,18 +7,11 @@
     <title>@yield('title', 'F&B Management')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/abc123xyz.js" crossorigin="anonymous"></script>
-    <!-- Font Awesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    {{-- CSRF --}}
-
-    <head>
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-    </head>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -29,21 +22,44 @@
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --gray-100: #f8fafc;
-            --gray-200: #e2e8f0;
-            --gray-300: #cbd5e1;
-            --gray-600: #475569;
-            --gray-800: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .layout-container {
+            display: flex;
+            min-height: 100vh;
         }
 
         .sidebar {
+            width: 260px;
             background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
         }
 
         .nav-item {
@@ -74,181 +90,373 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
         }
 
-        .table-row {
-            transition: all 0.3s ease;
+        .header-shadow {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        .table-row:hover {
-            background: #f8fafc;
+        .mobile-menu-btn {
+            display: none;
         }
 
-        .badge-success {
-            background: #ecfdf5;
-            color: #065f46;
-            border: 1px solid #a7f3d0;
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
         }
 
-        .badge-warning {
-            background: #fffbeb;
-            color: #92400e;
-            border: 1px solid #fcd34d;
+        /* Scrollbar styling */
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
         }
 
-        .badge-danger {
-            background: #fef2f2;
-            color: #991b1b;
-            border: 1px solid #fca5a5;
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
         }
     </style>
     @yield('styles')
 </head>
 
 <body class="text-gray-800">
-    <div class="flex h-screen">
+    <div class="layout-container">
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
         <!-- Sidebar -->
-        <div class="sidebar w-64 flex-shrink-0 text-white">
-            <!-- Logo -->
+        <div class="sidebar" id="sidebar">
+            <!-- Logo Section -->
             <div class="p-6 border-b border-blue-600">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                         <i class="fas fa-utensils text-blue-600 text-xl"></i>
+                        <a href="/"></a>
                     </div>
-                    <div>
-                        <h1 class="text-xl font-bold">F&B POS</h1>
-                        <p class="text-blue-200 text-xs">tqdong22</p>
+                    <div class="flex-1">
+                        <h1 class="text-white font-bold text-lg">F&B Manager</h1>
+                        <div class="flex items-center mt-1">
+                            <i class="fa-solid fa-user text-amber-400 mr-2 text-xs"></i>
+                            <span class="text-blue-200 text-sm">{{ Auth::user()->name }}</span>
+                            @if (Auth::user()->isAdmin())
+                                <span class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">Admin</span>
+                            @elseif(Auth::user()->isManager())
+                                <span class="ml-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">Quản
+                                    lý</span>
+                            @else
+                                <span class="ml-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">Nhân
+                                    viên</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Navigation -->
-            <nav class="p-4 space-y-1">
-                <a href=""
-                    class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-chart-pie w-6 mr-3"></i>
-                    <span class="font-medium">Tổng quan</span>
-                </a>
+            <!-- Navigation Menu -->
+            <nav class="p-4 flex-1">
+                <ul class="space-y-2">
+                    <!-- Dashboard -->
+                    <li class="nav-item">
+                        <a href="{{ route('admin.dashboard') }}"
+                            class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                            <i class="fas fa-chart-line mr-3 w-5 text-center"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
 
-                <a href="{{ route('admin.tables.index') }}"
-                    class="nav-item {{ request()->routeIs('tables.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fa-solid fa-table w-6 mr-3"></i>
-                    <span class="font-medium">Bàn Billards</span>
-                </a>
+                    <!-- Users Management (Only for Admin/Manager) -->
+                    @if (Auth::user()->isAdmin() || Auth::user()->isManager())
+                        <li class="nav-item">
+                            <a href="{{ route('admin.users.index') }}"
+                                class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                                <i class="fas fa-users mr-3 w-5 text-center"></i>
+                                <span>Quản lý người dùng</span>
+                            </a>
+                        </li>
+                    @endif
 
-                <a href=""
-                    class="nav-item {{ request()->routeIs('products.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-boxes w-6 mr-3"></i>
-                    <span class="font-medium">Hàng hóa</span>
-                </a>
+                    <!-- Products Management -->
+                    <li class="nav-item">
+                        <a href="{{ route('admin.products.index') }}"
+                            class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                            <i class="fas fa-cubes mr-3 w-5 text-center"></i>
+                            <span>Quản lý sản phẩm</span>
+                        </a>
+                    </li>
 
-                <a href="{{ route('admin.users.index') }}"
-                    class="nav-item {{ request()->routeIs('customers.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-users w-6 mr-3"></i>
-                    <span class="font-medium">Khách hàng</span>
-                </a>
+                    <!-- Inventory Management -->
+                    <li class="nav-item">
+                        <a href=""
+                            class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                            <i class="fas fa-clipboard-list mr-3 w-5 text-center"></i>
+                            <span>Nhập tồn kho</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.tables.index') }}"
+                            class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                            <i class="fas fa-circle mr-3 w-5 text-center"></i>
+                            <span>Quản lý bàn</span>
+                        </a>
+                    </li>
 
-                <a href="{{ route('admin.employees.index') }}"
-                    class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }} flex items-center px-4 py-3 text-white hover:text-white">
-                    <i class="fas fa-user-tie mr-3"></i>
-                    Nhân viên
-                </a>
+                    <!-- Orders Management -->
+                    <li class="nav-item">
+                        <a href=""
+                            class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                            <i class="fas fa-shopping-cart mr-3 w-5 text-center"></i>
+                            <span>Đơn hàng</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.employees.index') }}"
+                            class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                            <i class="fas fa-user-tie mr-3 w-5 text-center"></i>
+                            <span>Nhân Viên</span>
+                        </a>
+                    </li>
 
-                <a href=""
-                    class="nav-item {{ request()->routeIs('invoices.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-file-invoice-dollar w-6 mr-3"></i>
-                    <span class="font-medium">Hóa đơn</span>
-                </a>
+                    <!-- Reports (Only for Admin/Manager) -->
+                    @if (Auth::user()->isAdmin() || Auth::user()->isManager())
+                        <li class="nav-item">
+                            <a href=""
+                                class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                                <i class="fas fa-chart-bar mr-3 w-5 text-center"></i>
+                                <span>Báo cáo</span>
+                            </a>
+                        </li>
+                    @endif
 
-                <a href=""
-                    class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-chart-line w-6 mr-3"></i>
-                    <span class="font-medium">Báo cáo</span>
-                </a>
-                <a href="{{ route('admin.products.index') }}"
-                    class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-cubes text-white text-lg w-6 mr-3"></i>
-                    <span class="font-medium">Sản phẩm</span>
-                </a>
-
-                <a href=""
-                    class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-cog w-6 mr-3"></i>
-                    <span class="font-medium">Cài đặt</span>
-                </a>
+                    <!-- Settings (Only for Admin) -->
+                    @if (Auth::user()->isAdmin())
+                        <li class="nav-item">
+                            <a href=""
+                                class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                                <i class="fas fa-cog mr-3 w-5 text-center"></i>
+                                <span>Cài đặt hệ thống</span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
             </nav>
 
-            <!-- Store Info -->
-            <div class="absolute bottom-0 left-0 right-0 p-4">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                        <i class="fas fa-store text-white"></i>
+            <!-- User Section -->
+            <div class="p-4 border-t border-blue-600 mt-auto">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-white text-sm"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-white font-medium">{{ Auth::user()->name }}</p>
+                            <p class="text-xs text-blue-200">
+                                @if (Auth::user()->isAdmin())
+                                    Quản trị viên
+                                @elseif(Auth::user()->isManager())
+                                    Quản lý
+                                @else
+                                    Nhân viên
+                                @endif
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium">Cửa hàng chính</p>
-                        <p class="text-blue-200 text-xs">Đang hoạt động</p>
+                    <div class="relative">
+                        <button onclick="toggleUserDropdown()"
+                            class="text-blue-200 hover:text-white transition p-1 rounded">
+                            <i class="fas fa-chevron-down text-sm"></i>
+                        </button>
+
+                        <!-- User Dropdown -->
+                        <div id="userDropdown"
+                            class="absolute bottom-full right-0 mb-2 w-48 bg-white rounded-lg shadow-xl py-2 hidden z-50 border border-gray-200">
+                            <a href=""
+                                class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                <i class="fas fa-user-edit mr-3 text-gray-400 w-4 text-center"></i>
+                                <span class="text-sm">Hồ sơ</span>
+                            </a>
+                            <a href=""
+                                class="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50 transition">
+                                <i class="fas fa-cog mr-3 text-gray-400 w-4 text-center"></i>
+                                <span class="text-sm">Cài đặt</span>
+                            </a>
+                            <div class="border-t border-gray-200 my-1"></div>
+                            <form method="POST" action="{{ route('logout') }}" class="w-full">
+                                @csrf
+                                <button type="submit"
+                                    class="flex items-center w-full px-4 py-2 text-red-600 hover:bg-gray-50 transition text-sm">
+                                    <i class="fas fa-sign-out-alt mr-3 w-4 text-center"></i>
+                                    <span>Đăng xuất</span>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="main-content" id="mainContent">
             <!-- Header -->
-            <header class="bg-white shadow-sm border-b border-gray-200">
-                <div class="flex justify-between items-center px-6 py-4">
+            <header class="bg-white header-shadow border-b border-gray-200 sticky top-0 z-50">
+                <div class="flex items-center justify-between px-4 py-3 md:px-6">
+                    <!-- Mobile Menu Button -->
+                    <button class="mobile-menu-btn p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+                        onclick="toggleSidebar()">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+
                     <!-- Search -->
-                    <div class="flex-1 max-w-2xl">
+                    <div class="flex-1 max-w-2xl mx-4">
                         <div class="relative">
                             <input type="text" placeholder="Tìm kiếm..."
-                                class="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                class="w-full bg-gray-100 border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
                         </div>
                     </div>
 
-                    <!-- User Menu -->
-                    <div class="flex items-center space-x-4">
+                    <!-- Header Right -->
+                    <div class="flex items-center space-x-3">
                         <!-- Notifications -->
-                        <button class="relative p-2 text-gray-600 hover:text-blue-600 transition">
-                            <i class="fas fa-bell text-xl"></i>
+                        <button
+                            class="relative p-2 text-gray-600 hover:text-blue-600 transition rounded-lg hover:bg-gray-100">
+                            <i class="fas fa-bell text-lg"></i>
                             <span
                                 class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
                         </button>
 
                         <!-- Messages -->
-                        <button class="relative p-2 text-gray-600 hover:text-blue-600 transition">
-                            <i class="fas fa-envelope text-xl"></i>
+                        <button
+                            class="relative p-2 text-gray-600 hover:text-blue-600 transition rounded-lg hover:bg-gray-100">
+                            <i class="fas fa-envelope text-lg"></i>
                             <span
                                 class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
                         </button>
 
-                        <!-- User -->
-                        <div class="flex items-center space-x-3">
+                        <!-- User Info (Desktop) -->
+                        <div class="hidden md:flex items-center space-x-3 pl-3 border-l border-gray-200">
                             <div
-                                class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                TD
+                                class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                {{ substr(Auth::user()->name, 0, 1) }}
                             </div>
-                            <div class="hidden md:block">
-                                <p class="text-sm font-medium">Trần Quang Đông</p>
-                                <p class="text-xs text-gray-500">Quản lý</p>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
+                                <p class="text-xs text-gray-500">
+                                    @if (Auth::user()->isAdmin())
+                                        Quản trị viên
+                                    @elseif(Auth::user()->isManager())
+                                        Quản lý
+                                    @else
+                                        Nhân viên
+                                    @endif
+                                </p>
                             </div>
-                            <i class="fas fa-chevron-down text-gray-400"></i>
                         </div>
                     </div>
                 </div>
             </header>
 
             <!-- Page Content -->
-            <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
+            <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
                 @yield('content')
             </main>
         </div>
     </div>
 
     @yield('scripts')
+
     <script>
-        // Add CSS variables
-        document.documentElement.style.setProperty('--primary', '#1e40af');
-        document.documentElement.style.setProperty('--primary-dark', '#1e3a8a');
-        document.documentElement.style.setProperty('--secondary', '#f59e0b');
+        // Toggle sidebar on mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('active');
+
+            if (window.innerWidth < 768) {
+                document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : 'auto';
+            }
+        }
+
+        // Toggle user dropdown
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const userDropdown = document.getElementById('userDropdown');
+            const userButton = event.target.closest('button[onclick="toggleUserDropdown()"]');
+
+            if (!userDropdown.contains(event.target) && !userButton) {
+                userDropdown.classList.add('hidden');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (window.innerWidth >= 768) {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // Set active nav item based on current URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUrl = window.location.href;
+            const navItems = document.querySelectorAll('.nav-item a');
+
+            navItems.forEach(item => {
+                if (item.href === currentUrl) {
+                    item.classList.add('text-white', 'bg-blue-700');
+                    item.classList.remove('text-blue-100');
+                }
+            });
+        });
+
+        // Initialize tooltips and other UI enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add any additional initialization code here
+        });
     </script>
 </body>
 

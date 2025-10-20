@@ -34,6 +34,8 @@ Route::get('/', function () {
 
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
