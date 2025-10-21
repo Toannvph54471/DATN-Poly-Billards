@@ -14,7 +14,7 @@ class ProductsTableSeeder extends Seeder
             [
                 'product_code' => 'SERVICE001',
                 'name' => 'Giờ chơi bàn Standard',
-                'product_type' => Product::TYPE_SERVICE, // ← TYPE MỚI
+                'product_type' => 'Service',
                 'category' => 'Dịch vụ',
                 'price' => 50000,
                 'cost_price' => 0, // Không có chi phí
@@ -26,7 +26,7 @@ class ProductsTableSeeder extends Seeder
             [
                 'product_code' => 'SERVICE002',
                 'name' => 'Giờ chơi bàn VIP',
-                'product_type' => Product::TYPE_SERVICE,
+                'product_type' => 'Service',
                 'category' => 'Dịch vụ',
                 'price' => 80000,
                 'cost_price' => 0,
@@ -38,7 +38,7 @@ class ProductsTableSeeder extends Seeder
             [
                 'product_code' => 'SERVICE003',
                 'name' => 'Giờ chơi bàn Competition',
-                'product_type' => Product::TYPE_SERVICE,
+                'product_type' => 'Service',
                 'category' => 'Dịch vụ',
                 'price' => 100000,
                 'cost_price' => 0,
@@ -53,7 +53,7 @@ class ProductsTableSeeder extends Seeder
             [
                 'product_code' => 'DRK001',
                 'name' => 'Coca Cola',
-                'product_type' => Product::TYPE_DRINK,
+                'product_type' => 'Drink',
                 'category' => 'Nước ngọt',
                 'price' => 20000,
                 'cost_price' => 12000,
@@ -65,7 +65,7 @@ class ProductsTableSeeder extends Seeder
             [
                 'product_code' => 'DRK002',
                 'name' => 'Pepsi',
-                'product_type' => Product::TYPE_DRINK,
+                'product_type' => 'Drink',
                 'category' => 'Nước ngọt',
                 'price' => 20000,
                 'cost_price' => 12000,
@@ -79,7 +79,7 @@ class ProductsTableSeeder extends Seeder
             [
                 'product_code' => 'FOD001',
                 'name' => 'Bim bim',
-                'product_type' => Product::TYPE_FOOD,
+                'product_type' => 'Snack',
                 'category' => 'Snack',
                 'price' => 15000,
                 'cost_price' => 8000,
