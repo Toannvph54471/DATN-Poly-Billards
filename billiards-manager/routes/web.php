@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
@@ -36,7 +37,7 @@ Route::get('/', function () {
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    
+
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
@@ -50,7 +51,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('admin.employees.edit');
     Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('admin.employees.update');
     Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('admin.employees.destroy');
-    
+
 
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
@@ -66,5 +67,4 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
-
 });

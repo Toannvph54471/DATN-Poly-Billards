@@ -419,16 +419,16 @@
                     Đóng
                 </button>
                 ${table.status === 'available' ? `
-                                                                        <button type="button" onclick="handleStartTable(${table.id})"
-                                                                            class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium hover:bg-gray-700 transition">
-                                                                            Bắt đầu
-                                                                        </button>
-                                                                        ` : table.status === 'in_use' ? `
-                                                                        <button type="button" onclick="handleStopTable(${table.id})"
-                                                                            class="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
-                                                                            Kết thúc
-                                                                        </button>
-                                                                        ` : ''}
+                            <button type="button" onclick="handleStartTable(${table.id})"
+                                class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium hover:bg-gray-700 transition">
+                                Bắt đầu
+                            </button>
+                            ` : table.status === 'in_use' ? `
+                            <button type="button" onclick="handleStopTable(${table.id})"
+                                class="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
+                                Kết thúc
+                            </button>
+                            ` : ''}
             </div>
         </div>
     `;

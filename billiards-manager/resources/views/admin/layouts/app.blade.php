@@ -22,6 +22,7 @@
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
+            --sidebar-bg: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
         }
 
         * {
@@ -51,6 +52,10 @@
             overflow-y: auto;
             z-index: 1000;
             transition: all 0.3s ease;
+        }
+
+        .sidebar {
+            background: var(--sidebar-bg);
         }
 
         .main-content {
@@ -252,10 +257,10 @@
                     <!-- Reports (Only for Admin/Manager) -->
                     @if (Auth::user()->isAdmin() || Auth::user()->isManager())
                         <li class="nav-item">
-                            <a href=""
+                            <a href="{{ route("admin.roles.index") }}"
                                 class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
-                                <i class="fas fa-chart-bar mr-3 w-5 text-center"></i>
-                                <span>Báo cáo</span>
+                                <i class="fas fa-user-shield text-blue-500 mr-3 w-5 text-center"></i>
+                                <span>Vai trò</span>
                             </a>
                         </li>
                     @endif
