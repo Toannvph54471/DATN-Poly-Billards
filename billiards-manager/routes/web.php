@@ -23,8 +23,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 
-// Authentication Routes (Laravel 12 sử dụng Laravel Breeze/Fortify)
 Route::get('/', function () {
     return view('home');
 });
@@ -45,10 +45,14 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('admin.employees.update');
     Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('admin.employees.destroy');
 
-    // ✅ Shifts (thêm mới phần ca làm việc)
-    Route::get('/shifts/create', [ShiftController::class, 'create'])->name('admin.shifts.create');
-    Route::post('/shifts', [ShiftController::class, 'store'])->name('admin.shifts.store');
-
+    // Combo
+    Route::get('/combos', [ComboController::class, 'index'])->name('admin.combos.index');
+    Route::get('/combos/create', [ComboController::class, 'create'])->name('admin.combos.create');
+    Route::post('/combos', [ComboController::class, 'store'])->name('admin.combos.store');
+    Route::get('/combos/{id}', [ComboController::class, 'show'])->name('admin.combos.show');
+    Route::get('/combos/{id}/edit', [ComboController::class, 'edit'])->name('admin.combos.edit');
+    Route::put('/combos/{id}', [ComboController::class, 'update'])->name('admin.combos.update');
+    Route::delete('/combos/{id}', [ComboController::class, 'destroy'])->name('admin.combos.destroy');
 
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
@@ -59,4 +63,20 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
     Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
     Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
+
+    // Products
+    Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
+    Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
+    Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
+
+    // Shifts
+    Route::get('/shifts', [ShiftController::class, 'index'])->name('admin.shifts.index');
+    Route::get('/shifts/create', [ShiftController::class, 'create'])->name('admin.shifts.create');
+    Route::post('/shifts', [ShiftController::class, 'store'])->name('admin.shifts.store');
+    Route::get('/shifts/{id}', [ShiftController::class, 'show'])->name('admin.shifts.show');
+    Route::get('/shifts/{id}/edit', [ShiftController::class, 'edit'])->name('admin.shifts.edit');
+    Route::put('/shifts/{id}', [ShiftController::class, 'update'])->name('admin.shifts.update');
+    Route::delete('/shifts/{id}', [ShiftController::class, 'destroy'])->name('admin.shifts.destroy');
 });
+    
+    

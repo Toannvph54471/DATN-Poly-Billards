@@ -14,6 +14,7 @@ class ShiftController extends Controller
         return view('admin.shifts.create');
     }
 
+    
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
