@@ -1,183 +1,195 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Quản lý Combo - F&B Management')
+@section('title', 'Quản Lý Combo Đặt Bàn - F&B Management')
 
 @section('content')
     <!-- Page Header -->
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Quản lý Combo</h1>
-            <p class="text-gray-600">Danh sách combo và thông tin liên quan</p>
+            <h1 class="text-3xl font-bold text-gray-900">Quản Lý Combo Đặt Bàn</h1>
+            <p class="text-gray-600 mt-1">Danh sách combo và thông tin liên quan</p>
         </div>
-        <div class="flex space-x-3">
-            <a href="{{ route('admin.combos.create', request()->query()) }}"
-                class="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700 transition flex items-center">
-                <i class="fas fa-plus mr-2"></i> Thêm Combo
-            </a>
+        <a href="{{ route('admin.combos.create') }}"
+            class="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 font-medium shadow-sm">
+            <i class="fas fa-plus mr-2"></i> Thêm Combo
+        </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Tổng Combo</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">{{ $totalCombos }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-boxes text-blue-600 text-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Đang Hoạt Động</p>
+                    <p class="text-3xl font-bold text-green-600 mt-2">{{ $activeCombos }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 text-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Tạm Dừng</p>
+                    <p class="text-3xl font-bold text-red-600 mt-2">{{ $inactiveCombos }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-times-circle text-red-600 text-lg"></i>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div class="stat-card p-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="text-gray-500 text-sm">Tổng Combo</p>
-                    <p class="text-xl font-bold text-gray-800">{{ $totalCombos }}</p>
-                </div>
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-boxes text-blue-600"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="stat-card p-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="text-gray-500 text-sm">Đang hoạt động</p>
-                    <p class="text-xl font-bold text-gray-800">{{ $activeCombos }}</p>
-                </div>
-                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-check-circle text-green-600"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="stat-card p-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="text-gray-500 text-sm">Ngừng hoạt động</p>
-                    <p class="text-xl font-bold text-gray-800">{{ $inactiveCombos }}</p>
-                </div>
-                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-times-circle text-red-600"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <form action="{{ route('admin.combos.index') }}" method="GET">
+    <!-- Search & Filter -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
+        <form action="{{ route('admin.combos.index') }}" method="GET" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Search by Code -->
+                <!-- Search Code -->
                 <div>
-                    <label for="code" class="block text-sm font-medium text-gray-700 mb-1">Mã Combo</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mã Combo</label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-barcode text-gray-400"></i>
-                        </div>
-                        <input type="text" name="code" id="code" value="{{ request('code') }}"
-                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="Tìm theo mã combo">
+                        <i class="fas fa-barcode absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" name="code" value="{{ request('code') }}"
+                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                            placeholder="Tìm theo mã combo">
                     </div>
                 </div>
 
-                <!-- Search by Name -->
+                <!-- Search Name -->
                 <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Tên Combo</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tên Combo</label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i class="fas fa-box text-gray-400"></i>
-                        </div>
-                        <input type="text" name="name" id="name" value="{{ request('name') }}"
-                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="Tìm theo tên">
+                        <i class="fas fa-box absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" name="name" value="{{ request('name') }}"
+                            class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                            placeholder="Tìm theo tên">
                     </div>
                 </div>
 
-                <!-- Status -->
+                <!-- Status Filter -->
                 <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-                    <select name="status" id="status"
-                            class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">Tất cả</option>
-                        <option value="Active" {{ request('status') == 'Active' ? 'selected' : '' }}>Đang hoạt động</option>
-                        <option value="Inactive" {{ request('status') == 'Inactive' ? 'selected' : '' }}>Ngừng hoạt động</option>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Trạng Thái</label>
+                    <select name="status"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <option value="">Tất Cả</option>
+                        <option value="Active" {{ request('status') == 'Active' ? 'selected' : '' }}>Đang Hoạt Động</option>
+                        <option value="Inactive" {{ request('status') == 'Inactive' ? 'selected' : '' }}>Tạm Dừng</option>
                     </select>
                 </div>
             </div>
-            <div class="flex justify-end mt-4">
+            <div class="flex justify-end gap-2">
+                <a href="{{ route('admin.combos.index') }}"
+                    class="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium">
+                    Xóa Bộ Lọc
+                </a>
                 <button type="submit"
-                    class="bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 transition">
-                    <i class="fas fa-search mr-2"></i> Tìm kiếm
+                    class="inline-flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
+                    <i class="fas fa-search mr-2"></i> Tìm Kiếm
                 </button>
             </div>
         </form>
     </div>
 
     <!-- Combos Table -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã Combo</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Giá trị thực</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
-                </tr>
-            </thead>
-
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse ($combos as $combo)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $combo->combo_code ?? 'N/A' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $combo->name ?? 'N/A' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($combo->price, 0, ',', '.') }} VND</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($combo->actual_value, 0, ',', '.') }} VND</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ $combo->status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                {{ $combo->status === 'Active' ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex justify-end space-x-2">
-                                <a href="{{ route('admin.combos.show', $combo->id) }}"
-                                   class="text-blue-600 hover:text-blue-900 transition"
-                                   title="Chi tiết">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{{ route('admin.combos.edit', $combo->id) }}"
-                                   class="text-green-600 hover:text-green-900 transition"
-                                   title="Chỉnh sửa">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form id="delete-form-{{ $combo->id }}"
-                                      action="{{ route('admin.combos.destroy', $combo->id) }}"
-                                      method="POST" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="button" class="delete-combo-btn text-red-600 hover:text-red-900 transition"
-                                            data-combo-id="{{ $combo->id }}"
-                                            title="Xóa">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
-                        <td colspan="6" class="py-8 px-6 text-center">
-                            <div class="flex flex-col items-center justify-center">
-                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                                    <i class="fas fa-boxes text-gray-400 text-xl"></i>
-                                </div>
-                                <h3 class="text-lg font-medium text-gray-900 mb-1">Không có combo nào</h3>
-                                <p class="text-gray-500 mb-4">Không tìm thấy combo phù hợp với tiêu chí tìm kiếm.</p>
-                            </div>
-                        </td>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Mã Combo</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Tên</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Giá Bán</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Giá Trị Thực</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Trạng Thái</th>
+                        <th class="px-6 py-3 text-right font-semibold text-gray-700">Hành Động</th>
                     </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @forelse ($combos as $combo)
+                        <tr class="hover:bg-gray-50 transition duration-150">
+                            <td class="px-6 py-4 font-medium text-gray-900">
+                                {{ $combo->combo_code ?? 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-800">
+                                {{ $combo->name ?? 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-800 font-medium">
+                                {{ number_format($combo->price, 0, ',', '.') }} đ
+                            </td>
+                            <td class="px-6 py-4 text-gray-600">
+                                {{ number_format($combo->actual_value, 0, ',', '.') }} đ
+                            </td>
+                            <td class="px-6 py-4">
+                                @if ($combo->status === 'Active')
+                                    <span class="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                        <i class="fas fa-circle text-green-500 mr-1 text-xs"></i> Hoạt Động
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                        <i class="fas fa-circle text-red-500 mr-1 text-xs"></i> Tạm Dừng
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a href="{{ route('admin.combos.show', $combo->id) }}"
+                                        class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                        title="Chi Tiết">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ route('admin.combos.edit', $combo->id) }}"
+                                        class="inline-flex items-center justify-center w-8 h-8 text-green-600 hover:bg-green-50 rounded-lg transition"
+                                        title="Chỉnh Sửa">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </a>
+                                    <form id="delete-form-{{ $combo->id }}"
+                                        action="{{ route('admin.combos.destroy', $combo->id) }}"
+                                        method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="button" class="delete-combo-btn inline-flex items-center justify-center w-8 h-8 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                            data-combo-id="{{ $combo->id }}" title="Xóa">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                        <i class="fas fa-boxes text-gray-400 text-2xl"></i>
+                                    </div>
+                                    <h3 class="text-gray-900 font-semibold mb-1">Không Có Combo Nào</h3>
+                                    <p class="text-gray-600 text-sm">Không tìm thấy combo phù hợp với tiêu chí tìm kiếm</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Pagination -->
     @if ($combos->hasPages())
-        <div class="bg-white px-6 py-4 border-t border-gray-200">
+        <div class="mt-6 flex justify-center">
             {{ $combos->links('pagination::tailwind') }}
         </div>
     @endif
@@ -187,42 +199,25 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Event delegation cho button delete
         document.addEventListener('click', function(e) {
             if (e.target.closest('.delete-combo-btn')) {
                 e.preventDefault();
                 const button = e.target.closest('.delete-combo-btn');
                 const comboId = button.getAttribute('data-combo-id');
-                if (!comboId) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Lỗi!',
-                        text: 'Không thể xóa combo này.',
-                    });
-                    return;
-                }
 
                 Swal.fire({
-                    title: 'Xác nhận xóa?',
-                    text: "Bạn có chắc chắn muốn xóa combo này? Hành động này không thể hoàn tác!",
+                    title: 'Xác Nhận Xóa',
+                    text: 'Bạn có chắc chắn muốn xóa combo này? Hành động này không thể hoàn tác!',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#6b7280',
                     confirmButtonText: 'Xóa',
                     cancelButtonText: 'Hủy'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         const form = document.getElementById('delete-form-' + comboId);
-                        if (form) {
-                            form.submit();
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Lỗi!',
-                                text: 'Form xóa không tìm thấy.',
-                            });
-                        }
+                        if (form) form.submit();
                     }
                 });
             }
@@ -230,25 +225,3 @@
     });
 </script>
 @endsection
-
-<style>
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-
-    tbody tr {
-        transition: background-color 0.2s ease;
-    }
-
-    tbody tr:hover {
-        background-color: #f9fafb !important; /* bg-gray-50 */
-    }
-</style>
