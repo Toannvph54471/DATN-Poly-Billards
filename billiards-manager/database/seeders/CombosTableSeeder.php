@@ -15,20 +15,22 @@ class CombosTableSeeder extends Seeder
                 'name' => 'Combo 2h + 2 nước',
                 'description' => 'Bao gồm 2 giờ chơi và 2 nước ngọt',
                 'price' => 140000,
-                'actual_value' => 160000, // 2*60k + 2*20k
+                'actual_value' => 160000,
                 'status' => 'Active',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
+                'deleted_at' => null,
             ],
-            [   
+            [
                 'combo_code' => 'COMBO002',
                 'name' => 'Combo 3h VIP + snack',
                 'description' => 'Bao gồm 3 giờ chơi VIP và 1 snack',
                 'price' => 250000,
-                'actual_value' => 280000, // 3*80k + 40k
+                'actual_value' => 280000,
                 'status' => 'Active',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
+                'deleted_at' => null,
             ],
         ]);
     }

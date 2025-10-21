@@ -11,7 +11,7 @@ class Product extends Model
 
     protected $table = 'products';
 
-    
+
     protected $fillable = [
         'product_code',
         'name',
@@ -37,7 +37,7 @@ class Product extends Model
     const STATUS_INACTIVE = 'Inactive';
     const TYPE_SINGLE = 'Single';
     const TYPE_COMBO = 'Combo';
-
+    
     public function billDetails()
     {
         return $this->hasMany(BillDetail::class);

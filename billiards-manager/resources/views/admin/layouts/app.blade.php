@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -158,11 +157,11 @@
                     <span class="font-medium">Hóa đơn</span>
                 </a>
 
-                <a href=""
-                    class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-chart-line w-6 mr-3"></i>
-                    <span class="font-medium">Báo cáo</span>
-                </a>
+               <a href="{{ route('admin.combos.index') }}"
+                class="nav-item {{ request()->routeIs('combos.*') ? 'active' : '' }} flex items-center p-3">
+                <i class="fas fa-layer-group w-6 mr-3"></i>
+                <span class="font-medium">Combos Bàn</span>
+                    </a>              
                 <a href="{{ route('admin.products.index') }}"
                     class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-cubes text-white text-lg w-6 mr-3"></i>
@@ -177,8 +176,8 @@
             </nav>
 
             <!-- Store Info -->
-            <div class="absolute bottom-0 left-0 right-0 p-4">
-                <div class="flex items-center space-x-3">
+            <div class="absolute bottom-0 left-0 p-4">
+                <div class="flex items-center space-x-2">
                     <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                         <i class="fas fa-store text-white"></i>
                     </div>
