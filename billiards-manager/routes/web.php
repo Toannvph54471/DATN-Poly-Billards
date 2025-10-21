@@ -4,7 +4,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\ShiftController; // 
 use App\Http\Controllers\EmployeeShiftController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\PayrollController;
@@ -36,7 +36,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
     Route::put('/users/{id}/update', [UserController::class, 'update'])->name('admin.users.update');
 
-    //Employees
+    // Employees
     Route::get('/employees', [EmployeeController::class, 'index'])->name('admin.employees.index');
     Route::get('/employees/create', [EmployeeController::class, 'create'])->name('admin.employees.create');
     Route::post('/employees', [EmployeeController::class, 'store'])->name('admin.employees.store');
@@ -44,7 +44,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('admin.employees.edit');
     Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('admin.employees.update');
     Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('admin.employees.destroy');
-    
+
+    // ✅ Shifts (thêm mới phần ca làm việc)
+    Route::get('/shifts/create', [ShiftController::class, 'create'])->name('admin.shifts.create');
+    Route::post('/shifts', [ShiftController::class, 'store'])->name('admin.shifts.store');
+
 
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
