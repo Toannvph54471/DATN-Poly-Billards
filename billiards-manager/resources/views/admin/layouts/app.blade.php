@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,13 +10,6 @@
     <script src="https://kit.fontawesome.com/abc123xyz.js" crossorigin="anonymous"></script>
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    {{-- CSRF --}}
-
-    <head>
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-    </head>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -121,7 +115,7 @@
 
             <!-- Navigation -->
             <nav class="p-4 space-y-1">
-                <a href=""
+                <a href="/dashboard"
                     class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-chart-pie w-6 mr-3"></i>
                     <span class="font-medium">Tổng quan</span>
@@ -145,16 +139,12 @@
                     <span class="font-medium">Khách hàng</span>
                 </a>
 
-<<<<<<< HEAD
             <a href="{{ route('admin.shifts.index') }}"
     class="nav-item {{ request()->routeIs('admin.shifts.*') ? 'active' : '' }} flex items-center p-3">
     <i class="fa-solid fa-clock w-6 mr-3"></i>
     <span class="font-medium">Các ca làm</span>
 </a>
                 <a href="{{ route('admin.employees.index') }}" 
-=======
-                <a href="{{ route('admin.employees.index') }}"
->>>>>>> 3d896af493493a9c528e6e27ea914d192e48ca6c
                     class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }} flex items-center px-4 py-3 text-white hover:text-white">
                     <i class="fas fa-user-tie mr-3"></i>
                     Nhân viên
@@ -166,15 +156,10 @@
                     <span class="font-medium">Hóa đơn</span>
                 </a>
 
-               <a href="{{ route('admin.combos.index') }}"
-                class="nav-item {{ request()->routeIs('combos.*') ? 'active' : '' }} flex items-center p-3">
-                <i class="fas fa-layer-group w-6 mr-3"></i>
-                <span class="font-medium">Combos Bàn</span>
-                    </a>              
-                <a href="{{ route('admin.products.index') }}"
+                <a href=""
                     class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-cubes text-white text-lg w-6 mr-3"></i>
-                    <span class="font-medium">Sản phẩm</span>
+                    <i class="fas fa-chart-line w-6 mr-3"></i>
+                    <span class="font-medium">Báo cáo</span>
                 </a>
     
 
@@ -186,8 +171,8 @@
             </nav>
 
             <!-- Store Info -->
-            <div class="absolute bottom-0 left-0 p-4">
-                <div class="flex items-center space-x-2">
+            <div class="absolute bottom-0 left-0 right-0 p-4">
+                <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                         <i class="fas fa-store text-white"></i>
                     </div>
@@ -218,21 +203,18 @@
                         <!-- Notifications -->
                         <button class="relative p-2 text-gray-600 hover:text-blue-600 transition">
                             <i class="fas fa-bell text-xl"></i>
-                            <span
-                                class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
                         </button>
 
                         <!-- Messages -->
                         <button class="relative p-2 text-gray-600 hover:text-blue-600 transition">
                             <i class="fas fa-envelope text-xl"></i>
-                            <span
-                                class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
                         </button>
 
                         <!-- User -->
                         <div class="flex items-center space-x-3">
-                            <div
-                                class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                                 TD
                             </div>
                             <div class="hidden md:block">
