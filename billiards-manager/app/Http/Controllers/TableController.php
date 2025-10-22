@@ -38,7 +38,7 @@ class TableController extends Controller
     // hien thi form sua 
     public function edit($id){
         $table = Table::findOrFail($id);
-        return view('admin.tables.test', compact('table'));
+        return view('admin.tables.edit', compact('table'));
         
     }
     // xu ly update thong tin ban
