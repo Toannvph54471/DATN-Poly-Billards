@@ -44,7 +44,7 @@
 
         .sidebar {
             width: 260px;
-            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: var(--sidebar-bg);
             position: fixed;
             left: 0;
             top: 0;
@@ -52,10 +52,6 @@
             overflow-y: auto;
             z-index: 1000;
             transition: all 0.3s ease;
-        }
-
-        .sidebar {
-            background: var(--sidebar-bg);
         }
 
         .main-content {
@@ -153,6 +149,31 @@
         .sidebar::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.5);
         }
+
+        /* Role badges với icon */
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .role-badge.admin {
+            background-color: #2615c1;
+            color: white;
+        }
+
+        .role-badge.manager {
+            background-color: #7c3aed;
+            color: white;
+        }
+
+        .role-badge.employee {
+            background-color: #059669;
+            color: white;
+        }
     </style>
     @yield('styles')
 </head>
@@ -169,7 +190,6 @@
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                         <i class="fas fa-utensils text-blue-600 text-xl"></i>
-                        <a href="/"></a>
                     </div>
                     <div class="flex-1">
                         <h1 class="text-white font-bold text-lg">F&B Manager</h1>
@@ -177,13 +197,20 @@
                             <i class="fa-solid fa-user text-amber-400 mr-2 text-xs"></i>
                             <span class="text-blue-200 text-sm">{{ Auth::user()->name }}</span>
                             @if (Auth::user()->isAdmin())
-                                <span class="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">Admin</span>
+                                <span class="role-badge admin ml-2">
+                                    <i class="fas fa-crown mr-1 text-yellow-300"></i>
+                                    Admin
+                                </span>
                             @elseif(Auth::user()->isManager())
-                                <span class="ml-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full">Quản
-                                    lý</span>
+                                <span class="role-badge manager ml-2">
+                                    <i class="fas fa-user-tie mr-1"></i>
+                                    Quản lý
+                                </span>
                             @else
-                                <span class="ml-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">Nhân
-                                    viên</span>
+                                <span class="role-badge employee ml-2">
+                                    <i class="fas fa-user mr-1"></i>
+                                    Nhân viên
+                                </span>
                             @endif
                         </div>
                     </div>
@@ -230,11 +257,22 @@
                             <span>Nhập tồn kho</span>
                         </a>
                     </li>
+
+                    <!-- Table Management -->
                     <li class="nav-item">
                         <a href="{{ route('admin.tables.index') }}"
                             class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
-                            <i class="fas fa-circle mr-3 w-5 text-center"></i>
+                            <i class="fas fa-chair mr-3 w-5 text-center"></i>
                             <span>Quản lý bàn</span>
+                        </a>
+                    </li>
+
+                    <!-- Combos Management -->
+                    <li class="nav-item">
+                        <a href="{{ route('admin.combos.index') }}"
+                            class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
+                            <i class="fas fa-layer-group mr-3 w-5 text-center"></i>
+                            <span>Combos Bàn</span>
                         </a>
                     </li>
 
@@ -246,6 +284,8 @@
                             <span>Đơn hàng</span>
                         </a>
                     </li>
+
+                    <!-- Employees Management -->
                     <li class="nav-item">
                         <a href="{{ route('admin.employees.index') }}"
                             class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
@@ -254,12 +294,12 @@
                         </a>
                     </li>
 
-                    <!-- Reports (Only for Admin/Manager) -->
+                    <!-- Roles Management (Only for Admin/Manager) -->
                     @if (Auth::user()->isAdmin() || Auth::user()->isManager())
                         <li class="nav-item">
-                            <a href="{{ route("admin.roles.index") }}"
+                            <a href="{{ route('admin.roles.index') }}"
                                 class="flex items-center px-4 py-3 text-blue-100 hover:text-white rounded-lg transition">
-                                <i class="fas fa-user-shield text-blue-500 mr-3 w-5 text-center"></i>
+                                <i class="fas fa-user-shield mr-3 w-5 text-center"></i>
                                 <span>Vai trò</span>
                             </a>
                         </li>
@@ -287,12 +327,15 @@
                         </div>
                         <div class="ml-3">
                             <p class="text-sm text-white font-medium">{{ Auth::user()->name }}</p>
-                            <p class="text-xs text-blue-200">
+                            <p class="text-xs text-blue-200 flex items-center">
                                 @if (Auth::user()->isAdmin())
+                                    <i class="fas fa-crown mr-1 text-yellow-400"></i>
                                     Quản trị viên
                                 @elseif(Auth::user()->isManager())
+                                    <i class="fas fa-user-tie mr-1 text-purple-400"></i>
                                     Quản lý
                                 @else
+                                    <i class="fas fa-user mr-1 text-green-400"></i>
                                     Nhân viên
                                 @endif
                             </p>
@@ -378,12 +421,15 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
-                                <p class="text-xs text-gray-500">
+                                <p class="text-xs text-gray-500 flex items-center">
                                     @if (Auth::user()->isAdmin())
+                                        <i class="fas fa-crown mr-1 text-yellow-500"></i>
                                         Quản trị viên
                                     @elseif(Auth::user()->isManager())
+                                        <i class="fas fa-user-tie mr-1 text-purple-500"></i>
                                         Quản lý
                                     @else
+                                        <i class="fas fa-user mr-1 text-green-500"></i>
                                         Nhân viên
                                     @endif
                                 </p>
@@ -452,16 +498,33 @@
 
             navItems.forEach(item => {
                 if (item.href === currentUrl) {
-                    item.classList.add('text-white', 'bg-blue-700');
-                    item.classList.remove('text-blue-100');
+                    item.closest('.nav-item').classList.add('active');
                 }
             });
         });
 
-        // Initialize tooltips and other UI enhancements
+        // Load theme từ localStorage
         document.addEventListener('DOMContentLoaded', function() {
-            // Add any additional initialization code here
+            const savedTheme = localStorage.getItem('theme') || 'blue';
+            applyTheme(savedTheme);
         });
+
+        function applyTheme(themeName) {
+            const themes = {
+                blue: { primary: '#1e40af', primaryDark: '#1e3a8a' },
+                green: { primary: '#059669', primaryDark: '#047857' },
+                purple: { primary: '#7c3aed', primaryDark: '#6d28d9' },
+                orange: { primary: '#ea580c', primaryDark: '#c2410c' }
+            };
+
+            const theme = themes[themeName];
+            const root = document.documentElement;
+            
+            root.style.setProperty('--primary', theme.primary);
+            root.style.setProperty('--primary-dark', theme.primaryDark);
+            root.style.setProperty('--sidebar-bg', 
+                `linear-gradient(180deg, ${theme.primary} 0%, ${theme.primaryDark} 100%)`);
+        }
     </script>
 </body>
 
