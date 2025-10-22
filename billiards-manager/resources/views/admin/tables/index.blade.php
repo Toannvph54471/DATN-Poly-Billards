@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Quản lý bàn - Billiards Management')
 
@@ -18,7 +18,7 @@
             <a href="{{ route('admin.tables.trashed') }}"
                 class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                 <i class="fas fa-plus mr-2"></i>
-                Danh bàn ẩn
+                Danh sách xóa
             </a>
         </div>
     </div>
@@ -97,11 +97,9 @@
                     <select name="type" id="type"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Tất cả loại</option>
-                        @foreach ($types as $type)
-                            <option value="{{ $type }}" {{ request('type') == $type ? 'selected' : '' }}>
-                                {{ ucfirst($type) }}
-                            </option>
-                        @endforeach
+                        <option value="pool" {{ request('type') == 'pool' ? 'selected' : '' }}>Pool</option>
+                        <option value="snooker" {{ request('type') == 'snooker' ? 'selected' : '' }}>Snooker</option>
+                        <option value="carom" {{ request('type') == 'carom' ? 'selected' : '' }}>Carom</option>
                     </select>
                 </div>
 
@@ -242,8 +240,8 @@
                         <div class="p-4">
                             <div class="flex justify-between items-start mb-2">
                                 <div>
-                                    <h3 class="font-bold text-lg text-gray-900">Bàn {{ $table->table_name }}</h3>
-                                    <p class="text-gray-600 text-sm">{{ $table->table_number }}</p>
+                                    <h3 class="font-bold text-lg text-gray-900">Bàn {{ $table->table_number }}</h3>
+                                    <p class="text-gray-600 text-sm">{{ $table->table_name }}</p>
                                 </div>
                                 <div class="text-right">
                                     <span
@@ -299,7 +297,20 @@
                                     @endif
                                 </div>
                             </div>
-
+                            <div class="mt-4 pt-3 border-t border-gray-100">
+                                <div class="flex space-x-2">
+                                    <form action="{{ route('admin.tables.destroy', $table->id) }}" method="POST"
+                                        onsubmit="return confirm('Bạn có chắc muốn xóa bàn này không?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition flex items-center justify-center">
+                                            <i class="fas fa-trash mr-1"></i>
+                                            Xóa Bàn
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 @endforeach
@@ -336,7 +347,7 @@
     </div>
 @endsection
 
-@section('scripts')
+{{-- @section('scripts')
     <script>
         // Biến toàn cục để theo dõi trạng thái modal
         let isModalOpen = false;
@@ -393,17 +404,6 @@
                     <span class="font-medium text-gray-800">${table.position || 'Không rõ'}</span>
                 </div>
 
-                <div class="mt-4 pt-3 border-t border-gray-100">
-                            <div class="flex space-x-2">
-                            <button type="button"
-                            class="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition flex items-center justify-center"
-                            onclick="confirmDelete({{ $table->id }})">
-                            <i class="fas fa-trash mr-1"></i> Ẩn Bàn
-                        </button>
-
-                    </div>
-                </div>
-
                 <div class="flex justify-between items-center py-2 border-b border-gray-100">
                     <span class="flex items-center text-gray-600">
                         <i class="fas fa-info-circle mr-3 text-orange-500"></i>
@@ -419,16 +419,16 @@
                     Đóng
                 </button>
                 ${table.status === 'available' ? `
-                            <button type="button" onclick="handleStartTable(${table.id})"
-                                class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium hover:bg-gray-700 transition">
-                                Bắt đầu
-                            </button>
-                            ` : table.status === 'in_use' ? `
-                            <button type="button" onclick="handleStopTable(${table.id})"
-                                class="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
-                                Kết thúc
-                            </button>
-                            ` : ''}
+                                            <button type="button" onclick="handleStartTable(${table.id})"
+                                                class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-medium hover:bg-gray-700 transition">
+                                                Bắt đầu
+                                            </button>
+                                            ` : table.status === 'in_use' ? `
+                                            <button type="button" onclick="handleStopTable(${table.id})"
+                                                class="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition">
+                                                Kết thúc
+                                            </button>
+                                            ` : ''}
             </div>
         </div>
     `;
@@ -581,8 +581,8 @@
             event?.stopPropagation();
 
             Swal.fire({
-                title: 'Xác nhận ẩn?',
-                text: "Bạn có chắc chắn muốn ẩn bàn này?",
+                title: 'Xác nhận xóa?',
+                text: "Bạn có chắc chắn muốn xóa bàn này?",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -602,7 +602,7 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                Swal.fire('Thành công!', 'Đã ẩn', 'success');
+                                Swal.fire('Thành công!', 'Đã xóa bàn', 'success');
                                 // Reload trang để cập nhật danh sách
                                 setTimeout(() => window.location.reload(), 1000);
                             } else {
@@ -631,7 +631,7 @@
             });
         });
     </script>
-@endsection
+@endsection --}}
 
 <style>
     .stat-card {
