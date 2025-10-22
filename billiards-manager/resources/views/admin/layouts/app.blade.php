@@ -168,10 +168,10 @@
                     <span class="font-medium">Sản phẩm</span>
                 </a>
 
-                <a href=""
+                <a href="{{ route('admin.roles.index') }}"
                     class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-cog w-6 mr-3"></i>
-                    <span class="font-medium">Cài đặt</span>
+                    <i class="fas fa-users-cog text-purple-400 w-6 mr-3"></i>
+                    <span class="font-medium">Vai Trò</span>
                 </a>
             </nav>
 

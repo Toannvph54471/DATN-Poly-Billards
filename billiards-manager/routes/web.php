@@ -31,6 +31,7 @@ Route::get('/', function () {
 
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/dashboard', [UserController::class, 'index'])->name('admin.dashboard');
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
@@ -69,4 +70,3 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
 });
-    
