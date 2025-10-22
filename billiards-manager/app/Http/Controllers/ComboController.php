@@ -95,4 +95,12 @@ class ComboController extends Controller
 
         return redirect()->route('admin.combos.index', request()->query())->with('success', 'Combo đã được xóa (soft delete).');
     }
+ public function trashed()
+{
+    $combos = Combo::onlyTrashed()->latest()->paginate(10);
+    return view('admin.combos.trashed', compact('combos'));
+}
+
+
+
 }

@@ -26,8 +26,13 @@
             @forelse($shifts as $shift)
                 <tr class="border-t hover:bg-gray-50">
                     <td class="p-3">{{ $shift->name }}</td>
-                    <td class="p-3">{{ $shift->start_time }}</td>
-                    <td class="p-3">{{ $shift->end_time }}</td>
+                  <td class="p-3">
+    {{ \Carbon\Carbon::parse($shift->start_time)->format('H:i') }}
+</td>
+<td class="p-3">
+    {{ \Carbon\Carbon::parse($shift->end_time)->format('H:i') }}
+</td>
+
                     <td class="p-3">
                         @php
                             $employeeNames = $shift->employees->map(function($emp){

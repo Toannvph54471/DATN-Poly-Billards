@@ -4,16 +4,25 @@
 
 @section('content')
     <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Quản Lý Combo Đặt Bàn</h1>
-            <p class="text-gray-600 mt-1">Danh sách combo và thông tin liên quan</p>
-        </div>
+     <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Quản Lý Combo Đặt Bàn</h1>
+        <p class="text-gray-600 mt-1">Danh sách combo và thông tin liên quan</p>
+    </div>
+
+    <div class="flex gap-2">
+        <a href="{{ route('admin.combos.trashed') }}"
+           class="inline-flex items-center justify-center px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200 font-medium shadow-sm">
+           <i class="fas fa-trash mr-2"></i> Thùng Rác
+        </a>
         <a href="{{ route('admin.combos.create') }}"
-            class="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 font-medium shadow-sm">
-            <i class="fas fa-plus mr-2"></i> Thêm Combo
+           class="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 font-medium shadow-sm">
+           <i class="fas fa-plus mr-2"></i> Thêm Combo
         </a>
     </div>
+</div>
+
+   
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

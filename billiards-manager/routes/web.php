@@ -31,50 +31,43 @@ Route::get('/', function () {
 
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
     Route::put('/users/{id}/update', [UserController::class, 'update'])->name('admin.users.update');
 
     // Employees
-    Route::get('/employees', [EmployeeController::class, 'index'])->name('admin.employees.index');
-    Route::get('/employees/create', [EmployeeController::class, 'create'])->name('admin.employees.create');
-    Route::post('/employees', [EmployeeController::class, 'store'])->name('admin.employees.store');
-    Route::get('/employees/{id}', [EmployeeController::class, 'show'])->name('admin.employees.show');
-    Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('admin.employees.edit');
-    Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('admin.employees.update');
-    Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('admin.employees.destroy');
-
-    // Combos
-    Route::get('/combos', [ComboController::class, 'index'])->name('admin.combos.index');
-    Route::get('/combos/create', [ComboController::class, 'create'])->name('admin.combos.create');
-    Route::post('/combos', [ComboController::class, 'store'])->name('admin.combos.store');
-    Route::get('/combos/{id}', [ComboController::class, 'show'])->name('admin.combos.show');
-    Route::get('/combos/{id}/edit', [ComboController::class, 'edit'])->name('admin.combos.edit');
-    Route::put('/combos/{id}', [ComboController::class, 'update'])->name('admin.combos.update');
-    Route::delete('/combos/{id}', [ComboController::class, 'destroy'])->name('admin.combos.destroy');
+    Route::resource('employees', EmployeeController::class)->names('admin.employees');
 
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
 
     // Tables
     Route::get('/tables', [TableController::class, 'index'])->name('admin.tables.index');
-    Route::delete('tables/{id}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
-    Route::get('tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
-    Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
-    Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
+    Route::delete('/tables/{id}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
+    Route::get('/tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
+    Route::post('/tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
+    Route::delete('/tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
 
-<<<<<<< HEAD
-    // Shifts (đặt trong nhóm admin + middleware)
+    // Products
+    Route::resource('products', ProductController::class)->names('admin.products');
+  Route::get('combos/trashed', [ComboController::class, 'trashed'])->name('admin.combos.trashed');
+    // ✅ Combos (soft delete + restore)
+    Route::resource('combos', ComboController::class)->names('admin.combos');
+  
+
+    Route::patch('combos/{id}/restore', [ComboController::class, 'restore'])->name('admin.combos.restore');
+    Route::delete('combos/{id}/force-delete', [ComboController::class, 'forceDelete'])->name('admin.combos.forceDelete');
+
+    // Shifts
     Route::resource('shifts', ShiftController::class)->names('admin.shifts');
 });
 
-// (Loại bỏ các định nghĩa route shifts trùng lặp bên ngoài middleware)
-=======
-    // Products
-    Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
-    Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
-    Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
-});
-    
->>>>>>> 3d896af493493a9c528e6e27ea914d192e48ca6c
+
+
+
+
+
+
+

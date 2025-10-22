@@ -9,10 +9,17 @@
     <script src="https://kit.fontawesome.com/abc123xyz.js" crossorigin="anonymous"></script>
     <!-- Font Awesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 
     {{-- CSRF --}}
 
     <head>
+        <!-- Flatpickr JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+@yield('scripts')
+
         <meta name="csrf-token" content="{{ csrf_token() }}">
     </head>
 
@@ -145,16 +152,16 @@
                     <span class="font-medium">Khách hàng</span>
                 </a>
 
-<<<<<<< HEAD
+
             <a href="{{ route('admin.shifts.index') }}"
     class="nav-item {{ request()->routeIs('admin.shifts.*') ? 'active' : '' }} flex items-center p-3">
     <i class="fa-solid fa-clock w-6 mr-3"></i>
     <span class="font-medium">Các ca làm</span>
 </a>
                 <a href="{{ route('admin.employees.index') }}" 
-=======
+
                 <a href="{{ route('admin.employees.index') }}"
->>>>>>> 3d896af493493a9c528e6e27ea914d192e48ca6c
+
                     class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }} flex items-center px-4 py-3 text-white hover:text-white">
                     <i class="fas fa-user-tie mr-3"></i>
                     Nhân viên
@@ -260,5 +267,5 @@
         document.documentElement.style.setProperty('--secondary', '#f59e0b');
     </script>
 </body>
-
+@yield('scripts')
 </html>
