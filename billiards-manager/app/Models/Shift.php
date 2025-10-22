@@ -2,40 +2,24 @@
 
 namespace App\Models;
 
-class Shift extends BaseModel
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Shift extends Model
 {
-    protected $fillable = [
-        'shift_code',
-        'name',
-        'start_time',
-        'end_time',
-        'description',
-        'color',
-        'created_by',
-        'updated_by'
-    ];
+    use HasFactory;
 
-    protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime'
-    ];
+    protected $fillable = ['name', 'start_time', 'end_time'];
 
-    // Relationships
     public function employeeShifts()
     {
         return $this->hasMany(EmployeeShift::class);
     }
 
-    // Methods
-    public function getDuration(): int
+    public function employees()
     {
-        return $this->start_time->diffInHours($this->end_time);
-    }
-
-    public function isCurrentShift(): bool
-    {
-        $now = now()->format('H:i:s');
-        return $now >= $this->start_time->format('H:i:s') && 
-               $now <= $this->end_time->format('H:i:s');
+        return $this->belongsToMany(Employee::class, 'employee_shifts')
+            ->withPivot('shift_date', 'status', 'note', 'actual_start_time', 'actual_end_time')
+            ->withTimestamps();
     }
 }
