@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('admin.layouts.app')
 
 @section('title', 'Chi tiết nhân viên - F&B Management')
 
@@ -64,7 +64,7 @@
 
         <!-- Employment Info Card -->
         <div class="bg-white rounded-xl shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Thông tin việc làm</h3>
+            <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">Thông tin công việc</h3>
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Chức vụ</label>
@@ -72,10 +72,10 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Loại lương</label>
-                    <p class="text-gray-900 font-medium">{{ $employee->salary_type == 'hourly' ? 'Theo giờ' : 'Lương cứng' }}</p>
+                    <p class="text-gray-900 font-medium">{{ $employee->salary_type == 'hourly' ? 'Part-time' : 'Lương cứng' }}</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Lương cơ bản</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mức lương</label>
                     <p class="text-gray-900 font-medium">{{ number_format($employee->salary_rate, 0, ',', '.') }} VND/giờ</p>
                 </div>
                 <div>
@@ -90,8 +90,8 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ $employee->status ? 'badge-success' : 'badge-danger' }}">
-                        {{ $employee->status ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
+                    <span class="px-2 py-1 text-xs font-medium rounded-full {{ $employee->status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                        {{ $employee->status === 'Active' ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
                     </span>
                 </div>
             </div>
@@ -122,7 +122,7 @@
                             {{ $shift->actual_end_time ? $shift->actual_end_time->format('H:i') : $shift->shift->end_time }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ $shift->status == 'Completed' ? 'badge-success' : ($shift->status == 'Absent' ? 'badge-danger' : 'badge-warning') }}">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ $shift->status == 'Completed' ? 'bg-green-100 text-green-800' : ($shift->status == 'Absent' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
                                 {{ $shift->status }}
                             </span>
                         </td>

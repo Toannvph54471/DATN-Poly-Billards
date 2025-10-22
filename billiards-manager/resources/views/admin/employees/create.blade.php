@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('admin.layouts.app')
 
 @section('title', 'Thêm nhân viên mới - F&B Management')
 
@@ -107,7 +107,7 @@
                 <div class="space-y-6">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">
-                            Thông tin việc làm
+                            Thông tin công việc
                         </h3>
 
                         <div class="space-y-4">
@@ -158,6 +158,8 @@
                                 @enderror
                             </div>
 
+                            <!-- Mức lương -->
+
                             <!-- Ngày bắt đầu -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -168,6 +170,40 @@
                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('start_date')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Ngày kết thúc -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Ngày kết thúc
+                                </label>
+                                <input type="date" name="end_date"
+                                       value="{{ old('end_date') }}"
+                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                              focus:ring-2 focus:ring-blue-500">
+                                @error('end_date')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Trạng thái -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Trạng thái *
+                                </label>
+                                <select name="status" required
+                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                               focus:ring-2 focus:ring-blue-500">
+                                    <option value="Active" {{ old('status', 'Active') === 'Active' ? 'selected' : '' }}>
+                                        Đang hoạt động
+                                    </option>
+                                    <option value="Inactive" {{ old('status') === 'Inactive' ? 'selected' : '' }}>
+                                        Ngừng hoạt động
+                                    </option>
+                                </select>
+                                @error('status')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
