@@ -11,7 +11,7 @@ class TableController extends Controller
     public function index(Request $request)
     {
         $query = Table::query();
-
+        $types = Table::select('type')->distinct()->pluck('type');
         if ($request->filled('search')) {
             $query->where('table_name', 'like', "%{$request->search}%")
                 ->orWhere('table_number', 'like', "%{$request->search}%");
@@ -29,6 +29,7 @@ class TableController extends Controller
 
         return view('admin.tables.index', [
             'tables' => $tables,
+            'types' => $types,
             'totalTables' => Table::count(),
             'inUseCount' => Table::where('status', 'in_use')->count(),
             'maintenanceCount' => Table::where('status', 'maintenance')->count(),
@@ -69,10 +70,17 @@ class TableController extends Controller
     // Xóa mềm
     public function destroy($id)
     {
-        $table = Table::findOrFail($id);
-        $table->delete(); // 
-        return redirect()->route('admin.tables.index')->with('success', 'Bàn đã được xóa mềm!');
+        $table = Table::find($id);
+
+        if (!$table) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy bàn'], 404);
+        }
+
+        $table->delete();
+
+        return response()->json(['success' => true]);
     }
+
 
     public function trashed()
     {
