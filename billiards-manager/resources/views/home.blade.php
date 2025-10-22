@@ -23,11 +23,6 @@
             <a href="#about" class="border-2 border-amber-600 text-amber-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-amber-600 hover:text-white transition transform hover:scale-105">
                 Tìm hiểu thêm
             </a>
-            @auth
-            <a href="{{ route('admin.shifts.index') }}" class="bg-gray-800 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-900 transition transform hover:scale-105 shadow-lg">
-                Các ca làm
-            </a>
-            @endauth
         </div>
     </div>
 </section>

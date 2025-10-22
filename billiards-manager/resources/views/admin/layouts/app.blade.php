@@ -139,11 +139,7 @@
                     <span class="font-medium">Khách hàng</span>
                 </a>
 
-            <a href="{{ route('admin.shifts.index') }}"
-    class="nav-item {{ request()->routeIs('admin.shifts.*') ? 'active' : '' }} flex items-center p-3">
-    <i class="fa-solid fa-clock w-6 mr-3"></i>
-    <span class="font-medium">Các ca làm</span>
-</a>
+
                 <a href="{{ route('admin.employees.index') }}" 
                     class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }} flex items-center px-4 py-3 text-white hover:text-white">
                     <i class="fas fa-user-tie mr-3"></i>
@@ -161,7 +157,6 @@
                     <i class="fas fa-chart-line w-6 mr-3"></i>
                     <span class="font-medium">Báo cáo</span>
                 </a>
-    
 
                 <a href=""
                     class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center p-3">

@@ -55,9 +55,4 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
     Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
     Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
-
-    // Shifts (đặt trong nhóm admin + middleware)
-    Route::resource('shifts', ShiftController::class)->names('admin.shifts');
 });
-
-// (Loại bỏ các định nghĩa route shifts trùng lặp bên ngoài middleware)
