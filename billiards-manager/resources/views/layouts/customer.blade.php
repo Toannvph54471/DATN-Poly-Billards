@@ -51,7 +51,7 @@
                             </button>
                             <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg hidden">
                                 @if (Auth::user()->isAdmin() || Auth::user()->isManager())
-                                    <a href="{{ route('admin.users.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-amber-50">Quản trị</a>
+                                    <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-amber-50">Quản trị</a>
                                 @endif
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf

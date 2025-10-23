@@ -1,4 +1,4 @@
-@extends('admin.layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Chỉnh sửa nhân viên - F&B Management')
 
@@ -108,7 +108,7 @@
                 <div class="space-y-6">
                     <div>
                         <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">
-                            Thông tin công việc
+                            Thông tin việc làm
                         </h3>
 
                         <div class="space-y-4">
@@ -159,12 +159,12 @@
                                 @enderror
                             </div>
 
-                            <!-- Mức lương -->
+                            <!-- Lương cơ bản -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Mức lương (VND/giờ) *
+                                    Lương cơ bản (VND/giờ) *
                                 </label>
-                                <input type="number" name="salary_rate" step="0.01"
+                                <input type="number" name="salary_rate"
                                        value="{{ old('salary_rate', $employee->salary_rate) }}" required
                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
@@ -179,7 +179,7 @@
                                     Ngày bắt đầu *
                                 </label>
                                 <input type="date" name="start_date"
-                                       value="{{ old('start_date', $employee->start_date ? $employee->start_date->format('Y-m-d') : '') }}" required
+                                       value="{{ old('start_date', $employee->start_date->format('Y-m-d')) }}" required
                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('start_date')
@@ -209,10 +209,10 @@
                                 <select name="status" required
                                         class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                                focus:ring-2 focus:ring-blue-500">
-                                    <option value="Active" {{ old('status', $employee->status) === 'Active' ? 'selected' : '' }}>
+                                    <option value="0" {{ old('status', $employee->status) == 0 ? 'selected' : '' }}>
                                         Đang hoạt động
                                     </option>
-                                    <option value="Inactive" {{ old('status', $employee->status) === 'Inactive' ? 'selected' : '' }}>
+                                    <option value="1" {{ old('status', $employee->status) == 1 ? 'selected' : '' }}>
                                         Ngừng hoạt động
                                     </option>
                                 </select>

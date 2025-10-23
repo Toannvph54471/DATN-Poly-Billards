@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
@@ -25,19 +26,22 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 
+// Authentication Routes (Laravel 12 sử dụng Laravel Breeze/Fortify)
 Route::get('/', function () {
     return view('home');
 });
 
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
-    // Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
     Route::put('/users/{id}/update', [UserController::class, 'update'])->name('admin.users.update');
 
-    // Employees
+    //Employees
     Route::get('/employees', [EmployeeController::class, 'index'])->name('admin.employees.index');
     Route::get('/employees/create', [EmployeeController::class, 'create'])->name('admin.employees.create');
     Route::post('/employees', [EmployeeController::class, 'store'])->name('admin.employees.store');
@@ -45,15 +49,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/employees/{id}/edit', [EmployeeController::class, 'edit'])->name('admin.employees.edit');
     Route::put('/employees/{id}', [EmployeeController::class, 'update'])->name('admin.employees.update');
     Route::delete('/employees/{id}', [EmployeeController::class, 'destroy'])->name('admin.employees.destroy');
-
-    // Combos
-    Route::get('/combos', [ComboController::class, 'index'])->name('admin.combos.index');
-    Route::get('/combos/create', [ComboController::class, 'create'])->name('admin.combos.create');
-    Route::post('/combos', [ComboController::class, 'store'])->name('admin.combos.store');
-    Route::get('/combos/{id}', [ComboController::class, 'show'])->name('admin.combos.show');
-    Route::get('/combos/{id}/edit', [ComboController::class, 'edit'])->name('admin.combos.edit');
-    Route::put('/combos/{id}', [ComboController::class, 'update'])->name('admin.combos.update');
-    Route::delete('/combos/{id}', [ComboController::class, 'destroy'])->name('admin.combos.destroy');
+    
 
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');

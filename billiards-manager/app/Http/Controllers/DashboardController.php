@@ -15,10 +15,6 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $totalTable = Table::query();
-
-        return view('dashboard', [
-
-        ]);
+        return view('admin.dashboard');
     }
 }
