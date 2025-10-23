@@ -25,7 +25,7 @@
 
     <!-- Product Form -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <form action="" method="POST" enctype="multipart/form-data">
+        <form action="{{ route("admin.products.store") }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <!-- Basic Information Section -->
@@ -247,7 +247,7 @@
 
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Image Upload -->
+                    {{-- <!-- Image Upload -->
                     <div>
                         <label for="image" class="block text-sm font-medium text-gray-700 mb-2">
                             Hình ảnh sản phẩm
@@ -275,7 +275,7 @@
                         @error('image')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
-                    </div>
+                    </div> --}}
 
                     <!-- Description -->
                     <div>
