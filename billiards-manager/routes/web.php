@@ -31,6 +31,7 @@ Route::get('/', function () {
 
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
@@ -59,6 +60,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // Tables
     Route::get('/tables', [TableController::class, 'index'])->name('admin.tables.index');
+    Route::get('tables/create', [TableController::class, 'create'])->name('admin.tables.create');
+    Route::post('/tables', [TableController::class, 'store'])->name('admin.tables.store');
     Route::delete('tables/{id}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
     Route::get('tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
     Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
@@ -67,6 +70,13 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
+    Route::post('/products', [ProductController::class, 'store'])->name('admin.products.store');
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
+    Route::put('/products/{id}', [ProductController::class, 'update'])->name('admin.products.update');
+    Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('admin.products.destroy');
+    Route::get('/products/trashed', [ProductController::class, 'trashed'])->name('admin.products.trashed');
+    Route::post('/products/{id}/restore', [ProductController::class, 'restore'])->name('admin.products.restore');
+    Route::delete('/products/{id}/force-delete', [ProductController::class, 'forceDelete'])->name('admin.products.forceDelete');
+    
 });
     

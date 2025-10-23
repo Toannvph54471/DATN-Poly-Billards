@@ -14,6 +14,10 @@
                 class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Thêm sản phẩm
+            </a></br>
+            <a href="{{ route('admin.products.trashed') }}" 
+                class="bg-red-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition">
+                <i class="fas fa-trash-restore mr-1"></i> Sản phẩm đã xóa
             </a>
         </div>
     </div>
@@ -233,16 +237,16 @@
                                         class="text-blue-600 hover:text-blue-900 transition" title="Chỉnh sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    {{-- <button type="button" class="text-red-600 hover:text-red-900 transition"
-                                        title="Xóa" onclick="confirmDelete({{ $product->id }})">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                    <form id="delete-form-{{ $product->id }}" 
-                                          action="{{ route('admin.products.destroy', $product->id) }}" 
-                                          method="POST" class="hidden">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form> --}}
+                                <button type="button" class="text-red-600 hover:text-red-900 transition"
+                                    title="Xóa" onclick="confirmDelete({{ $product->id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <form id="delete-form-{{ $product->id }}" 
+                                        action="{{ route('admin.products.destroy', $product->id) }}" 
+                                        method="POST" class="hidden">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
                                 </div>
                             </td>
                         </tr>
