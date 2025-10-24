@@ -9,13 +9,6 @@
             <h1 class="text-2xl font-bold text-gray-800">Quản lý người dùng</h1>
             <p class="text-gray-600">Quản lý thông tin và phân quyền người dùng hệ thống</p>
         </div>
-        <div>
-            <a href="{{ route('admin.roles.index') }}"
-                class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
-                <i class="fas fa-plus mr-2"></i>
-                Vai trò
-            </a>
-        </div>
     </div>
 
     <!-- Stats -->
