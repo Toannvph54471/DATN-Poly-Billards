@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -157,21 +158,21 @@
                     <span class="font-medium">Hóa đơn</span>
                 </a>
 
-               <a href="{{ route('admin.combos.index') }}"
-                class="nav-item {{ request()->routeIs('combos.*') ? 'active' : '' }} flex items-center p-3">
-                <i class="fas fa-layer-group w-6 mr-3"></i>
-                <span class="font-medium">Combos Bàn</span>
-                    </a>              
+                <a href="{{ route('admin.combos.index') }}"
+                    class="nav-item {{ request()->routeIs('combos.*') ? 'active' : '' }} flex items-center p-3">
+                    <i class="fas fa-layer-group w-6 mr-3"></i>
+                    <span class="font-medium">Combos Bàn</span>
+                </a>
                 <a href="{{ route('admin.products.index') }}"
                     class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-cubes text-white text-lg w-6 mr-3"></i>
                     <span class="font-medium">Sản phẩm</span>
                 </a>
 
-                <a href=""
+                <a href="{{ route('admin.roles.index') }}"
                     class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-cog w-6 mr-3"></i>
-                    <span class="font-medium">Cài đặt</span>
+                    <i class="fas fa-user-tag mr-3 w-5 text-center text-white"></i>
+                    <span class="font-medium">Vai Trò</span>
                 </a>
             </nav>
 
