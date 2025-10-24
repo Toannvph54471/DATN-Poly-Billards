@@ -67,6 +67,7 @@ class ProductController extends Controller
   
     public function create()
     {
+    
         return view('admin.products.created');
     }
     
@@ -88,10 +89,36 @@ class ProductController extends Controller
     }
 
     
-    public function update(Request $request, string $id)
-    {
-        
-    }
+   public function update(Request $request, $id)
+{
+    $product = Product::findOrFail($id);
+
+    // ✅ Xác thực dữ liệu đầu vào
+    $validated = $request->validate([
+        'product_code'   => 'required|string|max:255|unique:products,product_code,' . $id,
+        'name'           => 'required|string|max:255',
+        'category'       => 'required|string',
+        'product_type'   => 'nullable|string',
+        'price'          => 'required|numeric|min:0',
+        'cost_price'     => 'nullable|numeric|min:0',
+        'stock_quantity' => 'nullable|integer|min:0',
+        'min_stock'      => 'nullable|integer|min:0',
+        'unit'           => 'required|string|max:50',
+        'is_available'   => 'required|in:0,1',
+        'description'    => 'nullable|string',
+       
+    ]);
+
+    
+
+    // ✅ Cập nhật sản phẩm
+    $product->update($validated);
+
+    // ✅ Quay lại danh sách sản phẩm
+    return redirect()
+        ->route('admin.products.index')
+        ->with('success', 'Sản phẩm đã được cập nhật thành công.');
+}
 
     
     public function destroy(string $id)

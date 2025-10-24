@@ -142,41 +142,7 @@
                         data-table-id="{{ $table->id }}" onclick="showTableDetail({{ $table->id }})">
                         <!-- Table Header -->
                         <div class="relative">
-                            <!-- Table Status Badge -->
-                            <div class="absolute top-3 left-3">
-                                @if ($table->status == 'available')
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                                        <i class="fas fa-circle mr-1" style="font-size:6px;"></i> Trống
-                                    </span>
-                                @elseif($table->status == 'in_use')
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                                        <i class="fas fa-circle mr-1" style="font-size:6px;"></i> Đang sử dụng
-                                    </span>
-                                @else
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
-                                        <i class="fas fa-circle mr-1" style="font-size:6px;"></i> Bảo trì
-                                    </span>
-                                @endif
-                            </div>
-
-                            <!-- Table Actions -->
-                            <div class="absolute top-3 right-3 flex space-x-1">
-                                <button type="button" onclick="event.stopPropagation(); editTable({{ $table->id }})"
-                                    class="w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center hover:bg-blue-100 transition"
-                                    title="Chỉnh sửa">
-                                    <i class="fas fa-edit text-blue-600 text-sm"></i>
-                                </button>
-                                <button type="button"
-                                    onclick="event.stopPropagation(); confirmDelete({{ $table->id }})"
-                                    class="w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center hover:bg-red-100 transition"
-                                    title="Xóa">
-                                    <i class="fas fa-trash text-red-600 text-sm"></i>
-                                </button>
-                            </div>
-
+                            
                             <!-- Billiard Table Visualization -->
                             <div
                                 class="billiard-table relative h-32 border-4 border-amber-900 rounded-lg mx-4 mt-4 mb-2 overflow-hidden 
@@ -298,7 +264,25 @@
                                     @endif
                                 </div>
                             </div>
-
+                            <div class="mt-4 pt-3 border-t border-gray-100">
+                                <div class="flex space-x-2">
+                                     <a href="{{ route('admin.tables.edit', $table->id) }}"
+                                            class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center justify-center">
+                                           <i class="fas fa-edit mr-1"></i>
+                                          Chỉnh sửa
+                                     </a>
+                                    <form action="{{ route('admin.tables.destroy', $table->id) }}" method="POST"
+                                        onsubmit="return confirm('Bạn có chắc muốn xóa bàn này không?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition flex items-center justify-center">
+                                            <i class="fas fa-trash mr-1"></i>
+                                            Xóa Bàn
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 @endforeach
