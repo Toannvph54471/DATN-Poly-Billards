@@ -123,6 +123,41 @@ class ProductController extends Controller
     
     public function destroy(string $id)
     {
-        
+              $product = Product::findOrFail($id);
+    $product->delete(); // xóa mềm (chỉ set deleted_at)
+
+    return redirect()->route('admin.products.index')->with('success', 'Sản phẩm đã được xóa tạm thời!');
     }
+    public function trashed()
+{
+    $products = Product::onlyTrashed()->paginate(10);
+    return view('admin.products.trashed', compact('products'));
 }
+   public function restore($id)
+{
+    // Tìm sản phẩm đã bị xóa mềm (có deleted_at)
+    $product = Product::withTrashed()->find($id);
+
+    if (!$product) {
+        return redirect()->back()->with('error', 'Sản phẩm không tồn tại hoặc chưa bị xóa.');
+    }
+
+    // Khôi phục sản phẩm
+    $product->restore();
+
+    return redirect()->route('admin.products.trashed')->with('success', 'Sản phẩm đã được khôi phục thành công!');
+}
+public function forceDelete($id)
+
+{
+    $product = Product::onlyTrashed()->findOrFail($id);
+    $product->forceDelete();
+    // Xóa các bản ghi con liên quan trước
+    \DB::table('combo_items')->where('product_id', $product->id)->delete();
+
+    return redirect()->route('admin.products.deleted')
+                     ->with('success', 'Đã xóa vĩnh viễn sản phẩm thành công!');
+}
+
+    }
+
