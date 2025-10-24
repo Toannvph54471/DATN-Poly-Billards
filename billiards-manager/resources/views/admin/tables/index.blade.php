@@ -10,11 +10,10 @@
             <p class="text-gray-600">Danh sách các bàn billiards trong hệ thống</p>
         </div>
         <div>
-            <button type="button" onclick="showAddTableForm()"
+            <a href="{{ route('admin.tables.create') }}"
                 class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
-                <i class="fas fa-plus mr-2"></i>
-                Thêm bàn mới
-            </button>
+                <i class="fas fa-plus mr-2"></i> Thêm bàn mới
+            </a>
             <a href="{{ route('admin.tables.trashed') }}"
                 class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                 <i class="fas fa-plus mr-2"></i>

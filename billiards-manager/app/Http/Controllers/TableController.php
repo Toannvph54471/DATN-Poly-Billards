@@ -36,6 +36,34 @@ class TableController extends Controller
             'availableCount' => Table::where('status', 'available')->count(),
         ]);
     }
+     public function create()
+    {
+        
+        return view('admin.tables.create');
+    }
+    public function store(Request $request)
+{
+    $request->validate([
+        'table_number' => 'required|unique:tables,table_number|max:10',
+        'table_name' => 'required|max:255|unique:tables,table_name',
+        'type' => 'required|in:standard,vip,competition',
+        'hourly_rate' => 'required|numeric|min:0',
+    ], [
+        'table_number.unique' => 'Mã bàn đã tồn tại.',
+        'table_name.unique' => 'Tên bàn đã tồn tại trong hệ thống.',
+    ]);
+
+    Table::create([
+        'table_number' => $request->table_number,
+        'table_name' => $request->table_name,
+        'type' => $request->type,
+        'status' => Table::STATUS_AVAILABLE,
+        'hourly_rate' => $request->hourly_rate,
+    ]);
+
+    return redirect()->route('admin.tables.create')->with('success', 'Thêm bàn mới thành công!');
+}
+
     // Xóa mềm
     public function destroy($id)
     {
