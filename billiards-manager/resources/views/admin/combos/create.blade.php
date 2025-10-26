@@ -206,65 +206,65 @@
                             <i class="fas fa-cubes text-purple-600 mr-3"></i>
                             Sản phẩm trong combo
                         </h2>
-                        <p class="text-gray-600 text-sm mt-1">Chọn tối đa 5 sản phẩm cho combo</p>
+                        <p class="text-gray-600 text-sm mt-1">Chọn tối đa 10 sản phẩm cho combo</p>
                     </div>
                     <div class="p-6">
-                        <div class="space-y-4">
-                            @for ($i = 0; $i < 5; $i++)
-                                <div
-                                    class="border-2 border-dashed border-gray-200 rounded-xl p-5 hover:border-purple-300 transition-all duration-200 {{ $i === 0 ? 'bg-orange-50 border-orange-200' : '' }}">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <h3 class="font-semibold text-gray-900 flex items-center">
-                                            <span
-                                                class="w-6 h-6 bg-{{ $i === 0 ? 'orange' : 'purple' }}-500 text-white rounded-full text-sm flex items-center justify-center mr-3">
-                                                {{ $i + 1 }}
-                                            </span>
-                                            Sản phẩm {{ $i + 1 }}
-                                            @if ($i === 0)
-                                                <span
-                                                    class="ml-2 bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">BẮT
-                                                    BUỘC</span>
-                                            @endif
-                                        </h3>
-                                        @if ($i > 0)
-                                            <span class="text-gray-400 text-sm">Tùy chọn</span>
-                                        @endif
-                                    </div>
+                        <div id="combo-products-container" class="space-y-4">
+                            <!-- Sản phẩm bắt buộc đầu tiên -->
+                            <div class="border-2 border-orange-200 rounded-xl p-5 bg-orange-50">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="font-semibold text-gray-900 flex items-center">
+                                        <span
+                                            class="w-6 h-6 bg-orange-500 text-white rounded-full text-sm flex items-center justify-center mr-3">
+                                            1
+                                        </span>
+                                        Sản phẩm 1
+                                        <span class="ml-2 bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">BẮT
+                                            BUỘC</span>
+                                    </h3>
+                                </div>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Chọn sản
-                                                phẩm</label>
-                                            <select name="combo_items[{{ $i }}][product_id]"
-                                                class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200 {{ $i === 0 ? 'required' : '' }}"
-                                                {{ $i === 0 ? 'required' : '' }}>
-                                                <option value="">-- Chọn sản phẩm --</option>
-                                                @foreach ($products as $product)
-                                                    <option value="{{ $product->id }}"
-                                                        {{ old("combo_items.$i.product_id") == $product->id ? 'selected' : '' }}
-                                                        class="py-2">
-                                                        {{ $product->name }} -
-                                                        {{ number_format($product->price, 0, ',', '.') }}₫
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng</label>
-                                            <div class="relative">
-                                                <input type="number" name="combo_items[{{ $i }}][quantity]"
-                                                    value="{{ old("combo_items.$i.quantity", 1) }}" min="1"
-                                                    class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200"
-                                                    {{ $i === 0 ? 'required' : '' }}>
-                                                <span
-                                                    class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                                    <i class="fas fa-cube"></i>
-                                                </span>
-                                            </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Chọn sản phẩm</label>
+                                        <select name="combo_items[0][product_id]"
+                                            class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200 required"
+                                            required>
+                                            <option value="">-- Chọn sản phẩm --</option>
+                                            @foreach ($products as $product)
+                                                <option value="{{ $product->id }}"
+                                                    {{ old('combo_items.0.product_id') == $product->id ? 'selected' : '' }}
+                                                    class="py-2">
+                                                    {{ $product->name }} -
+                                                    {{ number_format($product->price, 0, ',', '.') }}₫
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng</label>
+                                        <div class="relative">
+                                            <input type="number" name="combo_items[0][quantity]"
+                                                value="{{ old('combo_items.0.quantity', 1) }}" min="1"
+                                                class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200"
+                                                required>
+                                            <span
+                                                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                                <i class="fas fa-cube"></i>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-                            @endfor
+                            </div>
+                            <!-- Kết thúc sản phẩm bắt buộc -->
+                        </div>
+
+                        <!-- Nút thêm sản phẩm -->
+                        <div class="mt-6 flex justify-center">
+                            <button type="button" id="add-product-btn"
+                                class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md">
+                                <i class="fas fa-plus mr-2"></i> Thêm sản phẩm
+                            </button>
                         </div>
 
                         <!-- Info Box -->
@@ -350,7 +350,8 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-900">Combo chất lượng</p>
-                                    <p class="text-xs text-gray-600 mt-1">Chọn sản phẩm phù hợp với nhu cầu khách hàng</p>
+                                    <p class="text-xs text-gray-600 mt-1">Chọn sản phẩm phù hợp với nhu cầu khách hàng
+                                    </p>
                                 </div>
                             </div>
                             <div class="flex items-start">
@@ -380,3 +381,103 @@
         </div>
     </form>
 @endsection
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('combo-products-container');
+        const addButton = document.getElementById('add-product-btn');
+        let productCount = 1; // Bắt đầu từ 1 vì đã có sản phẩm bắt buộc
+
+        // Tối đa 10 sản phẩm
+        const maxProducts = 10;
+
+        addButton.addEventListener('click', function() {
+            if (productCount >= maxProducts) {
+                alert('Bạn chỉ có thể thêm tối đa ' + maxProducts + ' sản phẩm');
+                return;
+            }
+
+            productCount++;
+
+            const newProduct = document.createElement('div');
+            newProduct.className =
+                'border-2 border-dashed border-gray-200 rounded-xl p-5 hover:border-purple-300 transition-all duration-200';
+            newProduct.innerHTML = `
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-gray-900 flex items-center">
+                    <span class="w-6 h-6 bg-purple-500 text-white rounded-full text-sm flex items-center justify-center mr-3">
+                        ${productCount}
+                    </span>
+                    Sản phẩm ${productCount}
+                </h3>
+                <div class="flex items-center space-x-2">
+                    <span class="text-gray-400 text-sm">Tùy chọn</span>
+                    <button type="button" class="remove-product-btn text-red-500 hover:text-red-700 transition-colors duration-200">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Chọn sản phẩm</label>
+                    <select name="combo_items[${productCount-1}][product_id]" 
+                            class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200">
+                        <option value="">-- Chọn sản phẩm --</option>
+                        @foreach ($products as $product)
+                            <option value="{{ $product->id }}" class="py-2">
+                                {{ $product->name }} - {{ number_format($product->price, 0, ',', '.') }}₫
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng</label>
+                    <div class="relative">
+                        <input type="number" name="combo_items[${productCount-1}][quantity]" value="1" min="1" 
+                               class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200">
+                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fas fa-cube"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+            container.appendChild(newProduct);
+
+            // Thêm sự kiện cho nút xóa
+            const removeBtn = newProduct.querySelector('.remove-product-btn');
+            removeBtn.addEventListener('click', function() {
+                container.removeChild(newProduct);
+                productCount--;
+                updateProductNumbers();
+            });
+        });
+
+        // Hàm cập nhật số thứ tự sản phẩm
+        function updateProductNumbers() {
+            const products = container.querySelectorAll('.border-2');
+            products.forEach((product, index) => {
+                const numberSpan = product.querySelector('span.w-6');
+                const title = product.querySelector('h3');
+
+                if (numberSpan && title) {
+                    const newNumber = index + 1;
+                    numberSpan.textContent = newNumber;
+                    title.querySelector('span:last-child').textContent = `Sản phẩm ${newNumber}`;
+
+                    // Cập nhật name attribute cho select và input
+                    const select = product.querySelector('select');
+                    const input = product.querySelector('input[type="number"]');
+
+                    if (select) {
+                        select.name = `combo_items[${index}][product_id]`;
+                    }
+                    if (input) {
+                        input.name = `combo_items[${index}][quantity]`;
+                    }
+                }
+            });
+        }
+    });
+</script>
