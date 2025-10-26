@@ -85,7 +85,16 @@ class ProductController extends Controller
    
     public function show(string $id)
     {
+        $product = Product::findOrFail($id);
         
+        // Lấy sản phẩm liên quan (cùng danh mục)
+        $relatedProducts = Product::where('category', $product->category)
+            ->where('id', '!=', $product->id)
+            ->where('status', 'Active')
+            ->limit(3)
+            ->get();
+
+        return view('admin.products.product-detail', compact('product', 'relatedProducts'));
     }
 
     

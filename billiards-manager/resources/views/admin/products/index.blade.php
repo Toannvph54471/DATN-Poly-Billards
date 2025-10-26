@@ -233,6 +233,12 @@
                             </td>
                             <td class="py-4 px-6">
                                 <div class="flex items-center space-x-2">
+                                   <!-- Nút Xem chi tiết -->
+                               <a href="{{ route('admin.products.show', $product->id) }}"
+                                  class="text-green-600 hover:text-green-900 transition" title="Xem chi tiết">
+                                 <i class="fas fa-eye"></i>
+                               </a>
+
                                     <a href="{{ route('admin.products.edit', $product->id) }}"
                                         class="text-blue-600 hover:text-blue-900 transition" title="Chỉnh sửa">
                                         <i class="fas fa-edit"></i>
