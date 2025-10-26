@@ -1,5 +1,4 @@
 <?php
-
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
@@ -54,21 +53,35 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos/{id}/edit', [ComboController::class, 'edit'])->name('admin.combos.edit');
     Route::put('/combos/{id}', [ComboController::class, 'update'])->name('admin.combos.update');
     Route::delete('/combos/{id}', [ComboController::class, 'destroy'])->name('admin.combos.destroy');
-
+    
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
 
     // Tables
     Route::get('/tables', [TableController::class, 'index'])->name('admin.tables.index');
-    Route::delete('tables/{id}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
-    Route::get('tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
-    Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
-    Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
+    Route::delete('/tables/{id}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
+    Route::get('/tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
+    Route::post('/tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
+    Route::delete('/tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
+    Route::get('/tables/{id}/edit', [TableController::class, 'edit'])->name('admin.tables.edit');
+    Route::put('/tables/{id}', [TableController::class, 'update'])->name('admin.tables.update');
+   
+    // Route::delete('tables/{id}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
+    // Route::get('tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
+    // Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
+    // Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
 
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
+    Route::post('/products', [ProductController::class, 'store'])->name('admin.products.store');
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
     Route::get('/{id}', [ProductController::class, 'show'])->name('admin.products.show');
+    Route::put('/products/{id}', [ProductController::class, 'update'])->name('admin.products.update');
+    Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('admin.products.destroy');
+    Route::get('/products/trashed', [ProductController::class, 'trashed'])->name('admin.products.trashed');
+    Route::post('/products/{id}/restore', [ProductController::class, 'restore'])->name('admin.products.restore');
+    Route::delete('/products/{id}/force-delete', [ProductController::class, 'forceDelete'])->name('admin.products.forceDelete');
+    
 });
     

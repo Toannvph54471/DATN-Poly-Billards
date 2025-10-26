@@ -30,7 +30,7 @@
 
     <!-- Product Form -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <form action="" method="POST" enctype="multipart/form-data">
+        <form action="{{route('admin.products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
             
@@ -95,22 +95,28 @@
 
                     <!-- Type -->
                     <div>
-                        <label for="type" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label for="product_type" class="block text-sm font-medium text-gray-700 mb-2">
                             Loại sản phẩm
                         </label>
-                        <select name="type" id="type"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            <option value="">{{ $product->type }}</option>
-                            <option value="Thức uống" {{ old('type', $product->type) == 'Thức uống' ? 'selected' : '' }}>Thức uống</option>
-                            <option value="Đồ ăn nhanh" {{ old('type', $product->type) == 'Đồ ăn nhanh' ? 'selected' : '' }}>Đồ ăn nhanh</option>
-                            <option value="Món nướng" {{ old('type', $product->type) == 'Món nướng' ? 'selected' : '' }}>Món nướng</option>
-                            <option value="Món luộc" {{ old('type', $product->type) == 'Món luộc' ? 'selected' : '' }}>Món luộc</option>
-                            <option value="Món xào" {{ old('type', $product->type) == 'Món xào' ? 'selected' : '' }}>Món xào</option>
-                            <option value="Món hấp" {{ old('type', $product->type) == 'Món hấp' ? 'selected' : '' }}>Món hấp</option>
-                        </select>
-                        @error('type')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+@php
+    $listType = config('constants.product.types', []);
+@endphp
+
+<select name="product_type" id="product_type"
+    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+    <option value="">-- Chọn loại sản phẩm --</option>
+
+    @foreach ($listType as $type)
+        <option value="{{ $type }}" {{ old('product_type', $product->product_type) == $type ? 'selected' : '' }}>
+            {{ $type }}
+        </option>
+    @endforeach
+</select>
+
+@error('product_type')
+    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+@enderror
+
                     </div>
                 </div>
             </div>
@@ -284,33 +290,7 @@
                         </div>
                         @endif
 
-                        <!-- Image Upload Area -->
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-                            <div class="space-y-1 text-center">
-                                <div class="flex flex-col items-center justify-center">
-                                    <i class="fas fa-cloud-upload-alt text-gray-400 text-3xl mb-3"></i>
-                                    <div class="flex text-sm text-gray-600">
-                                        <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                                            <span>Tải ảnh lên</span>
-                                            <input id="image" name="image" type="file" class="sr-only" accept="image/*">
-                                        </label>
-                                        <p class="pl-1">hoặc kéo thả</p>
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        PNG, JPG, GIF tối đa 10MB
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="image-preview" class="mt-3 hidden">
-                            <p class="text-sm text-gray-600 mb-2">Ảnh xem trước:</p>
-                            <img id="preview" class="max-w-full h-48 rounded-lg shadow-sm object-cover">
-                        </div>
-                        @error('image')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
+                        
                     <!-- Description -->
                     <div>
                         <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
