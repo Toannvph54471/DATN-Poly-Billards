@@ -49,6 +49,11 @@ class Product extends Model
         return $this->hasMany(ComboItem::class);
     }
 
+        public function promotions()
+    {
+        return $this->belongsToMany(Promotion::class, 'promotion_products');
+    }
+    
     // 🔍 Scopes
 
 

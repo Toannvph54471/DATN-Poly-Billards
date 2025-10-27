@@ -62,6 +62,11 @@ class Bill extends BaseModel
     {
         return $this->belongsTo(Employee::class);
     }
+    
+    public function comboTimeUsages()
+{
+    return $this->hasMany(ComboTimeUsage::class);
+}
 
     public function billDetails()
     {

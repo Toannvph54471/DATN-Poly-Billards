@@ -27,6 +27,16 @@ class Combo extends BaseModel
     {
         return $this->hasMany(ComboItem::class);
     }
+    
+        public function promotions()
+    {
+        return $this->belongsToMany(Promotion::class, 'promotion_combo');
+    }
+
+     public function timeUsages()
+    {
+        return $this->hasMany(ComboTimeUsage::class);
+    }
 
     public function billDetails()
     {
