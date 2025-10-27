@@ -69,5 +69,16 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
+
+    // Shift
+    Route::get('/shifts', [ShiftController::class, 'index'])->name('admin.shifts.index');
+    Route::get('/shifts/create', [ShiftController::class, 'create'])->name('admin.shifts.create');
+    Route::post('/shifts/store', [ShiftController::class, 'store'])->name('admin.shifts.store');
+    Route::get('/shifts/{id}/edit', [ShiftController::class, 'edit'])->name('admin.shifts.edit');
+    Route::put('/shifts/{id}/update', [ShiftController::class, 'update'])->name('admin.shifts.update');
+
+    Route::get('/shiftE', [ShiftController::class, 'shiftEmployee'])->name('admin.shiftEmployee.index');
+    Route::post('/shiftE/schedule', [ShiftController::class, 'scheduleShifts'])->name('admin.shiftEmployee.schedule');
+    Route::post('/shiftE/save-weekly', [ShiftController::class, 'saveWeeklySchedule'])->name('admin.shiftEmployee.saveWeekly');
+    Route::post('/shiftE/bulk-schedule', [ShiftController::class, 'bulkScheduleShifts'])->name('admin.shiftEmployee.bulkSchedule');
 });
-    
