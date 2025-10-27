@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tables', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->integer('max_players')->default(4);
-            $table->string('status')->default('empty');
-            $table->timestamps();
-        });
+        Schema::create('promotion_combo', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('promotion_id')->constrained('promotions')->onDelete('cascade');
+    $table->foreignId('combo_id')->constrained('combos')->onDelete('cascade');
+    $table->timestamps();
+});
+
     }
 
     /**
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tables');
+        Schema::dropIfExists('promotion_combo');
     }
 };
