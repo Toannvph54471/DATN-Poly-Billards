@@ -37,7 +37,7 @@ class EmployeeShift extends BaseModel
 
     public function shift()
     {
-        return $this->belongsTo(Shift::class);
+        return $this->belongsTo(Shift::class, 'shift_id');
     }
 
     public function attendances()
@@ -68,7 +68,7 @@ class EmployeeShift extends BaseModel
     public function checkOut(): bool
     {
         $actualHours = $this->check_in ? $this->check_in->diffInHours(now()) : 0;
-        
+
         return $this->update([
             'check_out' => now(),
             'actual_hours' => $actualHours,
