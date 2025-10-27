@@ -100,6 +100,24 @@ class ComboController extends Controller
     $combos = Combo::onlyTrashed()->latest()->paginate(10);
     return view('admin.combos.trashed', compact('combos'));
 }
+    public function restore($id)
+{
+    $combo = Combo::withTrashed()->findOrFail($id);
+    $combo->restore();
+
+    return redirect()->route('admin.combos.trashed')->with('success', 'Khôi phục combo thành công!');
+}
+public function forceDelete($id)
+{
+    $combo = Combo::withTrashed()->findOrFail($id);
+
+    // Xóa các combo_items trước
+    $combo->comboItems()->delete(); // nếu có quan hệ comboItems()
+
+    $combo->forceDelete();
+
+    return redirect()->route('admin.combos.trashed')->with('success', 'Combo và các mục liên quan đã bị xóa vĩnh viễn!');
+}
 
 
 

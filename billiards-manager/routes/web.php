@@ -62,6 +62,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // Shifts
     Route::resource('shifts', ShiftController::class)->names('admin.shifts');
+    Route::get('/admin/combos/trashed', [ComboController::class, 'trashed'])->name('admin.combos.trashed');
+Route::get('/admin/combos/restore/{id}', [ComboController::class, 'restore'])->name('admin.combos.restore');
+Route::get('/admin/combos/force-delete/{id}', [ComboController::class, 'forceDelete'])->name('admin.combos.forceDelete');
+
 });
 
 
