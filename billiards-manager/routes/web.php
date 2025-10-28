@@ -91,5 +91,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/shiftE/save-weekly', [ShiftController::class, 'saveWeeklySchedule'])->name('admin.shiftEmployee.saveWeekly');
     Route::post('/shiftE/bulk-schedule', [ShiftController::class, 'bulkScheduleShifts'])->name('admin.shiftEmployee.bulkSchedule');
 
-    
+    Route::prefix('admin/combos')->name('admin.combos.')->group(function () {
+    Route::get('/trash', [ComboController::class, 'trash'])->name('trash');
+    Route::post('/restore/{id}', [ComboController::class, 'restore'])->name('restore');
+    Route::delete('/force-delete/{id}', [ComboController::class, 'forceDelete'])->name('forceDelete');
+});
+
 });
