@@ -13,7 +13,9 @@ return new class extends Migration
     {
        Schema::create('combo_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('combo_id')->constrained('combos');
+            $table->foreignId('combo_id')
+        ->constrained('combos')
+        ->onDelete('cascade'); // Xóa combo thì xóa combo_items 
             $table->foreignId('product_id')
             ->constrained('products')
              ->onDelete('cascade'); // ✅ Xóa product thì tự động gỡ khỏi combo_item

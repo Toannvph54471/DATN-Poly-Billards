@@ -55,6 +55,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos/{id}/edit', [ComboController::class, 'edit'])->name('admin.combos.edit');
     Route::put('/combos/{id}', [ComboController::class, 'update'])->name('admin.combos.update');
     Route::delete('/combos/{id}', [ComboController::class, 'destroy'])->name('admin.combos.destroy');
+    Route::get('/combos/trash', [ComboController::class, 'trash'])->name('trash');
+    Route::post('/combos/restore/{id}', [ComboController::class, 'restore'])->name('restore');
+    Route::delete('/combos/force-delete/{id}', [ComboController::class, 'forceDelete'])->name('forceDelete');
+
     
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');

@@ -203,4 +203,32 @@ class ComboController extends Controller
 
         return redirect()->route('admin.combos.index', request()->query())->with('success', 'Combo đã được xóa (soft delete).');
     }
+    public function trash()
+{
+    $combos = Combo::onlyTrashed()->latest()->paginate(10);
+
+    return view('admin.combos.trash', compact('combos'));
+}
+
+/**
+ * Khôi phục combo đã bị xóa mềm
+ */
+public function restore($id)
+{
+    $combo = Combo::onlyTrashed()->findOrFail($id);
+    $combo->restore();
+
+    return redirect()->route('admin.combos.trash')->with('success', 'Đã khôi phục combo thành công!');
+}
+
+/**
+ * Xóa vĩnh viễn combo
+ */
+public function forceDelete($id)
+{
+    $combo = Combo::onlyTrashed()->findOrFail($id);
+    $combo->forceDelete();
+
+    return redirect()->route('admin.combos.trash')->with('success', 'Đã xóa vĩnh viễn combo!');
+}
 }
