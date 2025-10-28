@@ -166,7 +166,12 @@
                     <i class="fas fa-cubes text-white text-lg w-6 mr-3"></i>
                     <span class="font-medium">Sản phẩm</span>
                 </a>
-
+                <a href="{{ route('admin.promotions.index') }}"
+                    class="nav-item {{ request()->routeIs('promotions.*') ? 'active' : '' }} flex items-center p-3">
+                    <i class="fas fa-tag w-6 mr-3"></i>
+                    <span class="font-medium">Khuyến mại</span>
+                </a>
+               
                 <a href="{{ route('admin.roles.index') }}"
                     class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-user-tag mr-3 w-5 text-center text-white"></i>

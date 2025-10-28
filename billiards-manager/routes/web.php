@@ -23,6 +23,7 @@ use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PromotionController;
 
 Route::get('/', function () {
     return view('home');
@@ -91,6 +92,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/shiftE/schedule', [ShiftController::class, 'scheduleShifts'])->name('admin.shiftEmployee.schedule');
     Route::post('/shiftE/save-weekly', [ShiftController::class, 'saveWeeklySchedule'])->name('admin.shiftEmployee.saveWeekly');
     Route::post('/shiftE/bulk-schedule', [ShiftController::class, 'bulkScheduleShifts'])->name('admin.shiftEmployee.bulkSchedule');
+
+    // Promotions
+    Route::get('/promotions', [PromotionController::class, 'index'])->name('admin.promotions.index');
 
     
 });
