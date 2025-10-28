@@ -14,7 +14,6 @@ class ShiftController extends Controller
     public function index()
     {
         $shifts = Shift::orderBy('start_time', 'asc')->get();
-
         return view('admin.shifts.index', compact('shifts'));
     }
 

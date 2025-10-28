@@ -19,6 +19,9 @@ class DatabaseSeeder extends Seeder
             ProductsTableSeeder::class,
             CombosTableSeeder::class,
             ComboItemsTableSeeder::class,
+            PromotionSeeder::class,
+            PromotionProductsSeeder::class,
+            PromotionComboSeeder::class,
         ]);
     }
 }
