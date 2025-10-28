@@ -9,6 +9,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ComboController;
 use App\Http\Controllers\ComboItemController;
@@ -23,7 +24,7 @@ use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PromotionController;
+
 
 Route::get('/', function () {
     return view('home');
@@ -77,6 +78,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/products/trashed', [ProductController::class, 'trashed'])->name('admin.products.trashed');
     Route::post('/products/{id}/restore', [ProductController::class, 'restore'])->name('admin.products.restore');
     Route::delete('/products/{id}/force-delete', [ProductController::class, 'forceDelete'])->name('admin.products.forceDelete');
+    Route::get('/products/deleted', [ProductController::class, 'trashed'])->name('admin.products.deleted');
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
     Route::get('/products/{id}', [ProductController::class, 'show'])->name('admin.products.show');
     Route::put('/products/{id}', [ProductController::class, 'update'])->name('admin.products.update');
@@ -98,6 +100,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // Promotions
     Route::get('/promotions', [PromotionController::class, 'index'])->name('admin.promotions.index');
+    Route::get('/promotions/create', [PromotionController::class, 'create'])->name('admin.promotions.create');
+    Route::post('/promotions', [PromotionController::class, 'store'])->name('admin.promotions.store');
+
 
     
 });

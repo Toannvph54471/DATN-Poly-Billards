@@ -10,11 +10,11 @@
             <p class="text-gray-600">Quản lý chương trình khuyến mại và voucher</p>
         </div>
         <div>
-            {{-- <a href="{{ route('admin.promotions.create') }}"
+            <a href="{{ route('admin.promotions.create') }}"
                 class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Thêm khuyến mại
-            </a> --}}
+            </a>
         </div>
     </div>
 
@@ -278,11 +278,11 @@
                                     </div>
                                     <h3 class="text-lg font-medium text-gray-900 mb-1">Không có khuyến mại nào</h3>
                                     <p class="text-gray-500 mb-4">Không tìm thấy khuyến mại phù hợp với tiêu chí tìm kiếm.</p>
-                                    {{-- <a href="{{ route('admin.promotions.create') }}" 
+                                    <a href="{{ route('admin.promotions.create') }}" 
                                        class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                                         <i class="fas fa-plus mr-2"></i>
                                         Thêm khuyến mại đầu tiên
-                                    </a> --}}
+                                    </a>
                                 </div>
                             </td>
                         </tr>
