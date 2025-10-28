@@ -78,6 +78,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/products/trashed', [ProductController::class, 'trashed'])->name('admin.products.trashed');
     Route::post('/products/{id}/restore', [ProductController::class, 'restore'])->name('admin.products.restore');
     Route::delete('/products/{id}/force-delete', [ProductController::class, 'forceDelete'])->name('admin.products.forceDelete');
+    Route::get('/products/deleted', [ProductController::class, 'trashed'])->name('admin.products.deleted');
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
     Route::get('/products/{id}', [ProductController::class, 'show'])->name('admin.products.show');
     Route::put('/products/{id}', [ProductController::class, 'update'])->name('admin.products.update');
