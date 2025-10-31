@@ -1,4 +1,5 @@
 <?php
+
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
@@ -53,7 +54,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos/{id}/edit', [ComboController::class, 'edit'])->name('admin.combos.edit');
     Route::put('/combos/{id}', [ComboController::class, 'update'])->name('admin.combos.update');
     Route::delete('/combos/{id}', [ComboController::class, 'destroy'])->name('admin.combos.destroy');
-    
+
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
 
@@ -65,7 +66,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
     Route::get('/tables/{id}/edit', [TableController::class, 'edit'])->name('admin.tables.edit');
     Route::put('/tables/{id}', [TableController::class, 'update'])->name('admin.tables.update');
-   
+
+    Route::get('tables/{id}', [TableController::class, 'detail'])->name('admin.tables.detail');
+    Route::post('/tables/{id}/start', [TableController::class, 'openTable'])->name('admin.tables.start');
+    Route::post('/tables/{id}/stop', [TableController::class, 'stopSession'])->name('admin.tables.stop');
+
 
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
@@ -91,6 +96,4 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/shiftE/schedule', [ShiftController::class, 'scheduleShifts'])->name('admin.shiftEmployee.schedule');
     Route::post('/shiftE/save-weekly', [ShiftController::class, 'saveWeeklySchedule'])->name('admin.shiftEmployee.saveWeekly');
     Route::post('/shiftE/bulk-schedule', [ShiftController::class, 'bulkScheduleShifts'])->name('admin.shiftEmployee.bulkSchedule');
-
-    
 });

@@ -16,10 +16,10 @@ class Bill extends BaseModel
     const PAYMENT_WALLET = 'wallet';
 
     protected $fillable = [
-        'bill_code',
+        'bill_number',
         'customer_id',
         'table_id',
-        'employee_id',
+        'staff_id',
         'start_time',
         'end_time',
         'total_time',

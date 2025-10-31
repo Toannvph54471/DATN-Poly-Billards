@@ -4,6 +4,7 @@ namespace App\Models;
 
 class BillTimeUsage extends BaseModel
 {
+    protected $table = 'bill_time_usage';
     protected $fillable = [
         'bill_id',
         'start_time',

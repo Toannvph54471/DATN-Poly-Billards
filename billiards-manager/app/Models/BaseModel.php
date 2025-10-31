@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 
 class BaseModel extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     // ========== COMMON STATUS CONSTANTS ==========
     const STATUS_ACTIVE = 'active';
