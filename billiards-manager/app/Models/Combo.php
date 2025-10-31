@@ -22,7 +22,6 @@ class Combo extends BaseModel
         'actual_value' => 'decimal:2',
     ];
 
-    // Relationships
     public function comboItems()
     {
         return $this->hasMany(ComboItem::class);
@@ -33,20 +32,20 @@ class Combo extends BaseModel
         return $this->hasMany(BillDetail::class);
     }
 
-    // Scopes
+    // SỬA: dùng chữ thường
     public function scopeActive($query)
     {
-        return $query->where('status', 'Active');
+        return $query->where('status', 'active');
     }
 
-    // Methods
     public function getFinalPrice(): float
     {
         return $this->price;
     }
 
+    // SỬA: dùng chữ thường
     public function isActive(): bool
     {
-        return $this->status === 'Active';
+        return $this->status === 'active';
     }
 }

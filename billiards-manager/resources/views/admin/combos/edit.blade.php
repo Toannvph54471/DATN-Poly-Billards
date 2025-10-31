@@ -209,18 +209,18 @@
                             <i class="fas fa-cubes text-purple-600 mr-3"></i>
                             Sản phẩm trong combo
                         </h2>
-                        <p class="text-gray-600 text-sm mt-1">Quản lý sản phẩm trong combo</p>
+                        <p class="text-gray-600 text-sm mt-1">Chọn tối đa 5 sản phẩm cho combo</p>
                     </div>
                     <div class="p-6">
                         <div class="space-y-4">
                             @php
-                                $comboItems = $combo->comboItems;
                                 $totalSlots = 5;
+                                $comboItems = $combo->comboItems->pad($totalSlots, null);
                             @endphp
 
                             @for ($i = 0; $i < $totalSlots; $i++)
                                 @php
-                                    $item = $comboItems->get($i);
+                                    $item = $comboItems[$i];
                                     $isRequired = $i === 0;
                                 @endphp
 
@@ -246,15 +246,14 @@
 
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Chọn sản
-                                                phẩm</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Chọn sản phẩm</label>
                                             <select name="combo_items[{{ $i }}][product_id]"
                                                 class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200"
                                                 {{ $isRequired ? 'required' : '' }}>
                                                 <option value="">-- Chọn sản phẩm --</option>
                                                 @foreach ($products as $product)
                                                     <option value="{{ $product->id }}"
-                                                        {{ old("combo_items.$i.product_id", $item->product_id ?? '') == $product->id ? 'selected' : '' }}
+                                                        {{ old("combo_items.$i.product_id", $item?->product_id) == $product->id ? 'selected' : '' }}
                                                         class="py-2">
                                                         {{ $product->name }} -
                                                         {{ number_format($product->price, 0, ',', '.') }}₫
@@ -266,7 +265,7 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng</label>
                                             <div class="relative">
                                                 <input type="number" name="combo_items[{{ $i }}][quantity]"
-                                                    value="{{ old("combo_items.$i.quantity", $item->quantity ?? 1) }}"
+                                                    value="{{ old("combo_items.$i.quantity", $item?->quantity ?? 1) }}"
                                                     min="1"
                                                     class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200"
                                                     {{ $isRequired ? 'required' : '' }}>
@@ -280,8 +279,7 @@
 
                                     <!-- Hidden field for existing item ID -->
                                     @if ($item)
-                                        <input type="hidden" name="combo_items[{{ $i }}][id]"
-                                            value="{{ $item->id }}">
+                                        <input type="hidden" name="combo_items[{{ $i }}][id]" value="{{ $item->id }}">
                                     @endif
                                 </div>
                             @endfor
@@ -329,7 +327,7 @@
                             </a>
 
                             <!-- Delete Button -->
-                            <form action="{{ route('admin.combos.destroy', $combo->id) }}" method="POST"
+                            {{-- <form action="{{ route('admin.combos.destroy', $combo->id) }}" method="POST"
                                 class="pt-3 border-t border-gray-200">
                                 @csrf
                                 @method('DELETE')
@@ -338,7 +336,7 @@
                                     <i class="fas fa-trash mr-3"></i>
                                     Xóa Combo
                                 </button>
-                            </form>
+                            </form> --}}
                         </div>
                     </div>
                 </div>
@@ -356,7 +354,7 @@
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-indigo-100">Số sản phẩm</span>
-                            <span class="font-semibold">{{ $comboItems->count() }}/5</span>
+                            <span class="font-semibold">{{ $combo->comboItems->count() }}/5</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-indigo-100">Trạng thái</span>

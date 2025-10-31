@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use GuzzleHttp\Handler\Proxy;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -93,7 +94,6 @@ class ProductController extends Controller
 {
     $product = Product::findOrFail($id);
 
-    // ✅ Xác thực dữ liệu đầu vào
     $validated = $request->validate([
         'product_code'   => 'required|string|max:255|unique:products,product_code,' . $id,
         'name'           => 'required|string|max:255',
