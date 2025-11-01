@@ -1,183 +1,142 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Chi tiết Combo - F&B Management')
+@section('title', 'Chi tiết Combo')
 
 @section('content')
-<div class="mb-6">
-    <div class="flex flex-col md:flex-row md:items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Chi tiết Combo</h1>
-            <p class="text-gray-600 mt-1">Thông tin đầy đủ về combo {{ $combo->name }}</p>
-        </div>
-        <div class="mt-4 md:mt-0 flex space-x-3">
-            <a href="{{ route('admin.combos.edit', $combo->id) }}" 
-               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center">
-                <i class="fas fa-edit mr-2"></i>
-                Chỉnh sửa
-            </a>
-            <a href="{{ route('admin.combos.index') }}" 
-               class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Quay lại
-            </a>
-        </div>
-    </div>
-</div>
-
-<!-- Thông tin chính -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-    <!-- Thông tin combo -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-        <div class="flex items-center mb-4">
-            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                <i class="fas fa-layer-group text-blue-600 text-xl"></i>
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <div class="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                <i class="fas fa-layer-group text-white text-2xl"></i>
             </div>
             <div>
-                <h2 class="text-xl font-semibold text-gray-900">{{ $combo->name }}</h2>
-                <p class="text-gray-500 text-sm">Mã: {{ $combo->combo_code }}</p>
-            </div>
-        </div>
-
-        <div class="space-y-3">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
-                <p class="text-gray-900 bg-gray-50 rounded-lg p-3">{{ $combo->description ?? 'Không có mô tả' }}</p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Giá bán</label>
-                    <p class="text-lg font-semibold text-green-600">{{ number_format($combo->price, 0, ',', '.') }}₫</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Giá trị thực</label>
-                    <p class="text-lg font-semibold text-blue-600">{{ number_format($combo->actual_value, 0, ',', '.') }}₫</p>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tiết kiệm</label>
-                <p class="text-lg font-semibold text-red-600">
-                    {{ number_format($combo->actual_value - $combo->price, 0, ',', '.') }}₫
+                <h1 class="text-3xl font-bold text-gray-900">{{ $combo->name }}</h1>
+                <p class="text-gray-600 mt-1">
+                    Mã: <span class="font-mono font-semibold">{{ $combo->combo_code }}</span>
+                    @if($combo->is_time_combo)
+                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <i class="fas fa-clock mr-1"></i>Combo bàn
+                        </span>
+                    @endif
                 </p>
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $combo->isActive() ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                    <i class="fas {{ $combo->isActive() ? 'fa-check-circle' : 'fa-pause-circle' }} mr-2"></i>
-                    {{ $combo->status }}
-                </span>
-            </div>
         </div>
-    </div>
-
-    <!-- Thống kê nhanh -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Thống kê</h3>
-        <div class="space-y-4">
-            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <div class="flex items-center">
-                    <i class="fas fa-cube text-blue-600 mr-3"></i>
-                    <span class="text-gray-700">Số sản phẩm</span>
-                </div>
-                <span class="text-xl font-bold text-blue-600">{{ $combo->comboItems->count() }}</span>
-            </div>
-            
-            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div class="flex items-center">
-                    <i class="fas fa-percentage text-green-600 mr-3"></i>
-                    <span class="text-gray-700">Tỷ lệ giảm giá</span>
-                </div>
-                <span class="text-xl font-bold text-green-600">
-                    {{ $combo->actual_value > 0 ? round((1 - $combo->price / $combo->actual_value) * 100, 1) : 0 }}%
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Hình ảnh (nếu có) -->
-    <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Hình ảnh</h3>
-        <div class="flex items-center justify-center h-40 bg-gray-100 rounded-lg">
-            @if($combo->image)
-                <img src="{{ asset('storage/' . $combo->image) }}" alt="{{ $combo->name }}" class="max-h-full max-w-full rounded-lg">
-            @else
-                <div class="text-center text-gray-500">
-                    <i class="fas fa-image text-4xl mb-2"></i>
-                    <p class="text-sm">Chưa có hình ảnh</p>
-                </div>
-            @endif
+        <div class="flex gap-3">
+            <a href="{{ route('admin.combos.edit', $combo->id) }}"
+               class="bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 font-medium transition flex items-center">
+                <i class="fas fa-edit mr-2"></i>Chỉnh sửa
+            </a>
+            <a href="{{ route('admin.combos.index') }}"
+               class="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-xl hover:bg-gray-300 font-medium transition flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i>Quay lại
+            </a>
         </div>
     </div>
 </div>
 
-<!-- Danh sách sản phẩm trong combo -->
-<div class="bg-white rounded-xl shadow-sm">
-    <div class="p-6 border-b border-gray-200">
-        <h3 class="text-xl font-semibold text-gray-900">Sản phẩm trong combo</h3>
-        <p class="text-gray-600 mt-1">Danh sách các sản phẩm và số lượng trong combo</p>
+@if($combo->is_time_combo && $activeSession)
+    <div class="mb-6 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-xl shadow-sm">
+        <div class="flex items-start">
+            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-hourglass-half text-white"></i>
+            </div>
+            <div class="ml-4">
+                <h4 class="text-blue-900 font-bold">Session đang chạy</h4>
+                <p class="text-blue-700 text-sm">Bàn đang sử dụng combo này. Thời gian còn lại: {{ $activeSession->remaining_minutes ?? 'N/A' }} phút</p>
+            </div>
+        </div>
     </div>
+@endif
 
-    <div class="overflow-x-auto">
-        <table class="w-full">
-            <thead>
-                <tr class="bg-gray-50 border-b border-gray-200">
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sản phẩm</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lượng</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Đơn giá</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thành tiền</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @foreach ($combo->comboItems as $index => $item)
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $index + 1 }}</td>
-                    <td class="px-6 py-4">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                                <i class="fas fa-cube text-gray-500"></i>
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Products -->
+    <div class="lg:col-span-3 space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-list text-blue-600 mr-3"></i> Sản phẩm trong combo
+                </h3>
+            </div>
+            <div class="divide-y divide-gray-100">
+                @foreach($combo->comboItems as $item)
+                    <div class="p-4 flex items-center justify-between hover:bg-gray-50 transition">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-box text-gray-400"></i>
                             </div>
                             <div>
-                                <div class="text-sm font-medium text-gray-900">{{ $item->product->name ?? 'Không xác định' }}</div>
-                                <div class="text-sm text-gray-500">{{ $item->product->product_code ?? 'N/A' }}</div>
+                                <h4 class="font-medium text-gray-900">{{ $item->product->name }}</h4>
+                                <p class="text-sm text-gray-500">{{ $item->product->product_code }}</p>
                             </div>
                         </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {{ $item->quantity }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($item->product->price, 0, ',', '.') }}₫</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ number_format($item->getTotalPrice(), 0, ',', '.') }}₫</td>
-                </tr>
+                        <div class="text-right">
+                            <p class="font-medium text-gray-900">{{ $item->quantity }} x {{ number_format($item->unit_price) }}đ</p>
+                            <p class="text-sm text-gray-500">Tổng: {{ number_format($item->quantity * $item->unit_price) }}đ</p>
+                        </div>
+                    </div>
                 @endforeach
-            </tbody>
-            <tfoot class="bg-gray-50">
-                <tr>
-                    <td colspan="4" class="px-6 py-4 text-right text-sm font-medium text-gray-900">Tổng giá trị combo:</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-lg font-bold text-green-600">
-                        {{ number_format($combo->price, 0, ',', '.') }}₫
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-</div>
+            </div>
+        </div>
 
-<!-- Action buttons -->
-<div class="mt-6 flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
-    <a href="{{ route('admin.combos.edit', $combo->id) }}" 
-       class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition flex items-center justify-center">
-        <i class="fas fa-edit mr-2"></i>
-        Chỉnh sửa Combo
-    </a>
-    <a href="{{ route('admin.combos.index') }}" 
-       class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition flex items-center justify-center">
-        <i class="fas fa-list mr-2"></i>
-        Danh sách Combo
-    </a>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Mô tả</h3>
+            <p class="text-gray-700">{{ $combo->description ?? 'Không có mô tả' }}</p>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Giá trị combo</h3>
+            <div class="space-y-4">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Giá bán</span>
+                    <span class="font-bold text-xl text-gray-900">{{ number_format($combo->price) }}đ</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Giá trị thực</span>
+                    <span class="text-gray-500 line-through">{{ number_format($combo->actual_value) }}đ</span>
+                </div>
+                <div class="border-t pt-4 flex justify-between">
+                    <span class="text-gray-600">Ưu đãi</span>
+                    <span class="font-bold text-green-600">
+                        {{ number_format($combo->getDiscountAmount()) }}đ ({{ $combo->getDiscountPercent() }}%)
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Chi tiết</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm text-gray-600">Trạng thái</label>
+                    <p class="mt-1">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $combo->status == 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                            {{ $combo->status == 'active' ? 'Hoạt động' : 'Tạm dừng' }}
+                        </span>
+                    </p>
+                </div>
+                @if($combo->is_time_combo)
+                    <div>
+                        <label class="text-sm text-gray-600">Loại bàn</label>
+                        <p class="mt-1 font-medium text-gray-900">{{ $combo->tableCategory?->name ?? 'Tất cả' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-600">Thời gian chơi</label>
+                        <p class="mt-1 font-medium text-gray-900">{{ $combo->play_duration_minutes }} phút</p>
+                    </div>
+                @endif
+                <div>
+                    <label class="text-sm text-gray-600">Ngày tạo</label>
+                    <p class="mt-1 text-gray-900">{{ $combo->created_at->format('d/m/Y H:i') }}</p>
+                </div>
+                <div>
+                    <label class="text-sm text-gray-600">Cập nhật</label>
+                    <p class="mt-1 text-gray-900">{{ $combo->updated_at->format('d/m/Y H:i') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

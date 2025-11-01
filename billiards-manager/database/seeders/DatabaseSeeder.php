@@ -13,12 +13,16 @@ class DatabaseSeeder extends Seeder
             PermissionsTableSeeder::class,
             RolePermissionsTableSeeder::class,
             UsersTableSeeder::class,
+            CategoriesTableSeeder::class,
             ShiftsTableSeeder::class,
             EmployeesTableSeeder::class,
             TablesTableSeeder::class,
             ProductsTableSeeder::class,
             CombosTableSeeder::class,
             ComboItemsTableSeeder::class,
+            PromotionSeeder::class,
+            PromotionProductsSeeder::class,
+            PromotionComboSeeder::class,
         ]);
     }
 }

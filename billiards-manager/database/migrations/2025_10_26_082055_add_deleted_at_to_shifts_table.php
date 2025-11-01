@@ -11,18 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('combos', function (Blueprint $table) {
-            $table->softDeletes(); // Thêm cột deleted_at
+        Schema::table('shifts', function (Blueprint $table) {
+            $table->softDeletes();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('combos', function (Blueprint $table) {
-            $table->dropSoftDeletes(); // Xóa cột deleted_at
+        Schema::table('shifts', function (Blueprint $table) {
+            $table->dropSoftDeletes();
         });
     }
 };

@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('combo_items', function (Blueprint $table) {
-            $table->decimal('unit_price', 12, 2)->default(0)->after('quantity');
+        Schema::table('bill_details', function (Blueprint $table) {
+            $table->softDeletes(); // Thêm cột deleted_at
         });
     }
 
     public function down()
     {
-        Schema::table('combo_items', function (Blueprint $table) {
-            $table->dropColumn('unit_price');
+        Schema::table('bill_details', function (Blueprint $table) {
+            $table->dropSoftDeletes();
         });
     }
 };

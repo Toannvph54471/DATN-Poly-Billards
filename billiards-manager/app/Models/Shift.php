@@ -5,14 +5,10 @@ namespace App\Models;
 class Shift extends BaseModel
 {
     protected $fillable = [
-        'shift_code',
         'name',
         'start_time',
         'end_time',
-        'description',
-        'color',
-        'created_by',
-        'updated_by'
+        'status',
     ];
 
     protected $casts = [
@@ -35,7 +31,7 @@ class Shift extends BaseModel
     public function isCurrentShift(): bool
     {
         $now = now()->format('H:i:s');
-        return $now >= $this->start_time->format('H:i:s') && 
-               $now <= $this->end_time->format('H:i:s');
+        return $now >= $this->start_time->format('H:i:s') &&
+            $now <= $this->end_time->format('H:i:s');
     }
 }

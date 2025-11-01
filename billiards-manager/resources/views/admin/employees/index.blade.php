@@ -10,10 +10,12 @@
             <p class="text-gray-600">Danh sách nhân viên và thông tin liên quan</p>
         </div>
         <div class="flex space-x-3">
-            <a href="#" class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
+            <a href="{{ route('admin.shiftEmployee.index') }}"
+                class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                 <i class="fas fa-calendar mr-2"></i> Phân công ca làm
             </a>
-            <a href="#" class="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition flex items-center">
+            <a href="{{ route('admin.shifts.index') }}"
+                class="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition flex items-center">
                 <i class="fas fa-clock mr-2"></i> Danh sách làm việc
             </a>
             <a href="{{ route('admin.employees.create') }}"
@@ -86,8 +88,8 @@
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
                         <input type="text" name="code" id="code" value="{{ request('code') }}"
-                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="Tìm theo mã nhân viên">
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Tìm theo mã nhân viên">
                     </div>
                 </div>
 
@@ -99,8 +101,8 @@
                             <i class="fas fa-search text-gray-400"></i>
                         </div>
                         <input type="text" name="name" id="name" value="{{ request('name') }}"
-                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="Tìm theo tên">
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Tìm theo tên">
                     </div>
                 </div>
 
@@ -108,22 +110,23 @@
                 <div>
                     <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
                     <select name="status" id="status"
-                            class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Tất cả trạng thái</option>
                         <option value="Active" {{ request('status') == 'Active' ? 'selected' : '' }}>Đang hoạt động</option>
-                        <option value="Inactive" {{ request('status') == 'Inactive' ? 'selected' : '' }}>Ngừng hoạt động</option>
+                        <option value="Inactive" {{ request('status') == 'Inactive' ? 'selected' : '' }}>Ngừng hoạt động
+                        </option>
                     </select>
                 </div>
 
                 <!-- Filter Button -->
                 <div class="flex items-end space-x-2">
                     <button type="submit"
-                            class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center w-full justify-center">
+                        class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center w-full justify-center">
                         <i class="fas fa-filter mr-2"></i>
                         Lọc
                     </button>
                     <a href="{{ route('admin.employees.index') }}"
-                       class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center">
+                        class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center">
                         <i class="fas fa-redo mr-2"></i>
                         Đặt lại
                     </a>
@@ -138,46 +141,55 @@
             <table class="w-full">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200">
-                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Mã nhân viên</th>
-                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Họ và tên</th>
-                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Chức vụ</th>
-                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Số điện thoại</th>
-                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                        <th class="text-right py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Mã nhân
+                            viên</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Họ và tên
+                        </th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Chức vụ
+                        </th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Số điện
+                            thoại</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Trạng
+                            thái</th>
+                        <th class="text-right py-4 px-6 text-sm font-medium text-gray-500 uppercase tracking-wider">Thao tác
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     @forelse($employees as $employee)
                         <tr class="hover:bg-gray-50 transition cursor-pointer">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->employee_code ?? 'N/A' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->name ?? 'N/A' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->position ?? 'N/A' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->phone ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ $employee->employee_code ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->name ?? 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ $employee->position ?? 'N/A' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->phone ?? 'N/A' }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 text-xs font-medium rounded-full {{ $employee->status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                <span
+                                    class="px-2 py-1 text-xs font-medium rounded-full {{ $employee->status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $employee->status === 'Active' ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end space-x-2">
                                     <a href="{{ route('admin.employees.show', $employee->id) }}"
-                                       class="text-blue-600 hover:text-blue-900 transition"
-                                       title="Chi tiết">
+                                        class="text-blue-600 hover:text-blue-900 transition" title="Chi tiết">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <a href="{{ route('admin.employees.edit', $employee->id) }}"
-                                       class="text-green-600 hover:text-green-900 transition"
-                                       title="Chỉnh sửa">
+                                        class="text-green-600 hover:text-green-900 transition" title="Chỉnh sửa">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <form id="delete-form-{{ $employee->id }}"
-                                          action="{{ route('admin.employees.destroy', $employee->id) }}"
-                                          method="POST" class="inline">
+                                        action="{{ route('admin.employees.destroy', $employee->id) }}" method="POST"
+                                        class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button" class="delete-employee-btn text-red-600 hover:text-red-900 transition"
-                                                data-employee-id="{{ $employee->id }}"
-                                                title="Xóa">
+                                        <button type="button"
+                                            class="delete-employee-btn text-red-600 hover:text-red-900 transition"
+                                            data-employee-id="{{ $employee->id }}" title="Xóa">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -192,7 +204,8 @@
                                         <i class="fas fa-users text-gray-400 text-xl"></i>
                                     </div>
                                     <h3 class="text-lg font-medium text-gray-900 mb-1">Không có nhân viên nào</h3>
-                                    <p class="text-gray-500 mb-4">Không tìm thấy nhân viên phù hợp với tiêu chí tìm kiếm.</p>
+                                    <p class="text-gray-500 mb-4">Không tìm thấy nhân viên phù hợp với tiêu chí tìm kiếm.
+                                    </p>
                                 </div>
                             </td>
                         </tr>
@@ -209,51 +222,51 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Event delegation cho button delete
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.delete-employee-btn')) {
-                e.preventDefault();
-                const button = e.target.closest('.delete-employee-btn');
-                const employeeId = button.getAttribute('data-employee-id');
-                if (!employeeId) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Lỗi!',
-                        text: 'Không thể xóa nhân viên này.',
-                    });
-                    return;
-                }
-
-                Swal.fire({
-                    title: 'Xác nhận xóa?',
-                    text: "Bạn có chắc chắn muốn xóa nhân viên này? Hành động này không thể hoàn tác!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Xóa',
-                    cancelButtonText: 'Hủy'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        const form = document.getElementById('delete-form-' + employeeId);
-                        if (form) {
-                            form.submit();
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Lỗi!',
-                                text: 'Form xóa không tìm thấy.',
-                            });
-                        }
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event delegation cho button delete
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.delete-employee-btn')) {
+                    e.preventDefault();
+                    const button = e.target.closest('.delete-employee-btn');
+                    const employeeId = button.getAttribute('data-employee-id');
+                    if (!employeeId) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi!',
+                            text: 'Không thể xóa nhân viên này.',
+                        });
+                        return;
                     }
-                });
-            }
+
+                    Swal.fire({
+                        title: 'Xác nhận xóa?',
+                        text: "Bạn có chắc chắn muốn xóa nhân viên này? Hành động này không thể hoàn tác!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Xóa',
+                        cancelButtonText: 'Hủy'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            const form = document.getElementById('delete-form-' + employeeId);
+                            if (form) {
+                                form.submit();
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi!',
+                                    text: 'Form xóa không tìm thấy.',
+                                });
+                            }
+                        }
+                    });
+                }
+            });
         });
-    });
-</script>
+    </script>
 @endsection
 
 <style>
@@ -274,6 +287,7 @@
     }
 
     tbody tr:hover {
-        background-color: #f9fafb !important; /* bg-gray-50 */
+        background-color: #f9fafb !important;
+        /* bg-gray-50 */
     }
 </style>

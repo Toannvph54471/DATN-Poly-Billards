@@ -11,11 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('combo_items', function (Blueprint $table) {
+        Schema::create('combo_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('combo_id')->constrained('combos');
-            $table->foreignId('product_id')->constrained('products');
+            $table->foreignId('combo_id')
+                ->constrained('combos')
+                ->onDelete('cascade') // Xóa combo thì xóa combo_items 
+                ->cascadeOnDelete();
+            $table->foreignId('product_id')
+                ->constrained('products')
+                ->onDelete('cascade')
+                ->cascadeOnDelete(); // ✅ Xóa product thì tự động gỡ khỏi combo_item
             $table->integer('quantity');
+    
             $table->boolean('is_required')->default(true);
             $table->string('choice_group')->nullable();
             $table->integer('max_choices')->nullable();
