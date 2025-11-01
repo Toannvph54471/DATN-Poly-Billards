@@ -10,7 +10,7 @@
             <p class="text-gray-600">Danh sách các bàn billiards trong hệ thống</p>
         </div>
         <div>
-            <a href="{{ route('admin.tables.create') }}"
+            <a href=""
                 class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                 <i class="fas fa-plus mr-2"></i> Thêm bàn mới
             </a>
