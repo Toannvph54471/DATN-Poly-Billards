@@ -12,18 +12,17 @@ class Product extends Model
 
     protected $table = 'products';
 
-    protected $dates = ['deleted_at'];
     protected $fillable = [
         'product_code',
         'name',
-        'category',         // Drink, Food, Service
-        'product_type',     // Single, Combo
+        'category_id',      // ĐÃ THAY category (string) → category_id
+        'product_type',     // Service, Consumption
         'price',
         'cost_price',
         'stock_quantity',
         'min_stock_level',
-        'unit',             // Chai, Lon, Giờ
-        'status',           // Active, Inactive
+        'unit',
+        'status',
     ];
 
     protected $casts = [
@@ -33,12 +32,15 @@ class Product extends Model
         'min_stock_level' => 'integer',
     ];
 
-
     const STATUS_ACTIVE = 'Active';
     const STATUS_INACTIVE = 'Inactive';
-    const TYPE_SINGLE = 'Single';
-    const TYPE_COMBO = 'Combo';
-    
+
+    // Relationships
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function billDetails()
     {
         return $this->hasMany(BillDetail::class);
@@ -49,49 +51,54 @@ class Product extends Model
         return $this->hasMany(ComboItem::class);
     }
 
-        public function promotions()
+    public function promotions()
     {
         return $this->belongsToMany(Promotion::class, 'promotion_products');
     }
-    
-    // 🔍 Scopes
 
-
+    // Scopes
     public function scopeActive($query)
     {
         return $query->where('status', self::STATUS_ACTIVE);
     }
-
 
     public function scopeInactive($query)
     {
         return $query->where('status', self::STATUS_INACTIVE);
     }
 
-
     public function scopeLowStock($query)
     {
         return $query->whereColumn('stock_quantity', '<=', 'min_stock_level');
     }
 
-
-    public function scopeCategory($query, $category)
+    // ĐÃ XÓA scopeCategory($category) vì không còn cột category (string)
+    // Thay bằng scopeCategoryId()
+    public function scopeCategoryId($query, $categoryId)
     {
-        return $query->where('category', $category);
+        return $query->where('category_id', $categoryId);
     }
 
+    public function scopeService($query)
+    {
+        return $query->where('product_type', 'Service');
+    }
 
+    public function scopeConsumption($query)
+    {
+        return $query->where('product_type', 'Consumption');
+    }
+
+    // Methods
     public function isAvailable(): bool
     {
         return $this->status === self::STATUS_ACTIVE && $this->stock_quantity > 0;
     }
 
-
     public function isLowStock(): bool
     {
         return $this->stock_quantity <= $this->min_stock_level;
     }
-
 
     public function reduceStock($quantity): bool
     {
@@ -102,10 +109,19 @@ class Product extends Model
         return false;
     }
 
-
     public function addStock($quantity): bool
     {
         $this->increment('stock_quantity', $quantity);
         return true;
+    }
+
+    public function isService(): bool
+    {
+        return $this->product_type === 'Service';
+    }
+
+    public function isConsumption(): bool
+    {
+        return $this->product_type === 'Consumption';
     }
 }

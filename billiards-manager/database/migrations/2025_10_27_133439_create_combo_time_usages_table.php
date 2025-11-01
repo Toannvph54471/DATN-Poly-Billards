@@ -6,27 +6,35 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-     Schema::create('combo_time_usages', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('combo_id')->constrained('combos'); // liên kết đến combo
-    $table->foreignId('bill_id')->constrained('bills'); // liên kết đến hóa đơn sử dụng combo
-    $table->datetime('start_time')->nullable(); // thời gian bắt đầu sử dụng combo
-    $table->datetime('end_time')->nullable(); // thời gian kết thúc sử dụng combo
-    $table->integer('total_minutes')->default(0); // tổng thời gian sử dụng tính theo phút
-    $table->integer('remaining_minutes')->default(0); // thời gian còn lại tính theo phút
-    $table->boolean('is_expired')->default(false); // trạng thái hết hạn sử dụng combo
-    $table->timestamps();
-});
+        Schema::create('combo_time_usages', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('combo_id')->constrained('combos')->cascadeOnDelete();
+            $table->foreignId('bill_id')->constrained('bills')->cascadeOnDelete();
+            $table->foreignId('table_id')->constrained('tables')->cascadeOnDelete();
+
+            $table->datetime('start_time')->nullable();
+            $table->datetime('end_time')->nullable();
+
+            $table->integer('total_minutes')->default(0);
+            $table->integer('remaining_minutes')->default(0);
+            $table->integer('extra_minutes_added')->default(0);
+
+            $table->boolean('is_expired')->default(false);
+            $table->decimal('extra_charge', 10, 2)->nullable();
+
+            $table->datetime('warning_sent_at')->nullable();
+            $table->longText('notes')->nullable();
+
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index(['combo_id', 'bill_id', 'table_id']);
+            $table->index(['is_expired', 'start_time']);
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('combo_time_usages');

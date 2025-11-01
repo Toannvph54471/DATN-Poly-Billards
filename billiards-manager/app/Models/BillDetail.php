@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class BillDetail extends BaseModel
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'bill_id',
         'product_id',

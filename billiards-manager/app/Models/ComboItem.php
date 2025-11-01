@@ -2,26 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Model;
 
-class ComboItem extends BaseModel
+class ComboItem extends Model
 {
-    use SoftDeletes;
-    
     protected $fillable = [
         'combo_id',
         'product_id',
         'quantity',
-        'unit_price',
-        'created_by'
+        'is_required',
+        'choice_group',
+        'max_choices',
     ];
 
-    protected $casts = [
-        'quantity' => 'integer',
-        'unit_price' => 'decimal:2'
-    ];
-
-    // Relationships
     public function combo()
     {
         return $this->belongsTo(Combo::class);
@@ -32,9 +25,9 @@ class ComboItem extends BaseModel
         return $this->belongsTo(Product::class);
     }
 
-    // Methods
-    public function getTotalPrice(): float
+    // Tính giá theo product->price hiện tại
+    public function getSubtotal(): float
     {
-        return $this->quantity * $this->unit_price;
+        return (float) ($this->product->price * $this->quantity);
     }
 }

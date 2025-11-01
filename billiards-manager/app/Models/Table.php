@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Table extends BaseModel
 {
+    use HasFactory, SoftDeletes;
+
     const TYPE_STANDARD = 'standard';
     const TYPE_VIP = 'vip';
     const TYPE_COMPETITION = 'competition';
@@ -15,10 +17,12 @@ class Table extends BaseModel
     const STATUS_OCCUPIED = 'occupied';
     const STATUS_MAINTENANCE = 'maintenance';
     const STATUS_RESERVED = 'reserved';
-    use HasFactory, SoftDeletes;
+
     protected $fillable = [
         'table_number',
         'table_name',
+        'category_id', // ĐÃ CÓ
+        'capacity',    // ĐÃ CÓ từ migration
         'type',
         'status',
         'hourly_rate',
@@ -28,7 +32,16 @@ class Table extends BaseModel
         'updated_by'
     ];
 
+    protected $casts = [
+        'hourly_rate' => 'decimal:2',
+    ];
+
     // Relationships
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function bills()
     {
         return $this->hasMany(Bill::class);
@@ -59,6 +72,11 @@ class Table extends BaseModel
         return $query->where('status', self::STATUS_OCCUPIED);
     }
 
+    public function scopeCategory($query, $categoryId)
+    {
+        return $query->where('category_id', $categoryId);
+    }
+
     // Methods
     public function isAvailable(): bool
     {
@@ -73,5 +91,10 @@ class Table extends BaseModel
     public function markAsAvailable(): bool
     {
         return $this->update(['status' => self::STATUS_AVAILABLE]);
+    }
+
+    public function getCategoryName(): string
+    {
+        return $this->category?->name ?? 'Unknown';
     }
 }
