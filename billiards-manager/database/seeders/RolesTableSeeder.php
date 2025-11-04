@@ -27,7 +27,20 @@ class RolesTableSeeder extends Seeder
                 'slug' => 'employee',
                 'description' => 'Nhân viên phục vụ',
                 'permissions' => json_encode(config('permissions.role_permissions.employee'))
-            ]
+            ],
+                        [
+                'name' => 'Khách hàng',
+                'slug' => 'customer',
+                'description' => 'Tài khoản khách hàng',
+                'permissions' => json_encode([
+                    'reservation.view_own',
+                    'reservation.create',
+                    'reservation.cancel_own',
+                    'profile.view',
+                    'profile.update'
+                ])
+            ],
+
         ];
 
         foreach ($roles as $role) {
