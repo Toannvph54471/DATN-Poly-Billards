@@ -15,6 +15,12 @@
                 <i class="fas fa-plus mr-2"></i>
                 Thêm combo
             </a>
+            <a href="{{ route('trash') }}"
+   class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center">
+    <i class="fas fa-trash mr-2"></i>
+    Thùng rác
+</a>
+
         </div>
     </div>
 

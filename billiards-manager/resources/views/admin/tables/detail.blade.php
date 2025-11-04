@@ -206,12 +206,14 @@
                                 class="w-24 h-24 flex items-center justify-center rounded-full
                                 @if ($table->status == 'available') bg-gray-100
                                 @elseif($table->status == 'in_use') bg-green-100
-                                @else bg-yellow-100 @endif">
+                                @elseif($table->status == 'paused') bg-yellow-100
+                                @else bg-red-100 @endif">
                                 <i
                                     class="fas fa-table text-3xl 
                                     @if ($table->status == 'available') text-gray-600
                                     @elseif($table->status == 'in_use') text-green-600
-                                    @else text-yellow-600 @endif"></i>
+                                    @elseif($table->status == 'paused') text-yellow-600
+                                    @else text-red-600 @endif"></i>
                             </div>
                             @if ($table->status == 'in_use')
                                 <div id="activeIndicator" class="absolute -top-2 -right-2">
@@ -259,14 +261,35 @@
                                     <span class="text-gray-600">⏸️ Trống</span>
                                 @elseif($table->status == 'in_use')
                                     <span class="text-green-600">▶️ Đang sử dụng</span>
+                                @elseif($table->status == 'paused')
+                                    <span class="text-yellow-600">⏸️ Tạm dừng</span>
                                 @else
-                                    <span class="text-yellow-600">🔧 Bảo trì</span>
+                                    <span class="text-red-600">🔧 Bảo trì</span>
                                 @endif
                             </span>
                         </div>
 
                         <!-- Thông tin Bill hiện tại (nếu có) -->
-                        @if ($table->status == 'in_use' && $table->currentBill)
+                        @if (($table->status == 'in_use' || $table->status == 'paused') && $table->currentBill)
+                            @php
+                                $currentUsage = DB::table('bill_time_usage')
+                                    ->where('bill_id', $table->currentBill->id)
+                                    ->whereNull('end_time')
+                                    ->orderByDesc('id')
+                                    ->first();
+
+                                $totalDuration = DB::table('bill_time_usage')
+                                    ->where('bill_id', $table->currentBill->id)
+                                    ->sum('duration_minutes');
+
+                                $currentDuration = $currentUsage
+                                    ? now()->diffInMinutes(Carbon\Carbon::parse($currentUsage->start_time))
+                                    : 0;
+                                $totalCurrentDuration =
+                                    $totalDuration + ($table->status == 'in_use' ? $currentDuration : 0);
+                                $currentCost = ($totalCurrentDuration / 60) * $table->hourly_rate;
+                            @endphp
+
                             <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
                                 <h3 class="font-semibold text-blue-800 mb-2 text-sm">Thông tin hóa đơn</h3>
                                 <div class="text-xs text-blue-700 space-y-1">
@@ -274,9 +297,11 @@
                                     </div>
                                     <div><span class="font-medium">Bắt đầu:</span>
                                         {{ $table->currentBill->start_time->format('H:i d/m/Y') }}</div>
-                                    <div><span class="font-medium">Thời gian:</span> <span id="currentDuration">0</span>
+                                    <div><span class="font-medium">Thời gian:</span> <span
+                                            id="currentDuration">{{ $totalCurrentDuration }}</span>
                                         phút</div>
-                                    <div><span class="font-medium">Tạm tính:</span> <span id="currentCost">0</span> đ
+                                    <div><span class="font-medium">Tạm tính:</span> <span
+                                            id="currentCost">{{ number_format($currentCost, 0, ',', '.') }}</span> đ
                                     </div>
                                 </div>
                             </div>
@@ -286,7 +311,7 @@
                     <!-- Actions -->
                     <div class="mt-6 pt-4 border-t border-gray-200">
                         @if ($table->status == 'available')
-                            <form id="startForm" method="POST" action="{{ route('admin.tables.start', $table->id) }}">
+                            <form method="POST" action="{{ route('admin.tables.start', $table->id) }}">
                                 @csrf
                                 <button type="submit" id="startButton"
                                     class="w-full bg-green-600 text-white py-3 font-semibold hover:bg-green-700 transition rounded flex items-center justify-center">
@@ -299,9 +324,38 @@
                                 <form method="POST" action="{{ route('admin.tables.stop', $table->id) }}">
                                     @csrf
                                     <button type="submit"
+                                        class="w-full bg-yellow-600 text-white py-3 font-semibold hover:bg-yellow-700 transition rounded flex items-center justify-center">
+                                        <i class="fas fa-pause mr-2"></i>
+                                        Tạm dừng phiên
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.tables.end', $table->id) }}"
+                                    onsubmit="return confirm('Bạn có chắc muốn kết thúc phiên và thanh toán?');">
+                                    @csrf
+                                    <button type="submit"
                                         class="w-full bg-red-600 text-white py-3 font-semibold hover:bg-red-700 transition rounded flex items-center justify-center">
                                         <i class="fas fa-stop mr-2"></i>
-                                        Kết thúc phiên
+                                        Kết thúc & Thanh toán
+                                    </button>
+                                </form>
+                            </div>
+                        @elseif($table->status == 'paused')
+                            <div class="space-y-3">
+                                <form method="POST" action="{{ route('admin.tables.resume', $table->id) }}">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full bg-green-600 text-white py-3 font-semibold hover:bg-green-700 transition rounded flex items-center justify-center">
+                                        <i class="fas fa-play mr-2"></i>
+                                        Tiếp tục sử dụng
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.tables.end', $table->id) }}"
+                                    onsubmit="return confirm('Bạn có chắc muốn kết thúc phiên và thanh toán?');">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full bg-red-600 text-white py-3 font-semibold hover:bg-red-700 transition rounded flex items-center justify-center">
+                                        <i class="fas fa-stop mr-2"></i>
+                                        Kết thúc & Thanh toán
                                     </button>
                                 </form>
                             </div>
@@ -469,8 +523,9 @@
                 orderItemsContainer.appendChild(row);
             });
 
+            // Tính tiền bàn dựa trên thời gian sử dụng
             const tableCost =
-                {{ $table->status == 'in_use' && $table->currentBill ? ($table->hourly_rate / 60) * ($currentUsage->duration_minutes ?? 0) : 0 }};
+                {{ ($table->status == 'in_use' || $table->status == 'paused') && $table->currentBill ? $currentCost : 0 }};
 
             productTotalElement.textContent = formatCurrency(productTotal);
             tableCostElement.textContent = formatCurrency(tableCost);
@@ -564,18 +619,6 @@
             document.getElementById('productSearch').addEventListener('input', filterProducts);
             document.getElementById('categoryFilter').addEventListener('change', filterProducts);
 
-            // Sự kiện form start
-            const startForm = document.getElementById('startForm');
-            const startButton = document.getElementById('startButton');
-
-            if (startForm && startButton) {
-                startForm.addEventListener('submit', function(e) {
-                    startButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
-                    startButton.disabled = true;
-                    startButton.classList.add('opacity-50');
-                });
-            }
-
             // Tự động ẩn thông báo
             setTimeout(() => {
                 const successMessage = document.getElementById('successMessage');
@@ -593,7 +636,7 @@
             }, 5000);
         });
 
-        // Cập nhật thời gian sử dụng real-time
+        // Cập nhật thời gian sử dụng real-time (chỉ khi bàn đang sử dụng)
         @if ($table->status == 'in_use' && $table->currentBill)
             function updateCurrentUsage() {
                 const startTime = new Date('{{ $table->currentBill->start_time }}').getTime();
@@ -604,10 +647,13 @@
 
                 document.getElementById('currentDuration').textContent = duration;
                 document.getElementById('currentCost').textContent = formatCurrency(cost);
+
+                // Cập nhật tổng tiền đơn hàng
+                updateOrderDisplay();
             }
 
             updateCurrentUsage();
-            setInterval(updateCurrentUsage, 60000);
+            setInterval(updateCurrentUsage, 60000); // Cập nhật mỗi phút
         @endif
     </script>
 @endsection

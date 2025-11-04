@@ -10,6 +10,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ComboController;
 use App\Http\Controllers\ComboItemController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+
 
 Route::get('/', function () {
     return view('home');
@@ -54,12 +56,18 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos/{id}/edit', [ComboController::class, 'edit'])->name('admin.combos.edit');
     Route::put('/combos/{id}', [ComboController::class, 'update'])->name('admin.combos.update');
     Route::delete('/combos/{id}', [ComboController::class, 'destroy'])->name('admin.combos.destroy');
+    Route::get('/combos/trash', [ComboController::class, 'trash'])->name('trash');
+    Route::post('/combos/restore/{id}', [ComboController::class, 'restore'])->name('restore');
+    Route::delete('/combos/force-delete/{id}', [ComboController::class, 'forceDelete'])->name('forceDelete');
+
 
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
 
     // Tables
     Route::get('/tables', [TableController::class, 'index'])->name('admin.tables.index');
+    Route::get('tables/create', [TableController::class, 'create'])->name('admin.tables.create');
+    Route::post('/tables', [TableController::class, 'store'])->name('admin.tables.store');
     Route::delete('/tables/{id}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
     Route::get('/tables/trashed', [TableController::class, 'trashed'])->name('admin.tables.trashed');
     Route::post('/tables/{id}/restore', [TableController::class, 'restore'])->name('admin.tables.restore');
@@ -70,19 +78,23 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('tables/{id}', [TableController::class, 'detail'])->name('admin.tables.detail');
     Route::post('/tables/{id}/start', [TableController::class, 'openTable'])->name('admin.tables.start');
     Route::post('/tables/{id}/stop', [TableController::class, 'stopSession'])->name('admin.tables.stop');
+    Route::post('/tables/{id}/resume', [TableController::class, 'resumeSession'])->name('admin.tables.resume');
+    Route::post('/tables/{id}/end', [TableController::class, 'endSession'])->name('admin.tables.end');
 
 
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
     Route::post('/products', [ProductController::class, 'store'])->name('admin.products.store');
+    Route::get('/products/trashed', [ProductController::class, 'trashed'])->name('admin.products.trashed');
+    Route::post('/products/{id}/restore', [ProductController::class, 'restore'])->name('admin.products.restore');
+    Route::delete('/products/{id}/force-delete', [ProductController::class, 'forceDelete'])->name('admin.products.forceDelete');
+    Route::get('/products/deleted', [ProductController::class, 'trashed'])->name('admin.products.deleted');
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('admin.products.edit');
     Route::get('/products/{id}', [ProductController::class, 'show'])->name('admin.products.show');
     Route::put('/products/{id}', [ProductController::class, 'update'])->name('admin.products.update');
     Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('admin.products.destroy');
-    Route::get('/products/trashed', [ProductController::class, 'trashed'])->name('admin.products.trashed');
-    Route::post('/products/{id}/restore', [ProductController::class, 'restore'])->name('admin.products.restore');
-    Route::delete('/products/{id}/force-delete', [ProductController::class, 'forceDelete'])->name('admin.products.forceDelete');
+
 
     // Shift
     Route::get('/shifts', [ShiftController::class, 'index'])->name('admin.shifts.index');
@@ -96,4 +108,15 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/shiftE/schedule', [ShiftController::class, 'scheduleShifts'])->name('admin.shiftEmployee.schedule');
     Route::post('/shiftE/save-weekly', [ShiftController::class, 'saveWeeklySchedule'])->name('admin.shiftEmployee.saveWeekly');
     Route::post('/shiftE/bulk-schedule', [ShiftController::class, 'bulkScheduleShifts'])->name('admin.shiftEmployee.bulkSchedule');
+
+    // Promotions
+    Route::get('/promotions', [PromotionController::class, 'index'])->name('admin.promotions.index');
+    Route::get('/promotions/create', [PromotionController::class, 'create'])->name('admin.promotions.create');
+    Route::post('/promotions', [PromotionController::class, 'store'])->name('admin.promotions.store');
+    Route::get('/promotions/{id}/edit', [PromotionController::class, 'edit'])->name('admin.promotions.edit');
+    Route::put('/promotions/{id}/update', [PromotionController::class, 'update'])->name('admin.promotions.update');
+    Route::get('/promotions/trashed', [PromotionController::class, 'trashed'])->name('admin.promotions.trashed');
+    Route::post('/promotions/{id}/restore', [PromotionController::class, 'restore'])->name('admin.promotions.restore');
+    Route::delete('/promotions/{id}/destroy', [PromotionController::class, 'destroy'])->name('admin.promotions.destroy');
+    Route::delete('/promotions/{id}/force-delete', [PromotionController::class, 'forceDelete'])->name('admin.promotions.forceDelete');
 });

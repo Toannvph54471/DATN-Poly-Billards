@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Promotion extends BaseModel
 {
+    use SoftDeletes;
     protected $fillable = [
         'promotion_code',
         'name',
@@ -23,7 +26,7 @@ class Promotion extends BaseModel
         return $this->belongsToMany(Combo::class, 'promotion_combo');
     }
 
-        public function products()
+    public function products()
     {
         return $this->belongsToMany(Product::class, 'promotion_products');
     }
