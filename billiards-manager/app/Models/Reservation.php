@@ -9,32 +9,34 @@ class Reservation extends BaseModel
     const STATUS_CHECKED_IN = 'checked_in';
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_COMPLETED = 'completed';
+    const STATUS_NO_SHOW = 'no_show'; // Thêm trạng thái mới
 
     protected $fillable = [
         'reservation_code',
         'customer_id',
         'table_id',
-        'reservation_date',
-        'start_time',
+        'reservation_time', // Thay cho reservation_date và start_time
         'end_time',
-        'number_of_people',
-        'special_requests',
-        'deposit_amount',
+        'duration',
+        'guest_count', // Thay cho number_of_people
+        'note', // Thay cho special_requests
         'status',
-        'checked_in_time',
-        'checked_out_time',
+        'checked_in_at', // Thay cho checked_in_time
+        'cancelled_at',
+        'cancellation_reason',
+        'no_show_at',
         'created_by',
         'updated_by'
     ];
 
     protected $casts = [
-        'reservation_date' => 'date',
-        'start_time' => 'datetime',
+        'reservation_time' => 'datetime',
         'end_time' => 'datetime',
-        'checked_in_time' => 'datetime',
-        'checked_out_time' => 'datetime',
-        'deposit_amount' => 'decimal:2',
-        'number_of_people' => 'integer'
+        'checked_in_at' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'no_show_at' => 'datetime',
+        'duration' => 'integer',
+        'guest_count' => 'integer'
     ];
 
     // Relationships
@@ -53,15 +55,20 @@ class Reservation extends BaseModel
         return $this->hasOne(Bill::class);
     }
 
+    public function statusHistories()
+    {
+        return $this->hasMany(ReservationStatusHistory::class);
+    }
+
     // Scopes
     public function scopeToday($query)
     {
-        return $query->whereDate('reservation_date', today());
+        return $query->whereDate('reservation_time', today());
     }
 
     public function scopeUpcoming($query)
     {
-        return $query->where('reservation_date', '>=', today())
+        return $query->where('reservation_time', '>=', now())
                     ->whereIn('status', [self::STATUS_PENDING, self::STATUS_CONFIRMED]);
     }
 
@@ -70,13 +77,42 @@ class Reservation extends BaseModel
     {
         return $this->update([
             'status' => self::STATUS_CHECKED_IN,
-            'checked_in_time' => now()
+            'checked_in_at' => now()
+        ]);
+    }
+
+    public function cancel($reason = null): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_CANCELLED,
+            'cancelled_at' => now(),
+            'cancellation_reason' => $reason
+        ]);
+    }
+
+    public function markAsNoShow(): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_NO_SHOW,
+            'no_show_at' => now()
         ]);
     }
 
     public function isUpcoming(): bool
     {
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_CONFIRMED]) &&
-               $this->reservation_date >= today();
+               $this->reservation_time >= now();
+    }
+
+    // Tự động tạo reservation_code khi tạo mới
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->reservation_code)) {
+                $model->reservation_code = 'RSV' . date('YmdHis') . rand(100, 999);
+            }
+        });
     }
 }
