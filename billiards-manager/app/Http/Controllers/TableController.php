@@ -136,10 +136,9 @@ class TableController extends Controller
             ->select('id', 'name', 'price')
             ->get();
 
-        // SỬA: Cho phép cả Open và Paused
         $currentUsage = BillTimeUsage::whereHas('bill', function ($query) use ($id) {
             $query->where('table_id', $id)
-                ->whereIn('status', ['Open', 'Paused']); // CHO PHÉP CẢ 2 TRẠNG THÁI
+                ->whereIn('status', ['Open', 'Paused']);
         })
             ->whereNull('end_time')
             ->with([
@@ -150,9 +149,8 @@ class TableController extends Controller
                         }]);
                 }
             ])
-            ->first();
+            ->first(); // ← Vẫn first(), nhưng Blade sẽ kiểm tra null
 
-        // Lịch sử: chỉ lấy Closed
         $usageHistory = BillTimeUsage::whereHas('bill', function ($query) use ($id) {
             $query->where('table_id', $id)->where('status', 'Closed');
         })
@@ -163,7 +161,7 @@ class TableController extends Controller
             ->get();
 
         $totalMinutes = $usageHistory->sum(fn($u) => $u->duration_minutes ?? 0);
-        $totalRevenue = $usageHistory->sum(fn($u) => $u->bill->total_amount ?? 0); // Dùng total_amount
+        $totalRevenue = $usageHistory->sum(fn($u) => $u->bill->total_amount ?? 0);
 
         return view('admin.tables.detail', compact(
             'table',

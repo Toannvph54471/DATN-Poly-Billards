@@ -21,8 +21,8 @@
 
         <!-- Trạng thái hiện tại -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            @if ($currentUsage)
-                <!-- Đang sử dụng -->
+            @if ($currentUsage && $currentUsage->bill)
+                <!-- ĐANG SỬ DỤNG -->
                 <div
                     class="bg-white rounded-lg shadow p-6 border {{ $currentUsage->bill->status === 'Paused' ? 'border-yellow-400' : 'border-green-400' }}">
                     <h2 class="text-lg font-semibold flex items-center gap-2">
@@ -34,16 +34,18 @@
                             <span class="text-yellow-800">TẠM DỪNG</span>
                         @endif
                     </h2>
-                    <p class="mt-2"><strong>Khách:</strong> {{ $currentUsage->bill->customer->name ?? 'Khách lẻ' }}
-                    </p>
-                    <p><strong>Nhân viên:</strong> {{ $currentUsage->bill->staff->name ?? 'Chưa có' }}</p>
+                    <p class="mt-2"><strong>Khách:</strong>
+                        {{ optional($currentUsage->bill->customer)->name ?? 'Khách lẻ' }}</p>
+                    <p><strong>Nhân viên:</strong> {{ optional($currentUsage->bill->staff)->name ?? 'Chưa có' }}</p>
                     <p><strong>Bắt đầu:</strong> {{ $currentUsage->start_time->format('H:i d/m/Y') }}</p>
-                    <!-- Thay đoạn <p><strong>Thời gian:</strong> -->
+
+                    <!-- Thời gian live -->
                     <p><strong>Thời gian:</strong>
                         <span class="live-time font-mono text-lg text-blue-700"
                             data-start="{{ $currentUsage->start_time->timestamp }}"
                             data-paused-duration="{{ $currentUsage->bill->paused_duration ?? 0 }}"
-                            data-paused-at="{{ $currentUsage->bill->status === 'Paused' ? $currentUsage->bill->paused_at?->timestamp : 0 }}"
+                            data-paused-at="{{ $currentUsage->bill->status === 'Paused' && $currentUsage->bill->paused_at ? \Carbon\Carbon::parse($currentUsage->bill->paused_at)->timestamp : 0 }}"
+                            data-status="{{ $currentUsage->bill->status }}"
                             data-rate="{{ $currentUsage->hourly_rate ?? 0 }}"
                             data-product-total="{{ $currentUsage->bill->total_amount - ($currentUsage->total_price ?? 0) }}">
                             00:00:00
@@ -81,12 +83,11 @@
                         </div>
                     </form>
 
-                    <!-- Nút điều khiển bàn -->
+                    <!-- Nút điều khiển -->
                     <div class="mt-6 space-y-3">
                         @if ($currentUsage->bill->status === 'Open')
                             <button onclick="pauseBill({{ $currentUsage->bill->id }})"
-                                class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-3 rounded-lg font-semibold 
-                                       hover:from-yellow-600 hover:to-yellow-700 flex items-center justify-center gap-2 shadow-md transition-all">
+                                class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-white py-3 rounded-lg font-semibold hover:from-yellow-600 hover:to-yellow-700 flex items-center justify-center gap-2 shadow-md transition-all">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -97,8 +98,7 @@
 
                         @if ($currentUsage->bill->status === 'Paused')
                             <button onclick="resumeBill({{ $currentUsage->bill->id }})"
-                                class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg font-semibold 
-                                       hover:from-green-600 hover:to-green-700 flex items-center justify-center gap-2 shadow-md transition-all">
+                                class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 flex items-center justify-center gap-2 shadow-md transition-all">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -110,8 +110,7 @@
                         @endif
 
                         <button onclick="confirmCloseBill({{ $currentUsage->bill->id }})"
-                            class="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-lg font-semibold 
-                                   hover:from-red-700 hover:to-red-800 flex items-center justify-center gap-2 shadow-md transition-all">
+                            class="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-lg font-semibold hover:from-red-700 hover:to-red-800 flex items-center justify-center gap-2 shadow-md transition-all">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -121,7 +120,7 @@
                     </div>
                 </div>
 
-                <!-- Danh sách sản phẩm + Tiền bàn + Tổng tiền -->
+                <!-- Danh sách sản phẩm + Tiền bàn -->
                 <div class="bg-white rounded-lg shadow p-6">
                     <h3 class="font-semibold text-gray-800 mb-3">
                         Đã gọi ({{ $currentUsage->bill->billDetails->count() }} món)
@@ -130,20 +129,16 @@
                     <div class="text-sm space-y-1 max-h-64 overflow-y-auto">
                         @forelse($currentUsage->bill->billDetails as $detail)
                             <div class="flex justify-between py-1 border-b">
-                                <span>
-                                    {{ $detail->quantity }}x
-                                    {{ $detail->product->name ?? ($detail->combo->name ?? 'N/A') }}
-                                </span>
-                                <span class="font-medium">
-                                    {{ number_format($detail->unit_price * $detail->quantity) }}đ
-                                </span>
+                                <span>{{ $detail->quantity }}x
+                                    {{ $detail->product->name ?? ($detail->combo->name ?? 'N/A') }}</span>
+                                <span
+                                    class="font-medium">{{ number_format($detail->unit_price * $detail->quantity) }}đ</span>
                             </div>
                         @empty
                             <p class="text-gray-500 italic">Chưa gọi món</p>
                         @endforelse
                     </div>
 
-                    <!-- TIỀN BÀN + TỔNG TIỀN (LIVE) -->
                     <div class="mt-4 space-y-2 border-t pt-3">
                         <div class="flex justify-between text-sm">
                             <span>Tiền sản phẩm:</span>
@@ -166,7 +161,7 @@
                     </div>
                 </div>
             @else
-                <!-- Bàn trống -->
+                <!-- BÀN TRỐNG -->
                 <div class="col-span-2 bg-gray-50 border border-gray-300 rounded-lg p-8 text-center">
                     <i class="fas fa-chair text-6xl text-gray-400 mb-4"></i>
                     <h2 class="text-xl font-semibold text-gray-700">BÀN ĐANG TRỐNG</h2>
@@ -183,7 +178,7 @@
             @endif
         </div>
 
-        <!-- Thống kê tổng -->
+        <!-- Thống kê + Lịch sử -->
         <div class="bg-white rounded-lg shadow p-6 mb-6">
             <h2 class="text-lg font-semibold text-gray-800 mb-3">Thống kê bàn</h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
@@ -196,21 +191,17 @@
                     <p class="text-sm text-gray-600">Tổng phút</p>
                 </div>
                 <div class="bg-yellow-50 p-4 rounded">
-                    <p class="text-2xl font-bold text-yellow-700">
-                        {{ number_format($totalRevenue) }}đ
-                    </p>
+                    <p class="text-2xl font-bold text-yellow-700">{{ number_format($totalRevenue) }}đ</p>
                     <p class="text-sm text-gray-600">Doanh thu</p>
                 </div>
                 <div class="bg-purple-50 p-4 rounded">
                     <p class="text-2xl font-bold text-purple-700">
-                        {{ $totalRevenue > 0 ? round($totalMinutes / $usageHistory->count(), 1) : 0 }}
-                    </p>
+                        {{ $totalRevenue > 0 ? round($totalMinutes / $usageHistory->count(), 1) : 0 }}</p>
                     <p class="text-sm text-gray-600">Phút trung bình</p>
                 </div>
             </div>
         </div>
 
-        <!-- Lịch sử sử dụng -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <div class="px-6 py-4 border-b bg-gray-50">
                 <h2 class="text-lg font-semibold text-gray-800">Lịch sử sử dụng ({{ $usageHistory->count() }})</h2>
@@ -219,41 +210,30 @@
                 <table class="min-w-full text-sm">
                     <thead class="bg-gray-100">
                         <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                Thời gian</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                Khách</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                NV</th>
-                            <th
-                                class="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                Phút</th>
-                            <th
-                                class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
-                                Tiền</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Thời gian</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Khách</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">NV</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase">Phút</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Tiền</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($usageHistory as $usage)
-                            <tr class="hover:bg-gray-50 transition-colors">
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm">{{ $usage->start_time->format('d/m H:i') }} -
+                                    {{ $usage->end_time?->format('H:i') ?? '--' }}</td>
                                 <td class="px-4 py-3 text-sm">
-                                    {{ $usage->start_time->format('d/m H:i') }} -
-                                    {{ $usage->end_time?->format('H:i') ?? '--' }}
-                                </td>
-                                <td class="px-4 py-3 text-sm">{{ $usage->bill->customer->name ?? 'Khách lẻ' }}</td>
-                                <td class="px-4 py-3 text-sm">{{ $usage->bill->staff->name ?? '-' }}</td>
+                                    {{ optional($usage->bill->customer)->name ?? 'Khách lẻ' }}</td>
+                                <td class="px-4 py-3 text-sm">{{ optional($usage->bill->staff)->name ?? '-' }}</td>
                                 <td class="px-4 py-3 text-center font-medium text-sm">
-                                    {{ $usage->duration_minutes ?? '?' }}
-                                </td>
+                                    {{ $usage->duration_minutes ?? '?' }}</td>
                                 <td class="px-4 py-3 text-right font-bold text-green-600 text-sm">
-                                    {{ number_format($usage->bill->total_amount ?? 0) }}đ
-                                </td>
+                                    {{ number_format($usage->bill->total_amount ?? 0) }}đ</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-gray-500 text-sm">
-                                    Chưa có lịch sử sử dụng
-                                </td>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-500 text-sm">Chưa có lịch sử
+                                    sử dụng</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -262,48 +242,58 @@
         </div>
     </div>
 
-    <!-- JavaScript - Tính tiền bàn live -->
+    <!-- JavaScript - Tính live chính xác -->
     <script>
         function updateLiveTimeAndPrice() {
             const el = document.querySelector('.live-time');
             if (!el) return;
 
             const start = parseInt(el.dataset.start) * 1000;
-            const paused = parseInt(el.dataset.paused) || 0;
+            const pausedDuration = parseInt(el.dataset.pausedDuration) || 0;
+            const pausedAt = parseInt(el.dataset.pausedAt) || 0;
+            const status = el.dataset.status;
             const rate = parseFloat(el.dataset.rate) || 0;
             const productTotal = parseFloat(el.dataset.productTotal) || 0;
             const now = new Date().getTime();
 
-            // Tính giây đã trôi
-            let diffSeconds = Math.floor((now - start) / 1000);
-            let totalMinutes = Math.floor(diffSeconds / 60) - paused;
-            totalMinutes = Math.max(0, totalMinutes);
+            let totalMinutes = 0;
+            let displayTime = '00:00:00';
 
-            // Cập nhật thời gian
-            const hours = String(Math.floor(diffSeconds / 3600)).padStart(2, '0');
-            const minutes = String(Math.floor((diffSeconds % 3600) / 60)).padStart(2, '0');
-            const seconds = String(diffSeconds % 60).padStart(2, '0');
-            el.textContent = `${hours}:${minutes}:${seconds}`;
+            if (status === 'Open') {
+                const diffSeconds = Math.floor((now - start) / 1000);
+                totalMinutes = Math.max(0, Math.floor(diffSeconds / 60) - pausedDuration);
+                const h = String(Math.floor(diffSeconds / 3600)).padStart(2, '0');
+                const m = String(Math.floor((diffSeconds % 3600) / 60)).padStart(2, '0');
+                const s = String(diffSeconds % 60).padStart(2, '0');
+                displayTime = `${h}:${m}:${s}`;
+            } else if (status === 'Paused' && pausedAt > 0) {
+                const diffSeconds = Math.floor((pausedAt * 1000 - start) / 1000);
+                totalMinutes = Math.max(0, Math.floor(diffSeconds / 60) - pausedDuration);
+                const h = String(Math.floor(diffSeconds / 3600)).padStart(2, '0');
+                const m = String(Math.floor((diffSeconds % 3600) / 60)).padStart(2, '0');
+                const s = String(diffSeconds % 60).padStart(2, '0');
+                displayTime = `${h}:${m}:${s}`;
+            }
 
-            // Tính tiền bàn
-            if (rate > 0) {
+            el.textContent = displayTime;
+
+            // Chỉ tăng tiền khi Open
+            if (rate > 0 && status === 'Open') {
                 const tablePrice = Math.round((totalMinutes / 60) * rate);
                 const grandTotal = productTotal + tablePrice;
-
-                document.getElementById('live-table-price').textContent = `${tablePrice.toLocaleString()}đ`;
-                document.getElementById('live-total-amount').textContent = `${grandTotal.toLocaleString()}đ`;
+                document.getElementById('live-table-price').textContent = tablePrice.toLocaleString() + 'đ';
+                document.getElementById('live-total-amount').textContent = grandTotal.toLocaleString() + 'đ';
             }
         }
 
-        // Cập nhật mỗi giây
         setInterval(updateLiveTimeAndPrice, 1000);
         updateLiveTimeAndPrice();
 
-        // === CÁC HÀM CŨ ===
-        function toggleQuantity(checkbox) {
-            const qtyInput = checkbox.closest('.product-row').querySelector('.quantity-input');
-            qtyInput.classList.toggle('hidden', !checkbox.checked);
-            if (!checkbox.checked) qtyInput.value = 1;
+        // Các hàm cũ
+        function toggleQuantity(cb) {
+            const input = cb.closest('.product-row').querySelector('.quantity-input');
+            input.classList.toggle('hidden', !cb.checked);
+            if (!cb.checked) input.value = 1;
         }
 
         function selectAll() {
@@ -320,21 +310,16 @@
             });
         }
 
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function() {
-                this.querySelectorAll('.quantity-input.hidden').forEach(input => {
-                    input.removeAttribute('name');
-                });
-            });
-        });
+        document.querySelectorAll('form').forEach(f => f.addEventListener('submit', () => {
+            f.querySelectorAll('.quantity-input.hidden').forEach(i => i.removeAttribute('name'));
+        }));
 
-        function callBillAction(id, action, successMsg) {
+        function callBillAction(id, action, msg) {
             const btn = event.target.closest('button');
-            const original = btn.innerHTML;
+            const orig = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML =
                 `<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang xử lý...`;
-
             fetch(`/admin/bills/${id}/${action}`, {
                     method: 'POST',
                     headers: {
@@ -343,14 +328,14 @@
                     }
                 })
                 .then(r => r.json())
-                .then(data => {
-                    showToast(data.success ? successMsg : (data.message || 'Lỗi'), data.success ? 'success' : 'error');
-                    if (data.success) setTimeout(() => location.reload(), 1000);
+                .then(d => {
+                    showToast(d.success ? msg : (d.message || 'Lỗi'), d.success ? 'success' : 'error');
+                    if (d.success) setTimeout(() => location.reload(), 1000);
                 })
                 .catch(() => showToast('Lỗi kết nối', 'error'))
                 .finally(() => {
                     btn.disabled = false;
-                    btn.innerHTML = original;
+                    btn.innerHTML = orig;
                 });
         }
 
@@ -363,77 +348,23 @@
         }
 
         function confirmCloseBill(id) {
-            if (confirm('Xác nhận tính tiền và kết thúc bàn?\nHóa đơn sẽ được chốt vĩnh viễn.')) {
-                callBillAction(id, 'close', 'Thanh toán thành công!');
-            }
+            if (confirm('Xác nhận tính tiền và kết thúc bàn?\nHóa đơn sẽ được chốt vĩnh viễn.')) callBillAction(id, 'close',
+                'Thanh toán thành công!');
         }
 
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-6 right-6 px-6 py-3 rounded-lg text-white font-medium shadow-xl z-50 
-                               transform transition-all duration-300 translate-y-16 opacity-0
-                               ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.classList.remove('translate-y-16', 'opacity-0'), 100);
+        function showToast(msg, type = 'success') {
+            const t = document.createElement('div');
+            t.className =
+                `fixed bottom-6 right-6 px-6 py-3 rounded-lg text-white font-medium shadow-xl z-50 transform transition-all duration-300 translate-y-16 opacity-0 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.classList.remove('translate-y-16', 'opacity-0'), 100);
             setTimeout(() => {
-                toast.classList.add('translate-y-16', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
+                t.classList.add('translate-y-16', 'opacity-0');
+                setTimeout(() => t.remove(), 300);
             }, 3000);
         }
-
-        function updateLiveTimeAndPrice() {
-            const el = document.querySelector('.live-time');
-            if (!el) return;
-
-            const start = parseInt(el.dataset.start) * 1000;
-            const pausedDuration = parseInt(el.dataset.pausedDuration) || 0;
-            const pausedAt = parseInt(el.dataset.pausedAt) || 0;
-            const rate = parseFloat(el.dataset.rate) || 0;
-            const productTotal = parseFloat(el.dataset.productTotal) || 0;
-            const now = new Date().getTime();
-
-            let totalMinutes = 0;
-            let displayTime = '00:00:00';
-
-            @if ($currentUsage->bill->status === 'Open')
-                // Đang chạy: tính từ start_time - paused_duration
-                let diffSeconds = Math.floor((now - start) / 1000);
-                totalMinutes = Math.floor(diffSeconds / 60) - pausedDuration;
-                totalMinutes = Math.max(0, totalMinutes);
-
-                const hours = String(Math.floor(diffSeconds / 3600)).padStart(2, '0');
-                const minutes = String(Math.floor((diffSeconds % 3600) / 60)).padStart(2, '0');
-                const seconds = String(diffSeconds % 60).padStart(2, '0');
-                displayTime = `${hours}:${minutes}:${seconds}`;
-            @elseif ($currentUsage->bill->status === 'Paused' && $currentUsage->bill->paused_at)
-                // Đang tạm dừng: tính từ start_time đến paused_at - paused_duration
-                let diffSeconds = Math.floor((pausedAt * 1000 - start) / 1000);
-                totalMinutes = Math.floor(diffSeconds / 60) - pausedDuration;
-                totalMinutes = Math.max(0, totalMinutes);
-
-                const hours = String(Math.floor(diffSeconds / 3600)).padStart(2, '0');
-                const minutes = String(Math.floor((diffSeconds % 3600) / 60)).padStart(2, '0');
-                const seconds = String(diffSeconds % 60).padStart(2, '0');
-                displayTime = `${hours}:${minutes}:${seconds}`;
-            @endif
-
-            // Cập nhật UI
-            el.textContent = displayTime;
-
-            // Tính tiền bàn (chỉ tăng khi Open)
-            if (rate > 0 && '{{ $currentUsage->bill->status }}' === 'Open') {
-                const tablePrice = Math.round((totalMinutes / 60) * rate);
-                const grandTotal = productTotal + tablePrice;
-
-                document.getElementById('live-table-price').textContent = `${tablePrice.toLocaleString()}đ`;
-                document.getElementById('live-total-amount').textContent = `${grandTotal.toLocaleString()}đ`;
-            }
-        }
     </script>
-
-
-
 </body>
 
 </html>
