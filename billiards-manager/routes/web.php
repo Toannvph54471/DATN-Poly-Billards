@@ -114,4 +114,17 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/promotions/{id}/restore', [PromotionController::class, 'restore'])->name('admin.promotions.restore');
     Route::delete('/promotions/{id}/destroy', [PromotionController::class, 'destroy'])->name('admin.promotions.destroy');
     Route::delete('/promotions/{id}/force-delete', [PromotionController::class, 'forceDelete'])->name('admin.promotions.forceDelete');
+
+    // Customers
+
+    Route::get('/customers', [CustomerController::class, 'index'])->name('admin.customers.index');
+    Route::get('/customers/create', [CustomerController::class, 'create'])->name('admin.customers.create');
+    Route::post('/customers', [CustomerController::class, 'store'])->name('admin.customers.store');
+    Route::get('/customers/{id}', [CustomerController::class, 'show'])->name('admin.customers.show');
+    Route::get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('admin.customers.edit');
+    Route::put('/customers/{id}', [CustomerController::class, 'update'])->name('admin.customers.update');
+    Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('admin.customers.destroy');
+    Route::get('/customers/trashed', [CustomerController::class, 'trash'])->name('admin.customers.trashed');
+    Route::post('/customers/{id}/restore', [CustomerController::class, 'restore'])->name('admin.customers.restore');
+    Route::delete('/customers/{id}/force-delete', [CustomerController::class, 'forceDelete'])->name('admin.customers.force-delete');
 });

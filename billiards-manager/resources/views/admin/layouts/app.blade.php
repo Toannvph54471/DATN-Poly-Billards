@@ -129,25 +129,25 @@
                 <a href="{{ route('admin.tables.index') }}"
                     class="nav-item {{ request()->routeIs('tables.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fa-solid fa-table w-6 mr-3"></i>
-                    <span class="font-medium">Bàn Billards</span>
-                </a>
-
-                <a href=""
-                    class="nav-item {{ request()->routeIs('products.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-boxes w-6 mr-3"></i>
-                    <span class="font-medium">Hàng hóa</span>
+                    <span class="font-medium">Quản lý bàn</span>
                 </a>
 
                 <a href="{{ route('admin.users.index') }}"
                     class="nav-item {{ request()->routeIs('customers.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-users w-6 mr-3"></i>
-                    <span class="font-medium">Khách hàng</span>
+                    <span class="font-medium">Quản lý người dùng</span>
                 </a>
+
+               <a href="{{ route('admin.customers.index') }}"
+                    class="nav-item {{ request()->routeIs('admin.customers.*') ? 'active' : '' }} flex items-center p-3">
+                     <i class="fas fa-users w-6 mr-3"></i>
+                     <span class="font-medium">Quản lý khách hàng</span>
+               </a>
 
                 <a href="{{ route('admin.employees.index') }}"
                     class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }} flex items-center px-4 py-3 text-white hover:text-white">
                     <i class="fas fa-user-tie mr-3"></i>
-                    Nhân viên
+                    Quản lý nhân viên
                 </a>
 
                 <a href=""
@@ -159,17 +159,17 @@
                 <a href="{{ route('admin.combos.index') }}"
                     class="nav-item {{ request()->routeIs('combos.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-layer-group w-6 mr-3"></i>
-                    <span class="font-medium">Combos Bàn</span>
+                    <span class="font-medium">Quản lý Combos</span>
                 </a>
                 <a href="{{ route('admin.products.index') }}"
                     class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-cubes text-white text-lg w-6 mr-3"></i>
-                    <span class="font-medium">Sản phẩm</span>
+                    <span class="font-medium">Quản lý sản phẩm</span>
                 </a>
                 <a href="{{ route('admin.promotions.index') }}"
                     class="nav-item {{ request()->routeIs('promotions.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-tag w-6 mr-3"></i>
-                    <span class="font-medium">Khuyến mại</span>
+                    <span class="font-medium">Quản lý khuyến mại</span>
                 </a>
                
                 <a href="{{ route('admin.roles.index') }}"

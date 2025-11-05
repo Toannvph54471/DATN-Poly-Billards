@@ -21,6 +21,7 @@ return new class extends Migration
     $table->decimal('total_spent', 12, 2)->default(0);
     $table->timestamp('last_visit_at')->nullable(); // Thêm trường này
     $table->text('note')->nullable();
+    $table->softDeletes(); 
     $table->timestamps();
 });
     }

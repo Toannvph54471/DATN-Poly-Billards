@@ -221,6 +221,10 @@
                 </button>
             </div>
             <div class="flex space-x-2">
+                <button onclick="window.history.back()"
+                   class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-gray-700 flex items-center">
+                   <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                </button>
                 <button class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
                     onclick="saveAllChanges()" id="saveAllBtn">
                     <i class="fas fa-save mr-2"></i>Lưu Tất Cả Thay Đổi
