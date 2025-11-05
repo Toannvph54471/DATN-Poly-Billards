@@ -5,6 +5,7 @@ namespace App\Models;
 class Bill extends BaseModel
 {
     const STATUS_OPEN = 'open';
+    const STATUS_PAUSED = 'paused';
     const STATUS_PLAYING = 'playing';
     const STATUS_PENDING_PAYMENT = 'pending_payment';
     const STATUS_PAID = 'paid';
@@ -22,6 +23,7 @@ class Bill extends BaseModel
         'staff_id',
         'start_time',
         'end_time',
+        'paused_at',
         'total_time',
         'table_price',
         'product_total',
@@ -33,7 +35,8 @@ class Bill extends BaseModel
         'status',
         'notes',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'paused_duration',
     ];
 
     protected $casts = [
@@ -62,11 +65,11 @@ class Bill extends BaseModel
     {
         return $this->belongsTo(Employee::class);
     }
-    
+
     public function comboTimeUsages()
-{
-    return $this->hasMany(ComboTimeUsage::class);
-}
+    {
+        return $this->hasMany(ComboTimeUsage::class);
+    }
 
     public function billDetails()
     {
@@ -131,5 +134,10 @@ class Bill extends BaseModel
             'status' => self::STATUS_PAID,
             'payment_status' => self::STATUS_PAID
         ]);
+    }
+
+    public function staff()
+    {
+        return $this->belongsTo(User::class, 'staff_id');
     }
 }

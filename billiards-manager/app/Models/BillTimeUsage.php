@@ -9,16 +9,16 @@ class BillTimeUsage extends BaseModel
         'bill_id',
         'start_time',
         'end_time',
-        'duration',
-        'rate_per_hour',
-        'total_cost',
+        'duration_minutes',
+        'hourly_rate',
+        'total_price',
         'created_by'
     ];
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
-        'duration' => 'integer', // in minutes
+        'duration_minutes' => 'integer', // in minutes
         'rate_per_hour' => 'decimal:2',
         'total_cost' => 'decimal:2'
     ];
@@ -35,4 +35,12 @@ class BillTimeUsage extends BaseModel
         $hours = $this->duration / 60;
         return $hours * $this->rate_per_hour;
     }
+
+    public function getDurationMinutesAttribute()
+    {
+        if (!$this->end_time) return 0;
+        return $this->start_time->diffInMinutes($this->end_time);
+    }
+
+    
 }

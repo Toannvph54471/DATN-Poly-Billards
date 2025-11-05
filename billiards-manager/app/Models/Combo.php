@@ -25,15 +25,15 @@ class Combo extends BaseModel
     // Relationships
     public function comboItems()
     {
-        return $this->hasMany(ComboItem::class);
+        return $this->hasMany(ComboItem::class, 'combo_id');
     }
-    
-        public function promotions()
+
+    public function promotions()
     {
         return $this->belongsToMany(Promotion::class, 'promotion_combo');
     }
 
-     public function timeUsages()
+    public function timeUsages()
     {
         return $this->hasMany(ComboTimeUsage::class);
     }

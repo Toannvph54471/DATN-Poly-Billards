@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\BaseModel;
 
 class ComboTimeUsage extends BaseModel
 {

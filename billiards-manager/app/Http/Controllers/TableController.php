@@ -131,26 +131,39 @@ class TableController extends Controller
     public function detail($id)
     {
         $table = Table::findOrFail($id);
-        $products = Product::all();
 
-        // Lấy phiên sử dụng hiện tại (nếu có)
-        $currentUsage = BillTimeUsage::whereHas('bill', function ($query) use ($id) {
-            $query->where('table_id', $id);
-        })
-            ->whereNull('end_time')
-            ->first();
-
-        // Lấy lịch sử sử dụng
-        $usageHistory = BillTimeUsage::whereHas('bill', function ($query) use ($id) {
-            $query->where('table_id', $id);
-        })
-            ->whereNotNull('end_time')
-            ->orderBy('start_time', 'desc')
+        $products = Product::where('stock_quantity', '>', 0)
+            ->select('id', 'name', 'price')
             ->get();
 
-        // Tính tổng thống kê
-        $totalMinutes = $usageHistory->sum('duration');
-        $totalRevenue = $usageHistory->sum('total_cost');
+        // SỬA: Cho phép cả Open và Paused
+        $currentUsage = BillTimeUsage::whereHas('bill', function ($query) use ($id) {
+            $query->where('table_id', $id)
+                ->whereIn('status', ['Open', 'Paused']); // CHO PHÉP CẢ 2 TRẠNG THÁI
+        })
+            ->whereNull('end_time')
+            ->with([
+                'bill' => function ($q) {
+                    $q->with(['staff', 'customer'])
+                        ->with(['billDetails' => function ($q) {
+                            $q->with(['product', 'combo']);
+                        }]);
+                }
+            ])
+            ->first();
+
+        // Lịch sử: chỉ lấy Closed
+        $usageHistory = BillTimeUsage::whereHas('bill', function ($query) use ($id) {
+            $query->where('table_id', $id)->where('status', 'Closed');
+        })
+            ->whereNotNull('end_time')
+            ->with('bill')
+            ->orderBy('start_time', 'desc')
+            ->take(50)
+            ->get();
+
+        $totalMinutes = $usageHistory->sum(fn($u) => $u->duration_minutes ?? 0);
+        $totalRevenue = $usageHistory->sum(fn($u) => $u->bill->total_amount ?? 0); // Dùng total_amount
 
         return view('admin.tables.detail', compact(
             'table',

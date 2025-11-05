@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ComboItem extends BaseModel
 {
     use SoftDeletes;
-    
+
     protected $fillable = [
         'combo_id',
         'product_id',
@@ -24,12 +24,12 @@ class ComboItem extends BaseModel
     // Relationships
     public function combo()
     {
-        return $this->belongsTo(Combo::class);
+        return $this->belongsTo(Combo::class, 'combo_id');
     }
 
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
     // Methods
