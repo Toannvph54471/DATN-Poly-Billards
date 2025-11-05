@@ -101,6 +101,10 @@ public function store(Request $request)
         ->route('admin.promotions.index')
         ->with('success', 'Đã thêm chương trình khuyến mãi thành công!');
 }
-
+    public function show($id)
+    {
+        $promotion = Promotion::findOrFail($id);
+        return view('admin.promotions.show', compact('promotion'));
+    }
 
 }
