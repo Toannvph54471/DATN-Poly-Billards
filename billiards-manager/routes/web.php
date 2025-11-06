@@ -26,11 +26,42 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Api\ComboTimeController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\FaqController;
+use App\Http\Controllers\PromotionClientController;
 
 
-Route::get('/', function () {
-    return view('home');
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::get('/faq', [FaqController::class, 'index'])->name('faq');
+
+// Promotions
+    Route::get('/promotions', [PromotionClientController::class, 'index'])->name('promotions.index');
+    Route::get('/promotions/{promotion}', [PromotionClientController::class, 'show'])->name('promotions.show');
+
+        
+    Route::prefix('api')->group(function () {
+        Route::post('/tables/available', [ReservationController::class, 'checkAvailability'])->name('api.tables.available');
+        Route::post('/reservations/search', [ReservationController::class, 'search'])->name('api.reservations.search');
+        Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('api.reservations.checkin');
+        Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('api.reservations.cancel');
 });
+
+// Authenticated Customer Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
+    Route::get('/reservation', [ReservationController::class, 'create'])->name('reservation.create');
+    Route::post('/reservation', [ReservationController::class, 'store'])->name('reservation.store');
+    Route::get('/reservations/track', [ReservationController::class, 'track'])->name('reservations.track');
+
+//profile
+    Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
+    Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
+    
+});
+
 
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
