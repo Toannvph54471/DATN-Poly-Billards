@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ComboItem extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'combo_id',
         'product_id',
@@ -17,12 +20,12 @@ class ComboItem extends Model
 
     public function combo()
     {
-        return $this->belongsTo(Combo::class);
+        return $this->belongsTo(Combo::class, 'combo_id');
     }
 
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
     // Tính giá theo product->price hiện tại

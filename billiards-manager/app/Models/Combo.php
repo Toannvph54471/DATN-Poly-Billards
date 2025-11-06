@@ -30,10 +30,10 @@ class Combo extends Model
     // Relationships
     public function comboItems()
     {
-        return $this->hasMany(ComboItem::class);
+        return $this->hasMany(ComboItem::class, 'combo_id');
     }
 
-    public function tableCategory()
+    public function promotions()
     {
         return $this->belongsTo(Category::class, 'table_category_id');
     }

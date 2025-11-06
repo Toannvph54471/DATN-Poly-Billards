@@ -18,6 +18,15 @@
                class="bg-white border-2 border-gray-200 text-gray-700 px-6 py-2.5 rounded-xl hover:bg-gray-50 font-medium transition flex items-center">
                 <i class="fas fa-trash mr-2"></i>Thùng rác
             </a>
+<<<<<<< HEAD
+            <a href="{{ route('trash') }}"
+   class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center">
+    <i class="fas fa-trash mr-2"></i>
+    Thùng rác
+</a>
+
+=======
+>>>>>>> 688976ddd043ae31c9c7c6f524c260e58a814a7e
         </div>
     </div>
 </div>
