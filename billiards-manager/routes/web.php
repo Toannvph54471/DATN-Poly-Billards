@@ -114,4 +114,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/promotions/{id}/restore', [PromotionController::class, 'restore'])->name('admin.promotions.restore');
     Route::delete('/promotions/{id}/destroy', [PromotionController::class, 'destroy'])->name('admin.promotions.destroy');
     Route::delete('/promotions/{id}/force-delete', [PromotionController::class, 'forceDelete'])->name('admin.promotions.forceDelete');
+
+    //Combos - API routes (THÊM MỚI)
+    Route::get('/combos-api/rates-by-category', [ComboController::class, 'getTableRatesByCategory'])->name('admin.combos.rates-by-category');
+    Route::post('/combos-api/preview-price', [ComboController::class, 'previewComboPrice'])->name('admin.combos.preview-price');
+    Route::get('/combos-api/calculate-table-price', [ComboController::class, 'calculateTablePriceAPI'])->name('admin.combos.calculate-table-price');
+
 });

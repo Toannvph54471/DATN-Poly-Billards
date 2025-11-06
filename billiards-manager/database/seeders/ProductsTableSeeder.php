@@ -11,49 +11,11 @@ class ProductsTableSeeder extends Seeder
     public function run(): void
     {
         $products = [
-            // Dịch vụ
-            [
-                'product_code' => 'SERVICE001',
-                'name' => 'Giờ chơi bàn Standard',
-                'category_id' => Category::where('name', 'Dịch vụ')->first()->id,
-                'product_type' => 'Service',
-                'price' => 50000,
-                'cost_price' => 0,
-                'stock_quantity' => 9999,
-                'min_stock_level' => 0,
-                'unit' => 'giờ',
-                'status' => 'Active',
-            ],
-            [
-                'product_code' => 'SERVICE002',
-                'name' => 'Giờ chơi bàn VIP',
-                'category_id' => Category::where('name', 'Dịch vụ')->first()->id,
-                'product_type' => 'Service',
-                'price' => 80000,
-                'cost_price' => 0,
-                'stock_quantity' => 9999,
-                'min_stock_level' => 0,
-                'unit' => 'giờ',
-                'status' => 'Active',
-            ],
-            [
-                'product_code' => 'SERVICE003',
-                'name' => 'Giờ chơi bàn Competition',
-                'category_id' => Category::where('name', 'Dịch vụ')->first()->id,
-                'product_type' => 'Service',
-                'price' => 100000,
-                'cost_price' => 0,
-                'stock_quantity' => 9999,
-                'min_stock_level' => 0,
-                'unit' => 'giờ',
-                'status' => 'Active',
-            ],
-
             // Đồ uống
             [
                 'product_code' => 'DRK001',
                 'name' => 'Coca Cola',
-                'category_id' => Category::where('name', 'Nước ngọt')->first()->id,
+                'category_name' => 'Nước ngọt',
                 'product_type' => 'Consumption',
                 'price' => 20000,
                 'cost_price' => 12000,
@@ -65,7 +27,7 @@ class ProductsTableSeeder extends Seeder
             [
                 'product_code' => 'DRK002',
                 'name' => 'Pepsi',
-                'category_id' => Category::where('name', 'Nước ngọt')->first()->id,
+                'category_name' => 'Nước ngọt',
                 'product_type' => 'Consumption',
                 'price' => 20000,
                 'cost_price' => 12000,
@@ -74,12 +36,11 @@ class ProductsTableSeeder extends Seeder
                 'unit' => 'chai',
                 'status' => 'Active'
             ],
-
             // Đồ ăn
             [
                 'product_code' => 'FOD001',
                 'name' => 'Bim bim',
-                'category_id' => Category::where('name', 'Snack')->first()->id,
+                'category_name' => 'Snack',
                 'product_type' => 'Consumption',
                 'price' => 15000,
                 'cost_price' => 8000,
@@ -90,8 +51,27 @@ class ProductsTableSeeder extends Seeder
             ]
         ];
 
-        foreach ($products as $product) {
-            Product::create($product);
+        foreach ($products as $p) {
+            $category = Category::where('name', $p['category_name'])->first();
+
+            if (!$category) {
+                continue; // Bỏ qua nếu category không tồn tại
+            }
+
+            Product::firstOrCreate(
+                ['product_code' => $p['product_code']], // Kiểm tra theo mã duy nhất
+                [
+                    'name' => $p['name'],
+                    'category_id' => $category->id,
+                    'product_type' => $p['product_type'],
+                    'price' => $p['price'],
+                    'cost_price' => $p['cost_price'],
+                    'stock_quantity' => $p['stock_quantity'],
+                    'min_stock_level' => $p['min_stock_level'],
+                    'unit' => $p['unit'],
+                    'status' => $p['status'],
+                ]
+            );
         }
     }
 }

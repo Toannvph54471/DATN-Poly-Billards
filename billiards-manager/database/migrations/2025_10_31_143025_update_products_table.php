@@ -6,36 +6,54 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    // File: 2025_10_31_143025_update_products_table.php
-public function up(): void
-{
-    Schema::table('products', function (Blueprint $table) {
-        // XÓA cột category cũ (string)
-        $table->dropColumn('category');
+    public function up(): void
+    {
+        Schema::table('products', function (Blueprint $table) {
+            // 1. XÓA cột cũ (kiểm tra tồn tại)
+            if (Schema::hasColumn('products', 'category')) {
+                $table->dropColumn('category');
+            }
 
-        // Thêm category_id
-        $table->foreignId('category_id')
-              ->nullable()
-              ->after('name')
-              ->constrained('categories')
-              ->nullOnDelete();
+            // 2. Thêm category_id (chỉ nếu chưa có)
+            if (! Schema::hasColumn('products', 'category_id')) {
+                $table->foreignId('category_id')
+                    ->nullable()
+                    ->after('name')
+                    ->constrained('categories')
+                    ->nullOnDelete();
+            }
 
-        // Thay đổi product_type thành enum
-        $table->dropColumn('product_type');
-        $table->enum('product_type', ['Service', 'Consumption'])
-              ->default('Consumption')
-              ->after('category_id');
-    });
-}
+            // 3. Thay đổi product_type
+            if (Schema::hasColumn('products', 'product_type')) {
+                $table->dropColumn('product_type');
+            }
 
-public function down(): void
-{
-    Schema::table('products', function (Blueprint $table) {
-        $table->dropConstrainedForeignId('category_id');
-        $table->dropColumn('product_type');
+            $table->enum('product_type', ['Service', 'Consumption'])
+                ->default('Consumption')
+                ->after('category_id');
+        });
+    }
 
-        // Khôi phục lại cột cũ
-        $table->string('category')->after('name');
-        $table->string('product_type')->default('Single')->after('category');
-    });
-}};
+    public function down(): void
+    {
+        Schema::table('products', function (Blueprint $table) {
+            // Xóa category_id
+            if (Schema::hasColumn('products', 'category_id')) {
+                $table->dropConstrainedForeignId('category_id');
+            }
+
+            // Xóa product_type mới
+            if (Schema::hasColumn('products', 'product_type')) {
+                $table->dropColumn('product_type');
+            }
+
+            // Khôi phục cột cũ
+            if (! Schema::hasColumn('products', 'category')) {
+                $table->string('category')->after('name');
+            }
+            if (! Schema::hasColumn('products', 'product_type')) {
+                $table->string('product_type')->default('Single')->after('category');
+            }
+        });
+    }
+};

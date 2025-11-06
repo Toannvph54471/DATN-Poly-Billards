@@ -27,7 +27,10 @@ class DatabaseSeeder extends Seeder
             ReservationSeeder::class,
             ReservationStatusHistorySeeder::class,
             PromotionApplicationSeeder::class,
-           
+            CategoriesTableSeeder::class,
+            TableRatesTableSeeder::class,     // Thêm mới
+            ProductsTableSeeder::class,
+            CombosTableSeeder::class,
 
         ]);
     }

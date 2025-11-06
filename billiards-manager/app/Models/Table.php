@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Services\TablePricingService;
 
 class Table extends BaseModel
 {
@@ -21,11 +22,10 @@ class Table extends BaseModel
     protected $fillable = [
         'table_number',
         'table_name',
-        'category_id', // ĐÃ CÓ
-        'capacity',    // ĐÃ CÓ từ migration
+        'category_id',
+        'capacity',
         'type',
         'status',
-        'hourly_rate',
         'description',
         'position',
         'created_by',
@@ -33,7 +33,7 @@ class Table extends BaseModel
     ];
 
     protected $casts = [
-        'hourly_rate' => 'decimal:2',
+        // REMOVED: 'hourly_rate' => 'decimal:2',
     ];
 
     // Relationships
@@ -77,7 +77,7 @@ class Table extends BaseModel
         return $query->where('category_id', $categoryId);
     }
 
-    // Methods
+    // Status Methods
     public function isAvailable(): bool
     {
         return $this->status === self::STATUS_AVAILABLE;
@@ -96,5 +96,71 @@ class Table extends BaseModel
     public function getCategoryName(): string
     {
         return $this->category?->name ?? 'Unknown';
+    }
+
+    // ============ PRICING METHODS - MỚI ============
+
+    /**
+     * Lấy giá giờ của bàn (từ service)
+     * 
+     * @param string|null $rateCode - Mã gói giá đặc biệt
+     * @return float
+     */
+    public function getHourlyRate(?string $rateCode = null): float
+    {
+        return app(TablePricingService::class)->getHourlyRate($this, now(), $rateCode);
+    }
+
+    /**
+     * Tính giá bàn theo số phút
+     */
+    public function calculatePrice(int $minutes, ?string $rateCode = null): float
+    {
+        return app(TablePricingService::class)->calculateTablePrice($this, $minutes, $rateCode);
+    }
+
+    /**
+     * Lấy thông tin chi tiết về giá
+     */
+    public function getPricingDetails(int $minutes = 60, ?string $rateCode = null): array
+    {
+        return app(TablePricingService::class)->getPricingDetails($this, $minutes, $rateCode);
+    }
+
+    /**
+     * Lấy các gói giá có sẵn cho bàn này
+     */
+    public function getAvailableRates(): array
+    {
+        if (!$this->category_id) {
+            return [];
+        }
+
+        return app(TablePricingService::class)->getAvailableRates($this->category_id);
+    }
+
+    /**
+     * Kiểm tra bàn có hỗ trợ gói giá này không
+     */
+    public function supportsRateCode(string $rateCode): bool
+    {
+        $rates = $this->getAvailableRates();
+
+        foreach ($rates as $rate) {
+            if ($rate['code'] === $rateCode) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * DEPRECATED: Dùng getHourlyRate() thay thế
+     * Giữ lại để tương thích ngược
+     */
+    public function hourly_rate(): float
+    {
+        return $this->getHourlyRate();
     }
 }
