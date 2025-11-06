@@ -12,16 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('customers', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('phone');
-            $table->string('email')->nullable();
-            $table->string('customer_type')->default('New'); // Regular, VIP, New
-            $table->integer('total_visits')->default(0);
-            $table->decimal('total_spent', 12, 2)->default(0);
-            $table->text('note')->nullable();
-            $table->timestamps();
-        });
+    $table->id();
+    $table->string('name');
+    $table->string('phone')->unique(); // Thêm unique để tránh trùng
+    $table->string('email')->nullable();
+    $table->string('customer_type')->default('New'); // Regular, VIP, New
+    $table->integer('total_visits')->default(0);
+    $table->decimal('total_spent', 12, 2)->default(0);
+    $table->timestamp('last_visit_at')->nullable(); // Thêm trường này
+    $table->text('note')->nullable();
+    $table->timestamps();
+});
     }
 
     /**

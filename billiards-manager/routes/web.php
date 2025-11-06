@@ -1,4 +1,5 @@
 <?php
+
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Api\ComboTimeController;
 
 
 Route::get('/', function () {
@@ -55,7 +57,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos/{id}/edit', [ComboController::class, 'edit'])->name('admin.combos.edit');
     Route::put('/combos/{id}', [ComboController::class, 'update'])->name('admin.combos.update');
     Route::delete('/combos/{id}', [ComboController::class, 'destroy'])->name('admin.combos.destroy');
-    
+    Route::get('/combos/trash', [ComboController::class, 'trash'])->name('admin.combos.trash');
+    Route::post('/combos/restore/{id}', [ComboController::class, 'restore'])->name('admin.combos.restore');
+    Route::delete('/combos/force-delete/{id}', [ComboController::class, 'forceDelete'])->name('admin.combos.forceDelete');
+
+
     // Roles
     Route::get('/roles', [RoleController::class, 'index'])->name('admin.roles.index');
 
@@ -69,7 +75,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
     Route::get('/tables/{id}/edit', [TableController::class, 'edit'])->name('admin.tables.edit');
     Route::put('/tables/{id}', [TableController::class, 'update'])->name('admin.tables.update');
-   
+
 
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
@@ -83,7 +89,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/products/{id}', [ProductController::class, 'show'])->name('admin.products.show');
     Route::put('/products/{id}', [ProductController::class, 'update'])->name('admin.products.update');
     Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('admin.products.destroy');
-    
+
 
     // Shift
     Route::get('/shifts', [ShiftController::class, 'index'])->name('admin.shifts.index');
@@ -106,4 +112,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
 
     
+    Route::get('/promotions/{id}/edit', [PromotionController::class, 'edit'])->name('admin.promotions.edit');
+    Route::put('/promotions/{id}/update', [PromotionController::class, 'update'])->name('admin.promotions.update');
+    Route::get('/promotions/trashed', [PromotionController::class, 'trashed'])->name('admin.promotions.trashed');
+    Route::post('/promotions/{id}/restore', [PromotionController::class, 'restore'])->name('admin.promotions.restore');
+    Route::delete('/promotions/{id}/destroy', [PromotionController::class, 'destroy'])->name('admin.promotions.destroy');
+    Route::delete('/promotions/{id}/force-delete', [PromotionController::class, 'forceDelete'])->name('admin.promotions.forceDelete');
 });

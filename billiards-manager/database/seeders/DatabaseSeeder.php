@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
             PermissionsTableSeeder::class,
             RolePermissionsTableSeeder::class,
             UsersTableSeeder::class,
+            CustomerSeeder::class,
+            CategoriesTableSeeder::class,
             ShiftsTableSeeder::class,
             EmployeesTableSeeder::class,
             TablesTableSeeder::class,
@@ -22,6 +24,11 @@ class DatabaseSeeder extends Seeder
             PromotionSeeder::class,
             PromotionProductsSeeder::class,
             PromotionComboSeeder::class,
+            ReservationSeeder::class,
+            ReservationStatusHistorySeeder::class,
+            PromotionApplicationSeeder::class,
+           
+
         ]);
     }
 }

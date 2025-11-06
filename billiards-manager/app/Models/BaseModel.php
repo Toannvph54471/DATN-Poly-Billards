@@ -4,12 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 class BaseModel extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     // ========== COMMON STATUS CONSTANTS ==========
     const STATUS_ACTIVE = 'active';
