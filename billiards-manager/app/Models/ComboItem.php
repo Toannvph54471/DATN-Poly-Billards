@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ComboItem extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'combo_id',
         'product_id',
@@ -23,12 +25,12 @@ class ComboItem extends Model
 
     public function combo(): BelongsTo
     {
-        return $this->belongsTo(Combo::class);
+        return $this->belongsTo(Combo::class, 'combo_id');
     }
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'product_id');
     }
 
     // ============ CALCULATION METHODS ============

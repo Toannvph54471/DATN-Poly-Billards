@@ -7,6 +7,21 @@
     <!-- Header -->
     <div class="mb-6">
         <div class="flex justify-between items-center">
+            <a href="{{ route('trash') }}"
+   class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center">
+    <i class="fas fa-trash mr-2"></i>
+    Thùng rác
+</a>
+
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+        <div class="flex items-center justify-between">
+
             <div>
                 <h1 class="text-3xl font-bold text-gray-900 mb-1">Quản lý Combo</h1>
                 <p class="text-gray-600">Tạo và quản lý các combo ưu đãi cho khách hàng</p>

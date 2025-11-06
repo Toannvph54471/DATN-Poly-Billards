@@ -35,7 +35,7 @@ class Combo extends Model
 
     public function comboItems(): HasMany
     {
-        return $this->hasMany(ComboItem::class);
+        return $this->hasMany(ComboItem::class, 'combo_id');
     }
 
     public function tableCategory(): BelongsTo

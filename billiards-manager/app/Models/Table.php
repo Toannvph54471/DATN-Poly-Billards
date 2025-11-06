@@ -15,6 +15,7 @@ class Table extends BaseModel
     const TYPE_COMPETITION = 'competition';
 
     const STATUS_AVAILABLE = 'available';
+    const STATUS_PAUSED = 'paused';
     const STATUS_OCCUPIED = 'occupied';
     const STATUS_MAINTENANCE = 'maintenance';
     const STATUS_RESERVED = 'reserved';

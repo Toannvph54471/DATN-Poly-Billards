@@ -14,6 +14,7 @@ class BillDetail extends BaseModel
         'combo_id',
         'quantity',
         'unit_price',
+        'original_price',
         'total_price',
         'notes',
         'created_by'
