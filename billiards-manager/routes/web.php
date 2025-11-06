@@ -78,15 +78,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // Detail Table
     Route::get('tables/{id}', [TableController::class, 'detail'])->name('admin.tables.detail');
-    // Mở bàn từ giao diện admin
     Route::post('tables/{id}/open', [BillController::class, 'openTable'])->name('tables.open');
-    // Tạm dừng
     Route::post('/bills/{bill}/pause', [BillController::class, 'pauseTable'])->name('bills.pause');
     Route::post('/bills/{bill}/resume', [BillController::class, 'resumeTable'])->name('bills.resume');
     Route::post('/bills/{bill}/close', [BillController::class, 'closeTable'])->name('bills.close');
-    // Thêm sản phẩm vào bill
     Route::post('bills/{bill}/product', [BillController::class, 'addProduct'])->name('bills.add-product');
-    // Thêm combo vào bill
     Route::post('bills/{bill}/combo', [BillController::class, 'addCombo'])->name('bills.add-combo');
 
 
