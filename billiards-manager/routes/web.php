@@ -108,6 +108,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/promotions', [PromotionController::class, 'index'])->name('admin.promotions.index');
     Route::get('/promotions/create', [PromotionController::class, 'create'])->name('admin.promotions.create');
     Route::post('/promotions', [PromotionController::class, 'store'])->name('admin.promotions.store');
+    Route::get('/admin/promotions/{id}', [PromotionController::class, 'show'])->name('admin.promotions.show');
+
+
+    
     Route::get('/promotions/{id}/edit', [PromotionController::class, 'edit'])->name('admin.promotions.edit');
     Route::put('/promotions/{id}/update', [PromotionController::class, 'update'])->name('admin.promotions.update');
     Route::get('/promotions/trashed', [PromotionController::class, 'trashed'])->name('admin.promotions.trashed');
