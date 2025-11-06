@@ -19,6 +19,7 @@ class Bill extends BaseModel
     protected $fillable = [
         'bill_number',
         'customer_id',
+        'reservation_id',
         'table_id',
         'staff_id',
         'start_time',
@@ -59,6 +60,11 @@ class Bill extends BaseModel
     public function table()
     {
         return $this->belongsTo(Table::class);
+    }
+    
+        public function reservation()
+    {
+        return $this->belongsTo(Reservation::class);
     }
 
     public function employee()

@@ -1,282 +1,160 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Thêm Combo mới - F&B Management')
+@section('title', 'Tạo Combo mới')
 
 @section('content')
-    <!-- Header Section -->
-    <div class="mb-8">
-        <div class="flex flex-col md:flex-row md:items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <div class="p-3 bg-blue-100 rounded-xl">
-                    <i class="fas fa-layer-group text-blue-600 text-2xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Thêm Combo Mới</h1>
-                    <p class="text-gray-600 mt-2">Tạo combo ưu đãi cho khách hàng</p>
-                </div>
+<div class="mb-8">
+    <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <div class="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
+                <i class="fas fa-plus-circle text-white text-2xl"></i>
             </div>
-            <div class="mt-4 md:mt-0">
-                <a href="{{ route('admin.combos.index') }}"
-                    class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 rounded-xl font-medium transition flex items-center shadow-sm">
-                    <i class="fas fa-arrow-left mr-3"></i>
-                    Quay lại danh sách
-                </a>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Tạo Combo mới</h1>
+                <p class="text-gray-600 mt-1">Tạo combo ưu đãi hấp dẫn cho khách hàng</p>
+            </div>
+        </div>
+        <a href="{{ route('admin.combos.index') }}" 
+           class="bg-white border-2 border-gray-200 text-gray-700 hover:bg-gray-50 px-6 py-2.5 rounded-xl font-medium transition flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i>Quay lại
+        </a>
+    </div>
+</div>
+
+@if ($errors->any())
+    <div class="mb-6 p-5 bg-red-50 border-l-4 border-red-500 rounded-xl shadow-sm">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+            </div>
+            <div class="ml-4">
+                <h4 class="text-red-800 font-bold mb-2">Có lỗi xảy ra</h4>
+                <ul class="text-red-700 text-sm space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>• {{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         </div>
     </div>
+@endif
 
-    <!-- Notifications -->
-    @if (session('success'))
-        <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center">
-            <i class="fas fa-check-circle text-green-500 text-lg mr-3"></i>
-            <div>
-                <p class="text-green-800 font-medium">{{ session('success') }}</p>
-            </div>
-        </div>
-    @endif
+<form action="{{ route('admin.combos.store') }}" method="POST" id="combo-form">
+    @csrf
 
-    @if ($errors->any())
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-            <div class="flex items-center mb-2">
-                <i class="fas fa-exclamation-triangle text-red-500 text-lg mr-2"></i>
-                <h4 class="text-red-800 font-semibold">Có lỗi xảy ra</h4>
-            </div>
-            <ul class="text-red-700 text-sm space-y-1">
-                @foreach ($errors->all() as $error)
-                    <li class="flex items-center">
-                        <i class="fas fa-circle text-red-400 text-xs mr-2"></i>
-                        {{ $error }}
-                    </li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center">
-            <i class="fas fa-exclamation-circle text-red-500 text-lg mr-3"></i>
-            <p class="text-red-800 font-medium">{{ session('error') }}</p>
-        </div>
-    @endif
-
-    <!-- Main Form -->
-    <form action="{{ route('admin.combos.store') }}" method="POST">
-        @csrf
-
-        <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
-            <!-- Left Column - Main Information -->
-            <div class="xl:col-span-3 space-y-8">
-                <!-- Basic Information Card -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-                            <i class="fas fa-info-circle text-blue-600 mr-3"></i>
-                            Thông tin cơ bản
-                        </h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Form -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Basic Info -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 text-lg mr-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-900">Thông tin cơ bản</h3>
                     </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- Name -->
-                            <div class="lg:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
-                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">BẮT BUỘC</span>
-                                    Tên combo
-                                </label>
-                                <input type="text" name="name" value="{{ old('name') }}"
-                                    class="w-full border-2 {{ $errors->has('name') ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-blue-500' }} rounded-xl px-4 py-3.5 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200"
-                                    placeholder="Ví dụ: Combo Gia Đình 4 Người" required>
-                                @error('name')
-                                    <p class="text-red-500 text-sm mt-2 flex items-center">
-                                        <i class="fas fa-exclamation-circle mr-1"></i> {{ $message }}
-                                    </p>
-                                @enderror
-                            </div>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Tên combo <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="name" id="name" value="{{ old('name') }}" required
+                                   placeholder="VD: Combo Sinh viên vui vẻ"
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition">
+                            @error('name') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
 
-                            <!-- Code -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-800 mb-3 flex items-center">
-                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">BẮT BUỘC</span>
-                                    Mã combo
-                                </label>
-                                <input type="text" name="combo_code" value="{{ old('combo_code') }}"
-                                    class="w-full border-2 {{ $errors->has('combo_code') ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-blue-500' }} rounded-xl px-4 py-3.5 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200"
-                                    placeholder="Ví dụ: COMBO001" required>
-                                @error('combo_code')
-                                    <p class="text-red-500 text-sm mt-2 flex items-center">
-                                        <i class="fas fa-exclamation-circle mr-1"></i> {{ $message }}
-                                    </p>
-                                @enderror
-                            </div>
+                        <div>
+                            <label for="combo_code" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Mã combo <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" name="combo_code" id="combo_code" value="{{ old('combo_code') }}" required
+                                   placeholder="Tự động tạo nếu để trống"
+                                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition font-mono">
+                            @error('combo_code') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
 
-                            <!-- Status -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-800 mb-3">Trạng thái</label>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <label class="relative flex cursor-pointer">
-                                        <input type="radio" name="status" value="active"
-                                            {{ old('status', 'active') === 'active' ? 'checked' : '' }}
-                                            class="peer sr-only">
-                                        <div
-                                            class="flex items-center justify-center w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-gray-600 hover:border-blue-300 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 transition-all duration-200">
-                                            <i class="fas fa-play-circle mr-2"></i>
-                                            Hoạt động
-                                        </div>
+                    <div>
+                        <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">Mô tả combo</label>
+                        <textarea name="description" id="description" rows="3"
+                                  placeholder="Mô tả ngắn về combo này..."
+                                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition">{{ old('description') }}</textarea>
+                        @error('description') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="price" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Giá bán <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="number" name="price" id="price" value="{{ old('price', 0) }}" required min="0" step="1000"
+                                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">đ</span>
+                            </div>
+                            @error('price') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="actual_value" class="block text-sm font-semibold text-gray-700 mb-2">
+                                Giá trị thực
+                            </label>
+                            <div class="relative">
+                                <input type="number" name="actual_value" id="actual_value" value="{{ old('actual_value', 0) }}" readonly
+                                       class="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">đ</span>
+                            </div>
+                            <p class="mt-1.5 text-xs text-gray-500">Tự động tính từ sản phẩm</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Trạng thái</label>
+                            <select name="status" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition">
+                                <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Hoạt động</option>
+                                <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Tạm dừng</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Time Combo -->
+                    <div class="flex items-center space-x-3">
+                    <input type="hidden" name="is_time_combo" value="0">
+                    <input type="checkbox" 
+                        name="is_time_combo" 
+                        id="is_time_combo" 
+                        value="1"
+                        {{ old('is_time_combo', $combo->is_time_combo ?? false) ? 'checked' : '' }}
+                        class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="is_time_combo" class="text-sm font-medium text-gray-700">
+                        Đây là Combo bàn (theo thời gian)
+                    </label>
+                </div>
+
+                        <div id="time-combo-fields" class="{{ old('is_time_combo') ? '' : 'hidden' }} bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="play_duration_minutes" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Thời gian chơi (phút) <span class="text-red-500">*</span>
                                     </label>
-                                    <label class="relative flex cursor-pointer">
-                                        <input type="radio" name="status" value="inactive"
-                                            {{ old('status') === 'inactive' ? 'checked' : '' }} class="peer sr-only">
-                                        <div
-                                            class="flex items-center justify-center w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-gray-600 hover:border-red-300 peer-checked:border-red-500 peer-checked:bg-red-50 peer-checked:text-red-700 transition-all duration-200">
-                                            <i class="fas fa-pause-circle mr-2"></i>
-                                            Tạm dừng
-                                        </div>
-                                    </label>
+                                    <input type="number" name="play_duration_minutes" id="play_duration_minutes"
+                                           value="{{ old('play_duration_minutes') }}" min="15" max="1440"
+                                           placeholder="Tối thiểu 15 phút"
+                                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition">
+                                    @error('play_duration_minutes') <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
-                            </div>
-
-                            <!-- Description -->
-                            <div class="lg:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-800 mb-3">
-                                    Mô tả combo
-                                </label>
-                                <textarea name="description" rows="4"
-                                    class="w-full border-2 {{ $errors->has('description') ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-blue-500' }} rounded-xl px-4 py-3.5 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200 resize-none"
-                                    placeholder="Mô tả chi tiết về combo...">{{ old('description') }}</textarea>
-                                @error('description')
-                                    <p class="text-red-500 text-sm mt-2 flex items-center">
-                                        <i class="fas fa-exclamation-circle mr-1"></i> {{ $message }}
-                                    </p>
-                                @enderror
-                            </div>
-
-                            <!-- Pricing -->
-                            <div class="lg:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-800 mb-4">Thông tin giá</label>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div
-                                        class="bg-gradient-to-br from-green-50 to-emerald-50 p-5 rounded-xl border border-green-100">
-                                        <label class="block text-sm font-semibold text-green-800 mb-2 flex items-center">
-                                            <i class="fas fa-tag mr-2"></i>
-                                            Giá bán
-                                        </label>
-                                        <div class="relative">
-                                            <input type="number" name="price" value="{{ old('price') }}" min="0"
-                                                class="w-full bg-white border-2 border-green-200 focus:border-green-500 rounded-xl px-4 py-3.5 pr-12 focus:outline-none focus:ring-4 focus:ring-green-100 transition-all duration-200"
-                                                placeholder="0" required>
-                                            <span
-                                                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-600 font-semibold">₫</span>
-                                        </div>
-                                        @error('price')
-                                            <p class="text-red-500 text-sm mt-2 flex items-center">
-                                                <i class="fas fa-exclamation-circle mr-1"></i> {{ $message }}
-                                            </p>
-                                        @enderror
-                                    </div>
-
-                                    <div
-                                        class="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-xl border border-blue-100">
-                                        <label class="block text-sm font-semibold text-blue-800 mb-2 flex items-center">
-                                            <i class="fas fa-receipt mr-2"></i>
-                                            Giá trị thực
-                                        </label>
-                                        <div class="relative">
-                                            <input type="number" name="actual_value" value="{{ old('actual_value') }}"
-                                                min="0"
-                                                class="w-full bg-white border-2 border-blue-200 focus:border-blue-500 rounded-xl px-4 py-3.5 pr-12 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all duration-200"
-                                                placeholder="0" required>
-                                            <span
-                                                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-600 font-semibold">₫</span>
-                                        </div>
-                                        @error('actual_value')
-                                            <p class="text-red-500 text-sm mt-2 flex items-center">
-                                                <i class="fas fa-exclamation-circle mr-1"></i> {{ $message }}
-                                            </p>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Products Selection Card -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-                            <i class="fas fa-cubes text-purple-600 mr-3"></i>
-                            Sản phẩm trong combo
-                        </h2>
-                        <p class="text-gray-600 text-sm mt-1">Chọn tối đa 10 sản phẩm cho combo</p>
-                    </div>
-                    <div class="p-6">
-                        <div id="combo-products-container" class="space-y-4">
-                            <!-- Sản phẩm bắt buộc đầu tiên -->
-                            <div class="border-2 border-orange-200 rounded-xl p-5 bg-orange-50">
-                                <div class="flex items-center justify-between mb-4">
-                                    <h3 class="font-semibold text-gray-900 flex items-center">
-                                        <span
-                                            class="w-6 h-6 bg-orange-500 text-white rounded-full text-sm flex items-center justify-center mr-3">
-                                            1
-                                        </span>
-                                        Sản phẩm 1
-                                        <span class="ml-2 bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded">BẮT
-                                            BUỘC</span>
-                                    </h3>
-                                </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Chọn sản phẩm</label>
-                                        <select name="combo_items[0][product_id]"
-                                            class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200 required"
-                                            required>
-                                            <option value="">-- Chọn sản phẩm --</option>
-                                            @foreach ($products as $product)
-                                                <option value="{{ $product->id }}"
-                                                    {{ old('combo_items.0.product_id') == $product->id ? 'selected' : '' }}
-                                                    class="py-2">
-                                                    {{ $product->name }} -
-                                                    {{ number_format($product->price, 0, ',', '.') }}₫
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng</label>
-                                        <div class="relative">
-                                            <input type="number" name="combo_items[0][quantity]"
-                                                value="{{ old('combo_items.0.quantity', 1) }}" min="1"
-                                                class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200"
-                                                required>
-                                            <span
-                                                class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                                <i class="fas fa-cube"></i>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Kết thúc sản phẩm bắt buộc -->
-                        </div>
-
-                        <!-- Nút thêm sản phẩm -->
-                        <div class="mt-6 flex justify-center">
-                            <button type="button" id="add-product-btn"
-                                class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-md">
-                                <i class="fas fa-plus mr-2"></i> Thêm sản phẩm
-                            </button>
-                        </div>
-
-                        <!-- Info Box -->
-                        <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                            <div class="flex items-start">
-                                <i class="fas fa-lightbulb text-yellow-500 text-lg mt-1 mr-3"></i>
                                 <div>
-                                    <p class="text-blue-800 font-medium mb-1">Mẹo nhỏ</p>
-                                    <p class="text-blue-700 text-sm">
-                                        Chọn ít nhất 1 sản phẩm bắt buộc. Đảm bảo giá bán thấp hơn tổng giá trị thực để tạo
-                                        ưu đãi hấp dẫn.
-                                    </p>
+                                    <label for="table_category_id" class="block text-sm font-semibold text-gray-700 mb-2">Loại bàn</label>
+                                    <select name="table_category_id" id="table_category_id"
+                                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 transition">
+                                        <option value="">Tất cả</option>
+                                        @foreach($tableCategories as $category)
+                                            <option value="{{ $category->id }}" {{ old('table_category_id') == $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -284,200 +162,212 @@
                 </div>
             </div>
 
-            <!-- Right Column - Actions & Info -->
-            <div class="xl:col-span-1 space-y-6">
-                <!-- Actions Card -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-6">
-                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <i class="fas fa-play-circle text-gray-600 mr-3"></i>
-                            Thao tác
-                        </h2>
+            <!-- Products -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-boxes text-green-600 text-lg mr-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-900">Sản phẩm trong combo</h3>
                     </div>
-                    <div class="p-6">
-                        <div class="space-y-3">
-                            <button type="submit"
-                                class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 transform hover:-translate-y-0.5">
-                                <i class="fas fa-plus-circle mr-3 text-lg"></i>
-                                Tạo Combo Mới
-                            </button>
-
-                            <a href="{{ route('admin.combos.index') }}"
-                                class="w-full bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-6 py-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center">
-                                <i class="fas fa-times mr-3"></i>
-                                Hủy bỏ
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Stats Card -->
-                <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
-                    <h3 class="text-lg font-semibold mb-4 flex items-center">
-                        <i class="fas fa-chart-line mr-3"></i>
-                        Thống kê nhanh
-                    </h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-indigo-100">Tổng combo</span>
-                            <span class="font-semibold">15</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-indigo-100">Đang hoạt động</span>
-                            <span class="font-semibold">12</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-indigo-100">Combo mới</span>
-                            <span class="font-semibold">3</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Guidelines Card -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <i class="fas fa-graduation-cap text-green-600 mr-3"></i>
-                            Hướng dẫn
-                        </h2>
-                    </div>
-                    <div class="p-6">
-                        <div class="space-y-4">
-                            <div class="flex items-start">
-                                <div
-                                    class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mr-3">
-                                    <i class="fas fa-check text-green-600 text-sm"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Combo chất lượng</p>
-                                    <p class="text-xs text-gray-600 mt-1">Chọn sản phẩm phù hợp với nhu cầu khách hàng
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <div
-                                    class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mr-3">
-                                    <i class="fas fa-percentage text-blue-600 text-sm"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Giá cả hợp lý</p>
-                                    <p class="text-xs text-gray-600 mt-1">Đảm bảo giá bán thấp hơn giá trị thực</p>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <div
-                                    class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 mr-3">
-                                    <i class="fas fa-unique text-purple-600 text-sm"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Mã độc nhất</p>
-                                    <p class="text-xs text-gray-600 mt-1">Mã combo phải không trùng lặp</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </form>
-@endsection
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const container = document.getElementById('combo-products-container');
-        const addButton = document.getElementById('add-product-btn');
-        let productCount = 1; // Bắt đầu từ 1 vì đã có sản phẩm bắt buộc
-
-        // Tối đa 10 sản phẩm
-        const maxProducts = 10;
-
-        addButton.addEventListener('click', function() {
-            if (productCount >= maxProducts) {
-                alert('Bạn chỉ có thể thêm tối đa ' + maxProducts + ' sản phẩm');
-                return;
-            }
-
-            productCount++;
-
-            const newProduct = document.createElement('div');
-            newProduct.className =
-                'border-2 border-dashed border-gray-200 rounded-xl p-5 hover:border-purple-300 transition-all duration-200';
-            newProduct.innerHTML = `
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-semibold text-gray-900 flex items-center">
-                    <span class="w-6 h-6 bg-purple-500 text-white rounded-full text-sm flex items-center justify-center mr-3">
-                        ${productCount}
-                    </span>
-                    Sản phẩm ${productCount}
-                </h3>
-                <div class="flex items-center space-x-2">
-                    <span class="text-gray-400 text-sm">Tùy chọn</span>
-                    <button type="button" class="remove-product-btn text-red-500 hover:text-red-700 transition-colors duration-200">
-                        <i class="fas fa-trash"></i>
+                    <button type="button" id="add-product-btn"
+                            class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium transition flex items-center">
+                        <i class="fas fa-plus mr-2"></i>Thêm
                     </button>
                 </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Chọn sản phẩm</label>
-                    <select name="combo_items[${productCount-1}][product_id]" 
-                            class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200">
-                        <option value="">-- Chọn sản phẩm --</option>
-                        @foreach ($products as $product)
-                            <option value="{{ $product->id }}" class="py-2">
-                                {{ $product->name }} - {{ number_format($product->price, 0, ',', '.') }}₫
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Số lượng</label>
-                    <div class="relative">
-                        <input type="number" name="combo_items[${productCount-1}][quantity]" value="1" min="1" 
-                               class="w-full border-2 border-gray-200 focus:border-purple-500 rounded-xl px-4 py-3 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all duration-200">
-                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                            <i class="fas fa-cube"></i>
-                        </span>
+                <div id="products-container" class="divide-y divide-gray-100">
+                    <div class="product-item p-4 hover:bg-gray-50 transition">
+                        <div class="flex items-center gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-box text-green-600"></i>
+                            </div>
+                            <select name="combo_items[0][product_id]" class="product-select flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 transition">
+                                <option value="">-- Chọn sản phẩm --</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}" data-price="{{ $product->price }}">
+                                        {{ $product->name }} - {{ number_format($product->price) }}đ
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="flex items-center gap-2">
+                                <label class="text-sm text-gray-600">SL:</label>
+                                <input type="number" name="combo_items[0][quantity]" class="quantity-input w-20 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-center" value="1" min="1" max="999">
+                            </div>
+                            <button type="button" class="remove-product-btn w-10 h-10 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
+                <div class="bg-gray-50 px-6 py-3 border-t border-gray-200">
+                    <p class="text-xs text-gray-600">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Combo chỉ được chứa tối đa 1 sản phẩm dịch vụ (giờ chơi)
+                    </p>
+                </div>
             </div>
-        `;
+        </div>
 
-            container.appendChild(newProduct);
+        <!-- Sidebar Summary -->
+        <div class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-calculator text-blue-600 mr-2"></i> Tóm tắt giá trị
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                        <span class="text-sm text-gray-600">Giá trị thực tế</span>
+                        <span class="text-lg font-bold text-gray-900" id="actual_value_display">0đ</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                        <span class="text-sm text-gray-600">Giá bán cho khách</span>
+                        <span class="text-lg font-bold text-blue-600" id="price_display">0đ</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-sm font-semibold text-gray-700">Khách tiết kiệm</span>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-green-600" id="discount_display">0đ</div>
+                            <div class="text-xs text-green-600" id="discount_percent_display">(0%)</div>
+                        </div>
+                    </div>
+                </div>
 
-            // Thêm sự kiện cho nút xóa
-            const removeBtn = newProduct.querySelector('.remove-product-btn');
-            removeBtn.addEventListener('click', function() {
-                container.removeChild(newProduct);
-                productCount--;
-                updateProductNumbers();
-            });
-        });
+                <button type="submit"
+                        class="mt-6 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 rounded-xl hover:from-blue-700 hover:to-blue-800 font-semibold transition shadow-lg flex items-center justify-center">
+                    <i class="fas fa-save mr-2"></i> Tạo combo mới
+                </button>
+            </div>
 
-        // Hàm cập nhật số thứ tự sản phẩm
-        function updateProductNumbers() {
-            const products = container.querySelectorAll('.border-2');
-            products.forEach((product, index) => {
-                const numberSpan = product.querySelector('span.w-6');
-                const title = product.querySelector('h3');
+            <!-- Tips -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                <h4 class="font-semibold text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i> Gợi ý
+                </h4>
+                <ul class="text-sm text-gray-700 space-y-2">
+                    <li class="flex items-start"><i class="fas fa-check text-green-600 mr-2 mt-0.5"></i>Đặt giá bán < giá trị thực để tạo ưu đãi</li>
+                    <li class="flex items-start"><i class="fas fa-check text-green-600 mr-2 mt-0.5"></i>Combo thời gian chỉ dành cho bàn chơi</li>
+                    <li class="flex items-start"><i class="fas fa-check text-green-600 mr-2 mt-0.5"></i>Tối đa 1 sản phẩm dịch vụ mỗi combo</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</form>
+@endsection
 
-                if (numberSpan && title) {
-                    const newNumber = index + 1;
-                    numberSpan.textContent = newNumber;
-                    title.querySelector('span:last-child').textContent = `Sản phẩm ${newNumber}`;
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('combo-form');
+    const isTimeCombo = document.getElementById('is_time_combo');
+    const timeFields = document.getElementById('time-combo-fields');
+    const container = document.getElementById('products-container');
+    const addBtn = document.getElementById('add-product-btn');
+    const priceInput = document.getElementById('price');
+    const actualValueDisplay = document.getElementById('actual_value_display');
+    const priceDisplay = document.getElementById('price_display');
+    const discountDisplay = document.getElementById('discount_display');
+    const discountPercentDisplay = document.getElementById('discount_percent_display');
+    let count = container.children.length;
 
-                    // Cập nhật name attribute cho select và input
-                    const select = product.querySelector('select');
-                    const input = product.querySelector('input[type="number"]');
-
-                    if (select) {
-                        select.name = `combo_items[${index}][product_id]`;
-                    }
-                    if (input) {
-                        input.name = `combo_items[${index}][quantity]`;
-                    }
-                }
-            });
+    // Auto generate combo code
+    const nameInput = document.getElementById('name');
+    const codeInput = document.getElementById('combo_code');
+    nameInput.addEventListener('input', function() {
+        if (!codeInput.value) {
+            codeInput.value = 'COMBO' + Date.now().toString().slice(-6);
         }
     });
+
+    // Toggle time combo
+    isTimeCombo.addEventListener('change', function() {
+        timeFields.classList.toggle('hidden', !this.checked);
+    });
+
+    // Add product
+    addBtn.addEventListener('click', function() {
+        const div = document.createElement('div');
+        div.className = 'product-item p-4 hover:bg-gray-50 transition';
+        div.innerHTML = `
+            <div class="flex items-center gap-4">
+                <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-box text-green-600"></i>
+                </div>
+                <select name="combo_items[${count}][product_id]" class="product-select flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 transition">
+                    <option value="">-- Chọn sản phẩm --</option>
+                    @foreach($products as $product)
+                        <option value="{{ $product->id }}" data-price="{{ $product->price }}">
+                            {{ $product->name }} - {{ number_format($product->price) }}đ
+                        </option>
+                    @endforeach
+                </select>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-600">SL:</label>
+                    <input type="number" name="combo_items[${count}][quantity]" class="quantity-input w-20 px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-center" value="1" min="1" max="999">
+                </div>
+                <button type="button" class="remove-product-btn w-10 h-10 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        container.appendChild(div);
+        count++;
+
+        div.querySelector('.remove-product-btn').addEventListener('click', function() {
+            if (container.children.length <= 1) {
+                Swal.fire('Cảnh báo', 'Combo phải có ít nhất 1 sản phẩm', 'warning');
+                return;
+            }
+            div.remove();
+            calc();
+        });
+
+        div.querySelectorAll('select, input').forEach(el => el.addEventListener('input', calc));
+        calc();
+    });
+
+    // Remove initial product
+    document.querySelectorAll('.remove-product-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (container.children.length <= 1) {
+                Swal.fire('Cảnh báo', 'Combo phải có ít nhất 1 sản phẩm', 'warning');
+                return;
+            }
+            this.closest('.product-item').remove();
+            calc();
+        });
+    });
+
+    // Calculate
+    function calc() {
+        let total = 0;
+        container.querySelectorAll('.product-item').forEach(item => {
+            const select = item.querySelector('.product-select');
+            const qty = parseInt(item.querySelector('.quantity-input').value) || 0;
+            const price = parseFloat(select.selectedOptions[0]?.dataset.price) || 0;
+            total += qty * price;
+        });
+
+        const price = parseFloat(priceInput.value) || 0;
+        const discount = Math.max(0, total - price);
+        const percent = total > 0 ? Math.round((discount / total) * 100) : 0;
+
+        document.querySelector('[name="actual_value"]').value = total;
+        actualValueDisplay.textContent = new Intl.NumberFormat('vi-VN').format(total) + 'đ';
+        priceDisplay.textContent = new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+        discountDisplay.textContent = new Intl.NumberFormat('vi-VN').format(discount) + 'đ';
+        discountPercentDisplay.textContent = '(' + percent + '%)';
+
+        discountDisplay.className = discount > 0 ? 'text-lg font-bold text-green-600' : 'text-lg font-bold text-gray-400';
+        discountPercentDisplay.className = discount > 0 ? 'text-xs text-green-600' : 'text-xs text-gray-400';
+    }
+
+    // Events
+    document.querySelectorAll('.product-select, .quantity-input, #price').forEach(el => {
+        el.addEventListener('input', calc);
+        el.addEventListener('change', calc);
+    });
+
+    calc();
+});
 </script>
+@endsection
