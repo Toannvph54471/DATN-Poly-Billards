@@ -22,7 +22,7 @@ class TablesTableSeeder extends Seeder
                 'capacity' => 4,
                 'type' => 'Standard',
                 'status' => 'available',
-                'hourly_rate' => 50000,
+                
             ],
             [
                 'table_number' => 'T02',
@@ -31,7 +31,7 @@ class TablesTableSeeder extends Seeder
                 'capacity' => 4,
                 'type' => 'Standard',
                 'status' => 'available',
-                'hourly_rate' => 50000,
+               
             ],
             [
                 'table_number' => 'VIP01',
@@ -40,7 +40,7 @@ class TablesTableSeeder extends Seeder
                 'capacity' => 6,
                 'type' => 'VIP',
                 'status' => 'available',
-                'hourly_rate' => 80000,
+                
             ],
             [
                 'table_number' => 'COMP01',
@@ -49,7 +49,7 @@ class TablesTableSeeder extends Seeder
                 'capacity' => 8,
                 'type' => 'Competition',
                 'status' => 'available',
-                'hourly_rate' => 100000,
+                
             ]
         ];
 

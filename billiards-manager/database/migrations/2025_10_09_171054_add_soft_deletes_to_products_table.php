@@ -9,14 +9,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->softDeletes();
+            // Chỉ thêm nếu chưa có
+            if (!Schema::hasColumn('products', 'deleted_at')) {
+                $table->softDeletes();
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropSoftDeletes();
+            // Chỉ xóa nếu có
+            if (Schema::hasColumn('products', 'deleted_at')) {
+                $table->dropSoftDeletes();
+            }
         });
     }
 };

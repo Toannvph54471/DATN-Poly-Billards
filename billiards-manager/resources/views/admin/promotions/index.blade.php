@@ -263,9 +263,9 @@
                             </td>
                             <td class="py-4 px-6">
                                 <div class="flex items-center space-x-2">
-                                    {{-- <a href="{{ route('admin.promotions.show', $promotion->id) }}"
-                                      class="text-green-600 hover:text-green-900 transition" title="Xem chi tiết"> --}}
-                                    <i class="fas fa-eye"></i>
+                                    <a href="{{ route('admin.promotions.show', $promotion->id) }}"
+                                      class="text-green-600 hover:text-green-900 transition" title="Xem chi tiết">
+                                        <i class="fas fa-eye"></i>
                                     </a>
 
                                     <a href="{{ route('admin.promotions.edit', $promotion->id) }}"

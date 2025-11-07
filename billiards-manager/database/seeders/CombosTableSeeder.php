@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\Combo;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class CombosTableSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        DB::table('combos')->insert([
+        $combos = [
             [
                 'combo_code' => 'COMBO001',
                 'name' => 'Combo 2h + 2 nước',
@@ -17,9 +17,6 @@ class CombosTableSeeder extends Seeder
                 'price' => 140000,
                 'actual_value' => 160000,
                 'status' => 'Active',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'deleted_at' => null,
             ],
             [
                 'combo_code' => 'COMBO002',
@@ -28,10 +25,14 @@ class CombosTableSeeder extends Seeder
                 'price' => 250000,
                 'actual_value' => 280000,
                 'status' => 'Active',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'deleted_at' => null,
             ],
-        ]);
+        ];
+
+        foreach ($combos as $combo) {
+            Combo::firstOrCreate(
+                ['combo_code' => $combo['combo_code']], 
+                $combo
+            );
+        }
     }
 }
