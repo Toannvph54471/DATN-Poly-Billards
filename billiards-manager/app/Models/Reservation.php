@@ -11,33 +11,31 @@ class Reservation extends BaseModel
     const STATUS_COMPLETED = 'completed';
     const STATUS_NO_SHOW = 'no_show'; // Thêm trạng thái mới
 
-    protected $fillable = [
-        'reservation_code',
-        'customer_id',
-        'table_id',
-        'reservation_time', // Thay cho reservation_date và start_time
-        'end_time',
-        'duration',
-        'guest_count', // Thay cho number_of_people
-        'note', // Thay cho special_requests
-        'status',
-        'checked_in_at', // Thay cho checked_in_time
-        'cancelled_at',
-        'cancellation_reason',
-        'no_show_at',
-        'created_by',
-        'updated_by'
-    ];
+   protected $fillable = [
+    'reservation_code',
+    'customer_id',
+    'table_id',
+    'reservation_time',
+    'end_time',
+    'duration',
+    'guest_count',
+    'note',
+    'status',
+    'checked_in_at',
+    'cancelled_at',
+    'cancellation_reason',
+    'no_show_at',
+    'created_by',
+    'updated_by',
+];
 
-    protected $casts = [
-        'reservation_time' => 'datetime',
-        'end_time' => 'datetime',
-        'checked_in_at' => 'datetime',
-        'cancelled_at' => 'datetime',
-        'no_show_at' => 'datetime',
-        'duration' => 'integer',
-        'guest_count' => 'integer'
-    ];
+protected $dates = [
+    'reservation_time',
+    'end_time',
+    'checked_in_at',
+    'cancelled_at',
+    'no_show_at',
+];
 
     // Relationships
     public function customer()
@@ -111,7 +109,7 @@ class Reservation extends BaseModel
 
         static::creating(function ($model) {
             if (empty($model->reservation_code)) {
-                $model->reservation_code = 'RSV' . date('YmdHis') . rand(100, 999);
+                $model->reservation_code = 'RSV' . date('Ymd') . '-' . str_pad(Reservation::count() + 1, 3, '0', STR_PAD_LEFT);
             }
         });
     }
