@@ -27,42 +27,72 @@ class ReservationController extends Controller
 
 public function store(Request $request)
 {
-    // Bắt buộc đăng nhập (route group middleware('auth') là ideal)
-    if (!auth()->check()) {
-        return response()->json(['message' => 'Bạn cần đăng nhập để đặt bàn'], 401);
-    }
-
+    // ... (Validation giữ nguyên) ...
     $validated = $request->validate([
         'table_id' => 'required|integer|exists:tables,id',
         'reservation_time' => 'required|string', // "YYYY-MM-DD HH:mm"
         'duration' => 'required|integer|min:30',
         'guest_count' => 'required|integer|min:1',
         'customer_name' => 'required|string|max:255',
-        'customer_phone' => 'required|string|max:30',
+        'customer_phone' => 'required|string|max:30', // Key chính
         'customer_email' => 'nullable|email|max:255',
         'note' => 'nullable|string|max:1000',
     ]);
 
-    // convert reservation_time to start/end
-    $start = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $validated['reservation_time']);
-    $end = (clone $start)->addMinutes($validated['duration']);
+    // Lấy Role 'Customer'
+    $customer_role_id = \App\Models\Role::where('slug', 'customer')->value('id');
+    if (!$customer_role_id) {
+        // Xử lý lỗi nếu không tìm thấy Role Customer
+        return response()->json(['message' => 'Lỗi cấu hình hệ thống: Không tìm thấy vai trò "Customer".'], 500);
+    }
+    
+    $customer_id = null;
 
     DB::beginTransaction();
     try {
+        if (Auth::check()) {
+            // ----- TRƯỜNG HỢP 1: KHÁCH ĐÃ ĐĂNG NHẬP -----
+            $customer_id = Auth::id();
+            $user = Auth::user();
+            
+            // (Tùy chọn) Cập nhật SĐT/Tên nếu họ sửa trên form
+            $user->update([
+                'name' => $validated['customer_name'],
+                'phone' => $validated['customer_phone']
+            ]);
+
+        } else {
+            // ----- TRƯỜNG HỢP 2: KHÁCH VÃNG LAI -----
+            // Tìm bằng SĐT, nếu không có thì tạo mới
+            $user = \App\Models\User::firstOrCreate(
+                ['phone' => $validated['customer_phone']], // Điều kiện tìm kiếm
+                [
+                    // Dữ liệu để tạo mới nếu không tìm thấy
+                    'name' => $validated['customer_name'],
+                    'email' => $validated['customer_email'],
+                    'role_id' => $customer_role_id,
+                    'password' => null // Khách vãng lai không có mật khẩu
+                ]
+            );
+            $customer_id = $user->id;
+        }
+
+        // ... (Logic tạo $start, $end, $reservationCode giữ nguyên) ...
+        $start = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $validated['reservation_time']);
+        $end = (clone $start)->addMinutes($validated['duration']);
         $reservationCode = 'RSV' . now()->format('Ymd') . '-' . rand(100, 999);
 
         $res = Reservation::create([
-            'customer_id' => auth()->id(), // or other logic if you have separate customer table
+            'customer_id' => $customer_id, // <-- ĐÃ SỬA
             'table_id' => $validated['table_id'],
             'reservation_time' => $start->format('Y-m-d H:i:s'),
-            'end_time' => $end->format('Y-m-d H:i:s'),
+            'end_time' => $end->format('Y-m-d H:i:s'), // <-- THÊM MỚI
             'duration' => $validated['duration'],
             'guest_count' => $validated['guest_count'],
             'note' => $validated['note'] ?? null,
             'status' => 'pending',
             'reservation_code' => $reservationCode,
-            'created_by' => auth()->id(),
-            // 'updated_by' => auth()->id(), // only if column exists
+            'created_by' => Auth::check() ? Auth::id() : null, // Gán người tạo nếu đăng nhập
         ]);
 
         DB::commit();

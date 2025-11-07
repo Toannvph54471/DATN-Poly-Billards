@@ -181,7 +181,7 @@
                                 <label for="customer_name" class="block text-sm font-medium text-gray-700 mb-2">
                                     Họ tên *
                                 </label>
-                                <input type="text" id="customer_name" value="{{ auth()->user()->name }}"
+                                <input type="text" id="customer_name" value="{{ auth()->check() ? auth()->user()->name : '' }}"
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200"
                                        required>
                             </div>
@@ -191,7 +191,7 @@
                                 <label for="customer_phone" class="block text-sm font-medium text-gray-700 mb-2">
                                     Số điện thoại *
                                 </label>
-                                <input type="tel" id="customer_phone" value="{{ auth()->user()->phone ?? '' }}"
+                                <input type="tel" id="customer_phone" value="{{ auth()->check() ? auth()->user()->phone : '' }}"
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200"
                                        required>
                             </div>
@@ -201,7 +201,7 @@
                                 <label for="customer_email" class="block text-sm font-medium text-gray-700 mb-2">
                                     Email
                                 </label>
-                                <input type="email" id="customer_email" value="{{ auth()->user()->email }}"
+                                <input type="email" id="customer_email" value="{{ auth()->check() ? auth()->user()->email : '' }}"
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200">
                             </div>
 

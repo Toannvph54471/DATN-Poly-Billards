@@ -106,7 +106,7 @@ public function store(Request $request)
     {
         $promotion = Promotion::findOrFail($id);
         return view('admin.promotions.show', compact('promotion'));
-   
+    }
     // Form tạo mới
     public function edit($id)
     {
