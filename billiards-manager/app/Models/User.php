@@ -52,6 +52,11 @@ class User extends Authenticatable
         return $this->hasMany(Attendance::class);
     }
 
+      public function reservations()
+    {
+        return $this->hasMany(Reservation::class);
+    }
+    
     // Helper methods
     public function isAdmin(): bool
     {

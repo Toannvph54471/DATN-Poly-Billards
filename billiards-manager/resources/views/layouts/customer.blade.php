@@ -3,184 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Billiard Club - Premium Billiard Experience')</title>
+    <title>@yield('title') - Poly Billiards</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <style>
-        html { scroll-behavior: smooth; }
-        .fade-in { animation: fadeIn 0.6s ease-in; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        'elegant': {
+                            'navy': '#1e3a5f',
+                            'burgundy': '#8b2635',
+                            'gold': '#d4af37',
+                            'cream': '#f5f5f5',
+                            'charcoal': '#2d3748'
+                        }
+                    },
+                    fontFamily: {
+                        'display': ['Playfair Display', 'serif'],
+                        'body': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
         }
-    </style>
-
-    @stack('styles')
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    @yield('styles')
 </head>
-<body class="bg-gray-50">
+<body class="font-body bg-elegant-cream">
     <!-- Header -->
-    <header class="fixed w-full top-0 z-50 bg-white shadow-md">
-        <div class="container mx-auto px-4">
-            <div class="flex items-center justify-between py-4">
+    <nav class="bg-elegant-navy shadow-lg border-b-4 border-elegant-gold">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-20">
                 <!-- Logo -->
-                <a href="{{ url('/') }}" class="flex items-center">
-                    <span class="text-3xl font-bold text-amber-600">BILLIARD</span>
-                    <span class="text-gray-800 text-sm ml-2 font-semibold">CLUB</span>
-                </a>
-
-                <!-- Navigation -->
-                <nav class="hidden md:flex items-center space-x-8">
-                    <a href="#home" class="text-gray-700 hover:text-amber-600 font-medium">Trang chủ</a>
-                    <a href="#about" class="text-gray-700 hover:text-amber-600 font-medium">Giới thiệu</a>
-                    <a href="#services" class="text-gray-700 hover:text-amber-600 font-medium">Dịch vụ</a>
-                    <a href="#gallery" class="text-gray-700 hover:text-amber-600 font-medium">Thư viện</a>
-                    <a href="#pricing" class="text-gray-700 hover:text-amber-600 font-medium">Bảng giá</a>
-                    <a href="#contact" class="text-gray-700 hover:text-amber-600 font-medium">Liên hệ</a>
-                </nav>
-
-                <!-- Right side buttons -->
-                <div class="hidden md:flex items-center space-x-4">
-                    @auth
-                        <!-- User Dropdown -->
-                        <div class="relative" id="user-menu">
-                            <button id="user-menu-btn" class="flex items-center text-gray-700 hover:text-amber-600 font-medium">
-                                <i class="fa-solid fa-user text-amber-600 mr-2"></i>
-                                {{ Auth::user()->name }}
-                                <i class="fas fa-chevron-down ml-2 text-sm"></i>
-                            </button>
-                            <div id="user-dropdown" class="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg hidden">
-                                @if (Auth::user()->isAdmin() || Auth::user()->isManager())
-                                    <a href="{{ route('admin.users.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-amber-50">Quản trị</a>
-                                @endif
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-amber-50">Đăng xuất</button>
-                                </form>
-                            </div>
+                <div class="flex-shrink-0">
+                    <a href="{{ route('home') }}" class="text-white font-display text-2xl font-bold flex items-center">
+                        <div class="w-12 h-12 bg-elegant-gold rounded-full flex items-center justify-center mr-3 shadow-lg">
+                            <i class="fas fa-billiard-ball text-elegant-navy text-xl"></i>
                         </div>
-                    @else
-                        <!-- Separate login/register buttons -->
-                        <a href="{{ route('login') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-full font-semibold hover:bg-gray-200 transition">
-                            Đăng nhập
-                        </a>
-                        <a href="{{ route('register') }}" class="bg-amber-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-amber-700 transition shadow-md">
-                            Đăng ký
-                        </a>
-                    @endauth
+                        Poly Billiards
+                    </a>
                 </div>
 
-                <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden text-gray-800">
-                    <i class="fas fa-bars text-2xl"></i>
-                </button>
-            </div>
+                <!-- Desktop Menu -->
+                <div class="hidden lg:block">
+                    <div class="ml-10 flex items-baseline space-x-1">
+                        <a href="{{ route('home') }}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-home mr-2"></i>Trang chủ
+                        </a>
+                        <a href="{{route('reservation.create')}}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-calendar-plus mr-2"></i>Đặt bàn
+                        </a>
+                        <a href="{{route('promotions.index')}}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105"> 
+                            <i class="fas fa-tag mr-2"></i>Khuyến mãi
+                        </a>
+                        <a href="{{route('contact')}}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105"> 
+                            <i class="fas fa-phone mr-2"></i>Liên hệ
+                        </a>
+                        <a href="{{route('faq')}}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105"> 
+                            <i class="fas fa-question-circle mr-2"></i>FAQ
+                        </a>
+                    </div>
+                </div>
 
-            <!-- Mobile Navigation -->
-            <nav id="mobile-menu" class="hidden md:hidden pb-4 bg-white">
-                <div class="flex flex-col space-y-4">
-                    <a href="#home" class="text-gray-700 hover:text-amber-600 font-medium">Trang chủ</a>
-                    <a href="#about" class="text-gray-700 hover:text-amber-600 font-medium">Giới thiệu</a>
-                    <a href="#services" class="text-gray-700 hover:text-amber-600 font-medium">Dịch vụ</a>
-                    <a href="#gallery" class="text-gray-700 hover:text-amber-600 font-medium">Thư viện</a>
-                    <a href="#pricing" class="text-gray-700 hover:text-amber-600 font-medium">Bảng giá</a>
-                    <a href="#contact" class="text-gray-700 hover:text-amber-600 font-medium">Liên hệ</a>
-                    
-                    @auth
-                        <a href="#" class="text-gray-700 font-medium">{{ Auth::user()->name }}</a>
+                <!-- User Authentication Links -->
+                <div class="hidden lg:block">
+                    <div class="ml-4 flex items-center space-x-4">
+                        @auth
+                            <span class="text-elegant-gold font-medium bg-elegant-charcoal px-3 py-2 rounded-lg">
+                                <i class="fas fa-user mr-2"></i>{{ Auth::user()->name }}
+                            </span>
+                            
+                            @if (Auth::user()->isAdmin() || Auth::user()->isManager())
+                                <a href="{{ route('admin.users.index') }}" class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200 bg-elegant-burgundy hover:bg-red-800 px-4 py-2 rounded-lg">
+                                    <i class="fas fa-cog mr-2"></i>Quản trị
+                                </a>
+                            @endif
+                            
+                            <form method="POST" action="{{ route('logout') }}" class="inline">
+                                @csrf
+                                <button type="submit" class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+                                </button>
+                            </form>
+                        @else
+                            <a href="" class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200">
+                                <i class="fas fa-search mr-2"></i>Tra cứu
+                            </a>
+                            <a href="{{ route('login') }}" class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200">
+                                <i class="fas fa-sign-in-alt mr-2"></i>Đăng nhập
+                            </a>
+                            <a href="{{ route('register') }}" class="bg-elegant-gold hover:bg-yellow-500 text-elegant-navy font-semibold px-6 py-3 rounded-lg transition duration-200 transform hover:scale-105 shadow-lg">
+                                <i class="fas fa-user-plus mr-2"></i>Đăng ký
+                            </a>
+                        @endauth
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="lg:hidden">
+                    <button type="button" class="bg-primary-700 inline-flex items-center justify-center p-3 rounded-lg text-elegant-cream hover:bg-primary-600 focus:outline-none transition duration-200" aria-controls="mobile-menu" aria-expanded="false" id="mobile-menu-button">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu -->
+        <div class="lg:hidden hidden bg-elegant-navy border-t border-primary-600" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="{{ route('home') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                    <i class="fas fa-home mr-3"></i>Trang chủ
+                </a>
+                <a href="{{route('reservation.create')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                    <i class="fas fa-calendar-plus mr-3"></i>Đặt bàn
+                </a>
+                <a href="{{route('promotions.index')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                    <i class="fas fa-tag mr-3"></i>Khuyến mãi
+                </a>
+                <a href="{{route('contact')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                    <i class="fas fa-phone mr-3"></i>Liên hệ
+                </a>
+                <a href="{{route('faq')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                    <i class="fas fa-question-circle mr-3"></i>FAQ
+                </a>
+                
+                @auth
+                    <div class="border-t border-primary-600 pt-4">
+                        <div class="flex items-center px-3 pb-3">
+                            <i class="fas fa-user-circle text-elegant-gold text-2xl mr-3"></i>
+                            <div>
+                                <div class="text-base font-medium text-white">{{ Auth::user()->name }}</div>
+                                <div class="text-sm font-medium text-primary-200">{{ Auth::user()->email }}</div>
+                            </div>
+                        </div>
                         @if (Auth::user()->isAdmin() || Auth::user()->isManager())
-                            <a href="{{ route('admin.users.index') }}" class="text-gray-700 hover:text-amber-600 font-medium">Quản trị</a>
+                            <a href="{{ route('admin.users.index') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                                <i class="fas fa-cog mr-3"></i>Quản trị
+                            </a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="text-gray-700 hover:text-amber-600 font-medium text-left">Đăng xuất</button>
+                            <button type="submit" class="w-full text-left text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                                <i class="fas fa-sign-out-alt mr-3"></i>Đăng xuất
+                            </button>
                         </form>
-                    @else
-                        <a href="{{ route('login') }}" class="text-gray-700 hover:text-amber-600 font-medium">Đăng nhập</a>
-                        <a href="{{ route('register') }}" class="text-gray-700 hover:text-amber-600 font-medium">Đăng ký</a>
-                    @endauth
-
-                    <button onclick="window.location.href='#contact'" class="bg-amber-600 text-white px-6 py-2 rounded-full font-semibold w-full hover:bg-amber-700">
-                        Đặt bàn ngay
-                    </button>
-                </div>
-            </nav>
+                    </div>
+                @else
+                    <div class="border-t border-primary-600 pt-4">
+                        <a href="{{route('reservation.create')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                            <i class="fas fa-search mr-3"></i>Tra cứu đặt bàn
+                        </a>
+                        <a href="{{ route('login') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                            <i class="fas fa-sign-in-alt mr-3"></i>Đăng nhập
+                        </a>
+                        <a href="{{ route('register') }}" class="bg-elegant-gold text-elegant-navy font-semibold block px-3 py-3 rounded-lg text-base font-medium transition duration-200 mt-2">
+                            <i class="fas fa-user-plus mr-3"></i>Đăng ký
+                        </a>
+                    </div>
+                @endauth
+            </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main -->
-    <main class="pt-20">
+    <!-- Main Content -->
+    <main>
         @yield('content')
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-12 mt-10">
-        <div class="container mx-auto px-4 grid md:grid-cols-4 gap-8">
-            <div>
-                <h3 class="text-2xl font-bold text-amber-500 mb-4">BILLIARD CLUB</h3>
-                <p class="text-gray-300 text-sm">Điểm đến hàng đầu cho những người đam mê bi-a. Bàn chuyên nghiệp, không gian đẳng cấp và trải nghiệm khó quên.</p>
-            </div>
-            <div>
-                <h4 class="text-lg font-semibold mb-4">Liên kết nhanh</h4>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="#home" class="text-gray-300 hover:text-amber-500">Trang chủ</a></li>
-                    <li><a href="#about" class="text-gray-300 hover:text-amber-500">Giới thiệu</a></li>
-                    <li><a href="#services" class="text-gray-300 hover:text-amber-500">Dịch vụ</a></li>
-                    <li><a href="#gallery" class="text-gray-300 hover:text-amber-500">Thư viện</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-lg font-semibold mb-4">Thông tin liên hệ</h4>
-                <ul class="space-y-2 text-sm text-gray-300">
-                    <li><i class="fas fa-phone mr-2 text-amber-500"></i> +84 123 456 789</li>
-                    <li><i class="fas fa-envelope mr-2 text-amber-500"></i> info@billiardclub.com</li>
-                    <li><i class="fas fa-map-marker-alt mr-2 text-amber-500"></i> Hà Nội, Việt Nam</li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-lg font-semibold mb-4">Giờ mở cửa</h4>
-                <p class="text-gray-300 text-sm"><i class="fas fa-clock text-amber-500 mr-2"></i>T2 - T6: 10:00 - 02:00</p>
-                <p class="pl-6 text-gray-300 text-sm">T7 - CN: 10:00 - 04:00</p>
-                <div class="flex space-x-4 mt-4">
-                    <a href="#" class="text-gray-300 hover:text-amber-500"><i class="fab fa-facebook text-xl"></i></a>
-                    <a href="#" class="text-gray-300 hover:text-amber-500"><i class="fab fa-instagram text-xl"></i></a>
-                    <a href="#" class="text-gray-300 hover:text-amber-500"><i class="fab fa-twitter text-xl"></i></a>
+    <footer class="bg-elegant-navy text-elegant-cream pt-12 pb-8 border-t-4 border-elegant-gold">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h3 class="text-xl font-display font-bold mb-6 flex items-center">
+                        <div class="w-10 h-10 bg-elegant-gold rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-billiard-ball text-elegant-navy"></i>
+                        </div>
+                        Poly Billiards
+                    </h3>
+                    <p class="text-primary-200 mb-4 leading-relaxed">
+                        Thiên đường bi-a chuyên nghiệp với không gian sang trọng và dịch vụ đẳng cấp.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 bg-primary-700 hover:bg-primary-600 rounded-full flex items-center justify-center transition duration-200">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-primary-700 hover:bg-primary-600 rounded-full flex items-center justify-center transition duration-200">
+                            <i class="fab fa-tiktok"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-primary-700 hover:bg-primary-600 rounded-full flex items-center justify-center transition duration-200">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6 text-elegant-gold">Liên hệ</h4>
+                    <div class="space-y-3">
+                        <p class="flex items-center text-primary-200">
+                            <i class="fas fa-map-marker-alt text-elegant-gold mr-3 w-5"></i>
+                            123 Đường ABC, Quận 1, TP.HCM
+                        </p>
+                        <p class="flex items-center text-primary-200">
+                            <i class="fas fa-phone text-elegant-gold mr-3 w-5"></i>
+                            (028) 1234 5678
+                        </p>
+                        <p class="flex items-center text-primary-200">
+                            <i class="fas fa-envelope text-elegant-gold mr-3 w-5"></i>
+                            info@polybilliards.com
+                        </p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6 text-elegant-gold">Giờ mở cửa</h4>
+                    <div class="space-y-2 text-primary-200">
+                        <p class="flex justify-between">
+                            <span>Thứ 2 - Thứ 6:</span>
+                            <span>8:00 - 24:00</span>
+                        </p>
+                        <p class="flex justify-between">
+                            <span>Thứ 7 - CN:</span>
+                            <span>24/24</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-6 text-elegant-gold">Liên kết nhanh</h4>
+                    <div class="space-y-2">
+                        <a href="{{route('reservation.create')}}" class="block text-primary-200 hover:text-elegant-gold transition duration-200">Đặt bàn</a>
+                        <a href="{{route('promotions.index')}}" class="block text-primary-200 hover:text-elegant-gold transition duration-200">Khuyến mãi</a>
+                        <a href="{{route('faq')}}" class="block text-primary-200 hover:text-elegant-gold transition duration-200">Câu hỏi thường gặp</a>
+                        <a href="{{route('contact')}}" class="block text-primary-200 hover:text-elegant-gold transition duration-200">Liên hệ</a>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="text-center text-gray-400 text-sm border-t border-gray-700 mt-8 pt-4">
-            © 2025 Billiard Club. Bản quyền thuộc về chúng tôi.
+            
+            <div class="border-t border-primary-700 pt-6 text-center text-primary-300">
+                <p>&copy; 2024 Poly Billiards. All rights reserved.</p>
+            </div>
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script>
         // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenuBtn.addEventListener('click', () => {
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
             mobileMenu.classList.toggle('hidden');
-            const icon = mobileMenuBtn.querySelector('i');
-            icon.classList.toggle('fa-times');
-            icon.classList.toggle('fa-bars');
-        });
-
-        // Dropdown toggle
-        const userMenuBtn = document.getElementById('user-menu-btn');
-        const userDropdown = document.getElementById('user-dropdown');
-        if (userMenuBtn) {
-            userMenuBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                userDropdown.classList.toggle('hidden');
-            });
-        }
-        document.addEventListener('click', (e) => {
-            if (userDropdown && !document.getElementById('user-menu').contains(e.target)) {
-                userDropdown.classList.add('hidden');
-            }
         });
     </script>
 
-    @stack('scripts')
+    @yield('scripts')
 </body>
 </html>

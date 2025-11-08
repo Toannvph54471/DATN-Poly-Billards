@@ -28,3 +28,4 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::prefix('public')->group(function () {
     // Add public API routes here
 });
+

@@ -32,11 +32,6 @@ class ComboTimeUsage extends Model
         'extra_charge' => 'decimal:2',
     ];
 
-    public function combo()
-    {
-        return $this->belongsTo(Combo::class);
-    }
-
     public function bill()
     {
         return $this->belongsTo(Bill::class);

@@ -26,11 +26,42 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Api\ComboTimeController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\FaqController;
+use App\Http\Controllers\PromotionClientController;
 
 
-Route::get('/', function () {
-    return view('home');
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/contact', [ContactController::class, 'index'])->name('contact');
+Route::get('/faq', [FaqController::class, 'index'])->name('faq');
+
+// Promotions
+    Route::get('/promotions', [PromotionClientController::class, 'index'])->name('promotions.index');
+    Route::get('/promotions/{promotion}', [PromotionClientController::class, 'show'])->name('promotions.show');
+
+        
+    Route::prefix('api')->group(function () {
+        Route::post('/tables/available', [ReservationController::class, 'checkAvailability'])->name('api.tables.available');
+        Route::post('/reservations/search', [ReservationController::class, 'search'])->name('api.reservations.search');
+        Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('api.reservations.checkin');
+        Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('api.reservations.cancel');
 });
+
+// Authenticated Customer Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
+    Route::get('/reservation', [ReservationController::class, 'create'])->name('reservation.create');
+    Route::post('/reservation', [ReservationController::class, 'store'])->name('reservation.store');
+    Route::get('/reservations/track', [ReservationController::class, 'track'])->name('reservations.track');
+
+//profile
+    Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
+    Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
+    
+});
+
 
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
@@ -76,6 +107,19 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/tables/{id}/edit', [TableController::class, 'edit'])->name('admin.tables.edit');
     Route::put('/tables/{id}', [TableController::class, 'update'])->name('admin.tables.update');
 
+    // Detail Table
+    Route::get('tables/{id}', [TableController::class, 'detail'])->name('admin.tables.detail');
+    // Mở bàn từ giao diện admin
+    Route::post('tables/{id}/open', [BillController::class, 'openTable'])->name('tables.open');
+    // Tạm dừng
+    Route::post('/bills/{bill}/pause', [BillController::class, 'pauseTable'])->name('bills.pause');
+    Route::post('/bills/{bill}/resume', [BillController::class, 'resumeTable'])->name('bills.resume');
+    Route::post('/bills/{bill}/close', [BillController::class, 'closeTable'])->name('bills.close');
+    // Thêm sản phẩm vào bill
+    Route::post('bills/{bill}/product', [BillController::class, 'addProduct'])->name('bills.add-product');
+    // Thêm combo vào bill
+    Route::post('bills/{bill}/combo', [BillController::class, 'addCombo'])->name('bills.add-combo');
+
 
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
@@ -108,6 +152,10 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/promotions', [PromotionController::class, 'index'])->name('admin.promotions.index');
     Route::get('/promotions/create', [PromotionController::class, 'create'])->name('admin.promotions.create');
     Route::post('/promotions', [PromotionController::class, 'store'])->name('admin.promotions.store');
+    Route::get('/admin/promotions/{id}', [PromotionController::class, 'show'])->name('admin.promotions.show');
+
+
+    
     Route::get('/promotions/{id}/edit', [PromotionController::class, 'edit'])->name('admin.promotions.edit');
     Route::put('/promotions/{id}/update', [PromotionController::class, 'update'])->name('admin.promotions.update');
     Route::get('/promotions/trashed', [PromotionController::class, 'trashed'])->name('admin.promotions.trashed');
@@ -127,4 +175,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/customers/trashed', [CustomerController::class, 'trash'])->name('admin.customers.trashed');
     Route::post('/customers/{id}/restore', [CustomerController::class, 'restore'])->name('admin.customers.restore');
     Route::delete('/customers/{id}/force-delete', [CustomerController::class, 'forceDelete'])->name('admin.customers.force-delete');
+    //Combos - API routes (THÊM MỚI)
+    Route::get('/combos-api/rates-by-category', [ComboController::class, 'getTableRatesByCategory'])->name('admin.combos.rates-by-category');
+    Route::post('/combos-api/preview-price', [ComboController::class, 'previewComboPrice'])->name('admin.combos.preview-price');
+    Route::get('/combos-api/calculate-table-price', [ComboController::class, 'calculateTablePriceAPI'])->name('admin.combos.calculate-table-price');
+
 });

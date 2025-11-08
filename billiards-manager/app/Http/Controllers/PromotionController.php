@@ -73,36 +73,40 @@ class PromotionController extends Controller
     }
 
     // Lưu khuyến mãi mới
-    public function store(Request $request)
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'promotion_code'   => 'required|string|max:50|unique:promotions,promotion_code',
+        'name'             => 'required|string|max:255',
+        'description'      => 'nullable|string|max:1000',
+        'discount_type'    => 'required|in:percent,fixed',
+        'discount_value'   => [
+            'required',
+            'numeric',
+            'min:0', // không âm
+            function ($attribute, $value, $fail) use ($request) {
+                if ($request->discount_type === 'percent' && $value > 100) {
+                    $fail('Giá trị giảm theo phần trăm không được vượt quá 100%.');
+                }
+            },
+        ],
+        'min_total_amount' => 'nullable|numeric|min:0', // không âm
+        'start_date'       => 'required|date',
+        'end_date'         => 'required|date|after:start_date',
+        'status'           => 'required|in:active,inactive',
+    ]);
+
+    Promotion::create($validated);
+
+    return redirect()
+        ->route('admin.promotions.index')
+        ->with('success', 'Đã thêm chương trình khuyến mãi thành công!');
+}
+    public function show($id)
     {
-        $validated = $request->validate([
-            'promotion_code'   => 'required|string|max:50|unique:promotions,promotion_code',
-            'name'             => 'required|string|max:255',
-            'description'      => 'nullable|string|max:1000',
-            'discount_type'    => 'required|in:percent,fixed',
-            'discount_value'   => [
-                'required',
-                'numeric',
-                'min:0', // không âm
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($request->discount_type === 'percent' && $value > 100) {
-                        $fail('Giá trị giảm theo phần trăm không được vượt quá 100%.');
-                    }
-                },
-            ],
-            'min_total_amount' => 'nullable|numeric|min:0', // không âm
-            'start_date'       => 'required|date',
-            'end_date'         => 'required|date|after:start_date',
-            'status'           => 'required|in:active,inactive',
-        ]);
-
-        Promotion::create($validated);
-
-        return redirect()
-            ->route('admin.promotions.index')
-            ->with('success', 'Đã thêm chương trình khuyến mãi thành công!');
+        $promotion = Promotion::findOrFail($id);
+        return view('admin.promotions.show', compact('promotion'));
     }
-
     // Form tạo mới
     public function edit($id)
     {
