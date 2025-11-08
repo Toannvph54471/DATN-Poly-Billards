@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Reservation;
 use App\Models\ReservationStatusHistory;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Seeder;
 
 class ReservationStatusHistorySeeder extends Seeder

@@ -78,8 +78,12 @@
                                     <i class="fas fa-box text-green-600"></i>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <h4 class="font-medium text-gray-900 truncate">{{ $item->product->name }}</h4>
-                                    <p class="text-xs text-gray-500 mt-0.5">{{ $item->product->product_code }}</p>
+                                    <h4 class="font-medium text-gray-900 truncate">
+    {{ $item->product?->name ?? 'Sản phẩm đã bị xóa' }}
+</h4>
+<p class="text-xs text-gray-500 mt-0.5">
+    {{ $item->product?->product_code ?? 'N/A' }}
+</p>
                                 </div>
                             </div>
                             <div class="text-right ml-4">

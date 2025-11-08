@@ -2,37 +2,31 @@
 
 namespace Database\Seeders;
 
-use App\Models\Combo;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Seeder;
-
+use App\Models\Combo;
+use App\Models\Category;
 class CombosTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $combos = [
-            [
-                'combo_code' => 'COMBO001',
-                'name' => 'Combo 2h + 2 nước',
-                'description' => 'Bao gồm 2 giờ chơi và 2 nước ngọt',
-                'price' => 140000,
-                'actual_value' => 160000,
-                'status' => 'Active',
-            ],
-            [
-                'combo_code' => 'COMBO002',
-                'name' => 'Combo 3h VIP + snack',
-                'description' => 'Bao gồm 3 giờ chơi VIP và 1 snack',
-                'price' => 250000,
-                'actual_value' => 280000,
-                'status' => 'Active',
-            ],
-        ];
+        DB::table('combos')->truncate();
+        $catStd = Category::where('name', 'Bàn Tiêu Chuẩn')->first();
 
-        foreach ($combos as $combo) {
-            Combo::firstOrCreate(
-                ['combo_code' => $combo['combo_code']], 
-                $combo
-            );
-        }
+        Combo::create([
+            'combo_code' => 'C_TIME_2H', 
+            'name' => 'Combo 2 giờ chơi + 2 nước', 
+            'price' => 150000,
+            'is_time_combo' => true,
+            'play_duration_minutes' => 120,
+            'table_category_id' => $catStd->id
+        ]);
+        
+        Combo::create([
+            'combo_code' => 'C_FOOD_SNACK', 
+            'name' => 'Combo Đồ ăn vặt', 
+            'price' => 100000,
+            'is_time_combo' => false,
+        ]);
     }
 }
