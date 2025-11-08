@@ -9,20 +9,22 @@
             <h1 class="text-2xl font-bold text-gray-800">Quản lý khách hàng</h1>
             <p class="text-gray-600">Quản lý thông tin và lịch sử sử dụng dịch vụ của khách hàng</p>
         </div>
-         <a href="{{ route('admin.customers.trashed') }}" 
-           class="bg-yellow-500 text-white rounded-lg px-4 py-2 hover:bg-yellow-600 transition flex items-center">
-            <i class="fas fa-trash mr-2"></i>
-            Đã xóa ({{ $trashedCount ?? 0 }})
-        </a>
-        <a href="{{ route('admin.customers.create') }}" 
-           class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
-            <i class="fas fa-plus mr-2"></i>
-            Thêm khách hàng
-        </a>
+        <div class="flex space-x-2">
+            <a href="{{ route('admin.customers.trashed') }}" 
+               class="bg-yellow-500 text-white rounded-lg px-4 py-2 hover:bg-yellow-600 transition flex items-center">
+                <i class="fas fa-trash mr-2"></i>
+                Đã xóa ({{ $trashedCount ?? 0 }})
+            </a>
+            <a href="{{ route('admin.customers.create') }}" 
+               class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
+                <i class="fas fa-plus mr-2"></i>
+                Thêm khách hàng
+            </a>
+        </div>
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
         <div class="stat-card p-4">
             <div class="flex justify-between items-center">
                 <div>
@@ -38,11 +40,11 @@
         <div class="stat-card p-4">
             <div class="flex justify-between items-center">
                 <div>
-                    <p class="text-gray-500 text-sm">Khách VIP</p>
-                    <p class="text-xl font-bold text-gray-800">{{ $vipCount }}</p>
+                    <p class="text-gray-500 text-sm">Đang hoạt động</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $activeCount ?? 0 }}</p>
                 </div>
-                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-crown text-purple-600"></i>
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600"></i>
                 </div>
             </div>
         </div>
@@ -50,11 +52,23 @@
         <div class="stat-card p-4">
             <div class="flex justify-between items-center">
                 <div>
-                    <p class="text-gray-500 text-sm">Khách thường</p>
-                    <p class="text-xl font-bold text-gray-800">{{ $regularCount }}</p>
+                    <p class="text-gray-500 text-sm">Ngừng hoạt động</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $inactiveCount ?? 0 }}</p>
                 </div>
-                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-user-friends text-green-600"></i>
+                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-pause-circle text-red-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card p-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-gray-500 text-sm">Khách VIP</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $vipCount }}</p>
+                </div>
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-crown text-purple-600"></i>
                 </div>
             </div>
         </div>
@@ -106,8 +120,9 @@
                     <select name="customer_type" id="customer_type"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Tất cả loại</option>
+                        <option value="New" {{ request('customer_type') == 'New' ? 'selected' : '' }}>Mới</option>
+                        <option value="Regular" {{ request('customer_type') == 'Regular' ? 'selected' : '' }}>Thường xuyên</option>
                         <option value="VIP" {{ request('customer_type') == 'VIP' ? 'selected' : '' }}>VIP</option>
-                        <option value="Regular" {{ request('customer_type') == 'Regular' ? 'selected' : '' }}>Thường</option>
                     </select>
                 </div>
 
@@ -119,7 +134,8 @@
                         Lọc
                     </button>
                     <a href="{{ route('admin.customers.index') }}"
-                        class="ml-2 bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center">
+                        class="ml-2 bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center"
+                        title="Làm mới bộ lọc">
                         <i class="fas fa-redo mr-2"></i>
                     </a>
                 </div>
@@ -155,7 +171,7 @@
                                     </div>
                                     <div class="ml-4">
                                         <div class="text-sm font-medium text-gray-900">{{ $customer->name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $customer->email }}</div>
+                                        <div class="text-sm text-gray-500">{{ $customer->email ?? 'Chưa có email' }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -177,10 +193,15 @@
                                         <i class="fas fa-crown mr-1"></i>
                                         VIP
                                     </span>
+                                @elseif($customer->customer_type === 'Regular')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-user-check mr-1"></i>
+                                        Thường xuyên
+                                    </span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        <i class="fas fa-user mr-1"></i>
-                                        Thường
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i class="fas fa-user-plus mr-1"></i>
+                                        Mới
                                     </span>
                                 @endif
                             </td>
@@ -274,13 +295,12 @@
             });
         }
 
-        // Auto submit form when filters change (optional)
+        // Auto submit form when filters change
         document.addEventListener('DOMContentLoaded', function() {
             const statusSelect = document.getElementById('status');
             const typeSelect = document.getElementById('customer_type');
 
-            // Uncomment if you want auto-submit on filter change
-            /*
+            // Tự động submit khi thay đổi filter (tùy chọn)
             statusSelect.addEventListener('change', function() {
                 this.form.submit();
             });
@@ -288,7 +308,6 @@
             typeSelect.addEventListener('change', function() {
                 this.form.submit();
             });
-            */
         });
     </script>
 @endsection

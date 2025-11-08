@@ -119,7 +119,7 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="p-4 space-y-1">
+            <nav class="p-4 space-y-1" style="height: 100vh; overflow-y: auto; position: fixed; padding-bottom: 150px;scrollbar-gutter: stable;box-sizing: border-box;padding-right: 0px; width: 260px;">
                 <a href=""
                     class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-chart-pie w-6 mr-3"></i>
@@ -178,19 +178,6 @@
                     <span class="font-medium">Vai Trò</span>
                 </a>
             </nav>
-
-            <!-- Store Info -->
-            <div class="absolute bottom-0 left-0 p-4">
-                <div class="flex items-center space-x-2">
-                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                        <i class="fas fa-store text-white"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium">Cửa hàng chính</p>
-                        <p class="text-blue-200 text-xs">Đang hoạt động</p>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Main Content -->

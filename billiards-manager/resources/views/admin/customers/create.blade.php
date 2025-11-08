@@ -88,12 +88,29 @@
                         @enderror
                     </div>
 
+                    <!-- Trạng thái -->
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
+                            Trạng thái <span class="text-red-500">*</span>
+                        </label>
+                        <select name="status" id="status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            required>
+                            <option value="">Chọn trạng thái</option>
+                            <option value="Active" {{ old('status') == 'Active' ? 'selected' : '' }}>Đang hoạt động</option>
+                            <option value="Inactive" {{ old('status') == 'Inactive' ? 'selected' : '' }}>Ngừng hoạt động</option>
+                        </select>
+                        @error('status')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Ghi chú -->
                     <div>
                         <label for="note" class="block text-sm font-medium text-gray-700 mb-1">
                             Ghi chú
                         </label>
-                        <textarea name="note" id="note" rows="4"
+                        <textarea name="note" id="note" rows="3"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ old('note') }}</textarea>
                         @error('note')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>

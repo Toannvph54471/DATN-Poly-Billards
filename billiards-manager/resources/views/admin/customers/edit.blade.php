@@ -88,12 +88,28 @@
                         @enderror
                     </div>
 
+                    <!-- Trạng thái -->
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
+                            Trạng thái <span class="text-red-500">*</span>
+                        </label>
+                        <select name="status" id="status"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                            required>
+                            <option value="Active" {{ old('status', $customer->status) == 'Active' ? 'selected' : '' }}>Đang hoạt động</option>
+                            <option value="Inactive" {{ old('status', $customer->status) == 'Inactive' ? 'selected' : '' }}>Ngừng hoạt động</option>
+                        </select>
+                        @error('status')
+                            <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Ghi chú -->
                     <div>
                         <label for="note" class="block text-sm font-medium text-gray-700 mb-1">
                             Ghi chú
                         </label>
-                        <textarea name="note" id="note" rows="4"
+                        <textarea name="note" id="note" rows="3"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ old('note', $customer->note) }}</textarea>
                         @error('note')
                             <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -119,8 +135,18 @@
                         <p class="text-sm text-gray-900">{{ $customer->last_visit_at ? $customer->last_visit_at->format('d/m/Y H:i') : 'Chưa có' }}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-500">Ngày tạo</label>
-                        <p class="text-sm text-gray-900">{{ $customer->created_at->format('d/m/Y H:i') }}</p>
+                        <label class="block text-sm font-medium text-gray-500">Trạng thái hiện tại</label>
+                        <p class="text-sm text-gray-900">
+                            @if($customer->status == 'Active')
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Đang hoạt động
+                                </span>
+                            @else
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    Ngừng hoạt động
+                                </span>
+                            @endif
+                        </p>
                     </div>
                 </div>
             </div>

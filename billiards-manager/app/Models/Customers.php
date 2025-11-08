@@ -20,6 +20,7 @@ class Customer extends Model
         'phone',
         'email',
         'customer_type',
+        'status', 
         'total_visits',
         'total_spent',
         'last_visit_at',
