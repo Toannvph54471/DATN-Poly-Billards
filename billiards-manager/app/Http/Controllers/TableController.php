@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Bill;
 use App\Models\BillTimeUsage;
+use App\Models\Category;
+use App\Models\Combo;
+use App\Models\ComboTimeUsage;
 use App\Models\Product;
 use App\Models\Table;
 use Carbon\Carbon;
@@ -15,31 +18,56 @@ class TableController extends Controller
     // Hiện thị
     public function index(Request $request)
     {
-        $query = Table::query();
-        $types = Table::select('type')->distinct()->pluck('type');
-        if ($request->filled('search')) {
-            $query->where('table_name', 'like', "%{$request->search}%")
-                ->orWhere('table_number', 'like', "%{$request->search}%");
+        $query = Table::with(['category']);
+
+        // Lọc theo category
+        if ($request->has('category_id') && $request->category_id) {
+            $query->where('category_id', $request->category_id);
         }
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        if ($request->filled('status')) {
+        // Lọc theo status
+        if ($request->has('status') && $request->status) {
             $query->where('status', $request->status);
         }
 
-        $tables = $query->paginate(10);
+        // Lọc theo type
+        if ($request->has('type') && $request->type) {
+            $query->where('type', $request->type);
+        }
 
-        return view('admin.tables.index', [
-            'tables' => $tables,
-            'types' => $types,
-            'totalTables' => Table::count(),
-            'inUseCount' => Table::where('status', 'in_use')->count(),
-            'maintenanceCount' => Table::where('status', 'maintenance')->count(),
-            'availableCount' => Table::where('status', 'available')->count(),
-        ]);
+        // Tìm kiếm
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('table_number', 'like', "%{$search}%")
+                    ->orWhere('table_name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $tables = $query->latest()->paginate(20);
+        $categories = Category::all();
+
+        $tableTypes = [
+            Table::TYPE_STANDARD => 'Standard',
+            Table::TYPE_VIP => 'VIP',
+            Table::TYPE_COMPETITION => 'Competition',
+        ];
+
+        $statuses = [
+            Table::STATUS_AVAILABLE => 'Available',
+            Table::STATUS_OCCUPIED => 'Occupied',
+            Table::STATUS_PAUSED => 'Paused',
+            Table::STATUS_MAINTENANCE => 'Maintenance',
+            Table::STATUS_RESERVED => 'Reserved',
+        ];
+
+        return view('admin.tables.index', compact(
+            'tables',
+            'categories',
+            'tableTypes',
+            'statuses'
+        ));
     }
     // hien thi form sua 
     public function edit($id)
@@ -128,48 +156,107 @@ class TableController extends Controller
         return redirect()->route('admin.tables.trashed')->with('success', 'Khôi phục bàn thành công!');
     }
 
-    public function detail($id)
+    // BillController.php
+    public function showDetail($id)
     {
-        $table = Table::findOrFail($id);
+        $table = Table::with([
+            'category',
+            'currentBill.customer',
+            'currentBill.billDetails.product',
+            'currentBill.billDetails.combo',
+            'currentBill.billTimeUsages' => function ($query) {
+                $query->whereNull('end_time')
+                    ->orWhere('end_time', '>', now()->subHours(24));
+            },
+            'currentBill.comboTimeUsages' => function ($query) {
+                $query->where('is_expired', false)
+                    ->orWhere('end_time', '>', now()->subHours(24));
+            }
+        ])->findOrFail($id);
 
-        $products = Product::where('stock_quantity', '>', 0)
-            ->select('id', 'name', 'price')
-            ->get();
+        // Lấy danh sách combo và products để hiển thị trong form
+        $combos = Combo::where('status', 'active')->get();
+        $products = Product::where('status', 'Active')->get();
 
-        $currentUsage = BillTimeUsage::whereHas('bill', function ($query) use ($id) {
-            $query->where('table_id', $id)
-                ->whereIn('status', ['Open', 'Paused']);
-        })
+        // Tính toán thời gian hiện tại
+        $timeInfo = $this->calculateCurrentTimeInfo($table);
+
+        return view('admin.tables.detail', compact('table', 'timeInfo', 'combos', 'products'));
+    }
+
+    // app/Http\Controllers/TableController.php
+
+    private function calculateCurrentTimeInfo($table)
+    {
+        $timeInfo = [
+            'mode' => 'none',
+            'elapsed_minutes' => 0,
+            'remaining_minutes' => 0,
+            'total_minutes' => 0,
+            'current_cost' => 0,
+            'is_running' => false,
+            'is_near_end' => false,
+            'hourly_rate' => $table->category->hourly_rate ?? 0
+        ];
+
+        if (!$table->currentBill) {
+            return $timeInfo;
+        }
+
+        $bill = $table->currentBill;
+
+        // Kiểm tra combo time đang hoạt động
+        $activeComboTime = $bill->comboTimeUsages
+            ->where('is_expired', false)
+            ->where('remaining_minutes', '>', 0)
+            ->first();
+
+        // Kiểm tra regular time đang hoạt động
+        $activeRegularTime = $bill->billTimeUsages
             ->whereNull('end_time')
-            ->with([
-                'bill' => function ($q) {
-                    $q->with(['staff', 'customer'])
-                        ->with(['billDetails' => function ($q) {
-                            $q->with(['product', 'combo']);
-                        }]);
-                }
-            ])
-            ->first(); // ← Vẫn first(), nhưng Blade sẽ kiểm tra null
+            ->first();
 
-        $usageHistory = BillTimeUsage::whereHas('bill', function ($query) use ($id) {
-            $query->where('table_id', $id)->where('status', 'Closed');
-        })
-            ->whereNotNull('end_time')
-            ->with('bill')
-            ->orderBy('start_time', 'desc')
-            ->take(50)
-            ->get();
+        if ($activeComboTime) {
+            // Đang dùng COMBO TIME
+            $elapsed = $activeComboTime->start_time->diffInMinutes(now());
+            $remaining = max(0, $activeComboTime->remaining_minutes - $elapsed);
 
-        $totalMinutes = $usageHistory->sum(fn($u) => $u->duration_minutes ?? 0);
-        $totalRevenue = $usageHistory->sum(fn($u) => $u->bill->total_amount ?? 0);
+            // Tính current_cost dựa trên extra_minutes_added
+            $currentCost = 0;
+            if ($activeComboTime->extra_minutes_added > 0) {
+                $tableRate = $table->category->hourly_rate;
+                $currentCost = ($tableRate / 60) * $activeComboTime->extra_minutes_added;
+            }
 
-        return view('admin.tables.detail', compact(
-            'table',
-            'currentUsage',
-            'usageHistory',
-            'totalMinutes',
-            'totalRevenue',
-            'products'
-        ));
+            $timeInfo = [
+                'mode' => 'combo',
+                'elapsed_minutes' => $elapsed,
+                'remaining_minutes' => $remaining,
+                'total_minutes' => $activeComboTime->total_minutes,
+                'current_cost' => $currentCost,
+                'is_running' => true,
+                'is_near_end' => $remaining <= 10,
+                'hourly_rate' => $table->category->hourly_rate ?? 0
+            ];
+        } elseif ($activeRegularTime) {
+            // Đang dùng REGULAR TIME
+            $elapsed = $activeRegularTime->start_time->diffInMinutes(now());
+            $cost = ($activeRegularTime->hourly_rate / 60) * $elapsed;
+
+            $timeInfo = [
+                'mode' => 'regular',
+                'elapsed_minutes' => $elapsed,
+                'remaining_minutes' => 0,
+                'total_minutes' => $elapsed,
+                'current_cost' => $cost,
+                'is_running' => true,
+                'is_near_end' => false,
+                'hourly_rate' => $activeRegularTime->hourly_rate
+            ];
+
+            
+        }
+
+        return $timeInfo;
     }
 }

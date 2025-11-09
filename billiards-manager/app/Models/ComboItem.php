@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -16,6 +15,11 @@ class ComboItem extends Model
         'product_id',
         'quantity',
         'unit_price',
+        'table_category_id',
+        'table_price_per_hour',
+        'is_required',
+        'choice_group',
+        'max_choices'
     ];
 
     protected $casts = [

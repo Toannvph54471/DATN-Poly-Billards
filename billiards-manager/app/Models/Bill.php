@@ -34,7 +34,7 @@ class Bill extends BaseModel
         'payment_method',
         'payment_status',
         'status',
-        'notes',
+        'note',
         'created_by',
         'updated_by',
         'paused_duration',
@@ -57,12 +57,19 @@ class Bill extends BaseModel
         return $this->belongsTo(Customer::class);
     }
 
+
+    public function timeUsages()
+    {
+        return $this->hasMany(BillTimeUsage::class);
+    }
+
+
     public function table()
     {
         return $this->belongsTo(Table::class);
     }
-    
-        public function reservation()
+
+    public function reservation()
     {
         return $this->belongsTo(Reservation::class);
     }
@@ -81,6 +88,7 @@ class Bill extends BaseModel
     {
         return $this->hasMany(BillDetail::class);
     }
+    
 
     public function billTimeUsages()
     {
