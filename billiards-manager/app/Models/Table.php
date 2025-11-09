@@ -164,4 +164,16 @@ class Table extends BaseModel
     {
         return $this->getHourlyRate();
     }
+
+    public function rate()
+    {
+        return $this->hasOneThrough(
+            TableRate::class,     // Model đích
+            Category::class,      // Model trung gian
+            'id',                 // Khóa ngoại trên Category (trỏ về Table)
+            'category_id',        // Khóa ngoại trên TableRate (trỏ về Category)
+            'category_id',        // Khóa cục bộ trên Table
+            'id'                  // Khóa cục bộ trên Category
+        );
+    }
 }

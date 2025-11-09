@@ -176,7 +176,7 @@ class ProductController extends Controller
         }
 
         // Xóa liên kết combo_items
-        \DB::table('combo_items')->where('product_id', $product->id)->delete();
+        DB::table('combo_items')->where('product_id', $product->id)->delete();
 
         $product->forceDelete();
 
