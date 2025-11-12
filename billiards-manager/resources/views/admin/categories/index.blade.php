@@ -48,7 +48,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <p class="text-gray-500 text-sm">Ngừng kích hoạt</p>
-                    <p class="text-xl font-bold text-gray-800">{{ $categoryInactives ?? 0 }}</p>
+                    <p class="text-xl font-bold text-gray-800">{{ $categoriesInactive ?? 0 }}</p>
                 </div>
                 <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                     <i class="fas fa-pause-circle text-red-600"></i>
