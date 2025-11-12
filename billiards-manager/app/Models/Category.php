@@ -9,8 +9,9 @@ class Category extends Model
     protected $fillable = [
         'name',
         'type', // 'product' | 'table'
-        'description',
+        'hourly_rate',
         'default_price',
+        'description',
         'status',
     ];
 
