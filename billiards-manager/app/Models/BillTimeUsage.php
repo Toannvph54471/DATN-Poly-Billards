@@ -12,7 +12,8 @@ class BillTimeUsage extends BaseModel
         'duration_minutes',
         'hourly_rate',
         'total_price',
-        'created_by'
+        'created_by',
+        'paused_at'
     ];
 
     protected $casts = [
