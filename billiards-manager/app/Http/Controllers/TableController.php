@@ -9,6 +9,7 @@ use App\Models\Combo;
 use App\Models\ComboTimeUsage;
 use App\Models\Product;
 use App\Models\Table;
+use App\Models\TableRate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,12 +19,7 @@ class TableController extends Controller
     // Hiện thị
     public function index(Request $request)
     {
-        $query = Table::with(['category']);
-
-        // Lọc theo category
-        if ($request->has('category_id') && $request->category_id) {
-            $query->where('category_id', $request->category_id);
-        }
+        $query = Table::query();
 
         // Lọc theo status
         if ($request->has('status') && $request->status) {
@@ -44,15 +40,8 @@ class TableController extends Controller
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
-
-        $tables = $query->latest()->paginate(20);
-        $categories = Category::all();
-
-        $tableTypes = [
-            Table::TYPE_STANDARD => 'Standard',
-            Table::TYPE_VIP => 'VIP',
-            Table::TYPE_COMPETITION => 'Competition',
-        ];
+        $tableRates = TableRate::where('status', 'Active')->get();
+        $tables = Table::with('tableRate')->paginate(10);
 
         $statuses = [
             Table::STATUS_AVAILABLE => 'Available',
@@ -61,19 +50,18 @@ class TableController extends Controller
             Table::STATUS_MAINTENANCE => 'Maintenance',
             Table::STATUS_RESERVED => 'Reserved',
         ];
-
         return view('admin.tables.index', compact(
             'tables',
-            'categories',
-            'tableTypes',
-            'statuses'
+            'statuses',
+            'tableRates'
         ));
     }
     // hien thi form sua 
     public function edit($id)
     {
         $table = Table::findOrFail($id);
-        return view('admin.tables.edit', compact('table'));
+        $tableRates = TableRate::where('status', 'Active')->get();
+        return view('admin.tables.edit', compact('table', 'tableRates'));
     }
     // xu ly update thong tin ban
     public function update(Request $request, $id)
@@ -82,7 +70,6 @@ class TableController extends Controller
             'table_name' => 'required|string|max:255',
             'table_number' => 'required|string|max:50',
             'type' => 'required|string',
-            'hourly_rate' => 'required|numeric|min:0',
             'status' => 'required|string',
         ]);
 
@@ -91,7 +78,6 @@ class TableController extends Controller
             'table_name',
             'table_number',
             'type',
-            'hourly_rate',
             'status',
         ]));
 
@@ -100,18 +86,22 @@ class TableController extends Controller
     }
 
 
+   // Hiển thị form thêm bàn
     public function create()
     {
-
-        return view('admin.tables.create');
+        $tableRates = TableRate::where('status', 'Active')->get();
+        return view('admin.tables.create', compact('tableRates'));
     }
+
+    // Lưu bàn mới
     public function store(Request $request)
     {
         $request->validate([
-            'table_number' => 'required|unique:tables,table_number|max:10',
-            'table_name' => 'required|max:255|unique:tables,table_name',
-            'type' => 'required|in:standard,vip,competition',
-            'hourly_rate' => 'required|numeric|min:0',
+            'table_number' => 'required|string|max:10|unique:tables,table_number',
+            'table_name' => 'required|string|max:255|unique:tables,table_name',
+            'capacity' => 'required|integer|min:1',
+            'status' => 'required|in:available,occupied,maintenance',
+            'table_rate_id' => 'required|exists:table_rates,id',
         ], [
             'table_number.unique' => 'Mã bàn đã tồn tại.',
             'table_name.unique' => 'Tên bàn đã tồn tại trong hệ thống.',
@@ -120,9 +110,9 @@ class TableController extends Controller
         Table::create([
             'table_number' => $request->table_number,
             'table_name' => $request->table_name,
-            'type' => $request->type,
-            'status' => Table::STATUS_AVAILABLE,
-            'hourly_rate' => $request->hourly_rate,
+            'capacity' => $request->capacity,
+            'status' => $request->status,
+            'table_rate_id' => $request->table_rate_id,
         ]);
 
         return redirect()->route('admin.tables.create')->with('success', 'Thêm bàn mới thành công!');
@@ -160,8 +150,7 @@ class TableController extends Controller
     public function showDetail($id)
     {
         $table = Table::with([
-            'category',
-            'currentBill.user',
+            'currentBill.customer',
             'currentBill.billDetails.product',
             'currentBill.billDetails.combo',
             'currentBill.billTimeUsages' => function ($query) {

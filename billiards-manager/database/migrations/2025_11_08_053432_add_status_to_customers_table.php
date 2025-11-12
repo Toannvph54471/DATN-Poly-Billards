@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('customers', function (Blueprint $table) {
-            $table->enum('status', ['Active', 'Inactive'])->default('Active')->after('customer_type');
-        });
+        // Schema::table('customers', function (Blueprint $table) {
+        //     $table->enum('status', ['Active', 'Inactive'])->default('Active')->after('customer_type');
+        // });
     }
 
     /**
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('customers', function (Blueprint $table) {
-            $table->dropColumn('status');
-        });
+        // Schema::table('customers', function (Blueprint $table) {
+        //     $table->dropColumn('status');
+        // });
     }
 };

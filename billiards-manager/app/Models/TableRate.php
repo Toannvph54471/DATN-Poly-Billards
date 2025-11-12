@@ -3,20 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; 
 
 class TableRate extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'code',
         'name',
-        'category_id',
         'hourly_rate',
         'max_hours',
         'status'
     ];
 
-    public function category()
+    public function tables()
     {
-        return $this->belongsTo(Category::class);
+        return $this->hasMany(Table::class);
     }
 }

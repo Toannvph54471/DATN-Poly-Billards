@@ -29,12 +29,6 @@ class TablePricingService
             }
         }
 
-        // Ưu tiên 2: TableRate active cho category này
-        $activeRate = $this->getActiveTableRate($table->category_id, $dateTime);
-        if ($activeRate) {
-            return (float) $activeRate->hourly_rate;
-        }
-
         // Ưu tiên 3: Category mặc định
         $category = $table->category;
         if ($category && $category->hourly_rate) {
@@ -138,11 +132,7 @@ class TablePricingService
     /**
      * Lấy gói giá active hiện tại (cho khuyến mãi tự động)
      */
-    private function getActiveTableRate(int $categoryId, ?Carbon $dateTime = null): ?TableRate
-    {
-        // TODO: Thêm logic kiểm tra thời gian khuyến mãi sau
-        return null;
-    }
+    
 
     /**
      * Xác định nguồn giá

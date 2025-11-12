@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->decimal('hourly_rate', 10, 2);
             $table->integer('max_hours')->default(24)->nullable();
             $table->string('status')->default('Active');

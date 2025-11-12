@@ -173,14 +173,6 @@
                             <span class="text-gray-600">Số bàn:</span>
                             <span class="font-semibold">{{ $table->table_number }}</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Loại bàn:</span>
-                            <span class="font-semibold">{{ $table->category->name ?? '-' }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Sức chứa:</span>
-                            <span class="font-semibold">{{ $table->capacity }} người</span>
-                        </div>
                     </div>
 
                     @if ($table->currentBill)
