@@ -15,10 +15,6 @@
                 <i class="fas fa-plus mr-2"></i>
                 Thêm danh mục
             </a>
-            <br>
-            <a href="#" class="bg-red-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition">
-                <i class="fas fa-trash-restore mr-1"></i> danh mục đã xóa
-            </a>
         </div>
     </div>
 
@@ -72,9 +68,9 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400 text-sm"></i>
                         </div>
-                        <input type="text" name="search" id="search" value=""
+                        <input type="text" name="search" id="search" value="{{ request('search') }}"
                             class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
-                            placeholder="Mã, tên danh mục...">
+                            placeholder="Tên danh mục...">
                     </div>
                 </div>
 
@@ -84,13 +80,14 @@
                     <select name="status" id="status"
                         class="block w-full py-2 px-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
                         <option value="">Tất cả trạng thái</option>
-                        <option value="0">Đang kích hoạt</option>
-                        <option value="upcoming">Ngừng kích hoạt</option>
+                        <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Đang kích hoạt</option>
+                        <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Ngừng kích hoạt
+                        </option>
                     </select>
                 </div>
                 <!-- Action Buttons -->
                 <div class="flex gap-2">
-                    <a href=""
+                    <a href="{{ route('categories.index') }}"
                         class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center text-sm whitespace-nowrap">
                         <i class="fas fa-redo mr-2"></i>
                         Làm mới
@@ -180,11 +177,6 @@
                     @endif
                 </tbody>
             </table>
-        </div>
-
-        <!-- Pagination -->
-        <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-            {{ $categories->links() }}
         </div>
     </div>
 @endsection

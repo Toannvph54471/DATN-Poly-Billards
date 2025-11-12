@@ -10,9 +10,20 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::paginate(10);
+        $search = $request->query('search');
+        $status = $request->query('status');
+
+        $categories = Category::where(function ($query) use ($search, $status) {
+            if ($search) {
+                $query->where('name', 'LIKE', "%{$search}%");
+            }
+            if ($status) {
+                $query->where('status', $status);
+            }
+        })->orderByDesc('id')->get();
+
         $totalCategories = Category::all()->count();
         $categoryActives = Category::where('status', 'active')->count();
         $categoriesInactive = Category::where('status', 'inactive')->count();
@@ -32,7 +43,7 @@ class CategoryController extends Controller
      */
     public function create()
     {
-        dd('Category Controller Create');
+        return view('admin.categories.create');
     }
 
     /**
@@ -40,7 +51,23 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $input = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'hourly_rate' => 'required|numeric|min:1|max:999999999999999',
+            'status' => 'required|string|max:255',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        $category = Category::create($input);
+
+        if (!$category) {
+            return back()->withErrors([
+                'error' => 'Lỗi xảy ra khi tạo thể loại.'
+            ])
+                ->withInput($request->all());
+        }
+        return redirect()->route('categories.index')->with('success', 'Thêm danh mục thành công.');
     }
 
     /**
@@ -56,7 +83,8 @@ class CategoryController extends Controller
      */
     public function edit(string $id)
     {
-        dd('Category Controller Edit');
+        $category = Category::findOrFail($id);
+        return view('admin.categories.edit', compact('category'));
     }
 
     /**
@@ -64,14 +92,27 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
-    }
+        $input = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'hourly_rate' => 'required|numeric|min:1|max:999999999999999',
+            'status' => 'required|string|max:255',
+            'description' => 'nullable|string|max:255',
+        ]);
 
+        $category = Category::findOrFail($id);
+        $category->update($input);
+
+        return redirect()->route('categories.index')->with('success', 'Cập nhật danh mục thành công.');
+    }
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        //
+        $category = Category::findOrFail($id);
+        $category->delete();
+
+        return redirect()->route('categories.index')->with('success', 'Xóa danh mục thành công.');
     }
 }
