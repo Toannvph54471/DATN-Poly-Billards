@@ -60,19 +60,6 @@
                         </div>
                     </div>
 
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Loại bàn:</span>
-                            <span class="font-medium">{{ $table->category->name ?? '-' }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Giá giờ:</span>
-                            <span
-                                class="font-medium text-green-600">{{ number_format($table->category->hourly_rate ?? 0) }}
-                                ₫/h</span>
-                        </div>
-                    </div>
-
                     @if ($table->currentBill)
                         <div class="mt-4 pt-4 border-t">
                             <div class="text-sm text-gray-600">Tổng hiện tại</div>

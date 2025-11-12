@@ -73,23 +73,6 @@
                                 </option>
                             </select>
                         </div>
-
-                        <!-- Giá/giờ -->
-                        <div class="space-y-2">
-                            <label class="block text-sm font-semibold text-gray-700">
-                                <i class="fas fa-money-bill-wave mr-2 text-blue-500"></i>
-                                Giá/giờ (VNĐ)
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 font-bold">₫</span>
-                                </div>
-                                <input type="number" name="hourly_rate" value="{{ $table->hourly_rate }}" min="0"
-                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                    placeholder="0" required>
-                            </div>
-                        </div>
-
                         <!-- Trạng thái -->
                         <div class="space-y-2 md:col-span-2">
                             <label class="block text-sm font-semibold text-gray-700">

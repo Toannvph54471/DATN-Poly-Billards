@@ -23,7 +23,6 @@ class Table extends BaseModel
     protected $fillable = [
         'table_number',
         'table_name',
-        'category_id',
         'capacity',
         'type',
         'status',
@@ -36,12 +35,6 @@ class Table extends BaseModel
     protected $casts = [
         // REMOVED: 'hourly_rate' => 'decimal:2',
     ];
-
-    // Relationships
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
 
     public function bills()
     {
@@ -73,10 +66,6 @@ class Table extends BaseModel
         return $query->where('status', self::STATUS_OCCUPIED);
     }
 
-    public function scopeCategory($query, $categoryId)
-    {
-        return $query->where('category_id', $categoryId);
-    }
 
     // Status Methods
     public function isAvailable(): bool
@@ -129,18 +118,6 @@ class Table extends BaseModel
     }
 
     /**
-     * Lấy các gói giá có sẵn cho bàn này
-     */
-    public function getAvailableRates(): array
-    {
-        if (!$this->category_id) {
-            return [];
-        }
-
-        return app(TablePricingService::class)->getAvailableRates($this->category_id);
-    }
-
-    /**
      * Kiểm tra bàn có hỗ trợ gói giá này không
      */
     public function supportsRateCode(string $rateCode): bool
@@ -164,16 +141,9 @@ class Table extends BaseModel
     {
         return $this->getHourlyRate();
     }
+    public function tableRate()
+{
+    return $this->belongsTo(TableRate::class, 'table_rate_id');
+}
 
-    public function rate()
-    {
-        return $this->hasOneThrough(
-            TableRate::class,     // Model đích
-            Category::class,      // Model trung gian
-            'id',                 // Khóa ngoại trên Category (trỏ về Table)
-            'category_id',        // Khóa ngoại trên TableRate (trỏ về Category)
-            'category_id',        // Khóa cục bộ trên Table
-            'id'                  // Khóa cục bộ trên Category
-        );
-    }
 }

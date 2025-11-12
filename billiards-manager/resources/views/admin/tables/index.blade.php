@@ -17,19 +17,6 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select name="category_id"
-                    class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">All Categories</option>
-                    @foreach ($categories as $category)
-                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                            {{ $category->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                 <select name="status"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -43,13 +30,13 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                <select name="type"
+                <label class="block text-sm font-medium text-gray-700 mb-2">Loại bàn</label>
+                <select name="table_rate_id"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">All Types</option>
-                    @foreach ($tableTypes as $value => $label)
-                        <option value="{{ $value }}" {{ request('type') == $value ? 'selected' : '' }}>
-                            {{ $label }}
+                    <option value="">Tất cả</option>
+                    @foreach ($tableRates as $rate)
+                        <option value="{{ $rate->id }}" {{ request('table_rate_id') == $rate->id ? 'selected' : '' }}>
+                            {{ $rate->name }}
                         </option>
                     @endforeach
                 </select>
@@ -81,8 +68,6 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Table
                                 Info</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Category</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Capacity</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type
                             </th>
@@ -109,9 +94,6 @@
                                     @endif
                                 </td>
 
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-sm text-gray-900">{{ $table->getCategoryName() }}</span>
-                                </td>
 
                                 <td class="px-6- py-4 whitespace-nowrap">
                                     <span
@@ -122,17 +104,47 @@
 
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php
+                                        $rate = $table->tableRate; // quan hệ table_rate của bàn
+
+                                        // Màu sắc theo loại bàn
                                         $typeColors = [
-                                            App\Models\Table::TYPE_STANDARD => 'bg-gray-100 text-gray-800',
-                                            App\Models\Table::TYPE_VIP => 'bg-purple-100 text-purple-800',
-                                            App\Models\Table::TYPE_COMPETITION => 'bg-yellow-100 text-yellow-800',
+                                            'Regular' => 'bg-gray-100 text-gray-800',
+                                            'VIP' => 'bg-purple-100 text-purple-800',
+                                            'Competition' => 'bg-yellow-100 text-yellow-800',
                                         ];
+
+                                        // Mặc định
+                                        $typeKey = 'Regular';
+                                        $rateLabel = 'Không xác định';
+                                        $rateValue = '';
+
+                                        if ($rate) {
+                                            // Xác định loại bàn theo prefix code hoặc category_id
+                                            if (str_starts_with($rate->code, 'VIP')) {
+                                                $typeKey = 'VIP';
+                                            } elseif (str_starts_with($rate->code, 'COMP')) {
+                                                $typeKey = 'Competition';
+                                            } elseif (str_starts_with($rate->code, 'REG')) {
+                                                $typeKey = 'Regular';
+                                            }
+
+                                            // Gắn nhãn hiển thị đẹp hơn
+                                            $rateLabel = $rate->name;
+                                            $rateValue = number_format($rate->hourly_rate, 0, ',', '.') . ' đ/giờ';
+                                        }
                                     @endphp
-                                    <span
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $typeColors[$table->type] ?? 'bg-gray-100 text-gray-800' }}">
-                                        {{ $tableTypes[$table->type] ?? $table->type }}
-                                    </span>
+
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $typeColors[$typeKey] ?? 'bg-gray-100 text-gray-800' }}">
+                                            {{ $rateLabel }}
+                                        </span>
+                                        @if ($rateValue)
+                                            <span class="text-xs text-gray-500 mt-1">{{ $rateValue }}</span>
+                                        @endif
+                                    </div>
                                 </td>
+
 
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php
