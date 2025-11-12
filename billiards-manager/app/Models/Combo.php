@@ -48,6 +48,11 @@ class Combo extends Model
         return $this->hasMany(ComboTimeUsage::class);
     }
 
+    public function comboItems()
+    {
+        return $this->hasMany(ComboItem::class, 'combo_id');
+    }
+
     public function billDetails(): HasMany
     {
         return $this->hasMany(BillDetail::class);

@@ -156,12 +156,12 @@ class TableController extends Controller
         return redirect()->route('admin.tables.trashed')->with('success', 'Khôi phục bàn thành công!');
     }
 
-    // BillController.php
+    // Thêm vào controller
     public function showDetail($id)
     {
         $table = Table::with([
             'category',
-            'currentBill.customer',
+            'currentBill.user',
             'currentBill.billDetails.product',
             'currentBill.billDetails.combo',
             'currentBill.billTimeUsages' => function ($query) {
@@ -169,94 +169,143 @@ class TableController extends Controller
                     ->orWhere('end_time', '>', now()->subHours(24));
             },
             'currentBill.comboTimeUsages' => function ($query) {
-                $query->where('is_expired', false)
-                    ->orWhere('end_time', '>', now()->subHours(24));
+                $query->where(function ($q) {
+                    $q->where('is_expired', false)
+                        ->orWhere('end_time', '>', now()->subHours(24));
+                });
             }
         ])->findOrFail($id);
 
-        // Lấy danh sách combo và products để hiển thị trong form
         $combos = Combo::where('status', 'active')->get();
         $products = Product::where('status', 'Active')->get();
 
-        // Tính toán thời gian hiện tại
-        $timeInfo = $this->calculateCurrentTimeInfo($table);
+        // Tính toán thời gian hiện tại - CHỈ KHI LÀ BÀN TÍNH GIỜ
+        $timeInfo = [];
+        if ($table->currentBill && $table->currentBill->status === 'open') {
+            $timeInfo = $this->calculateCurrentTimeInfo($table);
 
-        return view('admin.tables.detail', compact('table', 'timeInfo', 'combos', 'products'));
+            // Cập nhật tổng tiền real-time
+            app(BillController::class)->calculateBillTotal($table->currentBill);
+            $table->currentBill->refresh(); // Refresh để lấy dữ liệu mới
+        }
+
+        return view('admin.tables.detail', compact('table', 'combos', 'products', 'timeInfo'));
     }
-
-    // app/Http\Controllers/TableController.php
 
     private function calculateCurrentTimeInfo($table)
     {
-        $timeInfo = [
-            'mode' => 'none',
-            'elapsed_minutes' => 0,
-            'remaining_minutes' => 0,
-            'total_minutes' => 0,
-            'current_cost' => 0,
-            'is_running' => false,
-            'is_near_end' => false,
-            'hourly_rate' => $table->category->hourly_rate ?? 0
-        ];
-
-        if (!$table->currentBill) {
-            return $timeInfo;
+        if (!$table->currentBill || $table->currentBill->status !== 'open') {
+            return [
+                'is_running' => false,
+                'mode' => 'none',
+                'elapsed_minutes' => 0,
+                'current_cost' => 0,
+                'hourly_rate' => $table->category->hourly_rate,
+                'total_minutes' => 0,
+                'is_near_end' => false,
+                'is_paused' => false,
+                'paused_duration' => 0
+            ];
         }
 
         $bill = $table->currentBill;
+        $hourlyRate = $table->category->hourly_rate;
+        $currentTimestamp = now()->timestamp;
 
-        // Kiểm tra combo time đang hoạt động
-        $activeComboTime = $bill->comboTimeUsages
-            ->where('is_expired', false)
-            ->where('remaining_minutes', '>', 0)
-            ->first();
+        // Kiểm tra trạng thái hiện tại
+        $isPaused = false;
+        $elapsedMinutes = 0;
+        $pausedDuration = 0;
 
-        // Kiểm tra regular time đang hoạt động
-        $activeRegularTime = $bill->billTimeUsages
+        // Kiểm tra giờ thường
+        $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
             ->whereNull('end_time')
             ->first();
 
-        if ($activeComboTime) {
-            // Đang dùng COMBO TIME
-            $elapsed = $activeComboTime->start_time->diffInMinutes(now());
-            $remaining = max(0, $activeComboTime->remaining_minutes - $elapsed);
+        if ($activeRegularTime) {
+            $startTimestamp = strtotime($activeRegularTime->start_time);
 
-            // Tính current_cost dựa trên extra_minutes_added
-            $currentCost = 0;
-            if ($activeComboTime->extra_minutes_added > 0) {
-                $tableRate = $table->category->hourly_rate;
-                $currentCost = ($tableRate / 60) * $activeComboTime->extra_minutes_added;
+            if ($activeRegularTime->paused_at) {
+                // Đang tạm dừng - dùng timestamp
+                $isPaused = true;
+                $pausedAt = $activeRegularTime->paused_at; // Đây là timestamp
+
+                // Thời gian chạy trước khi pause = paused_at - start_time
+                $elapsedMinutes = ($pausedAt - $startTimestamp) / 60;
+
+                // Thời gian đã pause = current_time - paused_at
+                $pauseDurationMinutes = ($currentTimestamp - $pausedAt) / 60;
+                $pausedDuration = ($activeRegularTime->paused_duration ?? 0) + $pauseDurationMinutes;
+            } else {
+                // Đang chạy
+                $elapsedMinutes = ($currentTimestamp - $startTimestamp) / 60;
+                $pausedDuration = $activeRegularTime->paused_duration ?? 0;
             }
-
-            $timeInfo = [
-                'mode' => 'combo',
-                'elapsed_minutes' => $elapsed,
-                'remaining_minutes' => $remaining,
-                'total_minutes' => $activeComboTime->total_minutes,
-                'current_cost' => $currentCost,
-                'is_running' => true,
-                'is_near_end' => $remaining <= 10,
-                'hourly_rate' => $table->category->hourly_rate ?? 0
-            ];
-        } elseif ($activeRegularTime) {
-            // Đang dùng REGULAR TIME
-            $elapsed = $activeRegularTime->start_time->diffInMinutes(now());
-            $cost = ($activeRegularTime->hourly_rate / 60) * $elapsed;
-
-            $timeInfo = [
-                'mode' => 'regular',
-                'elapsed_minutes' => $elapsed,
-                'remaining_minutes' => 0,
-                'total_minutes' => $elapsed,
-                'current_cost' => $cost,
-                'is_running' => true,
-                'is_near_end' => false,
-                'hourly_rate' => $activeRegularTime->hourly_rate
-            ];
-
-            
         }
 
-        return $timeInfo;
+        // Kiểm tra combo time
+        $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
+            ->where('is_expired', false)
+            ->first();
+
+        if ($activeComboTime) {
+            $startTimestamp = strtotime($activeComboTime->start_time);
+
+            if ($activeComboTime->end_time) {
+                // Combo đang tạm dừng
+                $isPaused = true;
+                $endTimestamp = strtotime($activeComboTime->end_time);
+                $elapsedMinutes = ($endTimestamp - $startTimestamp) / 60;
+                $remainingMinutes = $activeComboTime->remaining_minutes;
+            } else {
+                // Combo đang chạy
+                $elapsedMinutes = ($currentTimestamp - $startTimestamp) / 60;
+                $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
+            }
+
+            $isNearEnd = $remainingMinutes <= 30 && $remainingMinutes > 0;
+
+            return [
+                'is_running' => !$isPaused,
+                'mode' => 'combo',
+                'elapsed_minutes' => $elapsedMinutes,
+                'current_cost' => max(0, ($elapsedMinutes - $activeComboTime->total_minutes) * ($hourlyRate / 60)),
+                'hourly_rate' => $hourlyRate,
+                'total_minutes' => $activeComboTime->total_minutes,
+                'remaining_minutes' => $remainingMinutes,
+                'is_near_end' => $isNearEnd,
+                'is_paused' => $isPaused,
+                'paused_duration' => $pausedDuration
+            ];
+        }
+
+        // Nếu đang tính giờ thường
+        if ($activeRegularTime) {
+            $effectiveMinutes = $elapsedMinutes - $pausedDuration;
+
+            return [
+                'is_running' => !$isPaused,
+                'mode' => 'regular',
+                'elapsed_minutes' => $elapsedMinutes,
+                'current_cost' => max(0, $effectiveMinutes) * ($hourlyRate / 60),
+                'hourly_rate' => $hourlyRate,
+                'total_minutes' => 0,
+                'is_near_end' => false,
+                'is_paused' => $isPaused,
+                'paused_duration' => $pausedDuration
+            ];
+        }
+
+        return [
+            'is_running' => false,
+            'mode' => 'none',
+            'elapsed_minutes' => 0,
+            'current_cost' => 0,
+            'hourly_rate' => $hourlyRate,
+            'total_minutes' => 0,
+            'is_near_end' => false,
+            'is_paused' => false,
+            'paused_duration' => 0
+        ];
     }
 }
