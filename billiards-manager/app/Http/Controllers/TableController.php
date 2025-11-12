@@ -214,8 +214,7 @@ class TableController extends Controller
 
         // Kiểm tra trạng thái hiện tại
         $isPaused = false;
-        $elapsedMinutes = 0;
-        $pausedDuration = 0;
+        $effectiveMinutes = 0;
 
         // Kiểm tra giờ thường
         $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
@@ -226,20 +225,17 @@ class TableController extends Controller
             $startTimestamp = strtotime($activeRegularTime->start_time);
 
             if ($activeRegularTime->paused_at) {
-                // Đang tạm dừng - dùng timestamp
+                // 🔴 Đang TẠM DỪNG
                 $isPaused = true;
-                $pausedAt = $activeRegularTime->paused_at; // Đây là timestamp
+                $pausedAt = $activeRegularTime->paused_at;
 
-                // Thời gian chạy trước khi pause = paused_at - start_time
-                $elapsedMinutes = ($pausedAt - $startTimestamp) / 60;
-
-                // Thời gian đã pause = current_time - paused_at
-                $pauseDurationMinutes = ($currentTimestamp - $pausedAt) / 60;
-                $pausedDuration = ($activeRegularTime->paused_duration ?? 0) + $pauseDurationMinutes;
+                // Chỉ tính đến thời điểm pause
+                $runningMinutes = ($pausedAt - $startTimestamp) / 60;
+                $effectiveMinutes = $runningMinutes - ($activeRegularTime->paused_duration ?? 0);
             } else {
-                // Đang chạy
-                $elapsedMinutes = ($currentTimestamp - $startTimestamp) / 60;
-                $pausedDuration = $activeRegularTime->paused_duration ?? 0;
+                // 🟢 Đang CHẠY - tính real-time
+                $runningMinutes = ($currentTimestamp - $startTimestamp) / 60;
+                $effectiveMinutes = $runningMinutes - ($activeRegularTime->paused_duration ?? 0);
             }
         }
 
@@ -252,15 +248,15 @@ class TableController extends Controller
             $startTimestamp = strtotime($activeComboTime->start_time);
 
             if ($activeComboTime->end_time) {
-                // Combo đang tạm dừng
+                // Combo đang TẠM DỪNG
                 $isPaused = true;
                 $endTimestamp = strtotime($activeComboTime->end_time);
-                $elapsedMinutes = ($endTimestamp - $startTimestamp) / 60;
+                $runningMinutes = ($endTimestamp - $startTimestamp) / 60;
                 $remainingMinutes = $activeComboTime->remaining_minutes;
             } else {
-                // Combo đang chạy
-                $elapsedMinutes = ($currentTimestamp - $startTimestamp) / 60;
-                $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
+                // Combo đang CHẠY
+                $runningMinutes = ($currentTimestamp - $startTimestamp) / 60;
+                $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $runningMinutes);
             }
 
             $isNearEnd = $remainingMinutes <= 30 && $remainingMinutes > 0;
@@ -268,31 +264,29 @@ class TableController extends Controller
             return [
                 'is_running' => !$isPaused,
                 'mode' => 'combo',
-                'elapsed_minutes' => $elapsedMinutes,
-                'current_cost' => max(0, ($elapsedMinutes - $activeComboTime->total_minutes) * ($hourlyRate / 60)),
+                'elapsed_minutes' => $runningMinutes,
+                'current_cost' => max(0, ($runningMinutes - $activeComboTime->total_minutes) * ($hourlyRate / 60)),
                 'hourly_rate' => $hourlyRate,
                 'total_minutes' => $activeComboTime->total_minutes,
                 'remaining_minutes' => $remainingMinutes,
                 'is_near_end' => $isNearEnd,
                 'is_paused' => $isPaused,
-                'paused_duration' => $pausedDuration
+                'paused_duration' => $activeRegularTime->paused_duration ?? 0
             ];
         }
 
         // Nếu đang tính giờ thường
         if ($activeRegularTime) {
-            $effectiveMinutes = $elapsedMinutes - $pausedDuration;
-
             return [
                 'is_running' => !$isPaused,
                 'mode' => 'regular',
-                'elapsed_minutes' => $elapsedMinutes,
-                'current_cost' => max(0, $effectiveMinutes) * ($hourlyRate / 60),
+                'elapsed_minutes' => $effectiveMinutes,
+                'current_cost' => $effectiveMinutes * ($hourlyRate / 60),
                 'hourly_rate' => $hourlyRate,
                 'total_minutes' => 0,
                 'is_near_end' => false,
                 'is_paused' => $isPaused,
-                'paused_duration' => $pausedDuration
+                'paused_duration' => $activeRegularTime->paused_duration ?? 0
             ];
         }
 
