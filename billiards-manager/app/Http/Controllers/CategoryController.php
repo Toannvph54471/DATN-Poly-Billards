@@ -67,7 +67,7 @@ class CategoryController extends Controller
             ])
                 ->withInput($request->all());
         }
-        return redirect()->route('categories.index')->with('success', 'Thêm danh mục thành công.');
+        return redirect()->route('admin.categories.index')->with('success', 'Thêm danh mục thành công.');
     }
 
     /**
@@ -103,7 +103,7 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
         $category->update($input);
 
-        return redirect()->route('categories.index')->with('success', 'Cập nhật danh mục thành công.');
+        return redirect()->route('admin.categories.index')->with('success', 'Cập nhật danh mục thành công.');
     }
     /**
      * Remove the specified resource from storage.
@@ -113,6 +113,6 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
         $category->delete();
 
-        return redirect()->route('categories.index')->with('success', 'Xóa danh mục thành công.');
+        return redirect()->route('admin.categories.index')->with('success', 'Xóa danh mục thành công.');
     }
 }

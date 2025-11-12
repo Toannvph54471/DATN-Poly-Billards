@@ -10,7 +10,7 @@
             <p class="text-gray-600">Quản lý danh mục</p>
         </div>
         <div>
-            <a href="{{ route('categories.create') }}"
+            <a href="{{ route('admin.categories.create') }}"
                 class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                 <i class="fas fa-plus mr-2"></i>
                 Thêm danh mục
@@ -87,7 +87,7 @@
                 </div>
                 <!-- Action Buttons -->
                 <div class="flex gap-2">
-                    <a href="{{ route('categories.index') }}"
+                    <a href="{{ route('admin.categories.index') }}"
                         class="bg-gray-200 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-300 transition flex items-center text-sm whitespace-nowrap">
                         <i class="fas fa-redo mr-2"></i>
                         Làm mới
@@ -148,7 +148,7 @@
                                 </td>
                                 <td class="py-4 px-6">
                                     <div class="flex items-center space-x-2">
-                                        <a href="{{ route('categories.edit', ['category' => $category->id]) }}"
+                                        <a href="{{ route('admin.categories.edit', ['category' => $category->id]) }}"
                                             class="text-green-600 hover:text-green-900 transition" title="Chỉnh sửa">
                                             <i class="fas fa-edit"></i>
                                         </a>
@@ -159,7 +159,7 @@
                                         </button>
 
                                         <form id="delete-form-{{ $category->id }}"
-                                            action="{{ route('categories.destroy', $category->id) }}" method="POST"
+                                            action="{{ route('admin.categories.destroy', $category->id) }}" method="POST"
                                             class="hidden">
                                             @csrf
                                             @method('DELETE')

@@ -16,7 +16,7 @@
                 </div>
             </div>
             <div class="mt-4 md:mt-0">
-                <a href="{{ route('categories.index') }}"
+                <a href="{{ route('admin.categories.index') }}"
                     class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 rounded-xl font-medium transition flex items-center shadow-sm">
                     <i class="fas fa-arrow-left mr-3"></i>
                     Quay lại danh sách
@@ -54,7 +54,7 @@
 
     <!-- Main Form -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <form action="{{ route('categories.store') }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('admin.categories.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="border-b border-gray-200 px-6 py-4">
                 <h2 class="text-lg font-semibold text-gray-800 flex items-center">
@@ -119,7 +119,7 @@
                 </div>
 
                 <div class="mt-8 flex justify-end space-x-3">
-                    <a href="{{ route('categories.index') }}"
+                    <a href="{{ route('admin.categories.index') }}"
                         class="bg-gray-200 text-gray-700 rounded-lg px-6 py-2 hover:bg-gray-300 transition">
                         Hủy
                     </a>
