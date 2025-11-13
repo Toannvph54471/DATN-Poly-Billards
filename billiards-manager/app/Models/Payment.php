@@ -9,28 +9,26 @@ class Payment extends BaseModel
     const METHOD_TRANSFER = 'transfer';
     const METHOD_WALLET = 'wallet';
 
-    const STATUS_PENDING = 'pending';
-    const STATUS_COMPLETED = 'completed';
-    const STATUS_FAILED = 'failed';
-    const STATUS_REFUNDED = 'refunded';
+    // SỬA LẠI CONST STATUS cho khớp với controller
+    const STATUS_PENDING = 'Pending';
+    const STATUS_COMPLETED = 'Completed';
+    const STATUS_FAILED = 'Failed';
+    const STATUS_REFUNDED = 'Refunded';
 
     protected $fillable = [
-        'payment_code',
         'bill_id',
-        'customer_id',
         'amount',
-        'method',
+        'payment_method',
+        'transaction_id',
         'status',
-        'payment_date',
-        'reference',
-        'notes',
-        'created_by',
-        'updated_by'
+        'paid_at'
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
-        'payment_date' => 'datetime'
+        'paid_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     // Relationships
@@ -39,12 +37,13 @@ class Payment extends BaseModel
         return $this->belongsTo(Bill::class);
     }
 
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
 
-    // Scopes
+    // Scopes - SỬA LẠI cho khớp
     public function scopeCompleted($query)
     {
         return $query->where('status', self::STATUS_COMPLETED);
@@ -52,12 +51,12 @@ class Payment extends BaseModel
 
     public function scopeToday($query)
     {
-        return $query->whereDate('payment_date', today());
+        return $query->whereDate('paid_at', today()); // SỬA thành paid_at
     }
 
     public function scopeByMethod($query, $method)
     {
-        return $query->where('method', $method);
+        return $query->where('payment_method', $method); // SỬA thành payment_method
     }
 
     // Methods
@@ -65,7 +64,7 @@ class Payment extends BaseModel
     {
         return $this->update([
             'status' => self::STATUS_COMPLETED,
-            'payment_date' => now()
+            'paid_at' => now() // SỬA thành paid_at
         ]);
     }
 

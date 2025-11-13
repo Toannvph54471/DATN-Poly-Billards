@@ -19,6 +19,7 @@ class Table extends BaseModel
     const STATUS_OCCUPIED = 'occupied';
     const STATUS_MAINTENANCE = 'maintenance';
     const STATUS_RESERVED = 'reserved';
+    const STATUS_QUICK = 'quick';
 
     protected $fillable = [
         'table_number',
@@ -28,13 +29,8 @@ class Table extends BaseModel
         'type',
         'status',
         'description',
-        'position',
         'created_by',
         'updated_by'
-    ];
-
-    protected $casts = [
-        // REMOVED: 'hourly_rate' => 'decimal:2',
     ];
 
     // Relationships
@@ -53,7 +49,8 @@ class Table extends BaseModel
         return $this->hasOne(Bill::class)->ofMany([
             'id' => 'max',
         ], function ($query) {
-            $query->whereIn('status', [Bill::STATUS_OPEN, Bill::STATUS_PLAYING]);
+            $query->whereIn('status', [Bill::STATUS_OPEN, Bill::STATUS_PLAYING, 'quick'])
+                ->where('payment_status', 'pending');
         });
     }
 
@@ -99,7 +96,7 @@ class Table extends BaseModel
         return $this->category?->name ?? 'Unknown';
     }
 
-    // ============ PRICING METHODS - MỚI ============
+    // ============ PRICING METHODS ============
 
     /**
      * Lấy giá giờ của bàn (từ service)
@@ -163,5 +160,17 @@ class Table extends BaseModel
     public function hourly_rate(): float
     {
         return $this->getHourlyRate();
+    }
+
+    public function rate()
+    {
+        return $this->hasOneThrough(
+            TableRate::class,
+            Category::class,
+            'id',
+            'category_id',
+            'category_id',
+            'id'
+        );
     }
 }

@@ -18,7 +18,7 @@ class Bill extends BaseModel
 
     protected $fillable = [
         'bill_number',
-        'customer_id',
+        'user_id',
         'reservation_id',
         'table_id',
         'staff_id',
@@ -34,11 +34,12 @@ class Bill extends BaseModel
         'payment_method',
         'payment_status',
         'status',
-        'notes',
+        'note',
         'created_by',
         'updated_by',
         'paused_duration',
     ];
+
 
     protected $casts = [
         'start_time' => 'datetime',
@@ -51,18 +52,24 @@ class Bill extends BaseModel
         'total_time' => 'integer' // in minutes
     ];
 
-    // Relationships
-    public function customer()
+    public function user()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(User::class);
     }
+
+
+    public function timeUsages()
+    {
+        return $this->hasMany(BillTimeUsage::class);
+    }
+
 
     public function table()
     {
         return $this->belongsTo(Table::class);
     }
-    
-        public function reservation()
+
+    public function reservation()
     {
         return $this->belongsTo(Reservation::class);
     }
@@ -81,6 +88,7 @@ class Bill extends BaseModel
     {
         return $this->hasMany(BillDetail::class);
     }
+
 
     public function billTimeUsages()
     {

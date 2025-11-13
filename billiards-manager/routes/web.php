@@ -38,15 +38,15 @@ Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::get('/faq', [FaqController::class, 'index'])->name('faq');
 
 // Promotions
-    Route::get('/promotions', [PromotionClientController::class, 'index'])->name('promotions.index');
-    Route::get('/promotions/{promotion}', [PromotionClientController::class, 'show'])->name('promotions.show');
+Route::get('/promotions', [PromotionClientController::class, 'index'])->name('promotions.index');
+Route::get('/promotions/{promotion}', [PromotionClientController::class, 'show'])->name('promotions.show');
 
-        
-    Route::prefix('api')->group(function () {
-        Route::post('/tables/available', [ReservationController::class, 'checkAvailability'])->name('api.tables.available');
-        Route::post('/reservations/search', [ReservationController::class, 'search'])->name('api.reservations.search');
-        Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('api.reservations.checkin');
-        Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('api.reservations.cancel');
+
+Route::prefix('api')->group(function () {
+    Route::post('/tables/available', [ReservationController::class, 'checkAvailability'])->name('api.tables.available');
+    Route::post('/reservations/search', [ReservationController::class, 'search'])->name('api.reservations.search');
+    Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('api.reservations.checkin');
+    Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('api.reservations.cancel');
 });
 
 // Authenticated Customer Routes
@@ -56,10 +56,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/reservation', [ReservationController::class, 'store'])->name('reservation.store');
     Route::get('/reservations/track', [ReservationController::class, 'track'])->name('reservations.track');
 
-//profile
+    //profile
     Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
     Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
-    
 });
 
 
@@ -107,15 +106,24 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/tables/{id}/edit', [TableController::class, 'edit'])->name('admin.tables.edit');
     Route::put('/tables/{id}', [TableController::class, 'update'])->name('admin.tables.update');
 
-    // Detail Table
-    Route::get('tables/{id}', [TableController::class, 'detail'])->name('admin.tables.detail');
-    Route::post('tables/{id}/open', [BillController::class, 'openTable'])->name('tables.open');
-    Route::post('/bills/{bill}/pause', [BillController::class, 'pauseTable'])->name('bills.pause');
-    Route::post('/bills/{bill}/resume', [BillController::class, 'resumeTable'])->name('bills.resume');
-    Route::post('/bills/{bill}/close', [BillController::class, 'closeTable'])->name('bills.close');
-    Route::post('bills/{bill}/product', [BillController::class, 'addProduct'])->name('bills.add-product');
-    Route::post('bills/{bill}/combo', [BillController::class, 'addCombo'])->name('bills.add-combo');
 
+    // Detail Table
+
+    Route::get('/tables/{id}/detail', [TableController::class, 'showDetail'])->name('admin.tables.detail');
+    Route::post('/bills/create', [BillController::class, 'createBill'])->name('bills.create');
+    Route::post('/bills/{id}/add-combo', [BillController::class, 'addComboToBill'])->name('bills.add-combo');
+    Route::post('/bills/{id}/add-product', [BillController::class, 'addProductToBill'])->name('bills.add-product');
+    Route::post('/bills/{id}/switch-regular', [BillController::class, 'switchToRegularTime'])->name('bills.switch-regular');
+    Route::post('/bills/{id}/extend-combo', [BillController::class, 'extendComboTime'])->name('bills.extend-combo');
+    Route::post('/bills/{id}/process-payment', [BillController::class, 'processPayment'])->name('bills.process-payment');
+    Route::get('/bills/{id}/payment', [BillController::class, 'showPayment'])->name('bills.payment-page');
+    Route::post('/bills/{id}/update-total', [BillController::class, 'updateBillTotal'])->name('bills.update-total');
+    Route::post('/bills/quick-create', [BillController::class, 'createQuickBill'])->name('bills.quick-create');
+    Route::post('/bills/{id}/convert-to-quick', [BillController::class, 'convertToQuick'])->name('bills.convert-to-quick');
+    Route::post('/bills/{id}/start-playing', [BillController::class, 'startPlaying'])->name('bills.start-playing');
+
+    Route::post('/bills/{id}/pause', [BillController::class, 'pauseTime'])->name('bills.pause');
+    Route::post('/bills/{id}/resume', [BillController::class, 'resumeTime'])->name('bills.resume');
 
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
@@ -151,7 +159,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/promotions/{id}', [PromotionController::class, 'show'])->name('admin.promotions.show');
 
 
-    
+
     Route::get('/promotions/{id}/edit', [PromotionController::class, 'edit'])->name('admin.promotions.edit');
     Route::put('/promotions/{id}/update', [PromotionController::class, 'update'])->name('admin.promotions.update');
     Route::get('/promotions/trashed', [PromotionController::class, 'trashed'])->name('admin.promotions.trashed');
@@ -163,5 +171,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos-api/rates-by-category', [ComboController::class, 'getTableRatesByCategory'])->name('admin.combos.rates-by-category');
     Route::post('/combos-api/preview-price', [ComboController::class, 'previewComboPrice'])->name('admin.combos.preview-price');
     Route::get('/combos-api/calculate-table-price', [ComboController::class, 'calculateTablePriceAPI'])->name('admin.combos.calculate-table-price');
-
+});
+Route::get('/test-timezone', function () {
+    return response()->json([
+        'timezone' => config('app.timezone'),
+        'current_time' => now()->format('Y-m-d H:i:s'),
+        'php_version' => PHP_VERSION,
+        'should_be_vietnam_time' => 'Yes - UTC+7'
+    ]);
 });

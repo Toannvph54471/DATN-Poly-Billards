@@ -48,19 +48,7 @@ class ComboTimeUsage extends Model
         return $this->is_expired || $this->remaining_minutes <= 0;
     }
 
-    public function getRealTimeRemaining(): int
-    {
-        if (!$this->start_time || $this->is_expired) {
-            return 0;
-        }
-
-        if ($this->end_time !== null) {
-            return $this->remaining_minutes;
-        }
-
-        $elapsedMinutes = $this->start_time->diffInMinutes(now());
-        return max(0, $this->remaining_minutes - $elapsedMinutes);
-    }
+    
 
     public function startSession(): bool
     {

@@ -33,9 +33,9 @@ class Combo extends Model
 
     // ============ RELATIONSHIPS ============
 
-    public function comboItems(): HasMany
+    public function items(): HasMany
     {
-        return $this->hasMany(ComboItem::class, 'combo_id');
+        return $this->hasMany(ComboItem::class);
     }
 
     public function tableCategory(): BelongsTo
@@ -46,6 +46,11 @@ class Combo extends Model
     public function timeUsages(): HasMany
     {
         return $this->hasMany(ComboTimeUsage::class);
+    }
+
+    public function comboItems()
+    {
+        return $this->hasMany(ComboItem::class, 'combo_id');
     }
 
     public function billDetails(): HasMany
