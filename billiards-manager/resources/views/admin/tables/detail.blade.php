@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Chi Tiết Bàn - {{ $table->table_name }}</title>
 
     {{-- Tailwind CDN --}}
@@ -111,7 +112,7 @@
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">{{ $table->table_name }}</h1>
                     <p class="text-gray-600 mt-1">Số: {{ $table->table_number }} •
-                        {{ $table->category->name ?? 'Chưa phân loại' }}</p>
+                        {{ $table->tableRate->name ?? 'Chưa phân loại' }}</p>
                 </div>
             </div>
             <div class="text-right">
@@ -119,17 +120,17 @@
                     class="status-badge {{ $table->status === 'available' ? 'status-available' : ($table->status === 'occupied' ? 'status-occupied' : 'status-maintenance') }}">
                     {{ $table->status === 'available' ? 'TRỐNG' : ($table->status === 'occupied' ? 'ĐANG SỬ DỤNG' : 'BẢO TRÌ') }}
                 </div>
-                <div class="text-sm text-gray-600 mt-2">Giá giờ: {{ number_format($table->category->hourly_rate ?? 0) }}
-                    ₫/h</div>
+                <div class="text-sm text-gray-600 mt-2">Giá giờ: {{ number_format($table->hourly_rate) }} ₫/h</div>
             </div>
         </div>
 
         {{-- Real-time Counter Banner --}}
         @if (
             $table->currentBill &&
-                $table->currentBill->status === 'open' &&
+                $table->currentBill->status === 'Open' &&
                 isset($timeInfo['is_running']) &&
-                $timeInfo['is_running']
+                $timeInfo['is_running'] &&
+                !$timeInfo['is_paused']
         )
             <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div class="flex items-center space-x-4">
@@ -175,11 +176,7 @@
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">Loại bàn:</span>
-                            <span class="font-semibold">{{ $table->category->name ?? '-' }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600">Sức chứa:</span>
-                            <span class="font-semibold">{{ $table->capacity }} người</span>
+                            <span class="font-semibold">{{ $table->tableRate->name ?? 'Chưa phân loại' }}</span>
                         </div>
                     </div>
 
@@ -323,7 +320,8 @@
                             </div>
                             <div>
                                 <div class="text-sm text-gray-600 mb-1">Số lần đến</div>
-                                <div class="font-semibold">{{ $table->currentBill->user->total_visits }} lần</div>
+                                <div class="font-semibold">{{ $table->currentBill->user->total_visits ?? 0 }} lần
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -521,7 +519,7 @@
                         </div>
                     </div>
 
-                    @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
+                    @if ($table->currentBill && $table->currentBill->billDetails && $table->currentBill->billDetails->count() > 0)
                         <div class="overflow-x-auto">
                             <table class="w-full border border-gray-300">
                                 <thead>
@@ -602,6 +600,7 @@
     {{-- JavaScript --}}
     <script>
         // Server data với giá trị mặc định
+        const currentBillId = {{ $table->currentBill->id ?? 'null' }};
         const isRunning = {{ isset($timeInfo['is_running']) && $timeInfo['is_running'] ? 'true' : 'false' }};
         const isPaused = {{ isset($timeInfo['is_paused']) && $timeInfo['is_paused'] ? 'true' : 'false' }};
         const currentMode = '{{ $timeInfo['mode'] ?? 'none' }}';
@@ -611,7 +610,7 @@
         const pausedDuration = Number({{ $timeInfo['paused_duration'] ?? 0 }});
 
         let startTimeMs = null;
-        @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && $table->currentBill && !$timeInfo['is_paused'])
+        @if ($table->currentBill && isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
             startTimeMs = new Date('{{ $table->currentBill->start_time }}').getTime();
         @endif
 
@@ -713,7 +712,7 @@
                         pauseTable();
                     } else {
                         // Nếu không tạm dừng, tiếp tục tính giờ thường
-                        resumeTimer();
+                        switchToRegularTime();
                     }
                 }
             }
@@ -732,8 +731,7 @@
 
                 if (response.ok) {
                     alert('Bàn đã được tạm dừng');
-                    // Cập nhật giao diện để hiển thị trạng thái tạm dừng
-                    updateTableStatus('paused');
+                    location.reload();
                 } else {
                     throw new Error('Lỗi khi tạm dừng bàn');
                 }
@@ -743,10 +741,10 @@
             }
         }
 
-        // Hàm tiếp tục tính giờ
-        async function resumeTimer() {
+        // Hàm chuyển sang giờ thường
+        async function switchToRegularTime() {
             try {
-                const response = await fetch(`/admin/bills/${currentBillId}/resume`, {
+                const response = await fetch(`/admin/bills/${currentBillId}/switch-regular`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -755,14 +753,13 @@
                 });
 
                 if (response.ok) {
-                    // Chuyển sang chế độ giờ thường
-                    switchToRegularTime();
+                    location.reload();
                 } else {
-                    throw new Error('Lỗi khi tiếp tục tính giờ');
+                    throw new Error('Lỗi khi chuyển sang giờ thường');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Có lỗi xảy ra khi tiếp tục tính giờ');
+                alert('Có lỗi xảy ra khi chuyển sang giờ thường');
             }
         }
 
@@ -809,34 +806,43 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                }).then(r => r.json()).then(data => {
+                }).then(r => {
+                    if (!r.ok) throw new Error('Network response was not ok');
+                    return r.json();
+                }).then(data => {
                     if (data.success) {
                         const final = data.final_amount;
                         ['totalAmountDisplay', 'finalAmountDisplay', 'billTotalAmount'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.textContent = formatCurrency(final);
                         });
+                    } else {
+                        console.error('Update failed:', data.message);
                     }
-                }).catch(console.error);
+                }).catch(error => {
+                    console.error('Error updating bill total:', error);
+                });
             @endif
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            const initialElapsedSeconds = Math.floor(elapsedMinutesFromServer * 60);
-            render(initialElapsedSeconds);
+            @if ($table->currentBill && $table->currentBill->status === 'Open')
+                const initialElapsedSeconds = Math.floor(elapsedMinutesFromServer * 60);
+                render(initialElapsedSeconds);
 
-            if (isRunning && startTimeMs && !isPaused) {
-                startTimer();
-            }
+                if (isRunning && startTimeMs && !isPaused) {
+                    startTimer();
+                }
 
-            // Start real-time counter for banner
-            if (isRunning && !isPaused) {
-                startRealTimeCounter();
-            }
+                // Start real-time counter for banner
+                if (isRunning && !isPaused) {
+                    startRealTimeCounter();
+                }
 
-            // Auto update bill total every 30 seconds
-            setInterval(updateBillTotal, 30000);
+                // Auto update bill total every 30 seconds
+                setInterval(updateBillTotal, 30000);
+            @endif
         });
 
         window.addEventListener('beforeunload', function() {

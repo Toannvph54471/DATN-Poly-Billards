@@ -33,10 +33,9 @@ class Table extends BaseModel
         'updated_by'
     ];
 
-    // Relationships
-    public function category()
+    public function tableRate()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(TableRate::class);
     }
 
     public function bills()
@@ -46,12 +45,10 @@ class Table extends BaseModel
 
     public function currentBill()
     {
-        return $this->hasOne(Bill::class)->ofMany([
-            'id' => 'max',
-        ], function ($query) {
-            $query->whereIn('status', [Bill::STATUS_OPEN, Bill::STATUS_PLAYING, 'quick'])
-                ->where('payment_status', 'pending');
-        });
+        return $this->hasOne(Bill::class)
+            ->whereIn('status', ['Open', 'quick'])
+            ->where('payment_status', 'Pending')
+            ->latest();
     }
 
     public function reservations()
