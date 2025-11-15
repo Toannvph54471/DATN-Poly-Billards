@@ -9,6 +9,7 @@ use App\Http\Controllers\EmployeeShiftController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\TableController;
+use App\Http\Controllers\TableRateController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\ProductController;
@@ -105,7 +106,19 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
     Route::get('/tables/{id}/edit', [TableController::class, 'edit'])->name('admin.tables.edit');
     Route::put('/tables/{id}', [TableController::class, 'update'])->name('admin.tables.update');
+    
+   // Table_rates
+    Route::get('/table_rates', [TableRateController::class, 'index'])->name('admin.table_rates.index');
+    Route::get('/table_rates/create', [TableRateController::class, 'create'])->name('admin.table_rates.create');
+    Route::post('/table_rates', [TableRateController::class, 'store'])->name('admin.table_rates.store');
+    Route::get('/table_rates/{id}/edit', [TableRateController::class, 'edit'])->name('admin.table_rates.edit');
+    Route::put('/table_rates/{id}', [TableRateController::class, 'update'])->name('admin.table_rates.update');
+    Route::delete('/table_rates/{id}', [TableRateController::class, 'destroy'])->name('admin.table_rates.destroy'); 
 
+// Bảng giá đã xóa
+    Route::get('/table_rates/trashed', [TableRateController::class, 'trashed'])->name('admin.table_rates.trashed');
+    Route::post('/table_rates/{id}/restore', [TableRateController::class, 'restore'])->name('admin.table_rates.restore');
+    Route::delete('/table_rates/{id}/force-delete', [TableRateController::class, 'forceDelete'])->name('admin.table_rates.forceDelete');
 
     // Detail Table
 
@@ -167,6 +180,18 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/promotions/{id}/destroy', [PromotionController::class, 'destroy'])->name('admin.promotions.destroy');
     Route::delete('/promotions/{id}/force-delete', [PromotionController::class, 'forceDelete'])->name('admin.promotions.forceDelete');
 
+    // Customers
+
+    Route::get('/customers', [CustomerController::class, 'index'])->name('admin.customers.index');
+    Route::get('/customers/create', [CustomerController::class, 'create'])->name('admin.customers.create');
+    Route::post('/customers', [CustomerController::class, 'store'])->name('admin.customers.store');
+    Route::get('/customers/{id}', [CustomerController::class, 'show'])->name('admin.customers.show');
+    Route::get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('admin.customers.edit');
+    Route::put('/customers/{id}', [CustomerController::class, 'update'])->name('admin.customers.update');
+    Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('admin.customers.destroy');
+    Route::get('/customers/trashed', [CustomerController::class, 'trash'])->name('admin.customers.trashed');
+    Route::post('/customers/{id}/restore', [CustomerController::class, 'restore'])->name('admin.customers.restore');
+    Route::delete('/customers/{id}/force-delete', [CustomerController::class, 'forceDelete'])->name('admin.customers.force-delete');
     //Combos - API routes (THÊM MỚI)
     Route::get('/combos-api/rates-by-category', [ComboController::class, 'getTableRatesByCategory'])->name('admin.combos.rates-by-category');
     Route::post('/combos-api/preview-price', [ComboController::class, 'previewComboPrice'])->name('admin.combos.preview-price');

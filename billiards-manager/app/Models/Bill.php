@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Bill extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'bill_number',
@@ -31,6 +30,7 @@ class Bill extends Model
         'note'
     ];
 
+
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
@@ -39,8 +39,14 @@ class Bill extends Model
         'final_amount' => 'decimal:2',
     ];
 
-    // Relationships
-    public function table(): BelongsTo
+
+    public function timeUsages()
+    {
+        return $this->hasMany(BillTimeUsage::class);
+    }
+
+
+    public function table()
     {
         return $this->belongsTo(Table::class);
     }

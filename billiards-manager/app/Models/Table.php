@@ -24,7 +24,6 @@ class Table extends BaseModel
     protected $fillable = [
         'table_number',
         'table_name',
-        'category_id',
         'capacity',
         'type',
         'status',
@@ -67,10 +66,6 @@ class Table extends BaseModel
         return $query->where('status', self::STATUS_OCCUPIED);
     }
 
-    public function scopeCategory($query, $categoryId)
-    {
-        return $query->where('category_id', $categoryId);
-    }
 
     // Status Methods
     public function isAvailable(): bool
@@ -120,18 +115,6 @@ class Table extends BaseModel
     public function getPricingDetails(int $minutes = 60, ?string $rateCode = null): array
     {
         return app(TablePricingService::class)->getPricingDetails($this, $minutes, $rateCode);
-    }
-
-    /**
-     * Lấy các gói giá có sẵn cho bàn này
-     */
-    public function getAvailableRates(): array
-    {
-        if (!$this->category_id) {
-            return [];
-        }
-
-        return app(TablePricingService::class)->getAvailableRates($this->category_id);
     }
 
     /**

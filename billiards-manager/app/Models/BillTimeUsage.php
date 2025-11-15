@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class BillTimeUsage extends Model
 {
     use HasFactory;
-
+    protected $table = 'bill_time_usage';
     protected $fillable = [
         'bill_id',
         'start_time',
@@ -18,7 +18,9 @@ class BillTimeUsage extends Model
         'paused_duration',
         'duration_minutes',
         'hourly_rate',
-        'total_price'
+        'total_price',
+        'created_by',
+        'paused_at'
     ];
 
     protected $casts = [

@@ -496,6 +496,6 @@
             calculateChange();
         });
     </script>
-</body>
+</body>~
 
 </html>
