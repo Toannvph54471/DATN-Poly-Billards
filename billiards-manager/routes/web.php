@@ -138,6 +138,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/bills/{id}/convert-to-quick', [BillController::class, 'convertToQuick'])->name('bills.convert-to-quick');
     Route::post('/bills/{id}/start-playing', [BillController::class, 'startPlaying'])->name('bills.start-playing');
 
+    Route::post('/bills/{id}/pause', [BillController::class, 'pauseTime'])->name('bills.pause');
+    Route::post('/bills/{id}/resume', [BillController::class, 'resumeTime'])->name('bills.resume');
+
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('admin.products.create');
@@ -196,4 +199,12 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos-api/rates-by-category', [ComboController::class, 'getTableRatesByCategory'])->name('admin.combos.rates-by-category');
     Route::post('/combos-api/preview-price', [ComboController::class, 'previewComboPrice'])->name('admin.combos.preview-price');
     Route::get('/combos-api/calculate-table-price', [ComboController::class, 'calculateTablePriceAPI'])->name('admin.combos.calculate-table-price');
+});
+Route::get('/test-timezone', function () {
+    return response()->json([
+        'timezone' => config('app.timezone'),
+        'current_time' => now()->format('Y-m-d H:i:s'),
+        'php_version' => PHP_VERSION,
+        'should_be_vietnam_time' => 'Yes - UTC+7'
+    ]);
 });
