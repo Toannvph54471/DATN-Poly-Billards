@@ -49,7 +49,6 @@ class ComboTimeUsage extends Model
     }
 
 
-
     public function startSession(): bool
     {
         if ($this->start_time !== null) {
