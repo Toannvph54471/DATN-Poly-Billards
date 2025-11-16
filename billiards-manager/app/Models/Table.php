@@ -44,11 +44,15 @@ class Table extends BaseModel
 
     public function currentBill()
     {
-        return $this->hasOne(Bill::class)
-            ->whereIn('status', ['Open', 'quick'])
-            ->where('payment_status', 'Pending')
-            ->latest();
+        return $this->hasOne(Bill::class)->ofMany(
+            ['id' => 'max'],
+            function ($query) {
+                $query->whereIn('status', ['open', 'playing', 'quick'])
+                    ->where('payment_status', 'pending');
+            }
+        );
     }
+
 
     public function reservations()
     {
@@ -98,6 +102,12 @@ class Table extends BaseModel
      */
     public function getHourlyRate(?string $rateCode = null): float
     {
+        // Nếu bàn có table_rate_id, lấy giá từ table_rates
+        if ($this->table_rate_id && $this->tableRate) {
+            return (float) $this->tableRate->hourly_rate;
+        }
+
+        // Fallback: sử dụng service cũ nếu không có table_rate_id
         return app(TablePricingService::class)->getHourlyRate($this, now(), $rateCode);
     }
 
@@ -152,5 +162,40 @@ class Table extends BaseModel
             'category_id',
             'id'
         );
+    }
+
+    public function canBePaused()
+    {
+        return $this->status === 'occupied' && $this->activeBill;
+    }
+
+    public function canBeResumed()
+    {
+        return $this->status === 'paused' && $this->activeBill;
+    }
+
+
+    public function pause()
+    {
+        if (!$this->canBePaused()) {
+            throw new \Exception('Bàn không thể tạm dừng');
+        }
+
+        $this->update(['status' => 'paused']);
+        $this->activeBill->pauseTimeTracking();
+
+        return true;
+    }
+
+    public function resume()
+    {
+        if (!$this->canBeResumed()) {
+            throw new \Exception('Bàn không thể tiếp tục');
+        }
+
+        $this->update(['status' => 'occupied']);
+        $this->activeBill->resumeTimeTracking();
+
+        return true;
     }
 }

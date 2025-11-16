@@ -106,16 +106,16 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('/tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('admin.tables.forceDelete');
     Route::get('/tables/{id}/edit', [TableController::class, 'edit'])->name('admin.tables.edit');
     Route::put('/tables/{id}', [TableController::class, 'update'])->name('admin.tables.update');
-    
-   // Table_rates
+
+    // Table_rates
     Route::get('/table_rates', [TableRateController::class, 'index'])->name('admin.table_rates.index');
     Route::get('/table_rates/create', [TableRateController::class, 'create'])->name('admin.table_rates.create');
     Route::post('/table_rates', [TableRateController::class, 'store'])->name('admin.table_rates.store');
     Route::get('/table_rates/{id}/edit', [TableRateController::class, 'edit'])->name('admin.table_rates.edit');
     Route::put('/table_rates/{id}', [TableRateController::class, 'update'])->name('admin.table_rates.update');
-    Route::delete('/table_rates/{id}', [TableRateController::class, 'destroy'])->name('admin.table_rates.destroy'); 
+    Route::delete('/table_rates/{id}', [TableRateController::class, 'destroy'])->name('admin.table_rates.destroy');
 
-// Bảng giá đã xóa
+    // Bảng giá đã xóa
     Route::get('/table_rates/trashed', [TableRateController::class, 'trashed'])->name('admin.table_rates.trashed');
     Route::post('/table_rates/{id}/restore', [TableRateController::class, 'restore'])->name('admin.table_rates.restore');
     Route::delete('/table_rates/{id}/force-delete', [TableRateController::class, 'forceDelete'])->name('admin.table_rates.forceDelete');
@@ -131,6 +131,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/bills/{id}/process-payment', [BillController::class, 'processPayment'])->name('bills.process-payment');
     Route::get('/bills/{id}/payment', [BillController::class, 'showPayment'])->name('bills.payment-page');
     Route::post('/bills/{id}/update-total', [BillController::class, 'updateBillTotal'])->name('bills.update-total');
+    Route::get('/admin/bills/{id}/time-info', [BillController::class, 'getBillTimeInfo'])->name('bills.time-info');
     Route::post('/bills/quick-create', [BillController::class, 'createQuickBill'])->name('bills.quick-create');
     Route::post('/bills/{id}/convert-to-quick', [BillController::class, 'convertToQuick'])->name('bills.convert-to-quick');
     Route::post('/bills/{id}/start-playing', [BillController::class, 'startPlaying'])->name('bills.start-playing');

@@ -106,4 +106,68 @@ class Bill extends Model
     {
         return $query->where('payment_status', 'Pending');
     }
+
+    // Method Time 
+    public function pauseTimeTracking()
+    {
+        $activeUsage = $this->activeTimeUsage;
+
+        if ($activeUsage) {
+            $activeUsage->update([
+                'paused_at' => time(),
+                'updated_at' => now()
+            ]);
+        }
+
+        // Pause active combo time usages
+        $this->activeComboTimeUsages->each->pause();
+
+        return true;
+    }
+
+    public function resumeTimeTracking()
+    {
+        $activeUsage = $this->activeTimeUsage;
+
+        if ($activeUsage && $activeUsage->paused_at) {
+            $pausedDuration = time() - $activeUsage->paused_at;
+
+            $activeUsage->update([
+                'paused_duration' => $activeUsage->paused_duration + $pausedDuration,
+                'paused_at' => null,
+                'updated_at' => now()
+            ]);
+        }
+
+        // Resume active combo time usages
+        $this->activeComboTimeUsages->each->resume();
+
+        return true;
+    }
+
+    public function getTotalPausedDuration()
+    {
+        return $this->timeUsages->sum('paused_duration');
+    }
+
+    public function getActivePlayDuration()
+    {
+        $activeUsage = $this->activeTimeUsage;
+        if (!$activeUsage) return 0;
+
+        $startTime = $activeUsage->start_time->timestamp;
+        $now = time();
+        $pausedDuration = $activeUsage->paused_duration;
+
+        if ($activeUsage->paused_at) {
+            $pausedDuration += ($now - $activeUsage->paused_at);
+        }
+
+        return max(0, $now - $startTime - $pausedDuration);
+    }
+
+    public function checkAndExpireCombos()
+    {
+        $this->activeComboTimeUsages->each->checkExpiration();
+    }
 }

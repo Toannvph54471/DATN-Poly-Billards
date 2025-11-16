@@ -104,4 +104,81 @@ class ComboTimeUsage extends Model
         $this->update(['extra_charge' => $charge]);
         return $charge;
     }
+
+    public function pause()
+    {
+        if (!$this->is_expired) {
+            $this->update(['paused_at' => now()]);
+        }
+    }
+
+    public function resume()
+    {
+        if ($this->paused_at && !$this->is_expired) {
+            $pausedDuration = now()->diffInMinutes($this->paused_at);
+            $this->update([
+                'paused_at' => null,
+                'remaining_minutes' => max(0, $this->remaining_minutes - $pausedDuration)
+            ]);
+
+            $this->checkExpiration();
+        }
+    }
+
+    public function checkExpiration()
+    {
+        if ($this->is_expired || $this->paused_at) {
+            return;
+        }
+
+        $elapsedMinutes = now()->diffInMinutes($this->start_time);
+        $remaining = $this->total_minutes - $elapsedMinutes;
+
+        if ($remaining <= 0) {
+            $this->expire();
+        } else {
+            $this->update(['remaining_minutes' => $remaining]);
+        }
+    }
+
+    public function expire()
+    {
+        $this->update([
+            'remaining_minutes' => 0,
+            'is_expired' => 1,
+            'end_time' => now()
+        ]);
+
+        // Chuyển sang tính giờ thường nếu đây là combo cuối cùng
+        $this->switchToNormalBilling();
+    }
+
+    protected function switchToNormalBilling()
+    {
+        $bill = $this->bill;
+
+        // Kiểm tra nếu không còn combo active nào
+        $hasActiveCombos = $bill->activeComboTimeUsages()
+            ->where('id', '!=', $this->id)
+            ->exists();
+
+        if (!$hasActiveCombos) {
+            // Tạo bill time usage mới với giá thường
+            BillTimeUsage::create([
+                'bill_id' => $bill->id,
+                'start_time' => now(),
+                'hourly_rate' => $bill->table->tableRate->hourly_rate,
+                'total_price' => 0
+            ]);
+        }
+    }
+
+    public function getRemainingTimeFormatted()
+    {
+        $minutes = $this->remaining_minutes;
+        $hours = floor($minutes / 60);
+        $mins = $minutes % 60;
+
+        return sprintf('%02d:%02d', $hours, $mins);
+    }
 }
