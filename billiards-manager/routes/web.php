@@ -31,6 +31,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\PromotionClientController;
+use App\Http\Controllers\CustomerClientController;
 
 
 
@@ -60,6 +61,8 @@ Route::middleware(['auth'])->group(function () {
     //profile
     Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
     Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
+    Route::get('/profile', [CustomerClientController::class, 'profile'])->name('client.profile');
+    Route::post('/profile/update', [CustomerClientController::class, 'update'])->name('client.profile.update');
 });
 
 

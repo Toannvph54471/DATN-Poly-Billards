@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
-class CustomerController extends Controller
+class CustomerClientController extends Controller
 {
     public function profile()
     {
@@ -37,7 +37,7 @@ class CustomerController extends Controller
 
         $user->update($data);
 
-        return redirect()->route('customer.profile')
+        return redirect()->route('client.profile')
                          ->with('success', 'Cập nhật hồ sơ thành công!');
     }
 }

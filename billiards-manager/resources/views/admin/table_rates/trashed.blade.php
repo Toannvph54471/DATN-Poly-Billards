@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold text-gray-800">Bảng giá bàn đã xóa</h1>
+    <h1 class="text-2xl font-bold text-gray-800">Loại bàn đã xóa</h1>
     <a href="{{ route('admin.table_rates.index') }}" 
        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
         <i class="fas fa-arrow-left mr-1"></i> Quay lại
@@ -49,7 +49,7 @@
                               onsubmit="return confirm('Bạn có chắc chắn muốn khôi phục bảng giá này không?');">
                             @csrf
                             <button type="submit" class="text-green-600 hover:text-green-900 transition">
-                                <i class="fas fa-undo"></i> Khôi phục
+                                <i class="fas fa-undo"></i>
                             </button>
                         </form>
                         <!-- Xóa vĩnh viễn -->
@@ -58,7 +58,7 @@
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="text-red-600 hover:text-red-900 transition">
-                                <i class="fas fa-trash-alt"></i> Xóa vĩnh viễn
+                                <i class="fas fa-trash-alt"></i> 
                             </button>
                         </form>
                     </td>
