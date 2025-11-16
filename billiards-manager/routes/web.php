@@ -16,6 +16,7 @@ use App\Http\Controllers\ComboController;
 use App\Http\Controllers\ComboItemController;
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\BillDetailController;
+use App\Http\Controllers\MockPaymentController;
 use App\Http\Controllers\BillTimeUsageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReservationController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\CustomerBillController;
 use App\Http\Controllers\Api\ComboTimeController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ContactController;
@@ -32,21 +34,23 @@ use App\Http\Controllers\FaqController;
 use App\Http\Controllers\PromotionClientController;
 
 
-
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');
 Route::get('/faq', [FaqController::class, 'index'])->name('faq');
 
 // Promotions
-    Route::get('/promotions', [PromotionClientController::class, 'index'])->name('promotions.index');
-    Route::get('/promotions/{promotion}', [PromotionClientController::class, 'show'])->name('promotions.show');
+Route::get('/promotions', [PromotionClientController::class, 'index'])->name('promotions.index');
+Route::get('/promotions/{promotion}', [PromotionClientController::class, 'show'])->name('promotions.show');
 
-        
-    Route::prefix('api')->group(function () {
-        Route::post('/tables/available', [ReservationController::class, 'checkAvailability'])->name('api.tables.available');
+
+Route::prefix('api')->group(function () {
+    Route::post('/tables/available', [ReservationController::class, 'checkAvailability'])->name('api.tables.available');
+
+    Route::middleware(['auth'])->group(function () {
         Route::post('/reservations/search', [ReservationController::class, 'search'])->name('api.reservations.search');
         Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('api.reservations.checkin');
         Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('api.reservations.cancel');
+    });
 });
 
 // Authenticated Customer Routes
@@ -54,19 +58,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservation', [ReservationController::class, 'create'])->name('reservation.create');
     Route::post('/reservation', [ReservationController::class, 'store'])->name('reservation.store');
+    Route::get('/reservations/{reservation}', [ReservationController::class, 'show'])->name('reservations.show');
     Route::get('/reservations/track', [ReservationController::class, 'track'])->name('reservations.track');
 
-//profile
-    Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
-    Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
-    
+    //profile
+    // Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
+    // Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
 });
 
 
 // Route cho Admin và Manager
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    // Users
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');    // Users
     Route::get('/users', [UserController::class, 'index'])->name('admin.users.index');
     Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
     Route::put('/users/{id}/update', [UserController::class, 'update'])->name('admin.users.update');
@@ -155,7 +158,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/promotions/{id}', [PromotionController::class, 'show'])->name('admin.promotions.show');
 
 
-    
+
     Route::get('/promotions/{id}/edit', [PromotionController::class, 'edit'])->name('admin.promotions.edit');
     Route::put('/promotions/{id}/update', [PromotionController::class, 'update'])->name('admin.promotions.update');
     Route::get('/promotions/trashed', [PromotionController::class, 'trashed'])->name('admin.promotions.trashed');
@@ -168,4 +171,154 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/combos-api/preview-price', [ComboController::class, 'previewComboPrice'])->name('admin.combos.preview-price');
     Route::get('/combos-api/calculate-table-price', [ComboController::class, 'calculateTablePriceAPI'])->name('admin.combos.calculate-table-price');
 
+    Route::prefix('reservations')->name('admin.reservations.')->group(function () {
+        Route::get('/', [ReservationController::class, 'adminIndex'])->name('index');
+        Route::post('/', [ReservationController::class, 'store'])->name('store');
+        Route::get('/{reservation}', [ReservationController::class, 'show'])->name('show');
+        Route::post('/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('checkin');
+        Route::post('/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('cancel');
+    });
+
+    // Payment routes
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::post('/reservations/{reservation}/payment', [PaymentController::class, 'create'])->name('payments.create');
+    Route::post('/payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
+    Route::post('/payments/{payment}/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
+});
+
+// Thêm vào phần authenticated customer routes
+Route::middleware(['auth'])->group(function () {
+    // Customer reservation management
+    Route::get('/reservations', [ReservationController::class, 'track'])->name('reservations.index');
+    Route::get('/reservations/track', [ReservationController::class, 'track'])->name('reservations.track');
+    Route::get('/reservation/create', [ReservationController::class, 'create'])->name('reservation.create');
+    Route::post('/reservation', [ReservationController::class, 'store'])->name('reservations.store');
+
+    // Payment routes for customers
+    Route::get('/reservation/{id}/payment', [ReservationController::class, 'showPayment'])->name('reservation.payment');
+    Route::post('/reservation/{id}/payment', [ReservationController::class, 'processPayment'])->name('reservation.process-payment');
+});
+
+Route::middleware(['auth'])->prefix('customer')->name('customer.')->group(function () {
+
+    // Lịch sử hóa đơn
+    Route::get('/bills', [CustomerBillController::class, 'index'])->name('bills.index');
+    Route::get('/bills/{id}', [CustomerBillController::class, 'show'])->name('bills.show');
+    Route::get('/bills/{id}/edit', [CustomerBillController::class, 'requestEdit'])->name('bills.edit');
+
+    // API cho khách hàng
+    Route::get('/api/bills', [CustomerBillController::class, 'apiList'])->name('bills.api');
+
+    // Xuất PDF (tùy chọn)
+    Route::get('/bills/{id}/pdf', [CustomerBillController::class, 'exportPdf'])->name('bills.pdf');
+});
+
+// ========== CẬP NHẬT API ROUTES ==========
+Route::prefix('api')->group(function () {
+    Route::post('/tables/available', [ReservationController::class, 'checkAvailability'])->name('api.tables.available');
+    Route::post('/api/tables/available', [ReservationController::class, 'checkAvailability'])->name('api.tables.available');
+    Route::post('/reservations/search', [ReservationController::class, 'search'])->name('api.reservations.search');
+    Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('api.reservations.checkin');
+    Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('api.reservations.cancel');
+
+    // *** MỚI: API sửa bill detail ***
+    Route::post('/bills/{bill}/details', [BillController::class, 'addProduct'])->name('api.bills.add-product');
+    Route::put('/bills/{bill}/details/{detail}', [BillController::class, 'updateBillDetail'])->name('api.bills.update-detail');
+    Route::delete('/bills/{bill}/details/{detail}', [BillController::class, 'deleteBillDetail'])->name('api.bills.delete-detail');
+});
+
+Route::prefix('mock-payment')->name('mock.payment.')->group(function () {
+    Route::get('/form', [MockPaymentController::class, 'showPaymentForm'])->name('form');
+    Route::post('/process', [MockPaymentController::class, 'processPayment'])->name('process');
+
+    // Tạo thanh toán cho reservation
+    Route::post('/reservation/{reservation}/create', [MockPaymentController::class, 'createReservationPayment'])
+        ->name('reservation.create');
+
+    // Tạo thanh toán cho bill
+    Route::post('/bill/{bill}/create', [MockPaymentController::class, 'createBillPayment'])
+        ->name('bill.create');
+
+    // Thông tin chuyển khoản
+    Route::get('/bank-transfer/{transaction_id}', [MockPaymentController::class, 'showBankTransfer'])
+        ->name('bank-transfer');
+});
+
+// ========== CẬP NHẬT PAYMENT ROUTES (SỬ DỤNG MOCK) ==========
+Route::prefix('payment')->name('payment.')->group(function () {
+    // Reservation payment - SỬ DỤNG MOCK
+    Route::post('/reservation/{reservation}/create', [MockPaymentController::class, 'createReservationPayment'])
+        ->name('reservation.create');
+
+    // Bill payment - SỬ DỤNG MOCK
+    Route::post('/bill/{bill}/create', [MockPaymentController::class, 'createBillPayment'])
+        ->name('bill.create');
+
+    // Callback routes (giữ nguyên cấu trúc)
+    Route::get('/reservation/callback', [MockPaymentController::class, 'processPayment'])
+        ->name('reservation.callback');
+    Route::get('/bill/callback', [MockPaymentController::class, 'processPayment'])
+        ->name('bill.callback');
+});
+
+Route::get('/track-reservation', [ReservationController::class, 'track'])
+    ->name('reservations.track');
+
+Route::post('/api/reservations/search', [ReservationController::class, 'search'])
+    ->name('api.reservations.search');
+
+// Customer Reservation Routes (Authenticated or Guest with code)
+Route::middleware(['web'])->group(function () {
+    // Create reservation
+    Route::get('/reservations/create', [ReservationController::class, 'create'])
+        ->name('reservation.create');
+    
+    Route::post('/reservations', [ReservationController::class, 'store'])
+        ->name('reservations.store');
+
+    // View reservation (public with reservation ID)
+    Route::get('/reservations/{id}', [ReservationController::class, 'show'])
+        ->name('reservations.show');
+
+    // Payment
+    Route::get('/reservations/{id}/payment', [ReservationController::class, 'showPayment'])
+        ->name('reservations.payment');
+    
+    Route::post('/reservations/{id}/payment', [ReservationController::class, 'processPayment'])
+        ->name('reservation.process-payment');
+});
+
+// API Routes (for AJAX calls)
+Route::prefix('api')->group(function () {
+    // Check table availability
+    Route::post('/tables/available', [TableController::class, 'checkAvailability'])
+        ->name('api.tables.available');
+
+    // Check-in
+    Route::post('/reservations/{id}/checkin', [ReservationController::class, 'checkin'])
+        ->name('api.reservations.checkin');
+
+    // Cancel reservation
+    Route::post('/reservations/{id}/cancel', [ReservationController::class, 'cancel'])
+        ->name('api.reservations.cancel');
+});
+
+// Mock Payment Routes
+Route::prefix('mock-payment')->name('mock.')->group(function () {
+    Route::get('/form', [MockPaymentController::class, 'showPaymentForm'])
+        ->name('payment.form');
+    
+    Route::post('/process', [MockPaymentController::class, 'processPayment'])
+        ->name('payment.process');
+});
+
+// Admin Routes (Protected by auth and role middleware)
+Route::middleware(['auth', 'role:admin,staff'])->prefix('admin')->name('admin.')->group(function () {
+    // Reservation management
+    Route::get('/reservations', [ReservationController::class, 'adminIndex'])
+        ->name('reservations.index');
+    
+    Route::get('/reservations/{id}', [ReservationController::class, 'show'])
+        ->name('reservations.show');
 });

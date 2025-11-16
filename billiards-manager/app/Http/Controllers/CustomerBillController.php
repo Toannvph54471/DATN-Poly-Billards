@@ -14,7 +14,7 @@ class CustomerBillController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        
+
         $query = Bill::where('customer_id', $user->id)
             ->with(['table', 'staff', 'reservation', 'billDetails.product', 'billTimeUsages', 'payments'])
             ->latest();
@@ -72,7 +72,7 @@ class CustomerBillController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        
+
         $bill = Bill::where('customer_id', $user->id)
             ->with([
                 'table',
@@ -94,7 +94,7 @@ class CustomerBillController extends Controller
     public function requestEdit($id)
     {
         $user = Auth::user();
-        
+
         $bill = Bill::where('customer_id', $user->id)
             ->whereIn('status', ['open', 'paused'])
             ->findOrFail($id);
@@ -108,7 +108,7 @@ class CustomerBillController extends Controller
     public function apiList(Request $request)
     {
         $user = Auth::user();
-        
+
         $bills = Bill::where('customer_id', $user->id)
             ->with(['table', 'billDetails', 'payments'])
             ->latest()
@@ -140,14 +140,14 @@ class CustomerBillController extends Controller
     public function exportPdf($id)
     {
         $user = Auth::user();
-        
+
         $bill = Bill::where('customer_id', $user->id)
             ->with(['table', 'billDetails.product', 'billTimeUsages'])
             ->findOrFail($id);
 
         // TODO: Implement PDF export
         // return PDF::loadView('bills.pdf', compact('bill'))->download("bill-{$bill->bill_number}.pdf");
-        
+
         return back()->with('info', 'Chức năng xuất PDF đang phát triển');
     }
 }

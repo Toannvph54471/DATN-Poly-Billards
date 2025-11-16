@@ -10,12 +10,7 @@ class Category extends Model
         'name',
         'type', // 'product' | 'table'
         'description',
-        'default_price',
         'status',
-    ];
-
-    protected $casts = [
-        'default_price' => 'decimal:2',
     ];
 
     // Relationships

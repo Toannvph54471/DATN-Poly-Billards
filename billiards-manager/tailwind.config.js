@@ -7,6 +7,10 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        './resources/js/**/*.js',        // Quan trọng: nếu bạn có file JS
+        './resources/js/**/*.vue',       // nếu dùng Vue
+        './resources/js/**/*.jsx',      // nếu dùng React
+        "./node_modules/flowbite/**/*.js"      
     ],
 
     theme: {
@@ -14,8 +18,15 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                'elegant-navy': '#1a2942',
+                'elegant-gold': '#ffd700',
+            },
         },
     },
 
-    plugins: [forms],
+    plugins: [
+        forms,
+        require('flowbite/plugin')
+    ],
 };
