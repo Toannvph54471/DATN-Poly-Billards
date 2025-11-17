@@ -31,7 +31,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\PromotionClientController;
-use App\Http\Controllers\CustomerClientController;
+use App\Http\Controllers\ClientProfileController;
 
 
 
@@ -59,10 +59,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reservations/track', [ReservationController::class, 'track'])->name('reservations.track');
 
     //profile
-    Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
-    Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
-    Route::get('/profile', [CustomerClientController::class, 'profile'])->name('client.profile');
-    Route::post('/profile/update', [CustomerClientController::class, 'update'])->name('client.profile.update');
+    // Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
+    // Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
+    // Route::get('/client/profile', [ClientProfileController::class, 'index'])->name('client.profile');
+    // Route::post('/client/profile', [ClientProfileController::class, 'update'])->name('client.profile.update');
+    Route::get('/profile', [ClientProfileController::class, 'index'])->name('client.profile.index');
+    Route::get('/profile/edit', [ClientProfileController::class, 'edit'])->name('client.profile.edit');
+    Route::put('/profile/update', [ClientProfileController::class, 'update'])->name('client.profile.update');
 });
 
 

@@ -99,28 +99,45 @@
                 <div class="hidden lg:block">
                     <div class="ml-4 flex items-center space-x-4">
                         @auth
-                            <span class="text-elegant-gold font-medium bg-elegant-charcoal px-3 py-2 rounded-lg">
-                                <i class="fas fa-user mr-2"></i>{{ Auth::user()->name }}
-                            </span>
-
-                            @if (Auth::user()->isAdmin() || Auth::user()->isManager())
-                                <a href="{{ route('admin.users.index') }}"
-                                    class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200 bg-elegant-burgundy hover:bg-red-800 px-4 py-2 rounded-lg">
-                                    <i class="fas fa-cog mr-2"></i>Quản trị
-                                </a>
-                            @endif
-
-                            <form method="POST" action="{{ route('logout') }}" class="inline">
-                                @csrf
-                                <button type="submit"
-                                    class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg">
-                                    <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+                            <div class="relative group">
+                                <!-- Nút tài khoản -->
+                                <button
+                                    class="flex items-center bg-elegant-charcoal text-elegant-gold 
+        font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                                    <i class="fas fa-user mr-2"></i>{{ Auth::user()->name }}
+                                    <i class="fas fa-chevron-down ml-2 text-sm"></i>
                                 </button>
-                            </form>
-                            <a href="{{ route('customer.profile') }}"
-                                class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200 bg-primary-700 hover:bg-primary-600 px-4 py-2 rounded-lg">
-                                <i class="fas fa-user-circle mr-2"></i>Trang cá nhân
-                            </a>
+
+                                <!-- Dropdown -->
+                                <div
+                                    class="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl 
+        border border-gray-200 hidden group-hover:block z-50">
+
+                                    <!-- Trang cá nhân -->
+                                    <a href="{{ route('client.profile.index') }}"
+                                        class="block px-4 py-3 hover:bg-gray-100 transition">
+                                        <i class="fas fa-user-circle mr-2"></i>Trang cá nhân
+                                    </a>
+
+                                    <!-- Quản trị -->
+                                    @if (Auth::user()->isAdmin() || Auth::user()->isManager())
+                                        <a href="{{ route('admin.users.index') }}"
+                                            class="block px-4 py-3 hover:bg-gray-100 transition">
+                                            <i class="fas fa-cog mr-2"></i>Quản trị
+                                        </a>
+                                    @endif
+
+                                    <!-- Logout -->
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="w-full text-left px-4 py-3 hover:bg-gray-100 transition">
+                                            <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </div>
                         @else
                             <a href=""
                                 class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200">
