@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Bill;
 use App\Models\BillTimeUsage;
-use App\Models\Category;
 use App\Models\Combo;
 use App\Models\ComboTimeUsage;
 use App\Models\Product;
@@ -75,21 +74,25 @@ class TableController extends Controller
         $request->validate([
             'table_name' => 'required|string|max:255',
             'table_number' => 'required|string|max:50',
-            'type' => 'required|string',
+            'capacity' => 'required|integer|min:1',
             'status' => 'required|string',
+            'table_rate_id' => 'required|exists:table_rates,id',
         ]);
 
         $table = Table::findOrFail($id);
+
         $table->update($request->only([
             'table_name',
             'table_number',
-            'type',
+            'capacity',
             'status',
+            'table_rate_id',
         ]));
 
-        return redirect()->route('admin.tables.index')
+        return redirect()->route('admin.tables.edit', $table->id)
             ->with('success', 'Cập nhật bàn thành công!');
     }
+
 
 
     // Hiển thị form thêm bàn

@@ -137,7 +137,7 @@
         }
 
         .left-panel {
-            width: 70%;
+            width: 35%;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -145,10 +145,19 @@
             gap: 1.5rem;
         }
 
-        .right-panel {
-            width: 30%;
+        .center-panel {
+            width: 40%;
             background: white;
             border-left: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            width: 25%;
+            background: white;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -267,7 +276,7 @@
             transition: width 0.3s ease;
         }
 
-        /* Thêm vào phần CSS */
+        /* Products List */
         .products-list {
             flex: 1;
             overflow: auto;
@@ -305,7 +314,7 @@
             transform: none;
         }
 
-        /* Products & Combos Section - UPDATED LAYOUT */
+        /* Products & Combos Section */
         .products-section {
             flex: 1;
             display: flex;
@@ -357,238 +366,7 @@
             overflow: auto;
         }
 
-        /* Products Grid Layout */
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
-            padding: 0.5rem;
-        }
-
-        .product-card {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            border-color: #3b82f6;
-        }
-
-        .product-image {
-            position: relative;
-            height: 140px;
-            background: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .product-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .product-img-placeholder {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            color: #94a3b8;
-        }
-
-        .product-img-placeholder.combo {
-            background: #ede9fe;
-            color: #8b5cf6;
-        }
-
-        /* Stock Badges */
-        .stock-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .out-of-stock {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .low-stock {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .in-stock {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-
-        .combo-badge {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            background: #ede9fe;
-            color: #7c3aed;
-        }
-
-        /* Product Info */
-        .product-info {
-            padding: 1rem;
-        }
-
-        .product-name {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 0.5rem;
-            line-height: 1.4;
-        }
-
-        .product-price {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #059669;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Combo Details */
-        .combo-details {
-            margin-bottom: 1rem;
-        }
-
-        .savings {
-            font-size: 0.875rem;
-            color: #059669;
-            font-weight: 500;
-        }
-
-        .time-info {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            color: #3b82f6;
-            margin-top: 0.25rem;
-        }
-
-        /* Product Controls */
-        .product-controls {
-            display: flex;
-            gap: 0.75rem;
-            align-items: center;
-        }
-
-        .quantity-controls {
-            display: flex;
-            align-items: center;
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 4px;
-        }
-
-        .quantity-btn {
-            width: 28px;
-            height: 28px;
-            border: none;
-            background: white;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-weight: 600;
-            color: #475569;
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .quantity-btn:hover {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .quantity-input {
-            width: 40px;
-            height: 28px;
-            border: none;
-            background: transparent;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin: 0 4px;
-        }
-
-        .quantity-input:focus {
-            outline: none;
-            background: white;
-            border-radius: 4px;
-        }
-
-        /* Add Button */
-        .add-btn {
-            flex: 1;
-            padding: 0.6rem 0.8rem;
-            background: #10b981;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: all 0.2s;
-            font-size: 0.85rem;
-        }
-
-        .add-btn:hover {
-            background: #059669;
-            transform: translateY(-1px);
-        }
-
-        .add-btn:disabled {
-            background: #cbd5e1;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .add-btn:disabled:hover {
-            background: #cbd5e1;
-            transform: none;
-        }
-
-        /* Combo Card Specific */
-        .combo-card {
-            border: 2px solid #ede9fe;
-        }
-
-        .combo-card:hover {
-            border-color: #8b5cf6;
-        }
-
-        /* Bill Details - NEW LOCATION */
+        /* Bill Details - NEW CENTER POSITION */
         .bill-details {
             flex: 1;
             display: flex;
@@ -883,33 +661,35 @@
 
         /* Responsive Design */
         @media (max-width: 1400px) {
-            .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            .left-panel {
+                width: 40%;
+            }
+            .center-panel {
+                width: 35%;
+            }
+            .right-panel {
+                width: 25%;
             }
         }
 
         @media (max-width: 1200px) {
-            .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            .main-content {
+                flex-direction: column;
             }
-        }
-
-        @media (max-width: 768px) {
-            .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-                gap: 1rem;
+            .left-panel, .center-panel, .right-panel {
+                width: 100%;
+                border: none;
             }
-
-            .product-info {
-                padding: 0.75rem;
+            .center-panel {
+                order: 1;
+                border-top: 1px solid #e2e8f0;
+                border-bottom: 1px solid #e2e8f0;
             }
-
-            .product-name {
-                font-size: 0.9rem;
+            .left-panel {
+                order: 2;
             }
-
-            .product-price {
-                font-size: 1rem;
+            .right-panel {
+                order: 3;
             }
         }
 
@@ -975,7 +755,7 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <!-- Left Panel - UPDATED LAYOUT -->
+            <!-- Left Panel - Products & Combos -->
             <div class="left-panel">
                 <!-- Real-time Counter Banner -->
                 @if (
@@ -1068,7 +848,7 @@
                     @endif
                 </div>
 
-                <!-- Products & Combos Section - Dạng danh sách -->
+                <!-- Products & Combos Section -->
                 <div class="card products-section">
                     <div class="products-tabs">
                         <div class="tab active" data-tab="products">
@@ -1250,10 +1030,10 @@
                 </div>
             </div>
 
-            <!-- Right Panel - UPDATED LAYOUT -->
-            <div class="right-panel">
+            <!-- Center Panel - Bill Details (NEW POSITION) -->
+            <div class="center-panel">
                 <div class="right-content">
-                    <!-- Bill Details - MOVED TO RIGHT PANEL -->
+                    <!-- Bill Details - NOW IN CENTER -->
                     <div class="card bill-details">
                         <div class="card-header">
                             <h2 class="section-title">
@@ -1322,7 +1102,12 @@
                             </div>
                         @endif
                     </div>
+                </div>
+            </div>
 
+            <!-- Right Panel - Table Info & Actions -->
+            <div class="right-panel">
+                <div class="right-content">
                     <!-- Table Info -->
                     <div class="card info-section">
                         <h2 class="section-title">
@@ -1748,11 +1533,11 @@
             @endif
         }
 
-        // Tab functionality for grid layout
+        // Tab functionality
         function setupTabs() {
             const tabs = document.querySelectorAll('.tab');
-            const productsGrid = document.getElementById('productsGrid');
-            const combosGrid = document.getElementById('combosGrid');
+            const productsList = document.getElementById('productsList');
+            const combosList = document.getElementById('combosList');
             const searchBox = document.getElementById('productSearch');
 
             tabs.forEach(tab => {
@@ -1763,15 +1548,15 @@
                     // Add active class to clicked tab
                     tab.classList.add('active');
 
-                    // Show/hide grids
+                    // Show/hide lists
                     const tabName = tab.getAttribute('data-tab');
                     if (tabName === 'products') {
-                        productsGrid.style.display = 'grid';
-                        combosGrid.style.display = 'none';
+                        productsList.style.display = 'block';
+                        combosList.style.display = 'none';
                         searchBox.placeholder = 'Tìm kiếm sản phẩm...';
                     } else {
-                        productsGrid.style.display = 'none';
-                        combosGrid.style.display = 'grid';
+                        productsList.style.display = 'none';
+                        combosList.style.display = 'block';
                         searchBox.placeholder = 'Tìm kiếm combo...';
                     }
 
@@ -1782,7 +1567,7 @@
             });
         }
 
-        // Search functionality for grid layout
+        // Search functionality
         function setupSearch() {
             const searchBox = document.getElementById('productSearch');
 
@@ -1793,19 +1578,19 @@
 
         function filterProducts(searchTerm) {
             const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
-            const grid = activeTab === 'products' ?
-                document.getElementById('productsGrid') :
-                document.getElementById('combosGrid');
+            const list = activeTab === 'products' ?
+                document.getElementById('productsList') :
+                document.getElementById('combosList');
 
-            const cards = grid.querySelectorAll('.product-card');
+            const rows = list.querySelectorAll('tbody tr');
             const term = searchTerm.toLowerCase();
 
-            cards.forEach(card => {
-                const name = card.querySelector('.product-name').textContent.toLowerCase();
+            rows.forEach(row => {
+                const name = row.querySelector('.font-medium').textContent.toLowerCase();
                 if (name.includes(term)) {
-                    card.style.display = 'block';
+                    row.style.display = '';
                 } else {
-                    card.style.display = 'none';
+                    row.style.display = 'none';
                 }
             });
         }
@@ -1998,60 +1783,6 @@
                 clearInterval(refreshInterval);
             }
         });
-
-        // Tab functionality for list layout
-        function setupTabs() {
-            const tabs = document.querySelectorAll('.tab');
-            const productsList = document.getElementById('productsList');
-            const combosList = document.getElementById('combosList');
-            const searchBox = document.getElementById('productSearch');
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    // Remove active class from all tabs
-                    tabs.forEach(t => t.classList.remove('active'));
-
-                    // Add active class to clicked tab
-                    tab.classList.add('active');
-
-                    // Show/hide lists
-                    const tabName = tab.getAttribute('data-tab');
-                    if (tabName === 'products') {
-                        productsList.style.display = 'block';
-                        combosList.style.display = 'none';
-                        searchBox.placeholder = 'Tìm kiếm sản phẩm...';
-                    } else {
-                        productsList.style.display = 'none';
-                        combosList.style.display = 'block';
-                        searchBox.placeholder = 'Tìm kiếm combo...';
-                    }
-
-                    // Reset search
-                    searchBox.value = '';
-                    filterProducts(searchBox.value);
-                });
-            });
-        }
-
-        // Search functionality for list layout
-        function filterProducts(searchTerm) {
-            const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
-            const list = activeTab === 'products' ?
-                document.getElementById('productsList') :
-                document.getElementById('combosList');
-
-            const rows = list.querySelectorAll('tbody tr');
-            const term = searchTerm.toLowerCase();
-
-            rows.forEach(row => {
-                const name = row.querySelector('.font-medium').textContent.toLowerCase();
-                if (name.includes(term)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
     </script>
 </body>
 
