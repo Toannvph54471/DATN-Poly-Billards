@@ -234,6 +234,7 @@ class BillController extends Controller
     /**
      * Đóng bill (before payment)
      */
+<<<<<<< HEAD
     public function closeTable(Request $request, $billId)
     {
         $bill = Bill::findOrFail($billId);
@@ -245,6 +246,10 @@ class BillController extends Controller
             ], 400);
         }
 
+=======
+    public function startPlaying($billId)
+    {
+>>>>>>> 2fb23e721b83a30d479e7130053d424f3ea04d09
         try {
             DB::beginTransaction();
 
@@ -480,5 +485,33 @@ class BillController extends Controller
         }
     }
 
+<<<<<<< HEAD
     // ==================== HELPER METHODS ====================
+=======
+    /**
+     * Lấy giá giờ của bàn
+     */
+    private function getTableHourlyRate(Table $table)
+    {
+        if ($table->table_rate_id) {
+            $tableRate = TableRate::find($table->table_rate_id);
+            if ($tableRate) {
+                return $tableRate->hourly_rate;
+            }
+        }
+    }
+
+    /**
+     * Tính số phút đã trôi qua
+     */
+    private function calculateElapsedMinutes(BillTimeUsage $timeUsage): int
+    {
+        if ($timeUsage->paused_at) {
+            return Carbon::parse($timeUsage->start_time)
+                ->diffInMinutes(Carbon::createFromTimestamp($timeUsage->paused_at));
+        } else {
+            return Carbon::parse($timeUsage->start_time)->diffInMinutes(now());
+        }
+    }
+>>>>>>> 2fb23e721b83a30d479e7130053d424f3ea04d09
 }

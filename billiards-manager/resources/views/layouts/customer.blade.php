@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') - Poly Billiards</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <script>
         tailwind.config = {
             theme: {
@@ -45,10 +46,12 @@
             }
         }
     </script>
-    
+
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
     @yield('styles')
 </head>
 
@@ -275,7 +278,8 @@ window.toast = window.Toast;
                 <!-- Logo -->
                 <div class="flex-shrink-0">
                     <a href="{{ route('home') }}" class="text-white font-display text-2xl font-bold flex items-center">
-                        <div class="w-12 h-12 bg-elegant-gold rounded-full flex items-center justify-center mr-3 shadow-lg">
+                        <div
+                            class="w-12 h-12 bg-elegant-gold rounded-full flex items-center justify-center mr-3 shadow-lg">
                             <i class="fas fa-billiard-ball text-elegant-navy text-xl"></i>
                         </div>
                         Poly Billiards
@@ -285,19 +289,24 @@ window.toast = window.Toast;
                 <!-- Desktop Menu -->
                 <div class="hidden lg:block">
                     <div class="ml-10 flex items-baseline space-x-1">
-                        <a href="{{ route('home') }}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105">
+                        <a href="{{ route('home') }}"
+                            class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105">
                             <i class="fas fa-home mr-2"></i>Trang chủ
                         </a>
-                        <a href="{{route('reservation.create')}}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105">
+                        <a href="{{ route('reservation.create') }}"
+                            class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105">
                             <i class="fas fa-calendar-plus mr-2"></i>Đặt bàn
                         </a>
-                        <a href="{{route('promotions.index')}}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105"> 
+                        <a href="{{ route('promotions.index') }}"
+                            class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105">
                             <i class="fas fa-tag mr-2"></i>Khuyến mãi
                         </a>
-                        <a href="{{route('contact')}}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105"> 
+                        <a href="{{ route('contact') }}"
+                            class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105">
                             <i class="fas fa-phone mr-2"></i>Liên hệ
                         </a>
-                        <a href="{{route('faq')}}" class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105"> 
+                        <a href="{{ route('faq') }}"
+                            class="text-elegant-cream hover:bg-primary-700 hover:text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105">
                             <i class="fas fa-question-circle mr-2"></i>FAQ
                         </a>
                     </div>
@@ -307,30 +316,56 @@ window.toast = window.Toast;
                 <div class="hidden lg:block">
                     <div class="ml-4 flex items-center space-x-4">
                         @auth
-                            <span class="text-elegant-gold font-medium bg-elegant-charcoal px-3 py-2 rounded-lg">
-                                <i class="fas fa-user mr-2"></i>{{ Auth::user()->name }}
-                            </span>
-                            
-                            @if (Auth::user()->isAdmin() || Auth::user()->isManager())
-                                <a href="{{ route('admin.users.index') }}" class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200 bg-elegant-burgundy hover:bg-red-800 px-4 py-2 rounded-lg">
-                                    <i class="fas fa-cog mr-2"></i>Quản trị
-                                </a>
-                            @endif
-                            
-                            <form method="POST" action="{{ route('logout') }}" class="inline">
-                                @csrf
-                                <button type="submit" class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200 bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg">
-                                    <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+                            <div class="relative group">
+                                <!-- Nút tài khoản -->
+                                <button
+                                    class="flex items-center bg-elegant-charcoal text-elegant-gold 
+                                font-medium px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                                    <i class="fas fa-user mr-2"></i>{{ Auth::user()->name }}
+                                    <i class="fas fa-chevron-down ml-2 text-sm"></i>
                                 </button>
-                            </form>
+
+                                <!-- Dropdown -->
+                                <div
+                                    class="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl 
+        border border-gray-200 hidden group-hover:block z-50">
+
+                                    <!-- Trang cá nhân -->
+                                    <a href="{{ route('client.profile.index') }}"
+                                        class="block px-4 py-3 hover:bg-gray-100 transition">
+                                        <i class="fas fa-user-circle mr-2"></i>Trang cá nhân
+                                    </a>
+
+                                    <!-- Quản trị -->
+                                    @if (Auth::user()->isAdmin() || Auth::user()->isManager())
+                                        <a href="{{ route('admin.users.index') }}"
+                                            class="block px-4 py-3 hover:bg-gray-100 transition">
+                                            <i class="fas fa-cog mr-2"></i>Quản trị
+                                        </a>
+                                    @endif
+
+                                    <!-- Logout -->
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit"
+                                            class="w-full text-left px-4 py-3 hover:bg-gray-100 transition">
+                                            <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </div>
                         @else
-                            <a href="" class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200">
+                            <a href=""
+                                class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200">
                                 <i class="fas fa-search mr-2"></i>Tra cứu
                             </a>
-                            <a href="{{ route('login') }}" class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200">
+                            <a href="{{ route('login') }}"
+                                class="text-elegant-cream hover:text-elegant-gold font-medium transition duration-200">
                                 <i class="fas fa-sign-in-alt mr-2"></i>Đăng nhập
                             </a>
-                            <a href="{{ route('register') }}" class="bg-elegant-gold hover:bg-yellow-500 text-elegant-navy font-semibold px-6 py-3 rounded-lg transition duration-200 transform hover:scale-105 shadow-lg">
+                            <a href="{{ route('register') }}"
+                                class="bg-elegant-gold hover:bg-yellow-500 text-elegant-navy font-semibold px-6 py-3 rounded-lg transition duration-200 transform hover:scale-105 shadow-lg">
                                 <i class="fas fa-user-plus mr-2"></i>Đăng ký
                             </a>
                         @endauth
@@ -339,10 +374,14 @@ window.toast = window.Toast;
 
                 <!-- Mobile menu button -->
                 <div class="lg:hidden">
-                    <button type="button" class="bg-primary-700 inline-flex items-center justify-center p-3 rounded-lg text-elegant-cream hover:bg-primary-600 focus:outline-none transition duration-200" aria-controls="mobile-menu" aria-expanded="false" id="mobile-menu-button">
+                    <button type="button"
+                        class="bg-primary-700 inline-flex items-center justify-center p-3 rounded-lg text-elegant-cream hover:bg-primary-600 focus:outline-none transition duration-200"
+                        aria-controls="mobile-menu" aria-expanded="false" id="mobile-menu-button">
                         <span class="sr-only">Open main menu</span>
-                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
                 </div>
@@ -352,28 +391,33 @@ window.toast = window.Toast;
         <!-- Mobile menu -->
         <div class="lg:hidden hidden bg-elegant-navy border-t border-primary-600" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="{{ route('home') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                <a href="{{ route('home') }}"
+                    class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                     <i class="fas fa-home mr-3"></i>Trang chủ
                 </a>
-                <a href="{{route('reservation.create')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                <a href="{{ route('reservation.create') }}"
+                    class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                     <i class="fas fa-calendar-plus mr-3"></i>Đặt bàn
                 </a>
-                <a href="{{route('promotions.index')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                <a href="{{ route('promotions.index') }}"
+                    class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                     <i class="fas fa-tag mr-3"></i>Khuyến mãi
                 </a>
-                <a href="{{route('contact')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                <a href="{{ route('contact') }}"
+                    class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                     <i class="fas fa-phone mr-3"></i>Liên hệ
                 </a>
-                <a href="{{route('faq')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                <a href="{{ route('faq') }}"
+                    class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                     <i class="fas fa-question-circle mr-3"></i>FAQ
                 </a>
 
-                <li class="nav-item">
+                {{-- <li class="nav-item">
                 <a href="{{ route('customer.bills.index') }}" class="nav-link">
                     <i class="fas fa-file-invoice mr-2"></i>
                   Lịch sử hóa đơn
                     </a>
-                </li>
+                </li> --}}
                 
                 @auth
                     <div class="border-t border-primary-600 pt-4">
@@ -385,26 +429,31 @@ window.toast = window.Toast;
                             </div>
                         </div>
                         @if (Auth::user()->isAdmin() || Auth::user()->isManager())
-                            <a href="{{ route('admin.users.index') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                            <a href="{{ route('admin.users.index') }}"
+                                class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                                 <i class="fas fa-cog mr-3"></i>Quản trị
                             </a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="w-full text-left text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                            <button type="submit"
+                                class="w-full text-left text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                                 <i class="fas fa-sign-out-alt mr-3"></i>Đăng xuất
                             </button>
                         </form>
                     </div>
                 @else
                     <div class="border-t border-primary-600 pt-4">
-                        <a href="{{route('reservation.create')}}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                        <a href="{{ route('reservation.create') }}"
+                            class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                             <i class="fas fa-search mr-3"></i>Tra cứu đặt bàn
                         </a>
-                        <a href="{{ route('login') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                        <a href="{{ route('login') }}"
+                            class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                             <i class="fas fa-sign-in-alt mr-3"></i>Đăng nhập
                         </a>
-                        <a href="{{ route('register') }}" class="bg-elegant-gold text-elegant-navy font-semibold block px-3 py-3 rounded-lg text-base font-medium transition duration-200 mt-2">
+                        <a href="{{ route('register') }}"
+                            class="bg-elegant-gold text-elegant-navy font-semibold block px-3 py-3 rounded-lg text-base font-medium transition duration-200 mt-2">
                             <i class="fas fa-user-plus mr-3"></i>Đăng ký
                         </a>
                     </div>
@@ -433,18 +482,21 @@ window.toast = window.Toast;
                         Thiên đường bi-a chuyên nghiệp với không gian sang trọng và dịch vụ đẳng cấp.
                     </p>
                     <div class="flex space-x-4">
-                        <a href="#" class="w-10 h-10 bg-primary-700 hover:bg-primary-600 rounded-full flex items-center justify-center transition duration-200">
+                        <a href="#"
+                            class="w-10 h-10 bg-primary-700 hover:bg-primary-600 rounded-full flex items-center justify-center transition duration-200">
                             <i class="fab fa-facebook-f"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-primary-700 hover:bg-primary-600 rounded-full flex items-center justify-center transition duration-200">
+                        <a href="#"
+                            class="w-10 h-10 bg-primary-700 hover:bg-primary-600 rounded-full flex items-center justify-center transition duration-200">
                             <i class="fab fa-tiktok"></i>
                         </a>
-                        <a href="#" class="w-10 h-10 bg-primary-700 hover:bg-primary-600 rounded-full flex items-center justify-center transition duration-200">
+                        <a href="#"
+                            class="w-10 h-10 bg-primary-700 hover:bg-primary-600 rounded-full flex items-center justify-center transition duration-200">
                             <i class="fab fa-youtube"></i>
                         </a>
                     </div>
                 </div>
-                
+
                 <div>
                     <h4 class="text-lg font-semibold mb-6 text-elegant-gold">Liên hệ</h4>
                     <div class="space-y-3">
@@ -462,7 +514,7 @@ window.toast = window.Toast;
                         </p>
                     </div>
                 </div>
-                
+
                 <div>
                     <h4 class="text-lg font-semibold mb-6 text-elegant-gold">Giờ mở cửa</h4>
                     <div class="space-y-2 text-primary-200">
@@ -476,18 +528,24 @@ window.toast = window.Toast;
                         </p>
                     </div>
                 </div>
-                
+
                 <div>
                     <h4 class="text-lg font-semibold mb-6 text-elegant-gold">Liên kết nhanh</h4>
                     <div class="space-y-2">
-                        <a href="{{route('reservation.create')}}" class="block text-primary-200 hover:text-elegant-gold transition duration-200">Đặt bàn</a>
-                        <a href="{{route('promotions.index')}}" class="block text-primary-200 hover:text-elegant-gold transition duration-200">Khuyến mãi</a>
-                        <a href="{{route('faq')}}" class="block text-primary-200 hover:text-elegant-gold transition duration-200">Câu hỏi thường gặp</a>
-                        <a href="{{route('contact')}}" class="block text-primary-200 hover:text-elegant-gold transition duration-200">Liên hệ</a>
+                        <a href="{{ route('reservation.create') }}"
+                            class="block text-primary-200 hover:text-elegant-gold transition duration-200">Đặt bàn</a>
+                        <a href="{{ route('promotions.index') }}"
+                            class="block text-primary-200 hover:text-elegant-gold transition duration-200">Khuyến
+                            mãi</a>
+                        <a href="{{ route('faq') }}"
+                            class="block text-primary-200 hover:text-elegant-gold transition duration-200">Câu hỏi
+                            thường gặp</a>
+                        <a href="{{ route('contact') }}"
+                            class="block text-primary-200 hover:text-elegant-gold transition duration-200">Liên hệ</a>
                     </div>
                 </div>
             </div>
-            
+
             <div class="border-t border-primary-700 pt-6 text-center text-primary-300">
                 <p>&copy; 2024 Poly Billiards. All rights reserved.</p>
             </div>
@@ -736,4 +794,5 @@ window.toast = window.Toast;
 
     @yield('scripts')
 </body>
+
 </html>

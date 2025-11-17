@@ -6,6 +6,63 @@
         <p class="text-gray-600">Quản lý bàn bi-a và trạng thái</p>
     </div>
 
+    <!-- Thống kê nhanh -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-2 bg-green-100 rounded-lg">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Bàn trống</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {{ $tables->where('status', 'available')->count() }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-2 bg-red-100 rounded-lg">
+                    <i class="fas fa-users text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Đang sử dụng</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {{ $tables->where('status', 'occupied')->count() }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-2 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-tools text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Bảo trì</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {{ $tables->where('status', 'maintenance')->count() }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <i class="fas fa-table text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Tổng số bàn</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $tables->count() }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filters và Search -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <form action="{{ route('admin.tables.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -187,83 +244,49 @@
                                     {{ number_format($hourlyRate, 0, ',', '.') }} đ/giờ
                                 </td>
 
-                                <!-- Cột Actions -->
+                                <!-- Cột Actions - ĐƠN GIẢN HÓA -->
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2" onclick="event.stopPropagation()">
+                                        <!-- Xem chi tiết -->
                                         <a href="{{ route('admin.tables.detail', $table->id) }}"
                                             class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
                                             title="Xem chi tiết">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('admin.tables.edit', $table->id) }}"
-                                            class="text-green-600 hover:text-green-900 transition-colors duration-200"
-                                            title="Chỉnh sửa">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
 
-                                        @if ($table->status === 'available')
-                                            <form action="{{ route('admin.tables.update', $table->id) }}" method="POST"
-                                                class="inline">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="status" value="occupied">
-                                                <button type="submit"
-                                                    class="text-red-600 hover:text-red-900 transition-colors duration-200"
-                                                    title="Đánh dấu đang sử dụng" onclick="event.stopPropagation()">
-                                                    <i class="fas fa-play"></i>
-                                                </button>
-                                            </form>
-                                        @elseif($table->status === 'occupied')
-                                            <form action="{{ route('admin.tables.update', $table->id) }}" method="POST"
-                                                class="inline">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="status" value="available">
-                                                <button type="submit"
-                                                    class="text-green-600 hover:text-green-900 transition-colors duration-200"
-                                                    title="Đánh dấu trống" onclick="event.stopPropagation()">
-                                                    <i class="fas fa-stop"></i>
-                                                </button>
-                                            </form>
+                                        <!-- Chỉnh sửa - Chỉ cho bàn không ở trạng thái occupied -->
+                                        @if ($table->status !== 'occupied')
+                                            <a href="{{ route('admin.tables.edit', $table->id) }}"
+                                                class="text-green-600 hover:text-green-900 transition-colors duration-200"
+                                                title="Chỉnh sửa">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        @else
+                                            <span class="text-gray-400 cursor-not-allowed"
+                                                title="Không thể chỉnh sửa bàn đang sử dụng">
+                                                <i class="fas fa-edit"></i>
+                                            </span>
                                         @endif
 
-                                        @if ($table->status === 'maintenance')
-                                            <form action="{{ route('admin.tables.update', $table->id) }}" method="POST"
-                                                class="inline">
+                                        <!-- Xóa - Chỉ cho bàn không ở trạng thái occupied -->
+                                        @if ($table->status !== 'occupied')
+                                            <form action="{{ route('admin.tables.destroy', $table->id) }}" method="POST"
+                                                class="inline"
+                                                onsubmit="return confirm('Bạn có chắc chắn muốn xóa bàn này?')">
                                                 @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="status" value="available">
+                                                @method('DELETE')
                                                 <button type="submit"
-                                                    class="text-green-600 hover:text-green-900 transition-colors duration-200"
-                                                    title="Kết thúc bảo trì" onclick="event.stopPropagation()">
-                                                    <i class="fas fa-check"></i>
+                                                    class="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                                    onclick="event.stopPropagation()" title="Xóa bàn">
+                                                    <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
                                         @else
-                                            <form action="{{ route('admin.tables.update', $table->id) }}" method="POST"
-                                                class="inline">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="status" value="maintenance">
-                                                <button type="submit"
-                                                    class="text-yellow-600 hover:text-yellow-900 transition-colors duration-200"
-                                                    title="Đưa vào bảo trì" onclick="event.stopPropagation()">
-                                                    <i class="fas fa-tools"></i>
-                                                </button>
-                                            </form>
-                                        @endif
-
-                                        <form action="{{ route('admin.tables.destroy', $table->id) }}" method="POST"
-                                            class="inline"
-                                            onsubmit="return confirm('Bạn có chắc chắn muốn xóa bàn này?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="text-red-600 hover:text-red-900 transition-colors duration-200"
-                                                onclick="event.stopPropagation()" title="Xóa bàn">
+                                            <span class="text-gray-400 cursor-not-allowed"
+                                                title="Không thể xóa bàn đang sử dụng">
                                                 <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
+                                            </span>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -289,61 +312,16 @@
         @endif
     </div>
 
-    <!-- Thống kê nhanh -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-        <div class="bg-white rounded-lg shadow-md p-4">
-            <div class="flex items-center">
-                <div class="p-2 bg-green-100 rounded-lg">
-                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Bàn trống</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                        {{ $tables->where('status', 'available')->count() }}
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-4">
-            <div class="flex items-center">
-                <div class="p-2 bg-red-100 rounded-lg">
-                    <i class="fas fa-users text-red-600 text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Đang sử dụng</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                        {{ $tables->where('status', 'occupied')->count() }}
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-4">
-            <div class="flex items-center">
-                <div class="p-2 bg-yellow-100 rounded-lg">
-                    <i class="fas fa-tools text-yellow-600 text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Bảo trì</p>
-                    <p class="text-2xl font-bold text-gray-900">
-                        {{ $tables->where('status', 'maintenance')->count() }}
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-4">
-            <div class="flex items-center">
-                <div class="p-2 bg-blue-100 rounded-lg">
-                    <i class="fas fa-table text-blue-600 text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Tổng số bàn</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ $tables->count() }}</p>
-                </div>
-            </div>
-        </div>
+    <!-- Nút thêm bàn mới ở dưới cùng -->
+    <div class="mt-6 flex justify-end">
+        <a href="{{ route('admin.tables.create') }}"
+            class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            <i class="fas fa-plus mr-2"></i>Thêm bàn mới
+        </a>
+        <a href="{{ route('admin.tables.trashed') }}"
+            class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ml-4">
+            <i class="fas fa-trash-restore mr-2"></i>Bàn đã xóa
+        </a>
     </div>
 
     @if (session('success'))
@@ -390,6 +368,11 @@
             tr[onclick] .flex.space-x-2 form {
                 position: relative;
                 z-index: 10;
+            }
+
+            /* Style cho icon bị disabled */
+            .cursor-not-allowed {
+                opacity: 0.5;
             }
         </style>
     @endpush

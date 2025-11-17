@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Bill;
 use App\Models\BillTimeUsage;
-use App\Models\Category;
 use App\Models\Combo;
 use App\Models\ComboTimeUsage;
 use App\Models\Product;
@@ -22,26 +21,29 @@ class TableController extends Controller
         $query = Table::query();
 
         // Lọc theo status
-        if ($request->has('status') && $request->status) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Lọc theo type
-        if ($request->has('type') && $request->type) {
-            $query->where('type', $request->type);
+        // Lọc theo tyable_rate_id
+        if ($request->filled('table_rate_id')) {
+            $query->where('table_rate_id', $request->table_rate_id);
         }
 
         // Tìm kiếm
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $search = $request->search;
+
             $query->where(function ($q) use ($search) {
                 $q->where('table_number', 'like', "%{$search}%")
-                    ->orWhere('table_name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('table_name', 'like', "%{$search}%");
             });
         }
+
+        // Quan trọng: dùng query đã lọc
+        $tables = $query->with('tableRate')->paginate(10);
+
         $tableRates = TableRate::where('status', 'Active')->get();
-        $tables = Table::with('tableRate')->paginate(10);
 
         $statuses = [
             Table::STATUS_AVAILABLE => 'Available',
@@ -49,13 +51,16 @@ class TableController extends Controller
             Table::STATUS_PAUSED => 'Paused',
             Table::STATUS_MAINTENANCE => 'Maintenance',
             Table::STATUS_RESERVED => 'Reserved',
+            'quick' => 'Quick',
         ];
+
         return view('admin.tables.index', compact(
             'tables',
             'statuses',
             'tableRates'
         ));
     }
+
     // hien thi form sua 
     public function edit($id)
     {
@@ -69,21 +74,25 @@ class TableController extends Controller
         $request->validate([
             'table_name' => 'required|string|max:255',
             'table_number' => 'required|string|max:50',
-            'type' => 'required|string',
+            'capacity' => 'required|integer|min:1',
             'status' => 'required|string',
+            'table_rate_id' => 'required|exists:table_rates,id',
         ]);
 
         $table = Table::findOrFail($id);
+
         $table->update($request->only([
             'table_name',
             'table_number',
-            'type',
+            'capacity',
             'status',
+            'table_rate_id',
         ]));
 
-        return redirect()->route('admin.tables.index')
+        return redirect()->route('admin.tables.edit', $table->id)
             ->with('success', 'Cập nhật bàn thành công!');
     }
+
 
 
     // Hiển thị form thêm bàn
@@ -115,7 +124,7 @@ class TableController extends Controller
             'table_rate_id' => $request->table_rate_id,
         ]);
 
-        return redirect()->route('admin.tables.create')->with('success', 'Thêm bàn mới thành công!');
+        return redirect()->route('admin.tables.index')->with('success', 'Thêm bàn mới thành công!');
     }
 
     // Xóa mềm
@@ -124,13 +133,30 @@ class TableController extends Controller
         $table = Table::find($id);
 
         if (!$table) {
-            return response()->json(['success' => false, 'message' => 'Không tìm thấy bàn'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy bàn'
+            ], 404);
         }
 
+        // Kiểm tra bàn có bill đang hoạt động hay không
+        $isInUse = $table->bills()
+            ->whereIn('status', ['open', 'playing', 'quick'])
+            ->exists();
+
+        if ($isInUse) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bàn đang được sử dụng, không thể xóa'
+            ], 400);
+        }
+
+        // Nếu không sử dụng -> được phép xóa
         $table->delete();
 
         return response()->json(['success' => true]);
     }
+
 
 
     public function trashed()
@@ -168,6 +194,7 @@ class TableController extends Controller
 
         $combos = Combo::where('status', 'active')->get();
         $products = Product::where('status', 'Active')->get();
+        // dd($products);
 
         // Tính toán thời gian hiện tại
         $timeInfo = [];
