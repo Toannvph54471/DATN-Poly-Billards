@@ -20,7 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/add-minutes', [ComboTimeController::class, 'addMinutes'])->name('addMinutes');
         Route::get('/warnings', [ComboTimeController::class, 'checkWarnings'])->name('warnings');
         Route::get('/{id}/history', [ComboTimeController::class, 'history'])->name('history');
-        Route::get('/report/daily', [ComboTimeController::class, 'dailyReport'])->name('dailyReport');
+        Route::get('/report/daily', [ComboTimeControllereController::class, 'dailyReport'])->name('dailyReport');
     });
 });
 

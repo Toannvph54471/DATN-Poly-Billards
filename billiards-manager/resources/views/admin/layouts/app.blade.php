@@ -150,11 +150,11 @@
                     Nhân viên
                 </a>
 
-                <a href=""
-                    class="nav-item {{ request()->routeIs('invoices.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-file-invoice-dollar w-6 mr-3"></i>
-                    <span class="font-medium">Hóa đơn</span>
-                </a>
+             <a href="{{ route('admin.bills.index') }}"
+    class="nav-item {{ request()->routeIs('admin.bills.*') ? 'active' : '' }} flex items-center p-3">
+    <i class="fas fa-file-invoice-dollar w-6 mr-3"></i>
+    <span class="font-medium">Hóa đơn</span>
+</a>
 
                 <a href="{{ route('admin.combos.index') }}"
                     class="nav-item {{ request()->routeIs('combos.*') ? 'active' : '' }} flex items-center p-3">
@@ -216,7 +216,7 @@
                                 class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
                         </button>
 
-                        <!-- Messages -->
+                        <!-- Messages --
                         <button class="relative p-2 text-gray-600 hover:text-blue-600 transition">
                             <i class="fas fa-envelope text-xl"></i>
                             <span

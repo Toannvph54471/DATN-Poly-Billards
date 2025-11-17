@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\SoftDeletes;
-
 class BillDetail extends BaseModel
 {
-    use SoftDeletes;
+    // Xóa dòng này:
+    // use SoftDeletes;
 
     protected $fillable = [
         'bill_id',

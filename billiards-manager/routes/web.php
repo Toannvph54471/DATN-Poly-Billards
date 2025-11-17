@@ -136,5 +136,13 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos-api/rates-by-category', [ComboController::class, 'getTableRatesByCategory'])->name('admin.combos.rates-by-category');
     Route::post('/combos-api/preview-price', [ComboController::class, 'previewComboPrice'])->name('admin.combos.preview-price');
     Route::get('/combos-api/calculate-table-price', [ComboController::class, 'calculateTablePriceAPI'])->name('admin.combos.calculate-table-price');
-
+ 
 });
+
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/bills', [BillController::class, 'index'])->name('bills.index');
+    Route::get('/bills/{id}', [BillController::class, 'show'])->name('bills.show');
+});
+
+
