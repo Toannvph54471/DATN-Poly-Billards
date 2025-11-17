@@ -14,7 +14,7 @@ class CategoriesTableSeeder extends Seeder
         
         // Loại sản phẩm
         Category::create(['name' => 'Đồ uống', 'type' => 'product']);
-        Category::create(['name' => 'Đồ ăn vặt', 'type' => 'product']);
+        Category::create(attributes: ['name' => 'Đồ ăn vặt', 'type' => 'product']);
         Category::create(['name' => 'Dịch vụ', 'type' => 'product']);
     }
 }

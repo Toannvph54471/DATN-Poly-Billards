@@ -27,10 +27,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Api\ComboTimeController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FaqController;
 use App\Http\Controllers\PromotionClientController;
+use App\Http\Controllers\ClientProfileController;
 
 
 
@@ -58,8 +60,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reservations/track', [ReservationController::class, 'track'])->name('reservations.track');
 
     //profile
-    Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
-    Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
+    // Route::get('/profile', [CustomerController::class, 'profile'])->name('customer.profile');
+    // Route::put('/profile', [CustomerController::class, 'update'])->name('customer.update');
+    // Route::get('/client/profile', [ClientProfileController::class, 'index'])->name('client.profile');
+    // Route::post('/client/profile', [ClientProfileController::class, 'update'])->name('client.profile.update');
+    Route::get('/profile', [ClientProfileController::class, 'index'])->name('client.profile.index');
+    Route::get('/profile/edit', [ClientProfileController::class, 'edit'])->name('client.profile.edit');
+    Route::put('/profile/update', [ClientProfileController::class, 'update'])->name('client.profile.update');
 });
 
 
@@ -210,5 +217,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos-api/rates-by-category', [ComboController::class, 'getTableRatesByCategory'])->name('admin.combos.rates-by-category');
     Route::post('/combos-api/preview-price', [ComboController::class, 'previewComboPrice'])->name('admin.combos.preview-price');
     Route::get('/combos-api/calculate-table-price', [ComboController::class, 'calculateTablePriceAPI'])->name('admin.combos.calculate-table-price');
+
+    // Category Routes
+    Route::resource('categories', CategoryController::class, ['as' => 'admin']);
 });
 
