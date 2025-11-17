@@ -41,11 +41,11 @@
                                 @enderror
                             </div>
                             {{-- Loại bàn --}}
-                            <div class="mb-4">
-                                <label for="table_rate_id" class="block text-gray-700 font-medium">Loại bàn / Bảng
+                            <div class="space-y-2 md:col-span-2">
+                                <label for="table_rate_id" class="block text-sm font-semibold text-gray-700">Loại bàn / Bảng
                                     giá</label>
                                 <select name="table_rate_id" id="table_rate_id"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                     <option value="">Chọn loại bàn</option>
                                     @foreach ($tableRates as $rate)
                                         <option value="{{ $rate->id }}"
