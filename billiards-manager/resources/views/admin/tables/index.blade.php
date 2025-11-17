@@ -2,25 +2,25 @@
 
 @section('content')
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Table Management</h1>
-        <p class="text-gray-600">Manage your pool tables and their status</p>
+        <h1 class="text-3xl font-bold text-gray-900">Quản lý bàn</h1>
+        <p class="text-gray-600">Quản lý bàn bi-a và trạng thái</p>
     </div>
 
     <!-- Filters và Search -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <form action="{{ route('admin.tables.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
                 <input type="text" name="search" value="{{ request('search') }}"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Search tables...">
+                    placeholder="Tìm kiếm bàn...">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
                 <select name="status"
                     class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">All Status</option>
+                    <option value="">Tất cả trạng thái</option>
                     @foreach ($statuses as $value => $label)
                         <option value="{{ $value }}" {{ request('status') == $value ? 'selected' : '' }}>
                             {{ $label }}
@@ -44,15 +44,15 @@
 
             <div class="md:col-span-4 flex gap-2">
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                    <i class="fas fa-search mr-2"></i>Filter
+                    <i class="fas fa-search mr-2"></i>Lọc
                 </button>
                 <a href="{{ route('admin.tables.index') }}"
                     class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
-                    <i class="fas fa-refresh mr-2"></i>Reset
+                    <i class="fas fa-refresh mr-2"></i>Đặt lại
                 </a>
                 <a href="{{ route('admin.tables.create') }}"
                     class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 ml-auto">
-                    <i class="fas fa-plus mr-2"></i>Add New Table
+                    <i class="fas fa-plus mr-2"></i>Thêm bàn mới
                 </a>
             </div>
         </form>
@@ -65,46 +65,49 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Table
-                                Info</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thông
+                                tin bàn</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Capacity</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type
+                                Sức chứa</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status</th>
+                                Trạng thái</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Hourly Rate</th>
+                                Giá theo giờ</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions</th>
+                                Thao tác</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach ($tables as $table)
                             <tr class="hover:bg-gray-50 group relative cursor-pointer"
-                                onclick="window.location='{{ route('admin.tables.detail', $table) }}'">
+                                onclick="window.location='{{ route('admin.tables.detail', $table->id) }}'">
 
                                 <!-- Các cột dữ liệu -->
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">#{{ $table->table_number }}</div>
                                     <div class="text-sm text-gray-500">{{ $table->table_name }}</div>
-                                    @if ($table->description)
-                                        <div class="text-xs text-gray-400 mt-1">{{ Str::limit($table->description, 50) }}
+                                    @if ($table->currentBill)
+                                        <div class="text-xs text-red-500 mt-1 font-semibold">
+                                            <i class="fas fa-clock mr-1"></i>Đang sử dụng
+                                            @if ($table->currentBill->user)
+                                                - {{ $table->currentBill->user->name }}
+                                            @endif
                                         </div>
                                     @endif
                                 </td>
 
-
-                                <td class="px-6- py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        <i class="fas fa-users mr-1"></i>{{ $table->capacity }}
+                                        <i class="fas fa-users mr-1"></i>{{ $table->capacity }} người
                                     </span>
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php
-                                        $rate = $table->tableRate; // quan hệ table_rate của bàn
+                                        $rate = $table->tableRate;
 
                                         // Màu sắc theo loại bàn
                                         $typeColors = [
@@ -115,11 +118,11 @@
 
                                         // Mặc định
                                         $typeKey = 'Regular';
-                                        $rateLabel = 'Không xác định';
+                                        $rateLabel = 'Chưa phân loại';
                                         $rateValue = '';
 
                                         if ($rate) {
-                                            // Xác định loại bàn theo prefix code hoặc category_id
+                                            // Xác định loại bàn theo code
                                             if (str_starts_with($rate->code, 'VIP')) {
                                                 $typeKey = 'VIP';
                                             } elseif (str_starts_with($rate->code, 'COMP')) {
@@ -128,9 +131,10 @@
                                                 $typeKey = 'Regular';
                                             }
 
-                                            // Gắn nhãn hiển thị đẹp hơn
                                             $rateLabel = $rate->name;
                                             $rateValue = number_format($rate->hourly_rate, 0, ',', '.') . ' đ/giờ';
+                                        } else {
+                                            $rateValue = number_format(50000, 0, ',', '.') . ' đ/giờ';
                                         }
                                     @endphp
 
@@ -139,81 +143,124 @@
                                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $typeColors[$typeKey] ?? 'bg-gray-100 text-gray-800' }}">
                                             {{ $rateLabel }}
                                         </span>
-                                        @if ($rateValue)
-                                            <span class="text-xs text-gray-500 mt-1">{{ $rateValue }}</span>
-                                        @endif
+                                        <span class="text-xs text-gray-500 mt-1">{{ $rateValue }}</span>
                                     </div>
                                 </td>
-
 
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php
                                         $statusColors = [
-                                            App\Models\Table::STATUS_AVAILABLE => 'bg-green-100 text-green-800',
-                                            App\Models\Table::STATUS_OCCUPIED => 'bg-red-100 text-red-800',
-                                            App\Models\Table::STATUS_PAUSED => 'bg-yellow-100 text-yellow-800',
-                                            App\Models\Table::STATUS_MAINTENANCE => 'bg-gray-100 text-gray-800',
-                                            App\Models\Table::STATUS_RESERVED => 'bg-blue-100 text-blue-800',
+                                            'available' => 'bg-green-100 text-green-800',
+                                            'occupied' => 'bg-red-100 text-red-800',
+                                            'paused' => 'bg-yellow-100 text-yellow-800',
+                                            'maintenance' => 'bg-gray-100 text-gray-800',
+                                            'reserved' => 'bg-blue-100 text-blue-800',
+                                            'quick' => 'bg-orange-100 text-orange-800',
+                                        ];
+
+                                        $statusLabels = [
+                                            'available' => 'Trống',
+                                            'occupied' => 'Đang sử dụng',
+                                            'paused' => 'Tạm dừng',
+                                            'maintenance' => 'Bảo trì',
+                                            'reserved' => 'Đã đặt',
+                                            'quick' => 'Bàn lẻ',
                                         ];
                                     @endphp
                                     <span
                                         class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusColors[$table->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                        {{ $statuses[$table->status] ?? $table->status }}
+                                        @if ($table->status === 'occupied' && $table->currentBill)
+                                            @if ($table->currentBill->status === 'Open')
+                                                <i class="fas fa-play-circle mr-1"></i>
+                                            @elseif($table->currentBill->status === 'quick')
+                                                <i class="fas fa-bolt mr-1"></i>
+                                            @endif
+                                        @endif
+                                        {{ $statusLabels[$table->status] ?? $table->status }}
                                     </span>
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    ${{ number_format($table->getHourlyRate(), 2) }}/hour
+                                    @php
+                                        $hourlyRate = $table->tableRate ? $table->tableRate->hourly_rate : 50000;
+                                    @endphp
+                                    {{ number_format($hourlyRate, 0, ',', '.') }} đ/giờ
                                 </td>
 
-                                <!-- Cột Actions - Cần xử lý riêng để không bị ảnh hưởng bởi click -->
+                                <!-- Cột Actions -->
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2" onclick="event.stopPropagation()">
-                                        <a href="{{ route('admin.tables.detail', $table) }}"
-                                            class="text-blue-600 hover:text-blue-900 transition-colors duration-200">
+                                        <a href="{{ route('admin.tables.detail', $table->id) }}"
+                                            class="text-blue-600 hover:text-blue-900 transition-colors duration-200"
+                                            title="Xem chi tiết">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('admin.tables.edit', $table) }}"
-                                            class="text-green-600 hover:text-green-900 transition-colors duration-200">
+                                        <a href="{{ route('admin.tables.edit', $table->id) }}"
+                                            class="text-green-600 hover:text-green-900 transition-colors duration-200"
+                                            title="Chỉnh sửa">
                                             <i class="fas fa-edit"></i>
                                         </a>
 
-                                        @if ($table->isAvailable())
-                                            <form action="{{ route('admin.tables.update', $table) }}" method="POST"
+                                        @if ($table->status === 'available')
+                                            <form action="{{ route('admin.tables.update', $table->id) }}" method="POST"
                                                 class="inline">
                                                 @csrf
-                                                @method('POST')
-                                                <input type="hidden" name="status"
-                                                    value="{{ App\Models\Table::STATUS_OCCUPIED }}">
+                                                @method('PUT')
+                                                <input type="hidden" name="status" value="occupied">
                                                 <button type="submit"
                                                     class="text-red-600 hover:text-red-900 transition-colors duration-200"
-                                                    title="Mark as Occupied" onclick="event.stopPropagation()">
+                                                    title="Đánh dấu đang sử dụng" onclick="event.stopPropagation()">
                                                     <i class="fas fa-play"></i>
                                                 </button>
                                             </form>
-                                        @elseif($table->status === App\Models\Table::STATUS_OCCUPIED)
-                                            <form action="{{ route('admin.tables.update', $table) }}" method="POST"
+                                        @elseif($table->status === 'occupied')
+                                            <form action="{{ route('admin.tables.update', $table->id) }}" method="POST"
                                                 class="inline">
                                                 @csrf
-                                                @method('POST')
-                                                <input type="hidden" name="status"
-                                                    value="{{ App\Models\Table::STATUS_AVAILABLE }}">
+                                                @method('PUT')
+                                                <input type="hidden" name="status" value="available">
                                                 <button type="submit"
                                                     class="text-green-600 hover:text-green-900 transition-colors duration-200"
-                                                    title="Mark as Available" onclick="event.stopPropagation()">
+                                                    title="Đánh dấu trống" onclick="event.stopPropagation()">
                                                     <i class="fas fa-stop"></i>
                                                 </button>
                                             </form>
                                         @endif
 
-                                        <form action="{{ route('admin.tables.destroy', $table) }}" method="POST"
+                                        @if ($table->status === 'maintenance')
+                                            <form action="{{ route('admin.tables.update', $table->id) }}" method="POST"
+                                                class="inline">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="status" value="available">
+                                                <button type="submit"
+                                                    class="text-green-600 hover:text-green-900 transition-colors duration-200"
+                                                    title="Kết thúc bảo trì" onclick="event.stopPropagation()">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <form action="{{ route('admin.tables.update', $table->id) }}" method="POST"
+                                                class="inline">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="status" value="maintenance">
+                                                <button type="submit"
+                                                    class="text-yellow-600 hover:text-yellow-900 transition-colors duration-200"
+                                                    title="Đưa vào bảo trì" onclick="event.stopPropagation()">
+                                                    <i class="fas fa-tools"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        <form action="{{ route('admin.tables.destroy', $table->id) }}" method="POST"
                                             class="inline"
-                                            onsubmit="return confirm('Are you sure you want to delete this table?')">
+                                            onsubmit="return confirm('Bạn có chắc chắn muốn xóa bàn này?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
                                                 class="text-red-600 hover:text-red-900 transition-colors duration-200"
-                                                onclick="event.stopPropagation()">
+                                                onclick="event.stopPropagation()" title="Xóa bàn">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -232,14 +279,71 @@
         @else
             <div class="text-center py-12">
                 <i class="fas fa-table fa-3x text-gray-300 mb-4"></i>
-                <h3 class="text-lg font-medium text-gray-900">No tables found</h3>
-                <p class="text-gray-500 mt-2">Get started by creating a new table.</p>
+                <h3 class="text-lg font-medium text-gray-900">Không tìm thấy bàn nào</h3>
+                <p class="text-gray-500 mt-2">Hãy bắt đầu bằng cách tạo bàn mới.</p>
                 <a href="{{ route('admin.tables.create') }}"
                     class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4">
-                    <i class="fas fa-plus mr-2"></i>Add New Table
+                    <i class="fas fa-plus mr-2"></i>Thêm bàn mới
                 </a>
             </div>
         @endif
+    </div>
+
+    <!-- Thống kê nhanh -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-2 bg-green-100 rounded-lg">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Bàn trống</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {{ $tables->where('status', 'available')->count() }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-2 bg-red-100 rounded-lg">
+                    <i class="fas fa-users text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Đang sử dụng</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {{ $tables->where('status', 'occupied')->count() }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-2 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-tools text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Bảo trì</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {{ $tables->where('status', 'maintenance')->count() }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-4">
+            <div class="flex items-center">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <i class="fas fa-table text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Tổng số bàn</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $tables->count() }}</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     @if (session('success'))

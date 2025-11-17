@@ -2,13 +2,20 @@
 
 namespace App\Models;
 
-class BillTimeUsage extends BaseModel
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class BillTimeUsage extends Model
 {
+    use HasFactory;
     protected $table = 'bill_time_usage';
     protected $fillable = [
         'bill_id',
         'start_time',
         'end_time',
+        'paused_at',
+        'paused_duration',
         'duration_minutes',
         'hourly_rate',
         'total_price',
@@ -19,29 +26,42 @@ class BillTimeUsage extends BaseModel
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
-        'duration_minutes' => 'integer', // in minutes
-        'rate_per_hour' => 'decimal:2',
-        'total_cost' => 'decimal:2'
+        'hourly_rate' => 'decimal:2',
+        'total_price' => 'decimal:2',
+        'paused_at' => 'integer'
     ];
 
-    // Relationships
-    public function bill()
+    public function bill(): BelongsTo
     {
         return $this->belongsTo(Bill::class);
     }
 
-    // Methods
-    public function calculateCost(): float
+    // Helper methods
+    public function isRunning(): bool
     {
-        $hours = $this->duration / 60;
-        return $hours * $this->rate_per_hour;
+        return is_null($this->end_time) && is_null($this->paused_at);
     }
 
-    public function getDurationMinutesAttribute()
+    public function isPaused(): bool
     {
-        if (!$this->end_time) return 0;
-        return $this->start_time->diffInMinutes($this->end_time);
+        return !is_null($this->paused_at);
     }
 
-    
+    public function getElapsedMinutes(): float
+    {
+        if ($this->isRunning()) {
+            return $this->start_time->diffInMinutes(now());
+        } elseif ($this->isPaused()) {
+            return $this->duration_minutes ?? 0;
+        } else {
+            return $this->duration_minutes ?? 0;
+        }
+    }
+    public function getEffectiveDuration()
+    {
+        $baseDuration = $this->duration_minutes ?? 0;
+        $pausedMinutes = floor($this->paused_duration / 60);
+
+        return max(0, $baseDuration - $pausedMinutes);
+    }
 }

@@ -2,60 +2,42 @@
 
 namespace App\Models;
 
-class Bill extends BaseModel
-{
-    const STATUS_OPEN = 'open';
-    const STATUS_PAUSED = 'paused';
-    const STATUS_PLAYING = 'playing';
-    const STATUS_PENDING_PAYMENT = 'pending_payment';
-    const STATUS_PAID = 'paid';
-    const STATUS_CANCELLED = 'cancelled';
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
-    const PAYMENT_CASH = 'cash';
-    const PAYMENT_CARD = 'card';
-    const PAYMENT_TRANSFER = 'transfer';
-    const PAYMENT_WALLET = 'wallet';
+class Bill extends Model
+{
+    use HasFactory;
 
     protected $fillable = [
         'bill_number',
+        'table_id',
         'user_id',
         'reservation_id',
-        'table_id',
         'staff_id',
         'start_time',
         'end_time',
-        'paused_at',
-        'total_time',
-        'table_price',
-        'product_total',
         'total_amount',
-        'discount',
+        'discount_amount',
         'final_amount',
         'payment_method',
         'payment_status',
         'status',
-        'note',
-        'created_by',
-        'updated_by',
         'paused_duration',
+        'note'
     ];
 
 
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
-        'table_price' => 'decimal:2',
-        'product_total' => 'decimal:2',
         'total_amount' => 'decimal:2',
-        'discount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'final_amount' => 'decimal:2',
-        'total_time' => 'integer' // in minutes
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 
 
     public function timeUsages()
@@ -69,33 +51,37 @@ class Bill extends BaseModel
         return $this->belongsTo(Table::class);
     }
 
-    public function reservation()
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function staff(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'staff_id');
+    }
+
+    public function reservation(): BelongsTo
     {
         return $this->belongsTo(Reservation::class);
     }
 
-    public function employee()
-    {
-        return $this->belongsTo(Employee::class);
-    }
-
-    public function comboTimeUsages()
-    {
-        return $this->hasMany(ComboTimeUsage::class);
-    }
-
-    public function billDetails()
+    public function billDetails(): HasMany
     {
         return $this->hasMany(BillDetail::class);
     }
 
-
-    public function billTimeUsages()
+    public function billTimeUsages(): HasMany
     {
         return $this->hasMany(BillTimeUsage::class);
     }
 
-    public function payments()
+    public function comboTimeUsages(): HasMany
+    {
+        return $this->hasMany(ComboTimeUsage::class);
+    }
+
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
@@ -103,55 +89,85 @@ class Bill extends BaseModel
     // Scopes
     public function scopeOpen($query)
     {
-        return $query->whereIn('status', [self::STATUS_OPEN, self::STATUS_PLAYING]);
+        return $query->where('status', 'Open');
+    }
+
+    public function scopeQuick($query)
+    {
+        return $query->where('status', 'quick');
     }
 
     public function scopePaid($query)
     {
-        return $query->where('status', self::STATUS_PAID);
+        return $query->where('payment_status', 'Paid');
     }
 
-    public function scopeToday($query)
+    public function scopePending($query)
     {
-        return $query->whereDate('created_at', today());
+        return $query->where('payment_status', 'Pending');
     }
 
-    // Methods
-    public function isOpen(): bool
+    // Method Time 
+    public function pauseTimeTracking()
     {
-        return in_array($this->status, [self::STATUS_OPEN, self::STATUS_PLAYING]);
-    }
+        $activeUsage = $this->activeTimeUsage;
 
-    public function isPaid(): bool
-    {
-        return $this->status === self::STATUS_PAID;
-    }
-
-    public function calculateTotalTime(): int
-    {
-        if (!$this->start_time || !$this->end_time) {
-            return 0;
+        if ($activeUsage) {
+            $activeUsage->update([
+                'paused_at' => time(),
+                'updated_at' => now()
+            ]);
         }
-        return $this->start_time->diffInMinutes($this->end_time);
+
+        // Pause active combo time usages
+        $this->activeComboTimeUsages->each->pause();
+
+        return true;
     }
 
-    public function calculateTableCharge(): float
+    public function resumeTimeTracking()
     {
-        $totalTime = $this->calculateTotalTime();
-        $hours = ceil($totalTime / 60);
-        return $hours * $this->table_price;
+        $activeUsage = $this->activeTimeUsage;
+
+        if ($activeUsage && $activeUsage->paused_at) {
+            $pausedDuration = time() - $activeUsage->paused_at;
+
+            $activeUsage->update([
+                'paused_duration' => $activeUsage->paused_duration + $pausedDuration,
+                'paused_at' => null,
+                'updated_at' => now()
+            ]);
+        }
+
+        // Resume active combo time usages
+        $this->activeComboTimeUsages->each->resume();
+
+        return true;
     }
 
-    public function markAsPaid(): bool
+    public function getTotalPausedDuration()
     {
-        return $this->update([
-            'status' => self::STATUS_PAID,
-            'payment_status' => self::STATUS_PAID
-        ]);
+        return $this->timeUsages->sum('paused_duration');
     }
 
-    public function staff()
+    public function getActivePlayDuration()
     {
-        return $this->belongsTo(User::class, 'staff_id');
+        $activeUsage = $this->activeTimeUsage;
+        if (!$activeUsage) return 0;
+
+        $startTime = $activeUsage->start_time->timestamp;
+        $now = time();
+        $pausedDuration = $activeUsage->paused_duration;
+
+        if ($activeUsage->paused_at) {
+            $pausedDuration += ($now - $activeUsage->paused_at);
+        }
+
+        return max(0, $now - $startTime - $pausedDuration);
+    }
+
+    public function checkAndExpireCombos()
+    {
+        $this->activeComboTimeUsages->each->checkExpiration();
     }
 }

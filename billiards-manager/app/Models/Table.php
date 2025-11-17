@@ -32,9 +32,10 @@ class Table extends BaseModel
         'updated_by'
     ];
 
-    protected $casts = [
-        // REMOVED: 'hourly_rate' => 'decimal:2',
-    ];
+    public function tableRate()
+    {
+        return $this->belongsTo(TableRate::class);
+    }
 
     public function bills()
     {
@@ -43,13 +44,15 @@ class Table extends BaseModel
 
     public function currentBill()
     {
-        return $this->hasOne(Bill::class)->ofMany([
-            'id' => 'max',
-        ], function ($query) {
-            $query->whereIn('status', [Bill::STATUS_OPEN, Bill::STATUS_PLAYING, 'quick'])
-                ->where('payment_status', 'pending');
-        });
+        return $this->hasOne(Bill::class)->ofMany(
+            ['id' => 'max'],
+            function ($query) {
+                $query->whereIn('status', ['open', 'playing', 'quick'])
+                    ->where('payment_status', 'pending');
+            }
+        );
     }
+
 
     public function reservations()
     {
@@ -99,6 +102,12 @@ class Table extends BaseModel
      */
     public function getHourlyRate(?string $rateCode = null): float
     {
+        // Nếu bàn có table_rate_id, lấy giá từ table_rates
+        if ($this->table_rate_id && $this->tableRate) {
+            return (float) $this->tableRate->hourly_rate;
+        }
+
+        // Fallback: sử dụng service cũ nếu không có table_rate_id
         return app(TablePricingService::class)->getHourlyRate($this, now(), $rateCode);
     }
 
@@ -142,9 +151,51 @@ class Table extends BaseModel
     {
         return $this->getHourlyRate();
     }
-    public function tableRate()
-{
-    return $this->belongsTo(TableRate::class, 'table_rate_id');
-}
 
+    public function rate()
+    {
+        return $this->hasOneThrough(
+            TableRate::class,
+            Category::class,
+            'id',
+            'category_id',
+            'category_id',
+            'id'
+        );
+    }
+
+    public function canBePaused()
+    {
+        return $this->status === 'occupied' && $this->activeBill;
+    }
+
+    public function canBeResumed()
+    {
+        return $this->status === 'paused' && $this->activeBill;
+    }
+
+
+    public function pause()
+    {
+        if (!$this->canBePaused()) {
+            throw new \Exception('Bàn không thể tạm dừng');
+        }
+
+        $this->update(['status' => 'paused']);
+        $this->activeBill->pauseTimeTracking();
+
+        return true;
+    }
+
+    public function resume()
+    {
+        if (!$this->canBeResumed()) {
+            throw new \Exception('Bàn không thể tiếp tục');
+        }
+
+        $this->update(['status' => 'occupied']);
+        $this->activeBill->resumeTimeTracking();
+
+        return true;
+    }
 }

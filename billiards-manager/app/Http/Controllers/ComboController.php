@@ -56,7 +56,7 @@ class ComboController extends Controller
         return view('admin.combos.index', compact('combos', 'stats'));
     }
 
-    
+
     public function create()
     {
         $products = Product::where('status', 'active')
