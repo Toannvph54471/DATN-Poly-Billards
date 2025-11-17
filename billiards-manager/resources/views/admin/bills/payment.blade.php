@@ -77,7 +77,8 @@
                         <div class="bg-gray-50 rounded-xl p-4">
                             <div class="text-sm text-gray-500 mb-1">Bàn</div>
                             <div class="font-semibold text-gray-800">{{ $bill->table->table_name }}</div>
-                            <div class="text-xs text-gray-400">{{ $bill->table->category->name }}</div>
+                            <div class="text-xs text-gray-400">{{ $bill->table->tableRate->name ?? 'Chưa phân loại' }}
+                            </div>
                         </div>
                         <div class="bg-gray-50 rounded-xl p-4">
                             <div class="text-sm text-gray-500 mb-1">Thời gian bắt đầu</div>
@@ -109,9 +110,9 @@
                                         <div>
                                             <div class="font-semibold text-gray-800">Giờ chơi</div>
                                             <div class="text-sm text-gray-600">
-                                                {{ $timeDetails['total_minutes'] }} phút
+                                                {{ $timeDetails['total_minutes'] ?? 0 }} phút
                                                 @
-                                                {{ number_format(ceil($timeDetails['hourly_rate'] / 1000) * 1000) }}₫/giờ
+                                                {{ number_format(ceil(($timeDetails['hourly_rate'] ?? 0) / 1000) * 1000) }}₫/giờ
                                             </div>
                                         </div>
                                     </div>
@@ -136,15 +137,21 @@
                                             <i class="fas fa-gift text-purple-600"></i>
                                         </div>
                                         <div>
-                                            <div class="font-semibold text-gray-800">{{ $comboDetail->combo->name }}
+                                            <div class="font-semibold text-gray-800">
+                                                {{ $comboDetail->combo->name ?? 'Combo' }}
                                             </div>
                                             <div class="text-sm text-gray-600">
-                                                @foreach ($bill->billDetails->where('parent_bill_detail_id', $comboDetail->id) as $component)
-                                                    {{ $component->quantity }}x {{ $component->product->name }}
-                                                    @if (!$loop->last)
-                                                        ,
-                                                    @endif
-                                                @endforeach
+                                                @if ($comboDetail->combo)
+                                                    @foreach ($bill->billDetails->where('parent_bill_detail_id', $comboDetail->id) as $component)
+                                                        {{ $component->quantity }}x
+                                                        {{ $component->product->name ?? 'Sản phẩm' }}
+                                                        @if (!$loop->last)
+                                                            ,
+                                                        @endif
+                                                    @endforeach
+                                                @else
+                                                    Combo đã bị xóa
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -171,7 +178,8 @@
                                             <i class="fas fa-utensils text-green-600"></i>
                                         </div>
                                         <div>
-                                            <div class="font-semibold text-gray-800">{{ $item->product->name }}</div>
+                                            <div class="font-semibold text-gray-800">
+                                                {{ $item->product->name ?? 'Sản phẩm' }}</div>
                                             <div class="text-sm text-gray-600">Đơn giá:
                                                 {{ number_format($roundedUnitPrice) }} ₫</div>
                                         </div>
@@ -199,7 +207,8 @@
                                             <i class="fas fa-plus-circle text-orange-600"></i>
                                         </div>
                                         <div>
-                                            <div class="font-semibold text-orange-700">{{ $extra->note }}</div>
+                                            <div class="font-semibold text-orange-700">
+                                                {{ $extra->note ?? 'Phí phát sinh' }}</div>
                                             <div class="text-sm text-orange-600">Phí phát sinh</div>
                                         </div>
                                     </div>
@@ -216,7 +225,7 @@
                 </div>
 
                 <!-- Customer Info -->
-                @if ($bill->customer)
+                @if ($bill->user)
                     <div class="bg-white rounded-2xl shadow-smooth p-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                             <i class="fas fa-user text-primary-500 mr-2"></i>
@@ -228,14 +237,14 @@
                                     <i class="fas fa-user-circle"></i>
                                 </div>
                                 <div class="text-sm text-gray-500">Tên khách</div>
-                                <div class="font-semibold text-gray-800 truncate">{{ $bill->customer->name }}</div>
+                                <div class="font-semibold text-gray-800 truncate">{{ $bill->user->name }}</div>
                             </div>
                             <div class="bg-gray-50 rounded-xl p-4 text-center">
                                 <div class="text-2xl font-bold text-primary-600 mb-1">
                                     <i class="fas fa-phone"></i>
                                 </div>
                                 <div class="text-sm text-gray-500">Điện thoại</div>
-                                <div class="font-semibold text-gray-800">{{ $bill->customer->phone }}</div>
+                                <div class="font-semibold text-gray-800">{{ $bill->user->phone }}</div>
                             </div>
                             <div class="bg-gray-50 rounded-xl p-4 text-center">
                                 <div class="text-2xl font-bold text-primary-600 mb-1">
@@ -244,7 +253,7 @@
                                 <div class="text-sm text-gray-500">Loại khách</div>
                                 <div class="font-semibold">
                                     <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
-                                        {{ $bill->customer->customer_type }}
+                                        {{ $bill->user->customer_type ?? 'Khách mới' }}
                                     </span>
                                 </div>
                             </div>
@@ -253,7 +262,7 @@
                                     <i class="fas fa-history"></i>
                                 </div>
                                 <div class="text-sm text-gray-500">Số lần đến</div>
-                                <div class="font-semibold text-gray-800">{{ $bill->customer->total_visits }}</div>
+                                <div class="font-semibold text-gray-800">{{ $bill->user->total_visits ?? 0 }}</div>
                             </div>
                         </div>
                     </div>
@@ -364,7 +373,7 @@
                             </div>
 
                             <!-- Change Amount -->
-                            <div id="changeAmountSection" class="transition-all duration-300 hidden">
+                            <div id="changeAmountSection" class="transition-all duration-300">
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Tiền thối lại</label>
                                 <input type="number" name="change_amount" value="0"
                                     class="w-full border-2 border-success-200 bg-success-50 rounded-xl px-4 py-3 text-lg font-bold text-success-600 text-right focus:ring-0"
@@ -433,12 +442,12 @@
                 const changeSection = document.getElementById('changeAmountSection');
 
                 if (selectedMethod === 'cash') {
-                    cashSection.classList.remove('hidden');
-                    changeSection.classList.remove('hidden');
+                    cashSection.style.display = 'block';
+                    changeSection.style.display = 'block';
                     calculateChange();
                 } else {
-                    cashSection.classList.add('hidden');
-                    changeSection.classList.add('hidden');
+                    cashSection.style.display = 'none';
+                    changeSection.style.display = 'none';
                 }
             });
         });
@@ -484,6 +493,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('.payment-method-card[data-method="cash"]').click();
             document.querySelector('input[name="cash_received"]').value = totalAmount;
+            calculateChange();
         });
     </script>
 </body>

@@ -9,6 +9,7 @@ use App\Models\Combo;
 use App\Models\ComboTimeUsage;
 use App\Models\Product;
 use App\Models\Table;
+use App\Models\TableRate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,12 +19,7 @@ class TableController extends Controller
     // Hiện thị
     public function index(Request $request)
     {
-        $query = Table::with(['category']);
-
-        // Lọc theo category
-        if ($request->has('category_id') && $request->category_id) {
-            $query->where('category_id', $request->category_id);
-        }
+        $query = Table::query();
 
         // Lọc theo status
         if ($request->has('status') && $request->status) {
@@ -44,15 +40,8 @@ class TableController extends Controller
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
-
-        $tables = $query->latest()->paginate(20);
-        $categories = Category::all();
-
-        $tableTypes = [
-            Table::TYPE_STANDARD => 'Standard',
-            Table::TYPE_VIP => 'VIP',
-            Table::TYPE_COMPETITION => 'Competition',
-        ];
+        $tableRates = TableRate::where('status', 'Active')->get();
+        $tables = Table::with('tableRate')->paginate(10);
 
         $statuses = [
             Table::STATUS_AVAILABLE => 'Available',
@@ -61,19 +50,18 @@ class TableController extends Controller
             Table::STATUS_MAINTENANCE => 'Maintenance',
             Table::STATUS_RESERVED => 'Reserved',
         ];
-
         return view('admin.tables.index', compact(
             'tables',
-            'categories',
-            'tableTypes',
-            'statuses'
+            'statuses',
+            'tableRates'
         ));
     }
     // hien thi form sua 
     public function edit($id)
     {
         $table = Table::findOrFail($id);
-        return view('admin.tables.edit', compact('table'));
+        $tableRates = TableRate::where('status', 'Active')->get();
+        return view('admin.tables.edit', compact('table', 'tableRates'));
     }
     // xu ly update thong tin ban
     public function update(Request $request, $id)
@@ -82,7 +70,6 @@ class TableController extends Controller
             'table_name' => 'required|string|max:255',
             'table_number' => 'required|string|max:50',
             'type' => 'required|string',
-            'hourly_rate' => 'required|numeric|min:0',
             'status' => 'required|string',
         ]);
 
@@ -91,7 +78,6 @@ class TableController extends Controller
             'table_name',
             'table_number',
             'type',
-            'hourly_rate',
             'status',
         ]));
 
@@ -100,18 +86,22 @@ class TableController extends Controller
     }
 
 
+    // Hiển thị form thêm bàn
     public function create()
     {
-
-        return view('admin.tables.create');
+        $tableRates = TableRate::where('status', 'Active')->get();
+        return view('admin.tables.create', compact('tableRates'));
     }
+
+    // Lưu bàn mới
     public function store(Request $request)
     {
         $request->validate([
-            'table_number' => 'required|unique:tables,table_number|max:10',
-            'table_name' => 'required|max:255|unique:tables,table_name',
-            'type' => 'required|in:standard,vip,competition',
-            'hourly_rate' => 'required|numeric|min:0',
+            'table_number' => 'required|string|max:10|unique:tables,table_number',
+            'table_name' => 'required|string|max:255|unique:tables,table_name',
+            'capacity' => 'required|integer|min:1',
+            'status' => 'required|in:available,occupied,maintenance',
+            'table_rate_id' => 'required|exists:table_rates,id',
         ], [
             'table_number.unique' => 'Mã bàn đã tồn tại.',
             'table_name.unique' => 'Tên bàn đã tồn tại trong hệ thống.',
@@ -120,9 +110,9 @@ class TableController extends Controller
         Table::create([
             'table_number' => $request->table_number,
             'table_name' => $request->table_name,
-            'type' => $request->type,
-            'status' => Table::STATUS_AVAILABLE,
-            'hourly_rate' => $request->hourly_rate,
+            'capacity' => $request->capacity,
+            'status' => $request->status,
+            'table_rate_id' => $request->table_rate_id,
         ]);
 
         return redirect()->route('admin.tables.create')->with('success', 'Thêm bàn mới thành công!');
@@ -160,7 +150,7 @@ class TableController extends Controller
     public function showDetail($id)
     {
         $table = Table::with([
-            'category',
+            'tableRate',
             'currentBill.user',
             'currentBill.billDetails.product',
             'currentBill.billDetails.combo',
@@ -179,14 +169,16 @@ class TableController extends Controller
         $combos = Combo::where('status', 'active')->get();
         $products = Product::where('status', 'Active')->get();
 
-        // Tính toán thời gian hiện tại - CHỈ KHI LÀ BÀN TÍNH GIỜ
+        // Tính toán thời gian hiện tại
         $timeInfo = [];
-        if ($table->currentBill && $table->currentBill->status === 'open') {
+        if ($table->currentBill && in_array($table->currentBill->status, ['Open', 'quick'])) {
             $timeInfo = $this->calculateCurrentTimeInfo($table);
 
-            // Cập nhật tổng tiền real-time
-            app(BillController::class)->calculateBillTotal($table->currentBill);
-            $table->currentBill->refresh(); // Refresh để lấy dữ liệu mới
+            // Cập nhật tổng tiền real-time (chỉ cho bàn tính giờ)
+            if ($table->currentBill->status === 'Open') {
+                app(BillController::class)->calculateBillTotal($table->currentBill);
+                $table->currentBill->refresh();
+            }
         }
 
         return view('admin.tables.detail', compact('table', 'combos', 'products', 'timeInfo'));
@@ -194,100 +186,60 @@ class TableController extends Controller
 
     private function calculateCurrentTimeInfo($table)
     {
-        if (!$table->currentBill || $table->currentBill->status !== 'open') {
+        $hourlyRate = $table->getHourlyRate();
+
+        if (!$table->currentBill || !in_array($table->currentBill->status, ['Open', 'quick'])) {
             return [
                 'is_running' => false,
                 'mode' => 'none',
                 'elapsed_minutes' => 0,
                 'current_cost' => 0,
-                'hourly_rate' => $table->category->hourly_rate,
+                'hourly_rate' => $hourlyRate,
                 'total_minutes' => 0,
                 'is_near_end' => false,
                 'is_paused' => false,
-                'paused_duration' => 0
+                'paused_duration' => 0,
+                'remaining_minutes' => 0,
+                'bill_status' => 'none'
             ];
         }
 
         $bill = $table->currentBill;
-        $hourlyRate = $table->category->hourly_rate;
-        $currentTimestamp = now()->timestamp;
 
-        // Kiểm tra trạng thái hiện tại
-        $isPaused = false;
-        $effectiveMinutes = 0;
+        // Nếu là bàn lẻ (quick)
+        if ($bill->status === 'quick') {
+            return [
+                'is_running' => false,
+                'mode' => 'quick',
+                'elapsed_minutes' => 0,
+                'current_cost' => 0,
+                'hourly_rate' => $hourlyRate,
+                'total_minutes' => 0,
+                'is_near_end' => false,
+                'is_paused' => false,
+                'paused_duration' => 0,
+                'remaining_minutes' => 0,
+                'bill_status' => 'quick'
+            ];
+        }
 
-        // Kiểm tra giờ thường
+        // Kiểm tra combo time trước (ưu tiên hiển thị combo time)
+        $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
+            ->where('is_expired', false)
+            ->where('remaining_minutes', '>', 0)
+            ->first();
+
+        if ($activeComboTime) {
+            return $this->calculateComboTimeInfo($activeComboTime, $hourlyRate);
+        }
+
+        // Kiểm tra regular time
         $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
             ->whereNull('end_time')
             ->first();
 
         if ($activeRegularTime) {
-            $startTimestamp = strtotime($activeRegularTime->start_time);
-
-            if ($activeRegularTime->paused_at) {
-                // 🔴 Đang TẠM DỪNG
-                $isPaused = true;
-                $pausedAt = $activeRegularTime->paused_at;
-
-                // Chỉ tính đến thời điểm pause
-                $runningMinutes = ($pausedAt - $startTimestamp) / 60;
-                $effectiveMinutes = $runningMinutes - ($activeRegularTime->paused_duration ?? 0);
-            } else {
-                // 🟢 Đang CHẠY - tính real-time
-                $runningMinutes = ($currentTimestamp - $startTimestamp) / 60;
-                $effectiveMinutes = $runningMinutes - ($activeRegularTime->paused_duration ?? 0);
-            }
-        }
-
-        // Kiểm tra combo time
-        $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
-            ->where('is_expired', false)
-            ->first();
-
-        if ($activeComboTime) {
-            $startTimestamp = strtotime($activeComboTime->start_time);
-
-            if ($activeComboTime->end_time) {
-                // Combo đang TẠM DỪNG
-                $isPaused = true;
-                $endTimestamp = strtotime($activeComboTime->end_time);
-                $runningMinutes = ($endTimestamp - $startTimestamp) / 60;
-                $remainingMinutes = $activeComboTime->remaining_minutes;
-            } else {
-                // Combo đang CHẠY
-                $runningMinutes = ($currentTimestamp - $startTimestamp) / 60;
-                $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $runningMinutes);
-            }
-
-            $isNearEnd = $remainingMinutes <= 30 && $remainingMinutes > 0;
-
-            return [
-                'is_running' => !$isPaused,
-                'mode' => 'combo',
-                'elapsed_minutes' => $runningMinutes,
-                'current_cost' => max(0, ($runningMinutes - $activeComboTime->total_minutes) * ($hourlyRate / 60)),
-                'hourly_rate' => $hourlyRate,
-                'total_minutes' => $activeComboTime->total_minutes,
-                'remaining_minutes' => $remainingMinutes,
-                'is_near_end' => $isNearEnd,
-                'is_paused' => $isPaused,
-                'paused_duration' => $activeRegularTime->paused_duration ?? 0
-            ];
-        }
-
-        // Nếu đang tính giờ thường
-        if ($activeRegularTime) {
-            return [
-                'is_running' => !$isPaused,
-                'mode' => 'regular',
-                'elapsed_minutes' => $effectiveMinutes,
-                'current_cost' => $effectiveMinutes * ($hourlyRate / 60),
-                'hourly_rate' => $hourlyRate,
-                'total_minutes' => 0,
-                'is_near_end' => false,
-                'is_paused' => $isPaused,
-                'paused_duration' => $activeRegularTime->paused_duration ?? 0
-            ];
+            return $this->calculateRegularTimeInfo($activeRegularTime, $hourlyRate);
         }
 
         return [
@@ -299,7 +251,81 @@ class TableController extends Controller
             'total_minutes' => 0,
             'is_near_end' => false,
             'is_paused' => false,
-            'paused_duration' => 0
+            'paused_duration' => 0,
+            'remaining_minutes' => 0,
+            'bill_status' => 'no_time'
+        ];
+    }
+
+    private function calculateComboTimeInfo($comboTime, $hourlyRate)
+    {
+        $start = Carbon::parse($comboTime->start_time);
+
+        if ($comboTime->end_time) {
+            // Đang tạm dừng - tính đến thời điểm tạm dừng
+            $end = Carbon::parse($comboTime->end_time);
+            $elapsedMinutes = $start->diffInMinutes($end);
+            $isPaused = true;
+            $isRunning = false;
+        } else {
+            // Đang chạy - tính đến hiện tại
+            $elapsedMinutes = $start->diffInMinutes(now());
+            $isPaused = false;
+            $isRunning = true;
+        }
+
+        $remainingMinutes = max(0, $comboTime->remaining_minutes - $elapsedMinutes);
+        $isNearEnd = $remainingMinutes <= 30 && $remainingMinutes > 0;
+
+        return [
+            'is_running' => $isRunning,
+            'mode' => 'combo',
+            'elapsed_minutes' => (int) round($elapsedMinutes),
+            'current_cost' => 0, // Combo đã trả tiền trước
+            'hourly_rate' => $hourlyRate,
+            'total_minutes' => $comboTime->total_minutes,
+            'remaining_minutes' => (int) round($remainingMinutes),
+            'is_near_end' => $isNearEnd,
+            'is_paused' => $isPaused,
+            'paused_duration' => 0,
+            'combo_id' => $comboTime->combo_id,
+            'bill_status' => 'combo'
+        ];
+    }
+
+    private function calculateRegularTimeInfo($regularTime, $hourlyRate)
+    {
+        $isPaused = !is_null($regularTime->paused_at);
+
+        if ($isPaused) {
+            // Đang tạm dừng - sử dụng paused_duration đã lưu
+            $isRunning = false;
+            $effectiveMinutes = $regularTime->paused_duration ?? 0;
+        } else {
+            // Đang chạy - tính từ start_time đến now
+            $start = Carbon::parse($regularTime->start_time);
+            $elapsedMinutes = $start->diffInMinutes(now());
+
+            // Trừ thời gian đã pause trước đó (nếu có)
+            $effectiveMinutes = $elapsedMinutes - ($regularTime->paused_duration ?? 0);
+            $isRunning = true;
+        }
+
+        // Tính chi phí hiện tại
+        $currentCost = max(0, $effectiveMinutes) * ($hourlyRate / 60);
+
+        return [
+            'is_running' => $isRunning,
+            'mode' => 'regular',
+            'elapsed_minutes' => (int) round($effectiveMinutes),
+            'current_cost' => $currentCost,
+            'hourly_rate' => $hourlyRate,
+            'total_minutes' => 0,
+            'remaining_minutes' => 0,
+            'is_near_end' => false,
+            'is_paused' => $isPaused,
+            'paused_duration' => $regularTime->paused_duration ?? 0,
+            'bill_status' => 'regular'
         ];
     }
 }

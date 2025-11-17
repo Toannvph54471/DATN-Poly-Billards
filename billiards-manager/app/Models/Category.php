@@ -8,26 +8,14 @@ class Category extends Model
 {
     protected $fillable = [
         'name',
-        'type', // 'product' | 'table'
-        'hourly_rate',
-        'default_price',
+        'type', // 'product' 
         'description',
         'status',
     ];
-
-    protected $casts = [
-        'default_price' => 'decimal:2',
-    ];
-
     // Relationships
     public function products()
     {
         return $this->hasMany(Product::class);
-    }
-
-    public function tables()
-    {
-        return $this->hasMany(Table::class);
     }
 
     // Scopes

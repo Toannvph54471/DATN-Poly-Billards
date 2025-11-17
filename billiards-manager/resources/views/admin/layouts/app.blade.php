@@ -132,6 +132,11 @@
                     <i class="fa-solid fa-table w-6 mr-3"></i>
                     <span class="font-medium">Quản lý bàn</span>
                 </a>
+                <a href="{{ route('admin.table_rates.index') }}"
+                    class="nav-item {{ request()->routeIs('tables.*') ? 'active' : '' }} flex items-center p-3">
+                    <i class="fa-solid fa-table w-6 mr-3"></i>
+                    <span class="font-medium">Quản lý loại bàn</span>
+                </a>
 
                 <a href="{{ route('admin.users.index') }}"
                     class="nav-item {{ request()->routeIs('customers.*') ? 'active' : '' }} flex items-center p-3">
