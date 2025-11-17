@@ -11,10 +11,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-       DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
         // 1. Dữ liệu Cốt lõi & Phân quyền
-       $this->call([
+        $this->call([
             RolesTableSeeder::class,           // (1) 
             PermissionsTableSeeder::class,     // (2) đồng bộ với config
             UsersTableSeeder::class,           // (3) Tạo Admin, Manager, Staff, Customer 
@@ -42,11 +42,11 @@ class DatabaseSeeder extends Seeder
         ]);
         // 5. Dữ liệu Nghiệp vụ MẪU (Tùy chọn)
         $this->call([
-            ReservationsTableSeeder::class, // (17) cần tạo lại
+            ReservationSeeder::class, // (17) cần tạo lại
             BillsTableSeeder::class,     // (18) 
-           BillDetailsTableSeeder::class,         // (19) **MỚI**
+            BillDetailsTableSeeder::class,         // (19) **MỚI**
             BillTimeUsageTableSeeder::class,       // (20) **MỚI**
-            PaymentsTableSeeder::class,            // (21) **MỚI**
+            PaymentSeeder::class,          // (21) **MỚI**
             PromotionApplicationsTableSeeder::class, // (22) **MỚI**
             ComboTimeUsagesTableSeeder::class,     // (24) **MỚI**
         ]);
