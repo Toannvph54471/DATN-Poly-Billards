@@ -120,7 +120,7 @@
 
             <!-- Navigation -->
             <nav class="p-4 space-y-1" style="height: 100vh; overflow-y: auto; position: fixed; padding-bottom: 150px;scrollbar-gutter: stable;box-sizing: border-box;padding-right: 0px; width: 260px;">
-                <a href=""
+                <a href="{{ route('admin.dashboard') }}"
                     class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-chart-pie w-6 mr-3"></i>
                     <span class="font-medium">Tổng quan</span>

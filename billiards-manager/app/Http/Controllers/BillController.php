@@ -454,7 +454,7 @@ class BillController extends Controller
      * Bắt đầu tính giờ từ bàn lẻ
      */
     public function startPlaying($billId)
-    {   
+    {
         try {
             DB::beginTransaction();
 
@@ -726,7 +726,7 @@ class BillController extends Controller
     /**
      * Lấy giá giờ của bàn
      */
-    private function getTableHourlyRate(Table $table): float
+    private function getTableHourlyRate(Table $table)
     {
         if ($table->table_rate_id) {
             $tableRate = TableRate::find($table->table_rate_id);

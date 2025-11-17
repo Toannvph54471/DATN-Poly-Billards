@@ -1,455 +1,1014 @@
-@extends('admin.layouts.app')
+<!DOCTYPE html>
+<html lang="vi">
 
-@section('title', 'Chi Tiết Bàn - ' . $table->table_name)
-
-@section('styles')
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Bàn - {{ $table->table_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        .card {
-            @apply bg-white border-2 rounded-xl shadow-lg px-6 py-5 transition-all duration-300 hover:shadow-xl;
+        :root {
+            --primary: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --purple: #8b5cf6;
         }
 
-        .card-primary {
-            @apply bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .card-success {
-            @apply bg-gradient-to-br from-green-50 to-emerald-50 border-green-200;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .card-warning {
-            @apply bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200;
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
 
-        .card-purple {
-            @apply bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200;
+        /* Header Styles */
+        .header {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
         }
 
-        .card-gray {
-            @apply bg-gradient-to-br from-gray-50 to-slate-50 border-gray-200;
+        .table-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .btn-primary {
-            @apply bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 rounded-xl px-6 py-3 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-semibold shadow-md hover:shadow-lg;
+        .table-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .btn-secondary {
-            @apply bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300 rounded-xl px-6 py-3 hover:from-gray-200 hover:to-gray-300 transition-all duration-300 font-semibold shadow-sm hover:shadow-md;
+        .back-btn {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            color: #475569;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
         }
 
-        .btn-success {
-            @apply bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 rounded-xl px-6 py-3 hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-semibold shadow-md hover:shadow-lg;
+        .back-btn:hover {
+            background: #e2e8f0;
+            transform: translateX(-2px);
         }
 
-        .btn-warning {
-            @apply bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 rounded-xl px-6 py-3 hover:from-amber-600 hover:to-orange-600 transition-all duration-300 font-semibold shadow-md hover:shadow-lg;
+        .table-details h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
         }
 
-        .btn-danger {
-            @apply bg-gradient-to-r from-red-500 to-pink-500 text-white border-0 rounded-xl px-6 py-3 hover:from-red-600 hover:to-pink-600 transition-all duration-300 font-semibold shadow-md hover:shadow-lg;
+        .table-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.25rem;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .table-status {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.25rem;
         }
 
         .status-badge {
-            @apply text-xs font-bold px-4 py-2 border-0 rounded-full shadow-sm;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            text-transform: uppercase;
         }
 
         .status-available {
-            @apply bg-gradient-to-r from-green-100 to-emerald-100 text-green-800;
+            background: #dcfce7;
+            color: #166534;
         }
 
         .status-occupied {
-            @apply bg-gradient-to-r from-red-100 to-pink-100 text-red-800;
+            background: #fee2e2;
+            color: #991b1b;
         }
 
         .status-maintenance {
-            @apply bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800;
+            background: #fef3c7;
+            color: #92400e;
         }
 
         .status-paused {
-            @apply bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800;
+            background: #dbeafe;
+            color: #1e40af;
         }
 
-        .time-display {
-            @apply bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 p-6 text-center rounded-2xl shadow-sm;
+        .hourly-rate {
+            font-size: 0.875rem;
+            color: #475569;
         }
 
-        .progress-bar {
-            @apply w-full bg-gray-200 h-4 rounded-full overflow-hidden shadow-inner;
-        }
-
-        .progress-fill {
-            @apply bg-gradient-to-r from-blue-500 to-purple-500 h-4 rounded-full transition-all duration-1000 shadow-md;
-        }
-
-        .combo-mode {
-            @apply bg-gradient-to-r from-purple-100 to-violet-100 text-purple-800 border-0 rounded-full px-4 py-2 font-bold;
-        }
-
-        .regular-mode {
-            @apply bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border-0 rounded-full px-4 py-2 font-bold;
-        }
-
-        .quick-mode {
-            @apply bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-0 rounded-full px-4 py-2 font-bold;
-        }
-
-        .paused-mode {
-            @apply bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 border-0 rounded-full px-4 py-2 font-bold;
-        }
-
-        .blink {
-            animation: blink 1.5s ease-in-out infinite;
-        }
-
-        @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.7;
-                transform: scale(1.05);
-            }
-        }
-
-        .time-counter {
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            background: linear-gradient(135deg, #1e40af, #3730a3);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .search-box {
-            @apply w-full border-2 border-gray-300 px-4 py-3 rounded-xl focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all duration-300 bg-white shadow-sm;
-        }
-
-        .quantity-input {
-            @apply w-20 border-2 border-gray-300 px-3 py-2 rounded-lg text-center focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200;
-        }
-
-        .product-item,
-        .combo-item {
-            @apply border-2 border-gray-200 p-4 mb-3 cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all duration-300 rounded-xl shadow-sm hover:shadow-md;
-        }
-
-        .scrollable-container {
-            @apply border-2 border-gray-200 rounded-xl bg-white overflow-hidden shadow-inner;
-        }
-
-        .scroll-content {
-            @apply max-h-80 overflow-y-auto p-4;
-        }
-
-        .scroll-content::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .scroll-content::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
-
-        .scroll-content::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #cbd5e1, #94a3b8);
-            border-radius: 10px;
-        }
-
-        .scroll-content::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #94a3b8, #64748b);
-        }
-
-        .collapsible {
-            transition: all 0.3s ease-in-out;
-        }
-
-        .collapsible-content {
+        /* Main Content Styles - UPDATED LAYOUT */
+        .main-content {
+            display: flex;
+            flex: 1;
             overflow: hidden;
-            transition: max-height 0.5s ease-in-out;
+        }
+
+        .left-panel {
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 1.5rem;
+            gap: 1.5rem;
+        }
+
+        .right-panel {
+            width: 30%;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
         }
 
         .section-title {
-            @apply text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .price-tag {
-            @apply bg-gradient-to-r from-emerald-500 to-green-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md;
+        /* Real-time Banner */
+        .real-time-banner {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .info-badge {
-            @apply bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm;
+        .time-counter {
+            font-size: 1.5rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Time Tracking */
+        .time-tracking {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .time-box {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .time-box:hover {
+            transform: translateY(-2px);
+        }
+
+        .time-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .time-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .time-elapsed {
+            color: #3b82f6;
+        }
+
+        .time-remaining {
+            color: #10b981;
+        }
+
+        .time-cost {
+            color: #f59e0b;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-top: 1rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #f1f5f9;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Thêm vào phần CSS */
+        .products-list {
+            flex: 1;
+            overflow: auto;
+        }
+
+        .products-list table {
+            min-width: 100%;
+        }
+
+        .products-list th {
+            position: sticky;
+            top: 0;
+            background: #f8fafc;
+            z-index: 10;
+        }
+
+        .quantity-btn {
+            transition: all 0.2s;
+        }
+
+        .quantity-btn:hover:not(:disabled) {
+            background: #3b82f6 !important;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .add-btn:disabled {
+            background: #cbd5e1 !important;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .add-btn:disabled:hover {
+            background: #cbd5e1 !important;
+            transform: none;
+        }
+
+        /* Products & Combos Section - UPDATED LAYOUT */
+        .products-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .products-tabs {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #3b82f6;
+        }
+
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .search-box {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .products-container {
+            flex: 1;
+            overflow: auto;
+        }
+
+        /* Products Grid Layout */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 0.5rem;
+        }
+
+        .product-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #3b82f6;
+        }
+
+        .product-image {
+            position: relative;
+            height: 140px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .product-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-img-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .product-img-placeholder.combo {
+            background: #ede9fe;
+            color: #8b5cf6;
+        }
+
+        /* Stock Badges */
+        .stock-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .out-of-stock {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .low-stock {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .in-stock {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .combo-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        /* Product Info */
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .product-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #059669;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Combo Details */
+        .combo-details {
+            margin-bottom: 1rem;
+        }
+
+        .savings {
+            font-size: 0.875rem;
+            color: #059669;
+            font-weight: 500;
+        }
+
+        .time-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #3b82f6;
+            margin-top: 0.25rem;
+        }
+
+        /* Product Controls */
+        .product-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .quantity-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #475569;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .quantity-btn:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .quantity-input {
+            width: 40px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 0 4px;
+        }
+
+        .quantity-input:focus {
+            outline: none;
+            background: white;
+            border-radius: 4px;
+        }
+
+        /* Add Button */
+        .add-btn {
+            flex: 1;
+            padding: 0.6rem 0.8rem;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .add-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        .add-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .add-btn:disabled:hover {
+            background: #cbd5e1;
+            transform: none;
+        }
+
+        /* Combo Card Specific */
+        .combo-card {
+            border: 2px solid #ede9fe;
+        }
+
+        .combo-card:hover {
+            border-color: #8b5cf6;
+        }
+
+        /* Bill Details - NEW LOCATION */
+        .bill-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .bill-container {
+            flex: 1;
+            overflow: auto;
+        }
+
+        .bill-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bill-table th {
+            text-align: left;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #475569;
+            position: sticky;
+            top: 0;
+        }
+
+        .bill-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .total-amount {
+            text-align: right;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #10b981;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* Right Panel Content */
+        .right-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+            padding: 1.5rem;
+        }
+
+        .info-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .info-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        .info-value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .action-btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+        }
+
+        .action-btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .action-btn-success {
+            background: #10b981;
+            color: white;
+            border: none;
+        }
+
+        .action-btn-success:hover {
+            background: #059669;
+        }
+
+        .action-btn-warning {
+            background: #f59e0b;
+            color: white;
+            border: none;
+        }
+
+        .action-btn-warning:hover {
+            background: #d97706;
+        }
+
+        .action-btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .action-btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Animation for real-time banner */
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .btn-loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-right-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1400px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 1rem;
+            }
+
+            .product-info {
+                padding: 0.75rem;
+            }
+
+            .product-name {
+                font-size: 0.9rem;
+            }
+
+            .product-price {
+                font-size: 1rem;
+            }
+        }
+
+        /* Empty State */
+        .products-grid:empty::after {
+            content: "Không có sản phẩm nào";
+            display: block;
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+            font-size: 1.1rem;
+            grid-column: 1 / -1;
         }
     </style>
-@endsection
+</head>
 
-@section('content')
-    <div class="max-w-8xl mx-auto px-4 py-6">
-        {{-- Header --}}
-        <div class="flex items-center justify-between mb-8 p-6 bg-white rounded-2xl shadow-lg border-2 border-gray-100">
-            <div class="flex items-center gap-4">
-                <a href="{{ route('admin.tables.index') }}" class="btn-secondary inline-flex items-center">
-                    <i class="fas fa-arrow-left mr-3"></i>
-                    Quay lại danh sách
-                </a>
-                <div class="ml-4">
-                    <h1
-                        class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                        {{ $table->table_name }}
-                    </h1>
-                    <p class="text-gray-600 mt-2 flex items-center gap-2">
-                        <span class="info-badge">Số: {{ $table->table_number }}</span>
-                        <span class="text-gray-500">•</span>
-                        <span class="font-medium text-gray-700">{{ $table->category->name ?? 'Chưa phân loại' }}</span>
-                    </p>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="table-info">
+                <div class="table-title">
+                    <a href="{{ route('admin.tables.index') }}" class="back-btn">
+                        <i class="fas fa-arrow-left"></i>
+                        Quay lại
+                    </a>
+                    <div class="table-details">
+                        <h1>{{ $table->table_name }}</h1>
+                        <div class="table-meta">
+                            <span>Số: {{ $table->table_number }}</span>
+                            <span>•</span>
+                            <span>{{ $table->category->name ?? 'Chưa phân loại' }}</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="text-right">
-                @php
-                    $statusClass = match ($table->status) {
-                        'available' => 'status-available',
-                        'occupied' => 'status-occupied',
-                        'maintenance' => 'status-maintenance',
-                        'paused' => 'status-paused',
-                        default => 'status-available',
-                    };
+                <div class="table-status">
+                    @php
+                        $statusClass = match ($table->status) {
+                            'available' => 'status-available',
+                            'occupied' => 'status-occupied',
+                            'maintenance' => 'status-maintenance',
+                            'paused' => 'status-paused',
+                            default => 'status-available',
+                        };
 
-                    $statusText = match ($table->status) {
-                        'available' => '🟢 TRỐNG',
-                        'occupied' => '🔴 ĐANG SỬ DỤNG',
-                        'maintenance' => '🟡 BẢO TRÌ',
-                        'paused' => '🔵 TẠM DỪNG',
-                        default => '🟢 TRỐNG',
-                    };
-                @endphp
-                <div class="status-badge {{ $statusClass }} text-lg">
-                    {{ $statusText }}
-                </div>
-                <div class="mt-3 text-sm text-gray-600 flex items-center justify-end gap-2">
-                    <i class="fas fa-clock text-blue-500"></i>
-                    <span class="font-semibold">Giá giờ: <span
-                            class="price-tag">{{ number_format($table->getHourlyRate()) }} ₫/h</span></span>
+                        $statusText = match ($table->status) {
+                            'available' => '🟢 TRỐNG',
+                            'occupied' => '🔴 ĐANG SỬ DỤNG',
+                            'maintenance' => '🟡 BẢO TRÌ',
+                            'paused' => '🔵 TẠM DỪNG',
+                            default => '🟢 TRỐNG',
+                        };
+                    @endphp
+                    <div class="status-badge {{ $statusClass }}">
+                        {{ $statusText }}
+                    </div>
+                    <div class="hourly-rate">
+                        Giá giờ: <strong>{{ number_format($table->getHourlyRate()) }} ₫/h</strong>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- Real-time Counter Banner --}}
-        @if (
-            $table->currentBill &&
-                in_array($table->currentBill->status, ['Open', 'quick']) &&
-                isset($timeInfo['is_running']) &&
-                $timeInfo['is_running']
-        )
-            <div class="mb-8 p-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-xl text-white">
-                <div class="flex items-center space-x-6">
-                    <div class="text-white">
-                        <i class="fas fa-clock blink text-4xl"></i>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="text-sm font-semibold text-blue-100 mb-2">THỜI GIAN ĐANG CHẠY</div>
-                                <div id="realTimeCounter" class="time-counter text-3xl font-bold text-white">
-                                    {{ floor($timeInfo['elapsed_minutes'] / 60) }}:{{ str_pad($timeInfo['elapsed_minutes'] % 60, 2, '0', STR_PAD_LEFT) }}
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-semibold text-blue-100 mb-2">CHI PHÍ HIỆN TẠI</div>
-                                <div id="realTimeCost" class="text-2xl font-bold text-white">
-                                    {{ number_format(round($timeInfo['current_cost'] ?? 0)) }} ₫
-                                </div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - UPDATED LAYOUT -->
+            <div class="left-panel">
+                <!-- Real-time Counter Banner -->
+                @if (
+                    $table->currentBill &&
+                        in_array($table->currentBill->status, ['Open', 'quick']) &&
+                        isset($timeInfo['is_running']) &&
+                        $timeInfo['is_running']
+                )
+                    <div class="real-time-banner pulse">
+                        <div>
+                            <div class="text-sm font-semibold">THỜI GIAN ĐANG CHẠY</div>
+                            <div id="realTimeCounter" class="time-counter">
+                                {{ floor($timeInfo['elapsed_minutes'] / 60) }}:{{ str_pad($timeInfo['elapsed_minutes'] % 60, 2, '0', STR_PAD_LEFT) }}
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        {{-- Main Grid --}}
-        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
-            {{-- Left Side - Products & Combos --}}
-            <div class="xl:col-span-4 space-y-8">
-                {{-- Products Section --}}
-                <div class="card card-success">
-                    <div class="flex items-center justify-between cursor-pointer" onclick="toggleCollapse('products')">
-                        <h2 class="text-xl font-bold flex items-center">
-                            <i class="fas fa-utensils text-green-600 mr-3 text-2xl"></i>
-                            <span class="section-title">SẢN PHẨM</span>
-                            <span class="ml-3 info-badge bg-green-500">
-                                {{ $products->count() }} sản phẩm
-                            </span>
-                        </h2>
-                        <i class="fas fa-chevron-down text-green-500 transition-transform text-lg" id="productsIcon"></i>
-                    </div>
-
-                    <div class="collapsible-content" id="productsContent" style="max-height: 500px">
-                        <div class="mt-6">
-                            <div class="relative">
-                                <i
-                                    class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" id="productSearch" placeholder="Tìm kiếm sản phẩm..."
-                                    class="search-box pl-12">
-                            </div>
-
-                            <div class="scrollable-container mt-4">
-                                <div class="scroll-content">
-                                    @foreach ($products as $product)
-                                        <div class="product-item" data-id="{{ $product->id }}"
-                                            data-name="{{ $product->name }}" data-price="{{ $product->price }}">
-                                            <div class="flex justify-between items-center mb-3">
-                                                <div class="flex-1">
-                                                    <div class="font-semibold text-gray-800">{{ $product->name }}</div>
-                                                    <div class="text-sm text-gray-600 mt-1">
-                                                        <span class="price-tag">{{ number_format($product->price) }}
-                                                            ₫</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center justify-between gap-3">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-sm font-medium text-gray-700">Số lượng:</span>
-                                                    <input type="number" min="1" value="1"
-                                                        class="quantity-input product-quantity"
-                                                        data-product-id="{{ $product->id }}">
-                                                </div>
-                                                <button type="button" class="btn-success px-4 py-2 text-sm add-product-btn"
-                                                    data-product-id="{{ $product->id }}">
-                                                    <i class="fas fa-plus mr-2"></i> Thêm
-                                                </button>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Combos Section --}}
-                <div class="card card-purple">
-                    <div class="flex items-center justify-between cursor-pointer" onclick="toggleCollapse('combos')">
-                        <h2 class="text-xl font-bold flex items-center">
-                            <i class="fas fa-gift text-purple-600 mr-3 text-2xl"></i>
-                            <span class="section-title">COMBO</span>
-                            <span class="ml-3 info-badge bg-purple-500">
-                                {{ $combos->count() }} combo
-                            </span>
-                        </h2>
-                        <i class="fas fa-chevron-down text-purple-500 transition-transform text-lg" id="combosIcon"></i>
-                    </div>
-
-                    <div class="collapsible-content" id="combosContent" style="max-height: 500px">
-                        <div class="mt-6">
-                            <div class="relative">
-                                <i
-                                    class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" id="comboSearch" placeholder="Tìm kiếm combo..."
-                                    class="search-box pl-12">
-                            </div>
-
-                            <div class="scrollable-container mt-4">
-                                <div class="scroll-content">
-                                    @foreach ($combos as $combo)
-                                        <div class="combo-item" data-id="{{ $combo->id }}"
-                                            data-name="{{ $combo->name }}" data-price="{{ $combo->price }}">
-                                            <div class="flex justify-between items-center mb-3">
-                                                <div class="flex-1">
-                                                    <div class="font-semibold text-gray-800">{{ $combo->name }}</div>
-                                                    <div class="text-sm text-gray-600 mt-1">
-                                                        <span class="price-tag">{{ number_format($combo->price) }}
-                                                            ₫</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="flex items-center justify-between gap-3">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-sm font-medium text-gray-700">Số lượng:</span>
-                                                    <input type="number" min="1" value="1"
-                                                        class="quantity-input combo-quantity"
-                                                        data-combo-id="{{ $combo->id }}">
-                                                </div>
-                                                <button type="button" class="btn-primary px-4 py-2 text-sm add-combo-btn"
-                                                    data-combo-id="{{ $combo->id }}">
-                                                    <i class="fas fa-plus mr-2"></i> Thêm
-                                                </button>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Quick Products for New Bill --}}
-                @if (!$table->currentBill)
-                    <div class="card card-warning">
-                        <h2 class="text-xl font-bold mb-6 border-b border-amber-200 pb-4 flex items-center">
-                            <i class="fas fa-bolt text-amber-600 mr-3 text-2xl"></i>
-                            <span class="section-title">SẢN PHẨM NHANH</span>
-                        </h2>
-
-                        <div class="scrollable-container">
-                            <div class="scroll-content">
-                                @foreach ($products->take(8) as $product)
-                                    <div class="product-item" data-id="{{ $product->id }}"
-                                        data-name="{{ $product->name }}" data-price="{{ $product->price }}">
-                                        <div class="flex justify-between items-center mb-3">
-                                            <div class="flex-1">
-                                                <div class="font-semibold text-gray-800">{{ $product->name }}</div>
-                                                <div class="text-sm text-gray-600 mt-1">
-                                                    <span class="price-tag">{{ number_format($product->price) }} ₫</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center justify-between gap-3">
-                                            <div class="flex items-center gap-2">
-                                                <span class="text-sm font-medium text-gray-700">Số lượng:</span>
-                                                <input type="number" min="1" value="1"
-                                                    class="quantity-input quick-product-quantity"
-                                                    data-product-id="{{ $product->id }}">
-                                            </div>
-                                            <button type="button"
-                                                class="btn-warning px-4 py-2 text-sm add-quick-product-btn"
-                                                data-product-id="{{ $product->id }}">
-                                                <i class="fas fa-plus mr-2"></i> Thêm
-                                            </button>
-                                        </div>
-                                    </div>
-                                @endforeach
+                        <div>
+                            <div class="text-sm font-semibold">CHI PHÍ HIỆN TẠI</div>
+                            <div id="realTimeCost" class="time-counter">
+                                {{ number_format(round($timeInfo['current_cost'] ?? 0)) }} ₫
                             </div>
                         </div>
                     </div>
                 @endif
-            </div>
 
-            {{-- Center - Time Tracking & Bill Details --}}
-            <div class="xl:col-span-5 space-y-8">
-                {{-- Time Tracking --}}
-                <div class="card card-primary">
-                    <div
-                        class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 border-b border-blue-200 pb-6">
+                <!-- Time Tracking -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-clock text-blue-500"></i>
+                            THEO DÕI THỜI GIAN
+                        </h2>
                         <div>
-                            <h2 class="text-2xl font-bold flex items-center">
-                                <i class="fas fa-clock text-blue-600 mr-4 text-3xl"></i>
-                                <span class="section-title">THEO DÕI THỜI GIAN</span>
-                            </h2>
-                            <p class="text-gray-600 mt-3 flex items-center gap-2">
-                                <i class="fas fa-database text-blue-400"></i>
-                                <span>Cập nhật từ dữ liệu server</span>
-                            </p>
-                        </div>
-                        <div class="flex items-center gap-3">
                             @php
-                                $modeClass = match ($timeInfo['mode'] ?? 'none') {
-                                    'combo' => 'combo-mode',
-                                    'regular' => 'regular-mode',
-                                    'quick' => 'quick-mode',
-                                    default
-                                        => 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 rounded-full px-4 py-2 font-bold',
-                                };
-
                                 $modeText = match ($timeInfo['mode'] ?? 'none') {
                                     'regular' => '🕒 GIỜ THƯỜNG',
                                     'combo' => '🎁 COMBO TIME',
@@ -457,35 +1016,21 @@
                                     default => '⏸️ KHÔNG HOẠT ĐỘNG',
                                 };
                             @endphp
-                            <div id="modeBadge" class="{{ $modeClass }} text-sm">
-                                {{ $modeText }}
-                            </div>
-                            @if (isset($timeInfo['is_paused']) && $timeInfo['is_paused'])
-                                <div class="paused-mode text-sm">
-                                    ⏸️ TẠM DỪNG
-                                </div>
-                            @endif
-                            @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
-                                <div class="quick-mode text-sm blink">
-                                    ▶️ ĐANG CHẠY
-                                </div>
-                            @endif
+                            <span class="text-sm font-medium text-gray-600">{{ $modeText }}</span>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        {{-- Elapsed Time --}}
-                        <div class="time-display">
-                            <div class="text-xs text-gray-500 mb-3 font-semibold">ĐÃ SỬ DỤNG</div>
-                            <div id="elapsedTimeDisplay" class="text-2xl font-mono font-bold text-blue-700">
+                    <div class="time-tracking">
+                        <div class="time-box">
+                            <div class="time-label">ĐÃ SỬ DỤNG</div>
+                            <div id="elapsedTimeDisplay" class="time-value time-elapsed">
                                 {{ isset($timeInfo['elapsed_minutes']) ? sprintf('%02d:%02d:%02d', floor($timeInfo['elapsed_minutes'] / 60), $timeInfo['elapsed_minutes'] % 60, 0) : '00:00:00' }}
                             </div>
                         </div>
 
-                        {{-- Remaining Time --}}
-                        <div class="time-display">
-                            <div class="text-xs text-gray-500 mb-3 font-semibold">THỜI GIAN CÒN LẠI</div>
-                            <div id="remainingTimeDisplay" class="text-2xl font-mono font-bold text-green-600">
+                        <div class="time-box">
+                            <div class="time-label">THỜI GIAN CÒN LẠI</div>
+                            <div id="remainingTimeDisplay" class="time-value time-remaining">
                                 @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && isset($timeInfo['remaining_minutes']))
                                     {{ sprintf('%02d:%02d', floor($timeInfo['remaining_minutes'] / 60), $timeInfo['remaining_minutes'] % 60) }}
                                 @else
@@ -494,24 +1039,19 @@
                             </div>
                         </div>
 
-                        {{-- Current Cost --}}
-                        <div class="time-display">
-                            <div class="text-xs text-gray-500 mb-3 font-semibold">CHI PHÍ HIỆN TẠI</div>
-                            <div id="currentCostDisplay" class="text-2xl font-bold text-amber-600">
+                        <div class="time-box">
+                            <div class="time-label">CHI PHÍ HIỆN TẠI</div>
+                            <div id="currentCostDisplay" class="time-value time-cost">
                                 {{ number_format(round($timeInfo['current_cost'] ?? 0)) }} ₫
                             </div>
                         </div>
                     </div>
 
-                    {{-- Progress Bar --}}
                     @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
-                        <div class="border-t border-blue-200 pt-6">
-                            <div class="flex justify-between text-sm text-gray-600 mb-3 font-semibold">
-                                <span class="flex items-center gap-2">
-                                    <i class="fas fa-chart-line text-purple-500"></i>
-                                    TIẾN ĐỘ SỬ DỤNG COMBO
-                                </span>
-                                <span id="progressText" class="font-bold text-purple-600">
+                        <div class="progress-container">
+                            <div class="progress-header">
+                                <span>TIẾN ĐỘ SỬ DỤNG COMBO</span>
+                                <span id="progressText" class="font-bold">
                                     @if (isset($timeInfo['total_minutes']) && $timeInfo['total_minutes'] > 0)
                                         {{ round(min(100, (($timeInfo['elapsed_minutes'] ?? 0) / $timeInfo['total_minutes']) * 100)) }}%
                                     @else
@@ -528,81 +1068,92 @@
                     @endif
                 </div>
 
-                {{-- Bill Details --}}
-                <div class="card card-gray">
-                    <div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-6">
-                        <h2 class="text-2xl font-bold flex items-center">
-                            <i class="fas fa-receipt text-gray-600 mr-4 text-3xl"></i>
-                            <span class="section-title">CHI TIẾT HÓA ĐƠN</span>
-                        </h2>
-                        <div class="text-right">
-                            <div class="text-sm text-gray-600 font-semibold mb-2">TỔNG HÓA ĐƠN</div>
-                            <div id="finalAmountDisplay"
-                                class="text-3xl font-bold text-green-600 bg-gradient-to-r from-green-100 to-emerald-100 px-4 py-2 rounded-xl">
-                                {{ number_format(round($table->currentBill->final_amount ?? 0)) }} ₫
-                            </div>
+                <!-- Products & Combos Section - Dạng danh sách -->
+                <div class="card products-section">
+                    <div class="products-tabs">
+                        <div class="tab active" data-tab="products">
+                            <i class="fas fa-utensils text-green-500"></i>
+                            SẢN PHẨM ({{ $products->count() }})
+                        </div>
+                        <div class="tab" data-tab="combos">
+                            <i class="fas fa-gift text-purple-500"></i>
+                            COMBO ({{ $combos->count() }})
                         </div>
                     </div>
 
-                    @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
-                        <div class="overflow-x-auto rounded-xl border-2 border-gray-200">
-                            <table class="w-full rounded-xl overflow-hidden">
+                    <input type="text" id="productSearch" placeholder="Tìm kiếm sản phẩm..." class="search-box">
+
+                    <div class="products-container">
+                        <!-- Products List -->
+                        <div id="productsList" class="products-list">
+                            <table class="w-full border-collapse">
                                 <thead>
-                                    <tr class="bg-gradient-to-r from-gray-100 to-gray-200 border-b-2 border-gray-300">
-                                        <th class="text-left py-5 px-6 font-bold text-gray-700 border-r border-gray-300">
-                                            SẢN PHẨM/DỊCH VỤ</th>
-                                        <th class="text-center py-5 px-6 font-bold text-gray-700 border-r border-gray-300">
-                                            SL</th>
-                                        <th class="text-right py-5 px-6 font-bold text-gray-700 border-r border-gray-300">
-                                            ĐƠN GIÁ</th>
-                                        <th class="text-right py-5 px-6 font-bold text-gray-700">THÀNH TIỀN</th>
+                                    <tr class="bg-gray-50">
+                                        <th class="p-3 text-left text-sm font-medium text-gray-600">Sản phẩm</th>
+                                        <th class="p-3 text-right text-sm font-medium text-gray-600 w-24">Giá</th>
+                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-32">Số lượng</th>
+                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-20">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($table->currentBill->billDetails as $item)
-                                        <tr
-                                            class="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200">
-                                            <td class="py-4 px-6 border-r border-gray-200">
-                                                <div class="flex items-center">
-                                                    @if ($item->product_id && $item->product)
-                                                        <i class="fas fa-utensils text-green-500 mr-4 text-lg"></i>
-                                                        <div>
-                                                            <div class="font-semibold text-gray-800">
-                                                                {{ $item->product->name }}</div>
-                                                            @if ($item->is_combo_component)
-                                                                <div
-                                                                    class="text-xs text-gray-500 bg-green-100 px-2 py-1 rounded-full mt-1 inline-block">
-                                                                    Thành phần combo</div>
+                                    @foreach ($products as $product)
+                                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                            <td class="p-3">
+                                                <div class="flex items-center gap-3">
+                                                    @if ($product->image)
+                                                        <img src="{{ asset('storage/' . $product->image) }}"
+                                                            alt="{{ $product->name }}"
+                                                            class="w-10 h-10 rounded-lg object-cover">
+                                                    @else
+                                                        <div
+                                                            class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                                            <i class="fas fa-utensils text-gray-400"></i>
+                                                        </div>
+                                                    @endif
+                                                    <div>
+                                                        <div class="font-medium text-gray-900">{{ $product->name }}
+                                                        </div>
+                                                        <div class="text-sm text-gray-500 flex items-center gap-2">
+                                                            @if ($product->stock_quantity <= 0)
+                                                                <span class="text-red-500 font-medium">Hết hàng</span>
+                                                            @elseif($product->stock_quantity < 10)
+                                                                <span class="text-orange-500 font-medium">Còn
+                                                                    {{ $product->stock_quantity }}</span>
+                                                            @else
+                                                                <span class="text-green-500 font-medium">Còn
+                                                                    {{ $product->stock_quantity }}</span>
                                                             @endif
                                                         </div>
-                                                    @elseif($item->combo_id && $item->combo)
-                                                        <i class="fas fa-gift text-purple-500 mr-4 text-lg"></i>
-                                                        <div>
-                                                            <div class="font-semibold text-gray-800">
-                                                                {{ $item->combo->name }}</div>
-                                                            <div
-                                                                class="text-xs text-gray-500 bg-purple-100 px-2 py-1 rounded-full mt-1 inline-block">
-                                                                Combo</div>
-                                                        </div>
-                                                    @else
-                                                        <i class="fas fa-plus-circle text-blue-500 mr-4 text-lg"></i>
-                                                        <div class="font-semibold text-gray-800">
-                                                            {{ $item->note ?? 'Dịch vụ khác' }}</div>
-                                                    @endif
+                                                    </div>
                                                 </div>
                                             </td>
-                                            <td class="text-center py-4 px-6 border-r border-gray-200">
-                                                <span
-                                                    class="bg-gradient-to-r from-blue-100 to-indigo-100 px-3 py-2 border border-blue-200 text-sm font-semibold rounded-full text-blue-800">
-                                                    {{ $item->quantity }}
-                                                </span>
+                                            <td class="p-3 text-right">
+                                                <div class="font-bold text-green-600">
+                                                    {{ number_format($product->price) }} ₫</div>
                                             </td>
-                                            <td
-                                                class="text-right py-4 px-6 border-r border-gray-200 font-semibold text-gray-700">
-                                                {{ number_format(round($item->unit_price)) }} ₫
+                                            <td class="p-3">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <button
+                                                        class="quantity-btn minus w-8 h-8 flex items-center justify-center bg-gray-100 rounded border"
+                                                        data-product-id="{{ $product->id }}">-</button>
+                                                    <input type="number" min="1"
+                                                        max="{{ $product->stock_quantity }}" value="1"
+                                                        class="quantity-input product-quantity w-12 text-center border rounded py-1"
+                                                        data-product-id="{{ $product->id }}"
+                                                        {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>
+                                                    <button
+                                                        class="quantity-btn plus w-8 h-8 flex items-center justify-center bg-gray-100 rounded border"
+                                                        data-product-id="{{ $product->id }}">+</button>
+                                                </div>
                                             </td>
-                                            <td class="text-right py-4 px-6 font-bold text-green-600">
-                                                {{ number_format(round($item->total_price)) }} ₫
+                                            <td class="p-3 text-center">
+                                                <button
+                                                    class="add-btn add-product-btn bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+                                                    data-product-id="{{ $product->id }}"
+                                                    {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>
+                                                    <i class="fas fa-plus mr-1"></i>
+                                                    Thêm
+                                                </button>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -610,262 +1161,448 @@
                             </table>
                         </div>
 
-                        <div class="mt-8 border-t border-gray-200 pt-6">
-                            <div
-                                class="flex justify-between items-center bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-200">
-                                <div class="text-xl font-bold text-gray-800">TỔNG CỘNG:</div>
-                                <div id="billTotalAmount" class="text-4xl font-bold text-green-600">
-                                    {{ number_format(round($table->currentBill->final_amount)) }} ₫
-                                </div>
-                            </div>
+                        <!-- Combos List -->
+                        <div id="combosList" class="products-list" style="display: none;">
+                            <table class="w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="p-3 text-left text-sm font-medium text-gray-600">Combo</th>
+                                        <th class="p-3 text-right text-sm font-medium text-gray-600 w-24">Giá</th>
+                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-32">Số lượng
+                                        </th>
+                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-20">Thao tác
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($combos as $combo)
+                                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                            <td class="p-3">
+                                                <div class="flex items-center gap-3">
+                                                    @if ($combo->image)
+                                                        <img src="{{ asset('storage/' . $combo->image) }}"
+                                                            alt="{{ $combo->name }}"
+                                                            class="w-10 h-10 rounded-lg object-cover">
+                                                    @else
+                                                        <div
+                                                            class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                                                            <i class="fas fa-gift text-purple-400"></i>
+                                                        </div>
+                                                    @endif
+                                                    <div>
+                                                        <div class="font-medium text-gray-900">{{ $combo->name }}
+                                                        </div>
+                                                        <div class="text-sm text-gray-500 flex items-center gap-2">
+                                                            @if ($combo->is_time_combo)
+                                                                <span
+                                                                    class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">
+                                                                    <i class="fas fa-clock mr-1"></i>
+                                                                    {{ $combo->play_duration_minutes }} phút
+                                                                </span>
+                                                            @endif
+                                                            @if ($combo->actual_value > $combo->price)
+                                                                <span class="text-green-600 font-medium">
+                                                                    Tiết kiệm
+                                                                    {{ number_format($combo->actual_value - $combo->price) }}
+                                                                    ₫
+                                                                </span>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="p-3 text-right">
+                                                <div class="font-bold text-green-600">
+                                                    {{ number_format($combo->price) }} ₫</div>
+                                                @if ($combo->actual_value > $combo->price)
+                                                    <div class="text-sm text-gray-400 line-through">
+                                                        {{ number_format($combo->actual_value) }} ₫</div>
+                                                @endif
+                                            </td>
+                                            <td class="p-3">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <button
+                                                        class="quantity-btn minus w-8 h-8 flex items-center justify-center bg-gray-100 rounded border"
+                                                        data-combo-id="{{ $combo->id }}">-</button>
+                                                    <input type="number" min="1" value="1"
+                                                        class="quantity-input combo-quantity w-12 text-center border rounded py-1"
+                                                        data-combo-id="{{ $combo->id }}">
+                                                    <button
+                                                        class="quantity-btn plus w-8 h-8 flex items-center justify-center bg-gray-100 rounded border"
+                                                        data-combo-id="{{ $combo->id }}">+</button>
+                                                </div>
+                                            </td>
+                                            <td class="p-3 text-center">
+                                                <button
+                                                    class="add-btn add-combo-btn bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded text-sm font-medium transition-colors"
+                                                    data-combo-id="{{ $combo->id }}"
+                                                    {{ $table->currentBill && $table->currentBill->status === 'quick' ? 'disabled' : '' }}>
+                                                    <i class="fas fa-plus mr-1"></i>
+                                                    Thêm
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
-                    @else
-                        <div
-                            class="text-center py-16 border-2 border-dashed border-gray-300 rounded-2xl bg-gradient-to-br from-gray-50 to-white">
-                            <i class="fas fa-receipt text-6xl text-gray-400 mb-6"></i>
-                            <p class="text-gray-500 text-xl font-semibold mb-3">CHƯA CÓ SẢN PHẨM NÀO TRONG HÓA ĐƠN</p>
-                            <p class="text-gray-400 text-sm">Thêm sản phẩm hoặc combo để bắt đầu</p>
-                        </div>
-                    @endif
+                    </div>
                 </div>
             </div>
 
-            {{-- Right Side - Table Info & Actions --}}
-            <div class="xl:col-span-3 space-y-8">
-                {{-- Table Info --}}
-                <div class="card card-primary">
-                    <h2 class="text-xl font-bold mb-6 border-b border-blue-200 pb-4 flex items-center">
-                        <i class="fas fa-info-circle text-blue-600 mr-3 text-2xl"></i>
-                        <span class="section-title">THÔNG TIN BÀN</span>
-                    </h2>
+            <!-- Right Panel - UPDATED LAYOUT -->
+            <div class="right-panel">
+                <div class="right-content">
+                    <!-- Bill Details - MOVED TO RIGHT PANEL -->
+                    <div class="card bill-details">
+                        <div class="card-header">
+                            <h2 class="section-title">
+                                <i class="fas fa-receipt text-gray-600"></i>
+                                CHI TIẾT HÓA ĐƠN
+                            </h2>
+                            <div class="text-right">
+                                <div class="text-sm text-gray-600">TỔNG HÓA ĐƠN</div>
+                                <div id="finalAmountDisplay" class="text-xl font-bold text-green-600">
+                                    {{ number_format(round($table->currentBill->final_amount ?? 0)) }} ₫
+                                </div>
+                            </div>
+                        </div>
 
-                    <div class="space-y-5">
-                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                            <span class="text-gray-600 font-medium">Tên bàn:</span>
-                            <span class="font-semibold text-blue-700">{{ $table->table_name }}</span>
+                        <div class="bill-container">
+                            @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
+                                <table class="bill-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Sản phẩm/Dịch vụ</th>
+                                            <th width="80">SL</th>
+                                            <th width="120">Đơn giá</th>
+                                            <th width="140">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($table->currentBill->billDetails as $item)
+                                            <tr>
+                                                <td>
+                                                    @if ($item->product_id && $item->product)
+                                                        <i class="fas fa-utensils text-green-500 mr-2"></i>
+                                                        {{ $item->product->name }}
+                                                        @if ($item->is_combo_component)
+                                                            <span class="text-xs text-gray-500">(Thành phần
+                                                                combo)</span>
+                                                        @endif
+                                                    @elseif($item->combo_id && $item->combo)
+                                                        <i class="fas fa-gift text-purple-500 mr-2"></i>
+                                                        {{ $item->combo->name }}
+                                                    @else
+                                                        <i class="fas fa-plus-circle text-blue-500 mr-2"></i>
+                                                        {{ $item->note ?? 'Dịch vụ khác' }}
+                                                    @endif
+                                                </td>
+                                                <td class="text-center">{{ $item->quantity }}</td>
+                                                <td class="text-right">{{ number_format(round($item->unit_price)) }} ₫
+                                                </td>
+                                                <td class="text-right font-semibold">
+                                                    {{ number_format(round($item->total_price)) }} ₫</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            @else
+                                <div class="empty-state">
+                                    <i class="fas fa-receipt"></i>
+                                    <p class="text-lg font-medium mb-2">Chưa có sản phẩm nào trong hóa đơn</p>
+                                    <p class="text-sm">Thêm sản phẩm hoặc combo để bắt đầu</p>
+                                </div>
+                            @endif
                         </div>
-                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                            <span class="text-gray-600 font-medium">Số bàn:</span>
-                            <span class="font-semibold text-blue-700">{{ $table->table_number }}</span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                            <span class="text-gray-600 font-medium">Giá giờ:</span>
-                            <span class="font-semibold text-green-600">{{ number_format($table->getHourlyRate()) }}
-                                ₫/h</span>
-                        </div>
-                        @if ($table->currentBill)
-                            <div class="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                                <span class="text-gray-600 font-medium">Mã bill:</span>
-                                <span class="font-semibold text-purple-600">{{ $table->currentBill->bill_number }}</span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                                <span class="text-gray-600 font-medium">Nhân viên mở bàn:</span>
-                                <span class="font-semibold text-purple-700">
-                                    {{ $table->currentBill->staff->name ?? 'N/A' }}
-                                </span>
-                            </div>
-                            <div class="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                                <span class="text-gray-600 font-medium">Thời gian mở:</span>
-                                <span class="font-semibold text-sm text-purple-700">
-                                    {{ $table->currentBill->start_time ? $table->currentBill->start_time->format('H:i d/m/Y') : 'N/A' }}
-                                </span>
+
+                        @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
+                            <div class="total-amount">
+                                Tổng cộng: {{ number_format(round($table->currentBill->final_amount)) }} ₫
                             </div>
                         @endif
                     </div>
 
-                    @if ($table->currentBill)
-                        <div class="mt-8 pt-6 border-t border-blue-200">
-                            <div class="text-sm text-gray-600 mb-3 font-semibold">TỔNG HIỆN TẠI</div>
-                            <div id="totalAmountDisplay"
-                                class="text-3xl font-bold text-green-600 bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-2xl text-center">
-                                {{ number_format(round($table->currentBill->final_amount)) }} ₫
-                            </div>
-                        </div>
-                    @endif
-                </div>
+                    <!-- Table Info -->
+                    <div class="card info-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-info-circle text-blue-500"></i>
+                            THÔNG TIN BÀN
+                        </h2>
 
-                {{-- Quick Actions --}}
-                <div class="card card-warning">
-                    <h3 class="text-lg font-bold mb-6 border-b border-amber-200 pb-4 flex items-center">
-                        <i class="fas fa-bolt text-amber-600 mr-3 text-xl"></i>
-                        <span class="section-title">THAO TÁC NHANH</span>
-                    </h3>
-                    <div class="space-y-4">
-                        @if ($table->currentBill)
-                            {{-- Xử lý bàn lẻ --}}
-                            @if ($table->currentBill->status === 'quick')
-                                <form action="{{ route('bills.start-playing', $table->currentBill->id) }}"
-                                    method="POST">
+                        <div class="space-y-2">
+                            <div class="info-item">
+                                <span class="info-label">Tên bàn:</span>
+                                <span class="info-value">{{ $table->table_name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Số bàn:</span>
+                                <span class="info-value">{{ $table->table_number }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Giá giờ:</span>
+                                <span class="info-value text-green-600">{{ number_format($table->getHourlyRate()) }}
+                                    ₫/h</span>
+                            </div>
+
+                            @if ($table->currentBill)
+                                <div class="border-t border-gray-200 pt-3 mt-2">
+                                    <div class="info-item">
+                                        <span class="info-label">Mã bill:</span>
+                                        <span class="info-value">{{ $table->currentBill->bill_number }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Nhân viên:</span>
+                                        <span
+                                            class="info-value">{{ $table->currentBill->staff->name ?? 'N/A' }}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">Thời gian mở:</span>
+                                        <span class="info-value text-sm">
+                                            {{ $table->currentBill->start_time ? $table->currentBill->start_time->format('H:i d/m/Y') : 'N/A' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="border-t border-gray-200 pt-3 mt-2">
+                                    <div class="info-item">
+                                        <span class="info-label">Tổng hiện tại:</span>
+                                        <span class="info-value text-green-600 font-bold">
+                                            {{ number_format(round($table->currentBill->final_amount)) }} ₫
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card info-section">
+                        <h2 class="section-title">
+                            <i class="fas fa-bolt text-amber-500"></i>
+                            THAO TÁC NHANH
+                        </h2>
+
+                        <div class="action-buttons">
+                            @if ($table->currentBill)
+                                <!-- Xử lý bàn lẻ -->
+                                @if ($table->currentBill->status === 'quick')
+                                    <form action="{{ route('bills.start-playing', $table->currentBill->id) }}"
+                                        method="POST" class="w-full">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-primary">
+                                            <i class="fas fa-play"></i>
+                                            BẮT ĐẦU TÍNH GIỜ
+                                        </button>
+                                    </form>
+
+                                    <!-- NÚT THANH TOÁN CHO BÀN LẺ -->
+                                    <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
+                                        class="action-btn action-btn-success">
+                                        <i class="fas fa-credit-card"></i>
+                                        THANH TOÁN BÀN LẺ
+                                    </a>
+                                @else
+                                    <!-- Pause/Resume Buttons -->
+                                    @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
+                                        <form action="{{ route('bills.pause', $table->currentBill->id) }}"
+                                            method="POST" class="w-full">
+                                            @csrf
+                                            <button type="submit" class="action-btn action-btn-warning">
+                                                <i class="fas fa-pause"></i>
+                                                TẠM DỪNG
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if (isset($timeInfo['is_paused']) && $timeInfo['is_paused'])
+                                        <form action="{{ route('bills.resume', $table->currentBill->id) }}"
+                                            method="POST" class="w-full">
+                                            @csrf
+                                            <button type="submit" class="action-btn action-btn-success">
+                                                <i class="fas fa-play"></i>
+                                                TIẾP TỤC
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    <!-- Thanh toán -->
+                                    <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
+                                        class="action-btn action-btn-primary">
+                                        <i class="fas fa-credit-card"></i>
+                                        THANH TOÁN
+                                    </a>
+
+                                    <!-- Cập nhật tổng -->
+                                    <button onclick="updateBillTotal()" class="action-btn action-btn-secondary">
+                                        <i class="fas fa-sync-alt"></i>
+                                        CẬP NHẬT TỔNG
+                                    </button>
+
+                                    <!-- Gia hạn combo -->
+                                    @if (isset($timeInfo['mode']) &&
+                                            $timeInfo['mode'] === 'combo' &&
+                                            isset($timeInfo['is_near_end']) &&
+                                            $timeInfo['is_near_end']
+                                    )
+                                        <form action="{{ route('bills.extend-combo', $table->currentBill->id) }}"
+                                            method="POST" class="w-full">
+                                            @csrf
+                                            <input type="hidden" name="extra_minutes" value="30">
+                                            <button type="submit" class="action-btn action-btn-warning">
+                                                <i class="fas fa-clock"></i>
+                                                GIA HẠN 30 PHÚT
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    <!-- Chuyển sang giờ thường -->
+                                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
+                                        <form action="{{ route('bills.switch-regular', $table->currentBill->id) }}"
+                                            method="POST" onsubmit="return confirm('Chuyển sang tính giờ thường?')"
+                                            class="w-full">
+                                            @csrf
+                                            <button type="submit" class="action-btn action-btn-secondary">
+                                                <i class="fas fa-exchange-alt"></i>
+                                                CHUYỂN GIỜ THƯỜNG
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endif
+
+                                <!-- Chuyển thành bàn lẻ -->
+                                <form action="{{ route('bills.convert-to-quick', $table->currentBill->id) }}"
+                                    method="POST" onsubmit="return confirm('Chuyển thành bàn lẻ?')" class="w-full">
                                     @csrf
-                                    <button type="submit" class="w-full btn-primary text-center py-4">
-                                        <i class="fas fa-play mr-3"></i>
-                                        BẮT ĐẦU TÍNH GIỜ
+                                    <button type="submit" class="action-btn action-btn-secondary">
+                                        <i class="fas fa-coins"></i>
+                                        CHUYỂN BÀN LẺ
                                     </button>
                                 </form>
                             @else
-                                {{-- Pause/Resume Buttons --}}
-                                @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
-                                    <form action="{{ route('bills.pause', $table->currentBill->id) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="w-full btn-warning text-center py-4">
-                                            <i class="fas fa-pause mr-3"></i>
-                                            TẠM DỪNG
-                                        </button>
-                                    </form>
-                                @endif
-
-                                @if (isset($timeInfo['is_paused']) && $timeInfo['is_paused'])
-                                    <form action="{{ route('bills.resume', $table->currentBill->id) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="w-full btn-success text-center py-4">
-                                            <i class="fas fa-play mr-3"></i>
-                                            TIẾP TỤC
-                                        </button>
-                                    </form>
-                                @endif
-
-                                {{-- Thanh toán --}}
-                                <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
-                                    class="w-full btn-primary text-center block py-4">
-                                    <i class="fas fa-credit-card mr-3"></i>
-                                    THANH TOÁN
-                                </a>
-
-                                {{-- Cập nhật tổng --}}
-                                <button onclick="updateBillTotal()" class="w-full btn-secondary text-center py-4">
-                                    <i class="fas fa-sync-alt mr-3"></i>
-                                    CẬP NHẬT TỔNG
-                                </button>
-
-                                {{-- Gia hạn combo --}}
-                                @if (isset($timeInfo['mode']) &&
-                                        $timeInfo['mode'] === 'combo' &&
-                                        isset($timeInfo['is_near_end']) &&
-                                        $timeInfo['is_near_end']
-                                )
-                                    <form action="{{ route('bills.extend-combo', $table->currentBill->id) }}"
-                                        method="POST">
-                                        @csrf
-                                        <input type="hidden" name="extra_minutes" value="30">
-                                        <button type="submit" class="w-full btn-warning text-center py-4">
-                                            <i class="fas fa-clock mr-3"></i>
-                                            GIA HẠN 30 PHÚT
-                                        </button>
-                                    </form>
-                                @endif
-
-                                {{-- Chuyển sang giờ thường --}}
-                                @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
-                                    <form action="{{ route('bills.switch-regular', $table->currentBill->id) }}"
-                                        method="POST" onsubmit="return confirm('Chuyển sang tính giờ thường?')">
-                                        @csrf
-                                        <button type="submit" class="w-full btn-secondary text-center py-4">
-                                            <i class="fas fa-exchange-alt mr-3"></i>
-                                            CHUYỂN GIỜ THƯỜNG
-                                        </button>
-                                    </form>
-                                @endif
-                            @endif
-
-                            {{-- Chuyển thành bàn lẻ --}}
-                            <form action="{{ route('bills.convert-to-quick', $table->currentBill->id) }}" method="POST"
-                                onsubmit="return confirm('Chuyển thành bàn lẻ?')">
-                                @csrf
-                                <button type="submit" class="w-full btn-secondary text-center py-4">
-                                    <i class="fas fa-coins mr-3"></i>
-                                    CHUYỂN BÀN LẺ
-                                </button>
-                            </form>
-                        @else
-                            {{-- Tạo bill mới --}}
-                            <form action="{{ route('bills.create') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="table_id" value="{{ $table->id }}">
-                                <input type="hidden" name="guest_count" value="1">
-                                <button type="submit" class="w-full btn-primary text-center py-4">
-                                    <i class="fas fa-plus mr-3"></i>
+                                <!-- Tạo bill mới -->
+                                <button onclick="showCreateBillModal()" class="action-btn action-btn-primary">
+                                    <i class="fas fa-plus"></i>
                                     TẠO HÓA ĐƠN TÍNH GIỜ
                                 </button>
-                            </form>
 
-                            {{-- Tạo bàn lẻ --}}
-                            <form action="{{ route('bills.quick-create') }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="table_id" value="{{ $table->id }}">
-                                <button type="submit" class="w-full btn-warning text-center py-4">
-                                    <i class="fas fa-bolt mr-3"></i>
+                                <!-- Tạo bàn lẻ -->
+                                <button onclick="showQuickBillModal()" class="action-btn action-btn-warning">
+                                    <i class="fas fa-bolt"></i>
                                     TẠO BÀN LẺ
                                 </button>
-                            </form>
-                        @endif
+                            @endif
+                        </div>
                     </div>
 
-                    {{-- Thời gian tạm dừng --}}
-                    @if (isset($timeInfo['paused_duration']) && $timeInfo['paused_duration'] > 0)
-                        <div class="mt-6 pt-6 border-t border-amber-200">
-                            <div class="text-sm text-gray-600 font-semibold mb-2">Thời gian tạm dừng:</div>
-                            <div class="font-bold text-amber-600 text-xl bg-amber-100 p-3 rounded-xl text-center">
-                                {{ floor($timeInfo['paused_duration'] / 60) }}h
-                                {{ $timeInfo['paused_duration'] % 60 }}p
+                    <!-- Customer Info -->
+                    @if ($table->currentBill && $table->currentBill->user)
+                        <div class="card info-section">
+                            <h2 class="section-title">
+                                <i class="fas fa-user text-purple-500"></i>
+                                THÔNG TIN KHÁCH HÀNG
+                            </h2>
+
+                            <div class="space-y-2">
+                                <div class="info-item">
+                                    <span class="info-label">Tên khách hàng</span>
+                                    <span class="info-value">{{ $table->currentBill->user->name }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Số điện thoại</span>
+                                    <span class="info-value">{{ $table->currentBill->user->phone }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Loại khách</span>
+                                    <span
+                                        class="info-value">{{ $table->currentBill->user->customer_type ?? 'Khách mới' }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Số lần đến</span>
+                                    <span class="info-value">{{ $table->currentBill->user->total_visits ?? 0 }}
+                                        lần</span>
+                                </div>
                             </div>
                         </div>
                     @endif
                 </div>
-
-                {{-- Customer Info --}}
-                @if ($table->currentBill && $table->currentBill->user)
-                    <div class="card card-purple">
-                        <h3 class="text-lg font-bold mb-6 border-b border-purple-200 pb-4 flex items-center">
-                            <i class="fas fa-user text-purple-600 mr-3 text-xl"></i>
-                            <span class="section-title">THÔNG TIN KHÁCH HÀNG</span>
-                        </h3>
-                        <div class="space-y-5">
-                            <div class="p-3 bg-purple-50 rounded-xl">
-                                <div class="text-sm text-gray-600 mb-1 font-semibold">Tên khách hàng</div>
-                                <div class="font-semibold text-purple-700">{{ $table->currentBill->user->name }}</div>
-                            </div>
-                            <div class="p-3 bg-purple-50 rounded-xl">
-                                <div class="text-sm text-gray-600 mb-1 font-semibold">Số điện thoại</div>
-                                <div class="font-semibold text-purple-700">{{ $table->currentBill->user->phone }}</div>
-                            </div>
-                            <div class="p-3 bg-purple-50 rounded-xl">
-                                <div class="text-sm text-gray-600 mb-1 font-semibold">Loại khách</div>
-                                <div>
-                                    <span
-                                        class="px-3 py-2 bg-gradient-to-r from-purple-500 to-violet-500 text-white text-xs font-bold rounded-full shadow-md">
-                                        {{ $table->currentBill->user->customer_type ?? 'Khách mới' }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="p-3 bg-purple-50 rounded-xl">
-                                <div class="text-sm text-gray-600 mb-1 font-semibold">Số lần đến</div>
-                                <div class="font-semibold text-purple-700">
-                                    {{ $table->currentBill->user->total_visits ?? 0 }} lần</div>
-                            </div>
-                        </div>
-                    </div>
-                @endif
             </div>
         </div>
     </div>
-@endsection
 
-@section('scripts')
+    <!-- Create Bill Modal -->
+    <div id="createBillModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Tạo Hóa Đơn Tính Giờ</h3>
+                <button class="close-btn" onclick="hideCreateBillModal()">&times;</button>
+            </div>
+            <form id="createBillForm" action="{{ route('bills.create') }}" method="POST">
+                @csrf
+                <input type="hidden" name="table_id" value="{{ $table->id }}">
+
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại khách hàng</label>
+                    <input type="text" name="user_phone" class="form-input" placeholder="Nhập số điện thoại">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tên khách hàng</label>
+                    <input type="text" name="user_name" class="form-input" placeholder="Nhập tên khách hàng">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Số lượng khách</label>
+                    <input type="number" name="guest_count" class="form-input" value="1" min="1"
+                        required>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="hideCreateBillModal()" class="btn btn-secondary flex-1">
+                        Hủy
+                    </button>
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <i class="fas fa-plus"></i> Tạo Hóa Đơn
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Bill Modal -->
+    <div id="quickBillModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Tạo Bàn Lẻ</h3>
+                <button class="close-btn" onclick="hideQuickBillModal()">&times;</button>
+            </div>
+            <form id="quickBillForm" action="{{ route('bills.quick-create') }}" method="POST">
+                @csrf
+                <input type="hidden" name="table_id" value="{{ $table->id }}">
+
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại khách hàng (tùy chọn)</label>
+                    <input type="text" name="user_phone" class="form-input" placeholder="Nhập số điện thoại">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tên khách hàng (tùy chọn)</label>
+                    <input type="text" name="user_name" class="form-input" placeholder="Nhập tên khách hàng">
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="hideQuickBillModal()" class="btn btn-secondary flex-1">
+                        Hủy
+                    </button>
+                    <button type="submit" class="btn btn-warning flex-1">
+                        <i class="fas fa-bolt"></i> Tạo Bàn Lẻ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Collapse functionality
-        function toggleCollapse(section) {
-            const content = document.getElementById(section + 'Content');
-            const icon = document.getElementById(section + 'Icon');
-
-            if (content.style.maxHeight && content.style.maxHeight !== '0px') {
-                content.style.maxHeight = '0px';
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                content.style.maxHeight = '500px';
-                icon.style.transform = 'rotate(180deg)';
-            }
-        }
-
         // Server data với giá trị mặc định
         const isRunning = {{ isset($timeInfo['is_running']) && $timeInfo['is_running'] ? 'true' : 'false' }};
         const isPaused = {{ isset($timeInfo['is_paused']) && $timeInfo['is_paused'] ? 'true' : 'false' }};
@@ -873,7 +1610,6 @@
         const hourlyRate = Number({{ $timeInfo['hourly_rate'] ?? 0 }});
         const totalComboMinutes = Number({{ $timeInfo['total_minutes'] ?? 0 }});
         const elapsedMinutesFromServer = Number({{ $timeInfo['elapsed_minutes'] ?? 0 }});
-        const pausedDuration = Number({{ $timeInfo['paused_duration'] ?? 0 }});
         const currentBillId = {{ $table->currentBill->id ?? 'null' }};
 
         // Không sử dụng thời gian thực từ client, chỉ sử dụng dữ liệu từ server
@@ -907,6 +1643,7 @@
             if (currentMode === 'regular') {
                 return (hourlyRate / 3600) * elapsedSeconds;
             } else if (currentMode === 'combo') {
+                const totalComboSeconds = totalComboMinutes * 60;
                 const extraSeconds = Math.max(0, elapsedSeconds - totalComboSeconds);
                 return (hourlyRate / 3600) * extraSeconds;
             }
@@ -920,6 +1657,7 @@
 
             // Remaining time and progress
             if (currentMode === 'combo') {
+                const totalComboSeconds = totalComboMinutes * 60;
                 const remainingSeconds = totalComboSeconds - serverElapsedSeconds;
                 document.getElementById('remainingTimeDisplay').textContent = formatHM(Math.max(0, remainingSeconds));
 
@@ -965,9 +1703,32 @@
             }, 1000);
         }
 
+        // Modal functions
+        function showCreateBillModal() {
+            document.getElementById('createBillModal').style.display = 'flex';
+        }
+
+        function hideCreateBillModal() {
+            document.getElementById('createBillModal').style.display = 'none';
+        }
+
+        function showQuickBillModal() {
+            document.getElementById('quickBillModal').style.display = 'flex';
+        }
+
+        function hideQuickBillModal() {
+            document.getElementById('quickBillModal').style.display = 'none';
+        }
+
         // Update bill total
         function updateBillTotal() {
             @if ($table->currentBill)
+                const button = event.target;
+                const originalText = button.innerHTML;
+
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang cập nhật...';
+                button.disabled = true;
+
                 fetch('{{ route('bills.update-total', $table->currentBill->id) }}', {
                     method: 'POST',
                     headers: {
@@ -976,52 +1737,131 @@
                     },
                 }).then(r => r.json()).then(data => {
                     if (data.success) {
-                        const final = data.final_amount;
-                        ['totalAmountDisplay', 'finalAmountDisplay', 'billTotalAmount'].forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el) el.textContent = formatCurrency(final);
-                        });
+                        location.reload();
                     }
-                }).catch(console.error);
+                }).catch(error => {
+                    console.error('Error:', error);
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    alert('Có lỗi xảy ra khi cập nhật tổng tiền');
+                });
             @endif
         }
 
-        // Search functionality
+        // Tab functionality for grid layout
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const productsGrid = document.getElementById('productsGrid');
+            const combosGrid = document.getElementById('combosGrid');
+            const searchBox = document.getElementById('productSearch');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+
+                    // Show/hide grids
+                    const tabName = tab.getAttribute('data-tab');
+                    if (tabName === 'products') {
+                        productsGrid.style.display = 'grid';
+                        combosGrid.style.display = 'none';
+                        searchBox.placeholder = 'Tìm kiếm sản phẩm...';
+                    } else {
+                        productsGrid.style.display = 'none';
+                        combosGrid.style.display = 'grid';
+                        searchBox.placeholder = 'Tìm kiếm combo...';
+                    }
+
+                    // Reset search
+                    searchBox.value = '';
+                    filterProducts(searchBox.value);
+                });
+            });
+        }
+
+        // Search functionality for grid layout
         function setupSearch() {
-            const productSearch = document.getElementById('productSearch');
-            const comboSearch = document.getElementById('comboSearch');
+            const searchBox = document.getElementById('productSearch');
 
-            if (productSearch) {
-                productSearch.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase();
-                    const productItems = document.querySelectorAll('#productsContent .product-item');
+            searchBox.addEventListener('input', function() {
+                filterProducts(this.value);
+            });
+        }
 
-                    productItems.forEach(item => {
-                        const name = item.getAttribute('data-name').toLowerCase();
-                        if (name.includes(searchTerm)) {
-                            item.style.display = 'block';
-                        } else {
-                            item.style.display = 'none';
+        function filterProducts(searchTerm) {
+            const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+            const grid = activeTab === 'products' ?
+                document.getElementById('productsGrid') :
+                document.getElementById('combosGrid');
+
+            const cards = grid.querySelectorAll('.product-card');
+            const term = searchTerm.toLowerCase();
+
+            cards.forEach(card => {
+                const name = card.querySelector('.product-name').textContent.toLowerCase();
+                if (name.includes(term)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Quantity controls functionality
+        function setupQuantityControls() {
+            // Plus buttons
+            document.querySelectorAll('.quantity-btn.plus').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    const comboId = this.getAttribute('data-combo-id');
+                    const input = productId ?
+                        document.querySelector(`.product-quantity[data-product-id="${productId}"]`) :
+                        document.querySelector(`.combo-quantity[data-combo-id="${comboId}"]`);
+
+                    if (input) {
+                        const max = parseInt(input.getAttribute('max')) || 999;
+                        const currentValue = parseInt(input.value) || 1;
+                        if (currentValue < max) {
+                            input.value = currentValue + 1;
                         }
-                    });
+                    }
                 });
-            }
+            });
 
-            if (comboSearch) {
-                comboSearch.addEventListener('input', function() {
-                    const searchTerm = this.value.toLowerCase();
-                    const comboItems = document.querySelectorAll('#combosContent .combo-item');
+            // Minus buttons
+            document.querySelectorAll('.quantity-btn.minus').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    const comboId = this.getAttribute('data-combo-id');
+                    const input = productId ?
+                        document.querySelector(`.product-quantity[data-product-id="${productId}"]`) :
+                        document.querySelector(`.combo-quantity[data-combo-id="${comboId}"]`);
 
-                    comboItems.forEach(item => {
-                        const name = item.getAttribute('data-name').toLowerCase();
-                        if (name.includes(searchTerm)) {
-                            item.style.display = 'block';
-                        } else {
-                            item.style.display = 'none';
+                    if (input) {
+                        const currentValue = parseInt(input.value) || 1;
+                        if (currentValue > 1) {
+                            input.value = currentValue - 1;
                         }
-                    });
+                    }
                 });
-            }
+            });
+
+            // Input validation
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    const min = parseInt(this.getAttribute('min')) || 1;
+                    const max = parseInt(this.getAttribute('max')) || 999;
+                    let value = parseInt(this.value) || min;
+
+                    if (value < min) value = min;
+                    if (value > max) value = max;
+
+                    this.value = value;
+                });
+            });
         }
 
         // Get quantity from input
@@ -1035,6 +1875,11 @@
         function addProductToBill(productId, quantity = null) {
             @if ($table->currentBill)
                 const finalQuantity = quantity || getQuantity('.product-quantity', productId);
+                const button = event.target;
+                const originalText = button.innerHTML;
+
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                button.disabled = true;
 
                 fetch('{{ route('bills.add-product', $table->currentBill->id) }}', {
                     method: 'POST',
@@ -1051,11 +1896,17 @@
                         location.reload();
                     } else {
                         alert('Có lỗi xảy ra khi thêm sản phẩm');
+                        button.innerHTML = originalText;
+                        button.disabled = false;
                     }
                 }).catch(error => {
                     console.error('Error:', error);
                     alert('Có lỗi xảy ra khi thêm sản phẩm');
+                    button.innerHTML = originalText;
+                    button.disabled = false;
                 });
+            @else
+                alert('Vui lòng tạo hóa đơn trước khi thêm sản phẩm');
             @endif
         }
 
@@ -1063,6 +1914,11 @@
         function addComboToBill(comboId, quantity = null) {
             @if ($table->currentBill)
                 const finalQuantity = quantity || getQuantity('.combo-quantity', comboId);
+                const button = event.target;
+                const originalText = button.innerHTML;
+
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                button.disabled = true;
 
                 fetch('{{ route('bills.add-combo', $table->currentBill->id) }}', {
                     method: 'POST',
@@ -1079,39 +1935,18 @@
                         location.reload();
                     } else {
                         alert('Có lỗi xảy ra khi thêm combo');
+                        button.innerHTML = originalText;
+                        button.disabled = false;
                     }
                 }).catch(error => {
                     console.error('Error:', error);
                     alert('Có lỗi xảy ra khi thêm combo');
+                    button.innerHTML = originalText;
+                    button.disabled = false;
                 });
+            @else
+                alert('Vui lòng tạo hóa đơn trước khi thêm combo');
             @endif
-        }
-
-        // Add quick product (for new bill)
-        function addQuickProduct(productId, quantity = null) {
-            const finalQuantity = quantity || getQuantity('.quick-product-quantity', productId);
-
-            fetch('{{ route('bills.quick-create') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    table_id: {{ $table->id }},
-                    product_id: productId,
-                    quantity: finalQuantity
-                })
-            }).then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    alert('Có lỗi xảy ra khi tạo bàn lẻ');
-                }
-            }).catch(error => {
-                console.error('Error:', error);
-                alert('Có lỗi xảy ra khi tạo bàn lẻ');
-            });
         }
 
         // Event listeners for buttons
@@ -1132,14 +1967,6 @@
                 });
             });
 
-            // Quick product buttons
-            document.querySelectorAll('.add-quick-product-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const productId = this.getAttribute('data-product-id');
-                    addQuickProduct(productId);
-                });
-            });
-
             // Render từ dữ liệu server ban đầu
             renderFromServer();
 
@@ -1151,8 +1978,19 @@
             // Auto update bill total every 30 seconds
             setInterval(updateBillTotal, 30000);
 
-            // Setup search functionality
+            // Setup tabs and search functionality
+            setupTabs();
             setupSearch();
+            setupQuantityControls();
+
+            // Close modals when clicking outside
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.style.display = 'none';
+                    }
+                });
+            });
         });
 
         window.addEventListener('beforeunload', function() {
@@ -1160,5 +1998,61 @@
                 clearInterval(refreshInterval);
             }
         });
+
+        // Tab functionality for list layout
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const productsList = document.getElementById('productsList');
+            const combosList = document.getElementById('combosList');
+            const searchBox = document.getElementById('productSearch');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+
+                    // Show/hide lists
+                    const tabName = tab.getAttribute('data-tab');
+                    if (tabName === 'products') {
+                        productsList.style.display = 'block';
+                        combosList.style.display = 'none';
+                        searchBox.placeholder = 'Tìm kiếm sản phẩm...';
+                    } else {
+                        productsList.style.display = 'none';
+                        combosList.style.display = 'block';
+                        searchBox.placeholder = 'Tìm kiếm combo...';
+                    }
+
+                    // Reset search
+                    searchBox.value = '';
+                    filterProducts(searchBox.value);
+                });
+            });
+        }
+
+        // Search functionality for list layout
+        function filterProducts(searchTerm) {
+            const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+            const list = activeTab === 'products' ?
+                document.getElementById('productsList') :
+                document.getElementById('combosList');
+
+            const rows = list.querySelectorAll('tbody tr');
+            const term = searchTerm.toLowerCase();
+
+            rows.forEach(row => {
+                const name = row.querySelector('.font-medium').textContent.toLowerCase();
+                if (name.includes(term)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
     </script>
-@endsection
+</body>
+
+</html>
