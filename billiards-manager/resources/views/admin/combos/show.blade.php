@@ -79,11 +79,11 @@
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <h4 class="font-medium text-gray-900 truncate">
-    {{ $item->product?->name ?? 'Sản phẩm đã bị xóa' }}
-</h4>
-<p class="text-xs text-gray-500 mt-0.5">
-    {{ $item->product?->product_code ?? 'N/A' }}
-</p>
+                                        {{ $item->product?->name ?? 'Sản phẩm đã bị xóa' }}
+                                    </h4>
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        {{ $item->product?->product_code ?? 'N/A' }}
+                                    </p>
                                 </div>
                             </div>
                             <div class="text-right ml-4">
@@ -179,18 +179,23 @@
                     </h3>
                     <div class="space-y-3">
                         <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
-                            <label class="text-xs text-purple-700 font-medium uppercase tracking-wider">Loại bàn</label>
+                            <label class="text-xs text-purple-700 font-medium uppercase tracking-wider">Bảng giá áp dụng</label>
                             <p class="mt-1 text-sm font-semibold text-gray-900">
-                                <i class="fas fa-table text-purple-600 mr-2"></i>{{ $combo->tableCategory?->name ?? 'Tất cả' }}
+                                <i class="fas fa-receipt text-purple-600 mr-2"></i>{{ $combo->tableRate?->name ?? 'Chưa thiết lập' }}
                             </p>
+                            @if($combo->tableRate)
+                                <p class="text-xs text-gray-600 mt-1">
+                                    Mã: {{ $combo->tableRate->code }} | {{ number_format($combo->tableRate->hourly_rate) }}đ/giờ
+                                </p>
+                            @endif
                         </div>
                         <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
                             <label class="text-xs text-purple-700 font-medium uppercase tracking-wider">Thời gian chơi</label>
                             <p class="mt-1 text-sm font-semibold text-gray-900">
-                                <i class="fas fa-hourglass-half text-purple-600 mr-2"></i>{{ $combo->play_duration_minutes }} phút
+                                <i class="fas fa-hourglass-half text-purple-600 mr-2"></i>{{ $combo->getFormattedDuration() }}
                             </p>
                         </div>
-                        @if($combo->is_time_combo && $combo->getTablePrice() > 0)
+                        @if($combo->getTablePrice() > 0)
                             <div class="bg-purple-50 rounded-lg p-3 border border-purple-200">
                                 <label class="text-xs text-purple-700 font-medium uppercase tracking-wider">Giá bàn</label>
                                 <p class="mt-1 text-base font-bold text-purple-600">

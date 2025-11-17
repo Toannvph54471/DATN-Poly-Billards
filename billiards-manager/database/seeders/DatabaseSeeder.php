@@ -29,7 +29,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategoriesTableSeeder::class,    // (7)
             TableRatesTableSeeder::class,    // (8) cần tạo thêm
-
             TablesTableSeeder::class,        // (10) cần tạo thêm
             ProductsTableSeeder::class,      // (11)
             CombosTableSeeder::class,        // (12) cần tạo thêm

@@ -1,3 +1,4 @@
+{{-- resources/views/admin/combos/edit.blade.php --}}
 @extends('admin.layouts.app')
 
 @section('title', 'Chỉnh sửa Combo')
@@ -137,17 +138,17 @@
                     <div id="time-combo-fields" class="{{ old('is_time_combo', $combo->is_time_combo) ? '' : 'hidden' }} bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-lg p-5 space-y-5">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
-                                <label for="table_category_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Loại bàn <span class="text-red-500">*</span>
+                                <label for="table_rate_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Chọn bàn <span class="text-red-500">*</span>
                                 </label>
-                                <select name="table_category_id" id="table_category_id"
+                                <select name="table_rate_id" id="table_rate_id"
                                         class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white transition">
-                                    <option value="">-- Chọn loại bàn --</option>
-                                    @foreach($tableCategories as $category)
-                                        <option value="{{ $category->id }}"
-                                                data-hourly-rate="{{ $category->hourly_rate }}"
-                                                {{ old('table_category_id', $combo->table_category_id) == $category->id ? 'selected' : '' }}>
-                                            {{ $category->name }} - {{ number_format($category->hourly_rate) }}đ/giờ
+                                    <option value="">-- Chọn bàn --</option>
+                                    @foreach($tableRates as $rate)
+                                        <option value="{{ $rate->id }}"
+                                                data-hourly-rate="{{ $rate->hourly_rate }}"
+                                                {{ old('table_rate_id', $combo->table_rate_id ?? $combo->table_category_id) == $rate->id ? 'selected' : '' }}>
+                                            {{ $rate->name }} - {{ number_format($rate->hourly_rate) }}đ/giờ
                                         </option>
                                     @endforeach
                                 </select>
@@ -155,7 +156,7 @@
 
                             <div>
                                 <label for="play_duration_minutes" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Thời gian chơi <span class="text-red-500">*</span>
+                                    Thời gian chơi (phút) <span class="text-red-500">*</span>
                                 </label>
                                 <div class="relative">
                                     <input type="number" name="play_duration_minutes" id="play_duration_minutes"
@@ -164,6 +165,7 @@
                                            class="w-full px-4 py-2.5 pr-16 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white transition">
                                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">phút</span>
                                 </div>
+                                <p class="text-xs text-gray-500 mt-1">Tối thiểu 15 phút, bội số của 15</p>
                             </div>
                         </div>
 
@@ -374,7 +376,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const isTimeCombo = document.getElementById('is_time_combo');
     const timeFields = document.getElementById('time-combo-fields');
-    const tableCategorySelect = document.getElementById('table_category_id');
+    const tableRateSelect = document.getElementById('table_rate_id');
     const playDurationInput = document.getElementById('play_duration_minutes');
     const container = document.getElementById('products-container');
     const addBtn = document.getElementById('add-product-btn');
@@ -390,8 +392,8 @@ document.addEventListener('DOMContentLoaded', function() {
         calc();
     });
 
-    // Category change
-    tableCategorySelect.addEventListener('change', calculateTablePrice);
+    // Table rate & duration change
+    tableRateSelect.addEventListener('change', calculateTablePrice);
     playDurationInput.addEventListener('input', function() {
         calculateTablePrice();
         updateDurationDisplay();
@@ -403,12 +405,10 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateTablePrice();
         updateDurationDisplay();
         
-        // Highlight active button
         document.querySelectorAll('.quick-duration-btn').forEach(btn => {
             btn.classList.remove('bg-purple-500', 'text-white', 'border-purple-500');
             btn.classList.add('bg-white', 'text-gray-700', 'border-purple-300');
         });
-        event.target.classList.remove('bg-white', 'text-gray-700', 'border-purple-300');
         event.target.classList.add('bg-purple-500', 'text-white', 'border-purple-500');
     };
 
@@ -416,34 +416,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const minutes = parseInt(playDurationInput.value) || 0;
         const hours = minutes / 60;
         let display = '';
-        
         if (hours >= 1) {
-            const fullHours = Math.floor(hours);
-            const remainMinutes = minutes % 60;
-            if (remainMinutes > 0) {
-                display = `${fullHours}h ${remainMinutes}p`;
-            } else {
-                display = `${fullHours} giờ`;
-            }
+            const full = Math.floor(hours);
+            const remain = minutes % 60;
+            display = remain > 0 ? `${full}h ${remain}p` : `${full} giờ`;
         } else {
             display = `${minutes} phút`;
         }
-        
         document.getElementById('duration-display').textContent = display;
     }
 
     function calculateTablePrice() {
-        const selectedOption = tableCategorySelect.options[tableCategorySelect.selectedIndex];
-        const hourlyRate = parseFloat(selectedOption.dataset.hourlyRate) || 0;
+        const selected = tableRateSelect.options[tableRateSelect.selectedIndex];
+        const hourlyRate = parseFloat(selected?.dataset.hourlyRate) || 0;
         const minutes = parseInt(playDurationInput.value) || 0;
         
-        const tablePriceRaw = (hourlyRate * minutes) / 60;
-        const tablePrice = Math.ceil(tablePriceRaw / 1000) * 1000;
+        const raw = (hourlyRate * minutes) / 60;
+        const tablePrice = Math.ceil(raw / 1000) * 1000;
 
-        document.getElementById('hourly-rate-display').textContent = 
-            new Intl.NumberFormat('vi-VN').format(hourlyRate) + 'đ/giờ';
-        document.getElementById('table-price-display').textContent = 
-            new Intl.NumberFormat('vi-VN').format(tablePrice) + 'đ';
+        document.getElementById('hourly-rate-display').textContent = new Intl.NumberFormat('vi-VN').format(hourlyRate) + 'đ/giờ';
+        document.getElementById('table-price-display').textContent = new Intl.NumberFormat('vi-VN').format(tablePrice) + 'đ';
         
         updateDurationDisplay();
         calc();
@@ -458,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center shadow-sm">
                     <i class="fas fa-box text-green-600"></i>
                 </div>
-                <select name="combo_items[${count}][product_id]" class="product-select flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition" required>
+                <select name="combo_items[${count}][product_id]" class="product-select flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 transition" required>
                     <option value="">-- Chọn sản phẩm --</option>
                     @foreach($products as $product)
                         <option value="{{ $product->id }}" data-price="{{ $product->price }}">
@@ -468,9 +460,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 </select>
                 <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
                     <label class="text-sm text-gray-600 whitespace-nowrap font-medium">SL:</label>
-                    <input type="number" name="combo_items[${count}][quantity]" class="quantity-input w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-center transition" value="1" min="1" max="999" required>
+                    <input type="number" name="combo_items[${count}][quantity]" class="quantity-input w-20 px-3 py-2 border border-gray-300 rounded-lg text-center transition" value="1" min="1" required>
                 </div>
-                <button type="button" class="remove-product-btn w-10 h-10 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition flex-shrink-0">
+                <button type="button" class="remove-product-btn w-10 h-10 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -485,21 +477,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function removeHandler() {
         if (container.children.length <= 1) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Không thể xóa',
-                text: 'Combo phải có ít nhất 1 sản phẩm',
-                confirmButtonColor: '#3b82f6'
-            });
+            Swal.fire({icon: 'warning', title: 'Không thể xóa', text: 'Phải có ít nhất 1 sản phẩm', confirmButtonColor: '#3b82f6'});
             return;
         }
         this.closest('.product-item').remove();
         calc();
     }
 
-    document.querySelectorAll('.remove-product-btn').forEach(btn => {
-        btn.addEventListener('click', removeHandler);
-    });
+    document.querySelectorAll('.remove-product-btn').forEach(btn => btn.addEventListener('click', removeHandler));
 
     function calc() {
         let productsTotal = 0;
@@ -512,33 +497,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let tablePrice = 0;
         if (isTimeCombo.checked) {
-            const selectedOption = tableCategorySelect.options[tableCategorySelect.selectedIndex];
-            const hourlyRate = parseFloat(selectedOption.dataset.hourlyRate) || 0;
+            const selected = tableRateSelect.options[tableRateSelect.selectedIndex];
+            const hourlyRate = parseFloat(selected?.dataset.hourlyRate) || 0;
             const minutes = parseInt(playDurationInput.value) || 0;
-            
-            const tablePriceRaw = (hourlyRate * minutes) / 60;
-            tablePrice = Math.ceil(tablePriceRaw / 1000) * 1000;
+            tablePrice = Math.ceil((hourlyRate * minutes / 60) / 1000) * 1000;
         }
 
-        const actualValueRaw = productsTotal + tablePrice;
-        const actualValue = Math.ceil(actualValueRaw / 1000) * 1000;
-        
+        const actualValue = Math.ceil((productsTotal + tablePrice) / 1000) * 1000;
         const salePrice = parseFloat(priceInput.value) || 0;
         const discount = Math.max(0, actualValue - salePrice);
         const percent = actualValue > 0 ? Math.round((discount / actualValue) * 100) : 0;
 
-        document.getElementById('products_total_display').textContent = 
-            new Intl.NumberFormat('vi-VN').format(productsTotal) + 'đ';
-        document.getElementById('table_price_display').textContent = 
-            new Intl.NumberFormat('vi-VN').format(tablePrice) + 'đ';
-        document.getElementById('actual_value_display').textContent = 
-            new Intl.NumberFormat('vi-VN').format(actualValue) + 'đ';
-        document.getElementById('price_display').textContent = 
-            new Intl.NumberFormat('vi-VN').format(salePrice) + 'đ';
-        document.getElementById('discount_display').textContent = 
-            new Intl.NumberFormat('vi-VN').format(discount) + 'đ';
-        document.getElementById('discount_percent_display').textContent = 
-            '(' + percent + '%)';
+        document.getElementById('products_total_display').textContent = new Intl.NumberFormat('vi-VN').format(productsTotal) + 'đ';
+        document.getElementById('table_price_display').textContent = new Intl.NumberFormat('vi-VN').format(tablePrice) + 'đ';
+        document.getElementById('actual_value_display').textContent = new Intl.NumberFormat('vi-VN').format(actualValue) + 'đ';
+        document.getElementById('price_display').textContent = new Intl.NumberFormat('vi-VN').format(salePrice) + 'đ';
+        document.getElementById('discount_display').textContent = new Intl.NumberFormat('vi-VN').format(discount) + 'đ';
+        document.getElementById('discount_percent_display').textContent = '(' + percent + '%)';
     }
 
     document.querySelectorAll('.product-select, .quantity-input, #price').forEach(el => {
@@ -546,13 +521,12 @@ document.addEventListener('DOMContentLoaded', function() {
         el.addEventListener('change', calc);
     });
 
-    // Initialize
-    if (tableCategorySelect.value) {
+    // Init
+    if (isTimeCombo.checked && tableRateSelect.value) {
         calculateTablePrice();
     } else {
         calc();
     }
-    
     updateDurationDisplay();
 });
 </script>

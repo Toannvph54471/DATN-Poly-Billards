@@ -119,7 +119,8 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="p-4 space-y-1">
+            <nav class="p-4 space-y-1"
+                style="height: 100vh; overflow-y: auto; position: fixed; padding-bottom: 150px;scrollbar-gutter: stable;box-sizing: border-box;padding-right: 0px; width: 260px;">
                 <a href=""
                     class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-chart-pie w-6 mr-3"></i>
@@ -129,25 +130,30 @@
                 <a href="{{ route('admin.tables.index') }}"
                     class="nav-item {{ request()->routeIs('tables.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fa-solid fa-table w-6 mr-3"></i>
-                    <span class="font-medium">Bàn Billards</span>
+                    <span class="font-medium">Quản lý bàn</span>
                 </a>
-
-                <a href=""
-                    class="nav-item {{ request()->routeIs('products.*') ? 'active' : '' }} flex items-center p-3">
-                    <i class="fas fa-boxes w-6 mr-3"></i>
-                    <span class="font-medium">Hàng hóa</span>
+                <a href="{{ route('admin.table_rates.index') }}"
+                    class="nav-item {{ request()->routeIs('tables.*') ? 'active' : '' }} flex items-center p-3">
+                    <i class="fa-solid fa-table w-6 mr-3"></i>
+                    <span class="font-medium">Quản lý loại bàn</span>
                 </a>
 
                 <a href="{{ route('admin.users.index') }}"
                     class="nav-item {{ request()->routeIs('customers.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-users w-6 mr-3"></i>
-                    <span class="font-medium">Khách hàng</span>
+                    <span class="font-medium">Quản lý người dùng</span>
+                </a>
+
+                <a href="{{ route('admin.customers.index') }}"
+                    class="nav-item {{ request()->routeIs('admin.customers.*') ? 'active' : '' }} flex items-center p-3">
+                    <i class="fas fa-users w-6 mr-3"></i>
+                    <span class="font-medium">Quản lý khách hàng</span>
                 </a>
 
                 <a href="{{ route('admin.employees.index') }}"
                     class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }} flex items-center px-4 py-3 text-white hover:text-white">
                     <i class="fas fa-user-tie mr-3"></i>
-                    Nhân viên
+                    Quản lý nhân viên
                 </a>
 
                 <a href=""
@@ -159,38 +165,31 @@
                 <a href="{{ route('admin.combos.index') }}"
                     class="nav-item {{ request()->routeIs('combos.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-layer-group w-6 mr-3"></i>
-                    <span class="font-medium">Combos Bàn</span>
+                    <span class="font-medium">Quản lý Combos</span>
                 </a>
                 <a href="{{ route('admin.products.index') }}"
                     class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-cubes text-white text-lg w-6 mr-3"></i>
-                    <span class="font-medium">Sản phẩm</span>
+                    <span class="font-medium">Quản lý sản phẩm</span>
                 </a>
                 <a href="{{ route('admin.promotions.index') }}"
                     class="nav-item {{ request()->routeIs('promotions.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-tag w-6 mr-3"></i>
-                    <span class="font-medium">Khuyến mại</span>
+                    <span class="font-medium">Quản lý khuyến mại</span>
                 </a>
-               
+
                 <a href="{{ route('admin.roles.index') }}"
                     class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-user-tag mr-3 w-5 text-center text-white"></i>
                     <span class="font-medium">Vai Trò</span>
                 </a>
-            </nav>
 
-            <!-- Store Info -->
-            <div class="absolute bottom-0 left-0 p-4">
-                <div class="flex items-center space-x-2">
-                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                        <i class="fas fa-store text-white"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium">Cửa hàng chính</p>
-                        <p class="text-blue-200 text-xs">Đang hoạt động</p>
-                    </div>
-                </div>
-            </div>
+                <a href=""
+                    class="nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }} flex items-center p-3">
+                    <i class="fas fa-tag w-6 mr-3"></i>
+                    <span class="font-medium">Quản lý danh mục</span>
+                </a>
+            </nav>
         </div>
 
         <!-- Main Content -->

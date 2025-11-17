@@ -449,7 +449,8 @@ class BillController extends Controller
                 'start_time' => now(),
                 'status' => Bill::STATUS_OPEN,
                 'total_amount' => 0,
-                'final_amount' => 0,
+                'discount_amount' => 0,
+                'final_amount' => 0
             ]);
 
             // Create time usage

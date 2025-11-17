@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class Bill extends BaseModel
 {
     const STATUS_OPEN = 'open';
@@ -11,9 +13,9 @@ class Bill extends BaseModel
 
     protected $fillable = [
         'bill_number',
-        'customer_id',
-        'reservation_id',
         'table_id',
+        'user_id',
+        'reservation_id',
         'staff_id',
         'start_time',
         'end_time',
@@ -29,7 +31,9 @@ class Bill extends BaseModel
         'created_by',
         'updated_by',
         'paused_duration',
+        'note'
     ];
+
 
     protected $casts = [
         'start_time' => 'datetime',
@@ -43,11 +47,12 @@ class Bill extends BaseModel
         'paused_duration' => 'integer',
     ];
 
-    // Relationships
-    public function customer()
+
+    public function timeUsages()
     {
         return $this->belongsTo(User::class, 'customer_id');
     }
+
 
     public function table()
     {
@@ -69,7 +74,7 @@ class Bill extends BaseModel
         return $this->hasMany(BillDetail::class);
     }
 
-    public function billTimeUsages()
+    public function billTimeUsages(): HasMany
     {
         return $this->hasMany(BillTimeUsage::class);
     }
@@ -101,9 +106,9 @@ class Bill extends BaseModel
         return $query->where('is_paid', false);
     }
 
-    public function scopeToday($query)
+    public function scopePending($query)
     {
-        return $query->whereDate('created_at', today());
+        return $query->where('payment_status', 'Pending');
     }
 
     public function scopeClosed($query)
@@ -154,7 +159,11 @@ class Bill extends BaseModel
         if (!$this->start_time || !$this->end_time) {
             return 0;
         }
-        return $this->start_time->diffInMinutes($this->end_time);
+
+        // Pause active combo time usages
+        $this->activeComboTimeUsages->each->pause();
+
+        return true;
     }
 
     public function getTotalTimeAttribute(): int

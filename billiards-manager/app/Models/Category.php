@@ -8,7 +8,8 @@ class Category extends Model
 {
     protected $fillable = [
         'name',
-        'type', // 'product' | 'table'
+        'type', // 'product' or 'table'
+        'rate_code', // Mã bảng giá
         'description',
         'status',
     ];
@@ -22,6 +23,14 @@ class Category extends Model
     public function tables()
     {
         return $this->hasMany(Table::class);
+    }
+
+    /**
+     * Quan hệ với TableRate
+     */
+    public function tableRate()
+    {
+        return $this->belongsTo(TableRate::class, 'rate_code', 'code');
     }
 
     // Scopes
@@ -45,5 +54,10 @@ class Category extends Model
         return $this->tables()
             ->where('status', 'available')
             ->count();
+    }
+
+    public function getHourlyRateAttribute()
+    {
+        return $this->tableRate ? $this->tableRate->hourly_rate : 0;
     }
 }
