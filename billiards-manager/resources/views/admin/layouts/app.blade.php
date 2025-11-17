@@ -119,7 +119,8 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="p-4 space-y-1" style="height: 100vh; overflow-y: auto; position: fixed; padding-bottom: 150px;scrollbar-gutter: stable;box-sizing: border-box;padding-right: 0px; width: 260px;">
+            <nav class="p-4 space-y-1"
+                style="height: 100vh; overflow-y: auto; position: fixed; padding-bottom: 150px;scrollbar-gutter: stable;box-sizing: border-box;padding-right: 0px; width: 260px;">
                 <a href=""
                     class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-chart-pie w-6 mr-3"></i>
@@ -143,11 +144,11 @@
                     <span class="font-medium">Quản lý người dùng</span>
                 </a>
 
-               <a href="{{ route('admin.customers.index') }}"
+                <a href="{{ route('admin.customers.index') }}"
                     class="nav-item {{ request()->routeIs('admin.customers.*') ? 'active' : '' }} flex items-center p-3">
-                     <i class="fas fa-users w-6 mr-3"></i>
-                     <span class="font-medium">Quản lý khách hàng</span>
-               </a>
+                    <i class="fas fa-users w-6 mr-3"></i>
+                    <span class="font-medium">Quản lý khách hàng</span>
+                </a>
 
                 <a href="{{ route('admin.employees.index') }}"
                     class="nav-item {{ request()->routeIs('employees.*') ? 'active' : '' }} flex items-center px-4 py-3 text-white hover:text-white">
@@ -176,11 +177,17 @@
                     <i class="fas fa-tag w-6 mr-3"></i>
                     <span class="font-medium">Quản lý khuyến mại</span>
                 </a>
-               
+
                 <a href="{{ route('admin.roles.index') }}"
                     class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center p-3">
                     <i class="fas fa-user-tag mr-3 w-5 text-center text-white"></i>
                     <span class="font-medium">Vai Trò</span>
+                </a>
+
+                <a href="{{ route('admin.categories.index') }}"
+                    class="nav-item {{ request()->routeIs('categories.*') ? 'active' : '' }} flex items-center p-3">
+                    <i class="fas fa-tag w-6 mr-3"></i>
+                    <span class="font-medium">Quản lý danh mục</span>
                 </a>
             </nav>
         </div>
