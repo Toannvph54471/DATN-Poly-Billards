@@ -27,7 +27,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Api\ComboTimeController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FaqController;
@@ -127,6 +126,19 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/table_rates/{id}/restore', [TableRateController::class, 'restore'])->name('admin.table_rates.restore');
     Route::delete('/table_rates/{id}/force-delete', [TableRateController::class, 'forceDelete'])->name('admin.table_rates.forceDelete');
 
+    // Table_rates
+    Route::get('/table_rates', [TableRateController::class, 'index'])->name('admin.table_rates.index');
+    Route::get('/table_rates/create', [TableRateController::class, 'create'])->name('admin.table_rates.create');
+    Route::post('/table_rates', [TableRateController::class, 'store'])->name('admin.table_rates.store');
+    Route::get('/table_rates/{id}/edit', [TableRateController::class, 'edit'])->name('admin.table_rates.edit');
+    Route::put('/table_rates/{id}', [TableRateController::class, 'update'])->name('admin.table_rates.update');
+    Route::delete('/table_rates/{id}', [TableRateController::class, 'destroy'])->name('admin.table_rates.destroy');
+
+    // Bảng giá đã xóa
+    Route::get('/table_rates/trashed', [TableRateController::class, 'trashed'])->name('admin.table_rates.trashed');
+    Route::post('/table_rates/{id}/restore', [TableRateController::class, 'restore'])->name('admin.table_rates.restore');
+    Route::delete('/table_rates/{id}/force-delete', [TableRateController::class, 'forceDelete'])->name('admin.table_rates.forceDelete');
+
     // Detail Table
     Route::get('/tables/{id}/detail', [TableController::class, 'showDetail'])->name('admin.tables.detail');
     Route::post('/bills/create', [BillController::class, 'createBill'])->name('bills.create');
@@ -203,8 +215,4 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/combos-api/rates-by-category', [ComboController::class, 'getTableRatesByCategory'])->name('admin.combos.rates-by-category');
     Route::post('/combos-api/preview-price', [ComboController::class, 'previewComboPrice'])->name('admin.combos.preview-price');
     Route::get('/combos-api/calculate-table-price', [ComboController::class, 'calculateTablePriceAPI'])->name('admin.combos.calculate-table-price');
-
-    // Category Routes
-    Route::resource('categories', CategoryController::class, ['as' => 'admin']);
 });
-

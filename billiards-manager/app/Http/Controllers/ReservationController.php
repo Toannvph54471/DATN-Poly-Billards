@@ -8,224 +8,478 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Reservation;
 use App\Models\Table;
+use App\Models\Payment;
+use App\Models\Role;
+use App\Models\User;
 use Carbon\Carbon;
 
 class ReservationController extends Controller
 {
-    public function index()
-    {
-        $reservations = Auth::user()->reservations()->latest()->get();
-        // Giả sử bạn có quan hệ: User hasMany Reservation
-        return view('client.reservation.index', compact('reservations'));
-    }
-
+    /**
+     * STEP 1: Customer view reservation form
+     */
     public function create()
     {
-        $tables = Table::available()->get();
+        $tables = Table::with('category')
+            ->where('status', Table::STATUS_AVAILABLE)
+            ->get()
+            ->groupBy('category.name');
+
         return view('client.reservation.create', compact('tables'));
     }
 
-public function store(Request $request)
-{
-    // ... (Validation giữ nguyên) ...
-    $validated = $request->validate([
-        'table_id' => 'required|integer|exists:tables,id',
-        'reservation_time' => 'required|string', // "YYYY-MM-DD HH:mm"
-        'duration' => 'required|integer|min:30',
-        'guest_count' => 'required|integer|min:1',
-        'customer_name' => 'required|string|max:255',
-        'customer_phone' => 'required|string|max:30', // Key chính
-        'customer_email' => 'nullable|email|max:255',
-        'note' => 'nullable|string|max:1000',
-    ]);
-
-    // Lấy Role 'Customer'
-    $customer_role_id = \App\Models\Role::where('slug', 'customer')->value('id');
-    if (!$customer_role_id) {
-        // Xử lý lỗi nếu không tìm thấy Role Customer
-        return response()->json(['message' => 'Lỗi cấu hình hệ thống: Không tìm thấy vai trò "Customer".'], 500);
-    }
-    
-    $customer_id = null;
-
-    DB::beginTransaction();
-    try {
-        if (Auth::check()) {
-            // ----- TRƯỜNG HỢP 1: KHÁCH ĐÃ ĐĂNG NHẬP -----
-            $customer_id = Auth::id();
-            $user = Auth::user();
-            
-            // (Tùy chọn) Cập nhật SĐT/Tên nếu họ sửa trên form
-            $user->update([
-                'name' => $validated['customer_name'],
-                'phone' => $validated['customer_phone']
-            ]);
-
-        } else {
-            // ----- TRƯỜNG HỢP 2: KHÁCH VÃNG LAI -----
-            // Tìm bằng SĐT, nếu không có thì tạo mới
-            $user = \App\Models\User::firstOrCreate(
-                ['phone' => $validated['customer_phone']], // Điều kiện tìm kiếm
-                [
-                    // Dữ liệu để tạo mới nếu không tìm thấy
-                    'name' => $validated['customer_name'],
-                    'email' => $validated['customer_email'],
-                    'role_id' => $customer_role_id,
-                    'password' => null // Khách vãng lai không có mật khẩu
-                ]
-            );
-            $customer_id = $user->id;
-        }
-
-        // ... (Logic tạo $start, $end, $reservationCode giữ nguyên) ...
-        $start = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $validated['reservation_time']);
-        $end = (clone $start)->addMinutes($validated['duration']);
-        $reservationCode = 'RSV' . now()->format('Ymd') . '-' . rand(100, 999);
-
-        $res = Reservation::create([
-            'customer_id' => $customer_id, // <-- ĐÃ SỬA
-            'table_id' => $validated['table_id'],
-            'reservation_time' => $start->format('Y-m-d H:i:s'),
-            'end_time' => $end->format('Y-m-d H:i:s'), // <-- THÊM MỚI
-            'duration' => $validated['duration'],
-            'guest_count' => $validated['guest_count'],
-            'note' => $validated['note'] ?? null,
-            'status' => 'pending',
-            'reservation_code' => $reservationCode,
-            'created_by' => Auth::check() ? Auth::id() : null, // Gán người tạo nếu đăng nhập
+    /**
+     * STEP 2: Check table availability
+     * ✅ FIXED: Sửa logic query conflicting reservations
+     */
+    public function checkAvailability(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => 'required|date|after_or_equal:today',
+            'time' => 'required',
+            'duration' => 'required|integer|min:30|max:480',
+            'guest_count' => 'nullable|integer|min:1',
+            'category_id' => 'nullable|exists:categories,id',
         ]);
 
-        DB::commit();
+        $start = Carbon::createFromFormat('Y-m-d H:i', $validated['date'] . ' ' . $validated['time']);
+        $end = $start->copy()->addMinutes($validated['duration']);
+
+        // Tính end_time động từ reservation_time + duration
+        $conflictingTableIds = Reservation::whereRaw(
+            "DATE_ADD(reservation_time, INTERVAL duration MINUTE) > ? AND reservation_time < ?",
+            [$start, $end]
+        )
+            ->whereIn('status', [
+                Reservation::STATUS_PENDING,
+                Reservation::STATUS_CONFIRMED,
+                Reservation::STATUS_CHECKED_IN
+            ])
+            ->pluck('table_id')
+            ->toArray();
+
+        $query = Table::with(['category'])
+            ->where('status', Table::STATUS_AVAILABLE)
+            ->whereNotIn('id', $conflictingTableIds);
+
+        if ($validated['guest_count'] ?? null) {
+            $query->where('capacity', '>=', $validated['guest_count']);
+        }
+
+        if ($validated['category_id'] ?? null) {
+            $query->where('category_id', $validated['category_id']);
+        }
+
+        $tables = $query->get()->map(function ($table) use ($validated) {
+            $price = $table->calculatePrice($validated['duration']);
+            return [
+                'id' => $table->id,
+                'table_name' => $table->table_name,
+                'table_number' => $table->table_number,
+                'category' => $table->category->name ?? 'Standard',
+                'capacity' => $table->capacity ?? 4,
+                'type' => $table->type,
+                'hourly_rate' => $table->getHourlyRate(),
+                'total_price' => $price,
+                'total_price_formatted' => number_format($price) . 'đ',
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'reservation_code' => $reservationCode,
-            'data' => $res
-        ], 201);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Reservation store error: ' . $e->getMessage(), [
-            'trace' => $e->getTraceAsString(),
-            'input' => $request->all()
+            'tables' => $tables,
+            'duration' => $validated['duration'],
         ]);
-        return response()->json(['message' => 'Lỗi server khi lưu đặt bàn'], 500);
     }
-}
 
+    /**
+     * STEP 3: Create reservation
+     * ✅ SỬA: Tạo reservation trước, payment sau
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'table_id' => 'required|exists:tables,id',
+            'reservation_time' => 'required|date|after:now',
+            'duration' => 'required|integer|min:30|max:480',
+            'guest_count' => 'required|integer|min:1',
+            'customer_name' => 'required|string|max:255',
+            'customer_phone' => 'required|string|max:20',
+            'customer_email' => 'nullable|email|max:255',
+            'note' => 'nullable|string|max:1000',
+            'payment_type' => 'required|in:online,onsite',
+        ]);
 
+        DB::beginTransaction();
+        try {
+            // Find or create customer
+            $customer = $this->findOrCreateCustomer($validated);
+
+            // Parse time
+            $start = Carbon::parse($validated['reservation_time']);
+            $end = $start->copy()->addMinutes($validated['duration']);
+
+            // Tính tiền bàn
+            $table = Table::findOrFail($validated['table_id']);
+            $totalAmount = $table->calculatePrice($validated['duration']);
+
+            // ✅ SỬA: Deposit = 0 cho cả online và onsite
+            // Khách sẽ thanh toán sau
+            $depositAmount = 0;
+
+            // Create reservation
+            $reservation = Reservation::create([
+                'customer_id' => $customer->id,
+                'customer_name' => $validated['customer_name'],
+                'customer_phone' => $validated['customer_phone'],
+                'customer_email' => $validated['customer_email'] ?? null,
+                'table_id' => $validated['table_id'],
+                'reservation_time' => $start,
+                'end_time' => $end,
+                'duration' => $validated['duration'],
+                'guest_count' => $validated['guest_count'],
+                'note' => $validated['note'] ?? null,
+                'payment_type' => $validated['payment_type'],
+                'total_amount' => $totalAmount,
+                'deposit_amount' => $depositAmount,
+                'status' => Reservation::STATUS_PENDING, // ✅ Luôn pending ban đầu
+                'payment_status' => Reservation::PAYMENT_PENDING,
+                'created_by' => Auth::id(),
+            ]);
+
+            DB::commit();
+
+            // ✅ QUAN TRỌNG: Không redirect đến payment ngay
+            // Trả về thông tin reservation để hiển thị modal
+            return response()->json([
+                'success' => true,
+                'message' => 'Đặt bàn thành công!',
+                'reservation_code' => $reservation->reservation_code,
+                'reservation_id' => $reservation->id,
+                'payment_type' => $validated['payment_type'],
+                'total_amount' => $totalAmount,
+                'reservation' => $reservation->load('table'),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Reservation error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * STEP 4: Payment page
+     * ✅ Cho phép thanh toán sau khi đã có reservation
+     */
+    public function showPayment($id)
+    {
+        $reservation = Reservation::with('table')->findOrFail($id);
+
+        // ✅ Cho phép xem trang payment nếu chưa thanh toán
+        if ($reservation->payment_status === Reservation::PAYMENT_PAID) {
+            return redirect()
+                ->route('reservations.show', $reservation->id)
+                ->with('info', 'Đặt bàn này đã được thanh toán');
+        }
+
+        // ✅ Kiểm tra quyền truy cập
+        if (Auth::check() && $reservation->customer_id !== Auth::id()) {
+            return redirect()
+                ->route('reservations.track')
+                ->with('error', 'Bạn không có quyền truy cập đặt bàn này');
+        }
+
+        return view('client.reservation.payment', compact('reservation'));
+    }
+
+    /**
+     * STEP 5: Process payment
+     */
+    public function processPayment(Request $request, $id)
+    {
+        $request->validate([
+            'payment_method' => 'required|in:vnpay,momo,zalopay,mock',
+        ]);
+
+        $reservation = Reservation::findOrFail($id);
+
+        if ($reservation->payment_status === Reservation::PAYMENT_PAID) {
+            return back()->with('error', 'Đặt bàn này đã được thanh toán');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Tạo payment record
+            $payment = $reservation->payments()->create([
+                'amount' => $reservation->total_amount,
+                'currency' => 'VND',
+                'payment_method' => $request->payment_method,
+                'payment_type' => Payment::TYPE_FULL,
+                'status' => Payment::STATUS_PENDING,
+                'transaction_id' => 'RSV-' . $reservation->id . '-' . time(),
+            ]);
+
+            DB::commit();
+
+            // Redirect đến mock payment form
+            $paymentUrl = route('mock.payment.form', ['payment' => $payment->id]);
+
+            return redirect($paymentUrl);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Payment creation error: ' . $e->getMessage());
+            return back()->with('error', 'Không thể tạo thanh toán: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * STEP 7: Customer check-in
+     */
+    public function checkin(Request $request, $id)
+    {
+        $reservation = Reservation::with('table')->findOrFail($id);
+
+        if (!$reservation->canCheckIn()) {
+            return response()->json([
+                'success' => false,
+                'message' => $this->getCheckInErrorMessage($reservation)
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $bill = $reservation->checkIn();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Check-in thành công!',
+                'bill' => $bill->load(['table', 'billTimeUsages']),
+                'redirect' => route('admin.tables.detail', $reservation->table_id)
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Check-in error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi check-in: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Cancel reservation
+     */
+    public function cancel(Request $request, $id)
+    {
+        $reservation = Reservation::findOrFail($id);
+
+        if (!in_array($reservation->status, [
+            Reservation::STATUS_PENDING,
+            Reservation::STATUS_CONFIRMED
+        ])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể hủy đặt bàn này'
+            ], 400);
+        }
+
+        // Check cancellation policy (1 hour before)
+        if ($reservation->reservation_time->diffInHours(now(), false) < 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ có thể hủy trước 1 giờ'
+            ], 400);
+        }
+
+        $reason = $request->input('reason', 'Khách hàng hủy');
+
+        if ($reservation->cancel($reason)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã hủy đặt bàn' . ($reservation->isPaid() ? ' và hoàn tiền' : '')
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Không thể hủy đặt bàn'
+        ], 500);
+    }
+
+    /**
+     * Track reservation
+     */
     public function track()
     {
-        return view('client.reservation.track'); // Theo dõi đặt bàn
+        if (Auth::check()) {
+            $userId = Auth::id();
+
+            $reservations = Reservation::where('customer_id', $userId)
+                ->with('table')
+                ->latest('reservation_time')
+                ->get();
+
+            $upcomingReservations = Reservation::where('customer_id', $userId)
+                ->whereIn('status', [
+                    Reservation::STATUS_PENDING,
+                    Reservation::STATUS_CONFIRMED
+                ])
+                ->where('reservation_time', '>', now())
+                ->with('table')
+                ->orderBy('reservation_time', 'asc')
+                ->get();
+
+            $totalSpent = Reservation::where('customer_id', $userId)
+                ->where('status', Reservation::STATUS_COMPLETED)
+                ->sum('total_amount');
+
+            return view('client.reservation.track', compact(
+                'reservations',
+                'upcomingReservations',
+                'totalSpent'
+            ));
+        }
+
+        return view('client.reservation.track-guest');
     }
 
-public function checkAvailability(Request $request)
-{
-    $validated = $request->validate([
-        'date' => 'required|date',
-        'time' => 'required',
-        'duration' => 'required|integer|min:30',
-    ]);
-
-    // Ví dụ: tìm bàn trống theo logic của bạn
-    // Đây là placeholder: đổi theo logic thật
-    $date = $validated['date'];
-    $time = $validated['time'];
-    $duration = $validated['duration'];
-
-    // build reservation_time and end_time for checking conflicts
-    $start = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $date . ' ' . $time);
-    $end = (clone $start)->addMinutes($duration);
-
-    // Thực hiện truy vấn lấy bàn trống (tùy schema của bạn)
-    $availableTables = Table::where('status', 'available')->get();
-
-    return response()->json([
-        'success' => true,
-        'tables' => $availableTables
-    ]);
-}
-
+    /**
+     * Search reservation (for guests)
+     */
     public function search(Request $request)
     {
         $request->validate([
-            'phone' => 'required|string|max:15',
+            'phone' => 'required|string',
             'code' => 'nullable|string',
         ]);
 
-        $query = Reservation::query();
+        $query = Reservation::with('table', 'payments');
 
-        if ($request->filled('phone')) {
-            $query->where('customer_phone', $request->phone);
-        }
+        // ✅ SỬA: Tìm theo phone trực tiếp trong reservations table
+        $query->where('customer_phone', $request->phone);
 
         if ($request->filled('code')) {
-            $query->where('code', $request->code);
+            $query->where('reservation_code', $request->code);
         }
 
-        $reservation = $query->first();
+        $reservations = $query->get();
 
-        if (!$reservation) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy đặt bàn.'
-            ], 404);
+        if ($reservations->isEmpty()) {
+            return back()->with('error', 'Không tìm thấy đặt bàn');
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $reservation
-        ]);
+        // ✅ Nếu tìm thấy nhiều, hiển thị danh sách
+        if ($reservations->count() > 1) {
+            return view('client.reservation.search-results', compact('reservations'));
+        }
+
+        // Nếu chỉ có 1, redirect đến chi tiết
+        return redirect()->route('reservations.show', $reservations->first()->id);
     }
 
-    public function checkin(Request $request, Reservation $reservation)
+    /**
+     * Show reservation detail
+     */
+    public function show($id)
     {
-        if ($reservation->status !== 'pending' && $reservation->status !== 'confirmed') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Đặt bàn không thể check-in.'
-            ], 400);
-        }
+        $reservation = Reservation::with([
+            'table',
+            'customer',
+            'bill.billDetails.product',
+            'bill.billTimeUsages',
+            'payments'
+        ])->findOrFail($id);
 
-        $reservation->update([
-            'status' => 'checked_in',
-            'checkin_at' => now(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Check-in thành công!',
-            'data' => $reservation
-        ]);
+        return view('client.reservation.show', compact('reservation'));
     }
 
-    public function cancel(Request $request, Reservation $reservation)
+    /**
+     * List all reservations (admin)
+     */
+    public function index(Request $request)
     {
-        if (!in_array($reservation->status, ['pending', 'confirmed'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không thể hủy đặt bàn này.'
-            ], 400);
+        $query = Reservation::with(['table', 'customer'])
+            ->latest('reservation_time');
+
+        // Filters
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
-        // Kiểm tra thời gian: chỉ hủy trước 1h
-        $reservationTime = Carbon::createFromFormat(
-            'Y-m-d H:i',
-            $reservation->reservation_date . ' ' . $reservation->reservation_time
+        if ($request->filled('date')) {
+            $query->whereDate('reservation_time', $request->date);
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        $reservations = $query->paginate(20);
+
+        return view('admin.reservations.index', compact('reservations'));
+    }
+
+    // ==================== HELPER METHODS ====================
+
+    private function findOrCreateCustomer(array $data): User
+    {
+        if (Auth::check() && Auth::user()->role->slug === 'customer') {
+            $customer = Auth::user();
+            $customer->update([
+                'name' => $data['customer_name'],
+                'phone' => $data['customer_phone']
+            ]);
+            return $customer;
+        }
+
+        $customerRole = Role::where('slug', 'customer')->firstOrFail();
+
+        return User::firstOrCreate(
+            ['phone' => $data['customer_phone']],
+            [
+                'name' => $data['customer_name'],
+                'email' => $data['customer_email'] ?? null,
+                'role_id' => $customerRole->id,
+                'password' => null,
+            ]
         );
+    }
 
-        if ($reservationTime->diffInHours(now(), false) < 1) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Chỉ có thể hủy trước 1 giờ.'
-            ], 400);
+    private function getCheckInErrorMessage(Reservation $reservation): string
+    {
+        // ✅ SỬA: Cho phép check-in cả khi chưa thanh toán (onsite payment)
+        if ($reservation->payment_type === 'online' && !$reservation->isPaid()) {
+            return 'Vui lòng thanh toán trước khi check-in';
         }
 
-        $reservation->update(['status' => 'cancelled']);
+        if (!in_array($reservation->status, [
+            Reservation::STATUS_PENDING,
+            Reservation::STATUS_CONFIRMED
+        ])) {
+            return 'Đặt bàn không trong trạng thái hợp lệ';
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Hủy đặt bàn thành công.'
-        ]);
+        $now = now();
+        $allowedStart = $reservation->reservation_time->copy()->subMinutes(30);
+        $allowedEnd = $reservation->reservation_time->copy()->addHours(1);
+
+        if ($now->lt($allowedStart)) {
+            return 'Chưa đến giờ check-in (có thể check-in từ 30 phút trước)';
+        }
+
+        if ($now->gt($allowedEnd)) {
+            return 'Đã quá giờ check-in';
+        }
+
+        return 'Không thể check-in';
     }
 }

@@ -42,6 +42,11 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class, 'user_id');
     }
 
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class, 'customer_id');
+    }
+
     public function shifts()
     {
         return $this->hasMany(EmployeeShift::class);
@@ -51,13 +56,6 @@ class User extends Authenticatable
     {
         return $this->hasMany(Attendance::class);
     }
-
-      public function reservations()
-    {
-        return $this->hasMany(Reservation::class);
-    }
-    
-    // Helper methods
     public function isAdmin(): bool
     {
         return $this->role && $this->role->slug === self::ROLE_ADMIN;

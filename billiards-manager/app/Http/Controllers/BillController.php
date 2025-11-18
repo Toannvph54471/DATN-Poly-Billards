@@ -3,726 +3,491 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bill;
-use App\Models\Table;
-use App\Models\User;
-use App\Models\Combo;
-use App\Models\Product;
-use App\Models\ComboTimeUsage;
-use App\Models\BillTimeUsage;
-use App\Models\BillDetail;
 use App\Models\Payment;
-use App\Models\TableRate;
-use App\Models\Reservation;
-use Carbon\Carbon;
-use Exception;
+use App\Models\Product;
+use App\Models\Combo;
+use App\Models\BillDetail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class BillController extends Controller
 {
     /**
-     * Tạo bill tính giờ thường
+     * Show bill detail với payment summary
      */
-    public function createBill(Request $request)
+    public function show($id)
     {
-        $request->validate([
-            'table_id' => 'required|exists:tables,id',
-            'user_phone' => 'nullable|string',
-            'user_name' => 'nullable|string|max:255',
-            'guest_count' => 'required|integer|min:1',
-            'reservation_id' => 'nullable|exists:reservations,id'
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $table = Table::findOrFail($request->table_id);
-
-            if ($table->status !== 'available') {
-                return redirect()->back()->with('error', 'Bàn đang được sử dụng');
+        $bill = Bill::with([
+            'table.category',
+            'customer',
+            'staff',
+            'reservation.payments' => function ($query) {
+                $query->completed();
+            },
+            'billDetails.product',
+            'billDetails.combo',
+            'billTimeUsages',
+            'payments' => function ($query) {
+                $query->completed();
             }
+        ])->findOrFail($id);
 
-            // Tìm hoặc tạo user
-            $user = null;
-            if ($request->user_phone) {
-                $user = User::firstOrCreate(
-                    ['phone' => $request->user_phone],
-                    [
-                        'name' => $request->user_name ?? 'Khách vãng lai',
-                        'email' => $request->user_phone . '@customer.com',
-                        'password' => bcrypt(Str::random(8)),
-                        'role_id' => 4,
-                        'status' => 'Active'
-                    ]
-                );
-            }
+        // Calculate payment summary
+        $summary = [
+            'table_amount' => $bill->calculateTableAmount(),
+            'product_amount' => $bill->calculateProductAmount(),
+            'subtotal' => $bill->total_amount,
+            'discount' => $bill->discount_amount,
+            'total' => $bill->final_amount,
+            'reservation_paid' => 0,
+            'additional_paid' => 0,
+            'total_paid' => 0,
+            'remaining' => 0,
+        ];
 
-            // Xử lý reservation nếu có
-            $reservation = null;
-            if ($request->reservation_id) {
-                $reservation = Reservation::find($request->reservation_id);
-            }
-
-            // Tạo bill number
-            $billNumber = 'BILL' . date('Ymd') . str_pad(Bill::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
-
-            // Lấy hourly rate
-            $hourlyRate = $this->getTableHourlyRate($table);
-
-            // Tạo bill
-            $bill = Bill::create([
-                'bill_number' => $billNumber,
-                'table_id' => $table->id,
-                'user_id' => $user?->id,
-                'reservation_id' => $reservation?->id,
-                'staff_id' => Auth::id(),
-                'start_time' => now(),
-                'status' => 'Open',
-                'payment_status' => 'Pending',
-                'total_amount' => 0,
-                'discount_amount' => 0,
-                'final_amount' => 0
-            ]);
-
-            // Khởi tạo tính giờ
-            BillTimeUsage::create([
-                'bill_id' => $bill->id,
-                'start_time' => now(),
-                'hourly_rate' => $hourlyRate
-            ]);
-
-            // Cập nhật trạng thái bàn
-            $table->update(['status' => 'occupied']);
-
-            // Cập nhật reservation nếu có
-            if ($reservation) {
-                $reservation->update([
-                    'status' => 'CheckedIn',
-                    'checked_in_at' => now()
-                ]);
-            }
-
-            DB::commit();
-
-            return redirect()->route('admin.tables.detail', $table->id)
-                ->with('success', 'Tạo hóa đơn tính giờ thành công');
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::error('Create bill error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Lỗi khi tạo hóa đơn: ' . $e->getMessage());
+        // Get reservation payment
+        if ($bill->reservation_id) {
+            $summary['reservation_paid'] = $bill->reservation
+                ->payments()
+                ->completed()
+                ->sum('amount');
         }
-    }
 
-    /**
-     * Tạo bill bàn lẻ (không tính giờ)
-     */
-    public function createQuickBill(Request $request)
-    {
-        $request->validate([
-            'table_id' => 'required|exists:tables,id',
-            'user_phone' => 'nullable|string',
-            'user_name' => 'nullable|string|max:255'
-        ]);
+        // Get additional payments (for products)
+        $summary['additional_paid'] = $bill->completedPayments()->sum('amount');
+        $summary['total_paid'] = $summary['reservation_paid'] + $summary['additional_paid'];
+        $summary['remaining'] = max(0, $summary['total'] - $summary['total_paid']);
 
-        try {
-            DB::beginTransaction();
-
-            $table = Table::findOrFail($request->table_id);
-
-            if ($table->status !== 'available') {
-                return redirect()->back()->with('error', 'Bàn đang được sử dụng');
-            }
-
-            // Tìm hoặc tạo user
-            $user = null;
-            if ($request->user_phone) {
-                $user = User::firstOrCreate(
-                    ['phone' => $request->user_phone],
-                    [
-                        'name' => $request->user_name ?? 'Khách vãng lai',
-                        'email' => $request->user_phone . '@customer.com',
-                        'password' => bcrypt(Str::random(8)),
-                        'role_id' => 4,
-                        'status' => 'Active'
-                    ]
-                );
-            }
-
-            // Tạo bill number
-            $billNumber = 'QUICK' . date('Ymd') . str_pad(Bill::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
-
-            // Tạo bill với status là 'quick'
-            $bill = Bill::create([
-                'bill_number' => $billNumber,
-                'table_id' => $table->id,
-                'user_id' => $user?->id,
-                'staff_id' => Auth::id(),
-                'start_time' => now(),
-                'status' => 'quick',
-                'payment_status' => 'Pending',
-                'total_amount' => 0,
-                'discount_amount' => 0,
-                'final_amount' => 0
-            ]);
-
-            // Cập nhật trạng thái bàn
-            $table->update(['status' => 'occupied']);
-
-            DB::commit();
-
-            return redirect()->route('admin.tables.detail', $table->id)
-                ->with('success', 'Tạo hóa đơn bàn lẻ thành công');
-        } catch (Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Lỗi khi tạo hóa đơn: ' . $e->getMessage());
-        }
+        return view('admin.bills.show', compact('bill', 'summary'));
     }
 
     /**
      * Thêm sản phẩm vào bill
      */
-    public function addProductToBill(Request $request, $billId)
+    public function addProduct(Request $request, $billId)
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1'
+            'quantity' => 'required|integer|min:1',
         ]);
+
+        $bill = Bill::findOrFail($billId);
+
+        if (!$bill->isOpen()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bill đã đóng, không thể thêm sản phẩm'
+            ], 400);
+        }
 
         try {
             DB::beginTransaction();
 
-            $bill = Bill::findOrFail($billId);
-            $product = Product::findOrFail($request->product_id);
-
-            // Kiểm tra tồn kho
-            if ($product->stock_quantity < $request->quantity) {
-                return redirect()->back()->with('error', "Sản phẩm {$product->name} không đủ tồn kho. Còn: {$product->stock_quantity}");
-            }
-
-            // Thêm sản phẩm vào bill
-            BillDetail::create([
-                'bill_id' => $bill->id,
-                'product_id' => $product->id,
-                'quantity' => $request->quantity,
-                'unit_price' => $product->price,
-                'original_price' => $product->price,
-                'total_price' => $product->price * $request->quantity,
-                'is_combo_component' => false
-            ]);
-
-            // Cập nhật tồn kho
-            $product->decrement('stock_quantity', $request->quantity);
-
-            // Cập nhật tổng tiền
-            $this->calculateBillTotal($bill);
+            $detail = $bill->addProduct(
+                $request->product_id,
+                $request->quantity
+            );
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Thêm sản phẩm thành công');
-        } catch (Exception $e) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã thêm sản phẩm',
+                'detail' => $detail->load('product'),
+                'bill_summary' => $bill->fresh()->payment_summary
+            ]);
+        } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Lỗi khi thêm sản phẩm: ' . $e->getMessage());
+            Log::error('Add product error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
      * Thêm combo vào bill
      */
-    public function addComboToBill(Request $request, $billId)
+    public function addCombo(Request $request, $billId)
     {
         $request->validate([
             'combo_id' => 'required|exists:combos,id',
-            'quantity' => 'required|integer|min:1'
         ]);
 
+        $bill = Bill::findOrFail($billId);
+
+        if (!$bill->isOpen()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bill đã đóng, không thể thêm combo'
+            ], 400);
+        }
+
         try {
             DB::beginTransaction();
 
-            $bill = Bill::findOrFail($billId);
+            $detail = $bill->addCombo($request->combo_id);
 
-            // Kiểm tra nếu là bàn lẻ thì không cho thêm combo
-            if ($bill->status === 'quick') {
-                return redirect()->back()->with('error', 'Bàn lẻ không thể thêm combo');
-            }
+            DB::commit();
 
-            $combo = Combo::with('comboItems.product')->findOrFail($request->combo_id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã thêm combo',
+                'detail' => $detail->load('combo'),
+                'bill_summary' => $bill->fresh()->payment_summary
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Add combo error: ' . $e->getMessage());
 
-            // Kiểm tra tồn kho cho tất cả sản phẩm trong combo
-            foreach ($combo->comboItems as $item) {
-                if ($item->product && $item->product->stock_quantity < ($item->quantity * $request->quantity)) {
-                    return redirect()->back()->with(
-                        'error',
-                        "{$item->product->name} không đủ tồn kho. Cần: " . ($item->quantity * $request->quantity)
-                    );
-                }
-            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 
-            // Thêm combo vào bill details
-            $comboDetail = BillDetail::create([
-                'bill_id' => $bill->id,
-                'combo_id' => $combo->id,
+    /**
+     * Cập nhật bill detail
+     */
+    public function updateBillDetail(Request $request, $billId, $detailId)
+    {
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
+
+        $bill = Bill::findOrFail($billId);
+        $detail = $bill->billDetails()->findOrFail($detailId);
+
+        if (!$bill->isOpen()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bill đã đóng'
+            ], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $detail->update([
                 'quantity' => $request->quantity,
-                'unit_price' => $combo->price,
-                'original_price' => $combo->actual_value,
-                'total_price' => $combo->price * $request->quantity,
-                'is_combo_component' => false
+                'total_price' => $detail->unit_price * $request->quantity
             ]);
 
-            // Xử lý các sản phẩm trong combo
-            foreach ($combo->comboItems as $item) {
-                if ($item->product_id) {
-                    BillDetail::create([
-                        'bill_id' => $bill->id,
-                        'product_id' => $item->product_id,
-                        'parent_bill_detail_id' => $comboDetail->id,
-                        'quantity' => $item->quantity * $request->quantity,
-                        'unit_price' => 0,
-                        'original_price' => $item->product->price,
-                        'total_price' => 0,
-                        'is_combo_component' => true
-                    ]);
-
-                    // Cập nhật tồn kho
-                    $item->product->decrement('stock_quantity', $item->quantity * $request->quantity);
-                }
-            }
-
-            // Xử lý combo có giờ chơi
-            if ($combo->is_time_combo && $combo->play_duration_minutes) {
-                $this->activateComboTime($bill, $combo, $comboDetail);
-            }
-
-            // Cập nhật tổng tiền
-            $this->calculateBillTotal($bill);
+            $bill->updateAmounts();
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Thêm combo thành công');
-        } catch (Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Lỗi khi thêm combo: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Chuyển từ combo time sang tính giờ thường
-     */
-    public function switchToRegularTime(Request $request, $billId)
-    {
-        try {
-            DB::beginTransaction();
-
-            $bill = Bill::findOrFail($billId);
-
-            // Kiểm tra xem có đang dùng combo time không
-            $activeComboTime = ComboTimeUsage::where('bill_id', $billId)
-                ->where('is_expired', false)
-                ->where('remaining_minutes', '>', 0)
-                ->first();
-
-            if (!$activeComboTime) {
-                return redirect()->back()->with('error', 'Không tìm thấy combo thời gian đang hoạt động');
-            }
-
-            // Đánh dấu combo time đã hết hạn
-            $activeComboTime->update([
-                'end_time' => now(),
-                'is_expired' => true,
-                'remaining_minutes' => 0
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã cập nhật',
+                'detail' => $detail->fresh(),
+                'bill_summary' => $bill->fresh()->payment_summary
             ]);
-
-            // Bắt đầu tính giờ thường
-            $hourlyRate = $this->getTableHourlyRate($bill->table);
-            BillTimeUsage::create([
-                'bill_id' => $bill->id,
-                'start_time' => now(),
-                'hourly_rate' => $hourlyRate
-            ]);
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Đã chuyển sang tính giờ thường');
-        } catch (Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Lỗi khi chuyển sang giờ thường: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Tạm dừng tính giờ
-     */
-    public function pauseTime($billId)
-    {
-        try {
-            DB::beginTransaction();
-
-            $bill = Bill::with('table')->findOrFail($billId);
-
-            // Kiểm tra trạng thái bill
-            if ($bill->status !== 'Open') {
-                return redirect()->back()->with('error', 'Chỉ có thể tạm dừng bill đang mở');
-            }
-
-            // Chỉ xử lý regular time, không xử lý combo time
-            $activeRegularTime = BillTimeUsage::where('bill_id', $billId)
-                ->whereNull('end_time')
-                ->whereNull('paused_at')
-                ->first();
-
-            if (!$activeRegularTime) {
-                return redirect()->back()->with('error', 'Không tìm thấy thời gian đang chạy để tạm dừng');
-            }
-
-            // Tính thời gian đã chạy
-            $start = Carbon::parse($activeRegularTime->start_time);
-            $elapsedMinutes = $start->diffInMinutes(now());
-
-            // Trừ đi thời gian đã pause trước đó (nếu có)
-            $previousPausedDuration = $activeRegularTime->paused_duration ?? 0;
-            $effectiveMinutes = $elapsedMinutes - $previousPausedDuration;
-
-            // Cập nhật thời gian pause
-            $activeRegularTime->update([
-                'paused_at' => now()->timestamp,
-                'paused_duration' => $effectiveMinutes
-            ]);
-
-            // Cập nhật trạng thái bàn
-            $bill->table->update(['status' => 'paused']);
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Đã tạm dừng tính giờ');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error pausing time: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Lỗi khi tạm dừng: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
-     * Tiếp tục tính giờ
+     * Xóa bill detail
      */
-    public function resumeTime($billId)
+    public function deleteBillDetail($billId, $detailId)
     {
+        $bill = Bill::findOrFail($billId);
+
+        if (!$bill->isOpen()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bill đã đóng'
+            ], 400);
+        }
+
         try {
             DB::beginTransaction();
 
-            $bill = Bill::with('table')->findOrFail($billId);
-
-            // Kiểm tra trạng thái bill
-            if ($bill->status !== 'Open') {
-                return redirect()->back()->with('error', 'Chỉ có thể tiếp tục bill đang mở');
-            }
-
-            // Chỉ xử lý regular time
-            $pausedRegularTime = BillTimeUsage::where('bill_id', $billId)
-                ->whereNotNull('paused_at')
-                ->whereNull('end_time')
-                ->first();
-
-            if (!$pausedRegularTime) {
-                return redirect()->back()->with('error', 'Không tìm thấy thời gian đang tạm dừng');
-            }
-
-            // Cập nhật start_time mới để bù lại thời gian đã chạy
-            $newStartTime = now()->subMinutes($pausedRegularTime->paused_duration ?? 0);
-
-            $pausedRegularTime->update([
-                'start_time' => $newStartTime,
-                'paused_at' => null,
-                'paused_duration' => 0
-            ]);
-
-            // Cập nhật trạng thái bàn
-            $bill->table->update(['status' => 'occupied']);
+            $bill->removeProduct($detailId);
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Đã tiếp tục tính giờ');
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã xóa sản phẩm',
+                'bill_summary' => $bill->fresh()->payment_summary
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error resuming time: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Lỗi khi tiếp tục: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
-     * Bắt đầu tính giờ từ bàn lẻ
+     * Đóng bill (before payment)
      */
+<<<<<<< HEAD
+    public function closeTable(Request $request, $billId)
+    {
+        $bill = Bill::findOrFail($billId);
+
+        if (!$bill->isOpen()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bill không thể đóng'
+            ], 400);
+        }
+
+=======
     public function startPlaying($billId)
     {
+>>>>>>> 2fb23e721b83a30d479e7130053d424f3ea04d09
         try {
             DB::beginTransaction();
 
-            $bill = Bill::findOrFail($billId);
-
-            // Chỉ cho phép nếu bill đang là quick
-            if ($bill->status !== 'quick') {
-                return redirect()->back()->with('error', 'Chỉ có thể bắt đầu tính giờ từ bàn lẻ');
-            }
-
-            // Chuyển từ quick sang Open
-            $bill->update([
-                'status' => 'Open'
-            ]);
-
-            // Bắt đầu tính giờ thường
-            $hourlyRate = $this->getTableHourlyRate($bill->table);
-            BillTimeUsage::create([
-                'bill_id' => $bill->id,
-                'start_time' => now(),
-                'hourly_rate' => $hourlyRate
-            ]);
-
-            $this->calculateBillTotal($bill);
+            $bill->close();
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Đã bắt đầu tính giờ chơi');
-        } catch (Exception $e) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã đóng bill. Vui lòng thanh toán.',
+                'bill_summary' => $bill->fresh()->payment_summary,
+                'redirect' => route('bills.payment', $billId)
+            ]);
+        } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Lỗi: ' . $e->getMessage());
+            Log::error('Close bill error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
-     * Cập nhật tổng tiền bill
+     * Show payment form
      */
-    public function updateBillTotal($billId)
-    {
-        try {
-            $bill = Bill::findOrFail($billId);
-            $this->calculateBillTotal($bill);
-            $bill->refresh();
-
-            return redirect()->back()->with('success', 'Đã cập nhật tổng tiền');
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Lỗi khi cập nhật tổng tiền: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Hiển thị trang thanh toán
-     */
-    public function showPayment($id)
+    public function showPayment($billId)
     {
         $bill = Bill::with([
-            'table',
-            'user',
+            'reservation.payments',
             'billDetails.product',
-            'billDetails.combo'
-        ])->findOrFail($id);
+            'billTimeUsages',
+            'payments'
+        ])->findOrFail($billId);
 
-        // Tính toán chi phí giờ chơi
-        $timeCost = $this->calculateTimeCharge($bill);
+        if (!$bill->canBePaid()) {
+            return redirect()
+                ->route('admin.tables.detail', $bill->table_id)
+                ->with('error', 'Bill không thể thanh toán');
+        }
 
-        // Tính tổng tiền sản phẩm và combo
-        $productTotal = BillDetail::where('bill_id', $bill->id)
-            ->where('is_combo_component', false)
-            ->sum('total_price');
+        $summary = $bill->payment_summary;
 
-        return view('admin.bills.payment', compact('bill', 'timeCost', 'productTotal'));
+        return view('admin.bills.payment', compact('bill', 'summary'));
     }
 
     /**
-     * Xử lý thanh toán
+     * Process payment
      */
     public function processPayment(Request $request, $billId)
     {
         $request->validate([
-            'payment_method' => 'required|in:cash,bank,card',
-            'amount' => 'required|numeric|min:0'
+            'payment_method' => 'required|in:cash,card,vnpay,momo,zalopay',
+            'amount' => 'required|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
         ]);
+
+        $bill = Bill::findOrFail($billId);
+
+        if (!$bill->canBePaid()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bill không thể thanh toán'
+            ], 400);
+        }
+
+        $paymentMethod = $request->payment_method;
+        $amount = $request->amount;
+        $discount = $request->discount_amount ?? 0;
+
+        // Validate amount
+        if ($amount > $bill->remaining_amount + $discount) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Số tiền thanh toán không hợp lệ'
+            ], 400);
+        }
 
         try {
             DB::beginTransaction();
 
-            $bill = Bill::findOrFail($billId);
-
-            // Dừng tất cả tính giờ
-            $this->stopAllTimeUsage($bill);
-
-            // Tính toán lại tổng tiền cuối cùng
-            $this->calculateBillTotal($bill);
-
-            // Tạo bản ghi thanh toán
-            Payment::create([
-                'bill_id' => $bill->id,
-                'amount' => $request->amount,
-                'payment_method' => $request->payment_method,
-                'status' => 'completed',
-                'paid_at' => now(),
-            ]);
-
-            // Cập nhật trạng thái bill
-            $bill->update([
-                'payment_status' => 'Paid',
-                'end_time' => now(),
-                'status' => 'Closed',
-                'payment_method' => $request->payment_method,
-                'final_amount' => $request->amount
-            ]);
-
-            // Giải phóng bàn
-            $bill->table->update(['status' => 'available']);
-
-            // Cập nhật thông tin user (nếu có)
-            if ($bill->user) {
-                $bill->user->increment('total_visits');
-                $bill->user->increment('total_spent', $bill->final_amount);
-
-                // Cập nhật customer_type dựa trên số lần visit
-                $visitCount = $bill->user->total_visits;
-                if ($visitCount >= 10) {
-                    $bill->user->update(['customer_type' => 'VIP']);
-                } elseif ($visitCount >= 5) {
-                    $bill->user->update(['customer_type' => 'Regular']);
-                }
-            }
+            $payment = $bill->pay($paymentMethod, $amount, $discount);
 
             DB::commit();
 
-            return redirect()->route('admin.tables.index')
-                ->with('success', 'Thanh toán thành công. Hóa đơn: ' . $bill->bill_number);
-        } catch (Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Lỗi khi thanh toán: ' . $e->getMessage());
-        }
-    }
+            // If cash/card, return success
+            if (in_array($paymentMethod, ['cash', 'card'])) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Thanh toán thành công!',
+                    'payment' => $payment,
+                    'bill_summary' => $bill->fresh()->payment_summary,
+                    'is_fully_paid' => $bill->fresh()->isFullyPaid(),
+                ]);
+            }
 
+            // If online payment, return payment URL
+            $paymentUrl = $this->createOnlinePaymentUrl($payment, $paymentMethod);
 
-    /**
-     * Kích hoạt combo time
-     */
-    private function activateComboTime(Bill $bill, Combo $combo, BillDetail $comboDetail)
-    {
-        // Tạo bản ghi theo dõi thời gian combo
-        ComboTimeUsage::create([
-            'combo_id' => $combo->id,
-            'bill_id' => $bill->id,
-            'table_id' => $bill->table_id,
-            'start_time' => now(),
-            'total_minutes' => $combo->play_duration_minutes,
-            'remaining_minutes' => $combo->play_duration_minutes,
-            'is_expired' => false
-        ]);
-
-        // Tạm dừng tính giờ thường (nếu có)
-        $activeTimeUsage = BillTimeUsage::where('bill_id', $bill->id)
-            ->whereNull('end_time')
-            ->first();
-
-        if ($activeTimeUsage) {
-            $elapsedMinutes = $activeTimeUsage->start_time->diffInMinutes(now());
-            $activeTimeUsage->update([
-                'end_time' => now(),
-                'duration_minutes' => $elapsedMinutes,
-                'total_price' => ($activeTimeUsage->hourly_rate / 60) * $elapsedMinutes
+            return response()->json([
+                'success' => true,
+                'require_redirect' => true,
+                'payment_url' => $paymentUrl
             ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Process payment error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     /**
-     * Tính tổng tiền bill
+     * Tạm dừng bàn
      */
-    public function calculateBillTotal(Bill $bill)
+    public function pauseTable($billId)
     {
-        // Tính tiền sản phẩm (không bao gồm thành phần combo)
-        $productTotal = BillDetail::where('bill_id', $bill->id)
-            ->where('is_combo_component', false)
-            ->sum('total_price');
+        $bill = Bill::findOrFail($billId);
 
-        // Tính tiền giờ - chỉ tính khi status là 'Open'
-        $timeTotal = 0;
-        if ($bill->status === 'Open') {
-            $timeTotal = $this->calculateTimeCharge($bill);
+        if ($bill->status !== Bill::STATUS_OPEN) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ có thể tạm dừng bill đang mở'
+            ], 400);
         }
-
-        $totalAmount = $productTotal + $timeTotal;
-        $finalAmount = $totalAmount - $bill->discount_amount;
 
         $bill->update([
-            'total_amount' => $totalAmount,
-            'final_amount' => $finalAmount
+            'status' => Bill::STATUS_PAUSED,
+            'paused_at' => now()
         ]);
 
-        return $totalAmount;
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã tạm dừng'
+        ]);
     }
 
     /**
-     * Tính tiền giờ chơi
+     * Tiếp tục bàn
      */
-    public function calculateTimeCharge(Bill $bill)
+    public function resumeTable($billId)
     {
-        $totalTimeCost = 0;
+        $bill = Bill::findOrFail($billId);
 
-        // 1. Tính tiền giờ thường đã kết thúc
-        $endedRegularTime = BillTimeUsage::where('bill_id', $bill->id)
-            ->whereNotNull('end_time')
-            ->get();
-
-        foreach ($endedRegularTime as $timeUsage) {
-            $effectiveMinutes = $timeUsage->duration_minutes - ($timeUsage->paused_duration ?? 0);
-            $totalTimeCost += ($timeUsage->hourly_rate / 60) * max(0, $effectiveMinutes);
+        if ($bill->status !== Bill::STATUS_PAUSED) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bill không ở trạng thái tạm dừng'
+            ], 400);
         }
 
-        // 2. Tính tiền giờ thường đang chạy hoặc tạm dừng
-        $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
-            ->whereNull('end_time')
-            ->first();
-
-        if ($activeRegularTime) {
-            $elapsedMinutes = $this->calculateElapsedMinutes($activeRegularTime);
-            $effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0);
-            $totalTimeCost += ($activeRegularTime->hourly_rate / 60) * max(0, $effectiveMinutes);
+        // Calculate pause duration
+        if ($bill->paused_at) {
+            $pausedMinutes = $bill->paused_at->diffInMinutes(now());
+            $bill->increment('paused_duration', $pausedMinutes);
         }
 
-        return $totalTimeCost;
+        $bill->update([
+            'status' => Bill::STATUS_OPEN,
+            'paused_at' => null
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã tiếp tục'
+        ]);
     }
 
     /**
-     * Dừng tất cả tính giờ
+     * Mở bàn mới (không từ reservation)
      */
-    private function stopAllTimeUsage(Bill $bill)
+    public function openTable(Request $request, $tableId)
     {
-        // Dừng regular time
-        $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
-            ->whereNull('end_time')
-            ->first();
+        $request->validate([
+            'customer_name' => 'nullable|string',
+            'customer_phone' => 'nullable|string',
+        ]);
 
-        if ($activeRegularTime) {
-            $elapsedMinutes = $this->calculateElapsedMinutes($activeRegularTime);
-            $effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0);
+        $table = \App\Models\Table::findOrFail($tableId);
 
-            $activeRegularTime->update([
-                'end_time' => now(),
-                'duration_minutes' => $elapsedMinutes,
-                'total_price' => ($activeRegularTime->hourly_rate / 60) * max(0, $effectiveMinutes)
-            ]);
+        if (!$table->isAvailable()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bàn không khả dụng'
+            ], 400);
         }
 
-        // Dừng combo time
-        $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
-            ->where('is_expired', false)
-            ->first();
+        try {
+            DB::beginTransaction();
 
-        if ($activeComboTime) {
-            $elapsedMinutes = is_null($activeComboTime->end_time)
-                ? $activeComboTime->start_time->diffInMinutes(now())
-                : 0;
-
-            $activeComboTime->update([
-                'end_time' => now(),
-                'is_expired' => true,
-                'remaining_minutes' => max(0, $activeComboTime->remaining_minutes - $elapsedMinutes)
+            // Create bill
+            $bill = Bill::create([
+                'bill_number' => 'BILL-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6)),
+                'table_id' => $tableId,
+                'customer_id' => null,
+                'reservation_id' => null,
+                'staff_id' => auth()->id() ?? 1,
+                'start_time' => now(),
+                'status' => Bill::STATUS_OPEN,
+                'total_amount' => 0,
+                'discount_amount' => 0,
+                'final_amount' => 0
             ]);
+
+            // Create time usage
+            $bill->billTimeUsages()->create([
+                'start_time' => now(),
+                'hourly_rate' => $table->getHourlyRate(),
+            ]);
+
+            // Update table status
+            $table->markAsOccupied();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã mở bàn',
+                'bill' => $bill->load('billTimeUsages')
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Open table error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
+<<<<<<< HEAD
+    // ==================== HELPER METHODS ====================
+=======
     /**
      * Lấy giá giờ của bàn
      */
@@ -748,4 +513,5 @@ class BillController extends Controller
             return Carbon::parse($timeUsage->start_time)->diffInMinutes(now());
         }
     }
+>>>>>>> 2fb23e721b83a30d479e7130053d424f3ea04d09
 }

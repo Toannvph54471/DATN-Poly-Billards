@@ -21,7 +21,8 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->boolean('is_time_combo')->default(false);
             $table->integer('play_duration_minutes')->nullable();
-            $table->foreignId('table_category_id')->nullable()->constrained('categories')->nullOnDelete();
+            $table->foreignId('table_rate_id')->nullable()->constrained('table_rates')->nullOnDelete();
+
             $table->timestamps();
             $table->softDeletes();
         });

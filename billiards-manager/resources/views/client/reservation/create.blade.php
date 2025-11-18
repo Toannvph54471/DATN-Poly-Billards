@@ -2,468 +2,446 @@
 
 @section('title', 'Đặt bàn - Poly Billiards')
 
-@section('styles')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-    .table-option {
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .table-option:hover {
-        background-color: #f3f4f6;
-        transform: translateY(-2px);
-    }
-    
-    .table-option.selected {
-        background-color: #dbeafe;
-        border-color: #3b82f6;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .step-content {
-        transition: all 0.3s ease;
-    }
-
-    .select2-container--default .select2-selection--single {
-        height: 42px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-    }
-
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 42px;
-    }
-
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 40px;
-    }
-</style>
-@endsection
-
-
 @section('content')
-@if (!auth()->check())
-    <script>
-        alert('Vui lòng đăng nhập để đặt bàn!');
-        window.location.href = '{{ route("login") }}';
-    </script>
-@else
 <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header Card -->
-        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-            <!-- Card Header -->
-            <div class="bg-elegant-navy px-6 py-4 border-b-4 border-elegant-gold">
+    <div class="max-w-5xl mx-auto px-4">
+        <!-- Progress Bar -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="flex items-center justify-between max-w-3xl mx-auto">
                 <div class="flex items-center">
-                    <div class="w-10 h-10 bg-elegant-gold rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-calendar-plus text-elegant-navy"></i>
-                    </div>
-                    <h2 class="text-2xl font-display font-bold text-white">Đặt bàn</h2>
+                    <div id="step-icon-1" class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</div>
+                    <span class="ml-2 text-sm font-medium text-gray-700">Thời gian</span>
                 </div>
-            </div>
-
-            <!-- Card Body -->
-            <div class="p-6">
-                <!-- Stepper -->
-                <div class="mb-8">
-                    <div class="flex items-center justify-between">
-                        @foreach([1 => 'Chọn thời gian', 2 => 'Chọn bàn', 3 => 'Thông tin', 4 => 'Xác nhận'] as $step => $label)
-                        <div class="flex items-center">
-                            <div class="flex flex-col items-center">
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold
-                                    @if($step == 1) bg-elegant-gold @else bg-gray-300 @endif
-                                    step @if($step == 1) active @endif" id="step{{ $step }}">
-                                    {{ $step }}
-                                </div>
-                                <span class="text-xs mt-2 text-gray-600 text-center">{{ $label }}</span>
-                            </div>
-                            @if($step < 4)
-                            <div class="w-16 h-1 mx-2 bg-gray-300"></div>
-                            @endif
-                        </div>
-                        @endforeach
-                    </div>
+                <div class="w-16 h-1 bg-gray-300" id="line-1"></div>
+                <div class="flex items-center">
+                    <div id="step-icon-2" class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold">2</div>
+                    <span class="ml-2 text-sm font-medium text-gray-500">Chọn bàn</span>
                 </div>
-
-                <!-- Step 1: Time Selection -->
-                <div id="step1-content" class="step-content">
-                    <h3 class="text-xl font-semibold text-gray-900 mb-6">Chọn thời gian đặt bàn</h3>
-                    
-                    <form id="timeForm">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Date -->
-                            <div>
-                                <label for="reservation_date" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Ngày đặt bàn *
-                                </label>
-                                <input type="date" id="reservation_date" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200"
-                                       min="{{ date('Y-m-d') }}" required>
-                            </div>
-
-                            <!-- Time -->
-                            <div>
-                                <label for="reservation_time" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Giờ bắt đầu *
-                                </label>
-                                <input type="time" id="reservation_time" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200"
-                                       min="08:00" max="23:00" required>
-                            </div>
-
-                            <!-- Duration -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Thời lượng *</label>
-                                <select id="duration" class="w-full px-4 py-3 border border-gray-300 rounded-lg" required>
-                                    <option value="60">1 giờ</option>
-                                    <option value="120" selected>2 giờ</option>
-                                    <option value="180">3 giờ</option>
-                                    <option value="240">4 giờ</option>
-                                    <option value="300">5 giờ</option>
-                                </select>
-                            </div>
-
-                            <!-- Guest Count -->
-                            <div>
-                                <label for="guest_count" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Số người *
-                                </label>
-                                <input type="number" id="guest_count" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200"
-                                       min="1" max="10" value="2" required>
-                            </div>
-                        </div>
-
-                        <div class="mt-8">
-                            <button type="button" onclick="checkAvailability()" 
-                                    class="w-full md:w-auto bg-elegant-gold hover:bg-yellow-500 text-elegant-navy font-semibold px-8 py-4 rounded-lg transition duration-200 transform hover:scale-105 flex items-center justify-center">
-                                <i class="fas fa-search mr-3"></i>
-                                Kiểm tra bàn trống
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Step 2: Table Selection -->
-                <div id="step2-content" class="step-content hidden">
-                    <h3 class="text-xl font-semibold text-gray-900 mb-6">Chọn bàn phù hợp</h3>
-                    
-                    <div id="tableResults" class="border-2 border-dashed border-gray-300 rounded-xl p-6 bg-gray-50 min-h-[200px] flex items-center justify-center">
-                        <div class="text-center">
-                            <i class="fas fa-clock text-gray-400 text-4xl mb-3"></i>
-                            <p class="text-gray-500">Vui lòng chọn thời gian để xem bàn trống</p>
-                        </div>
-                    </div>
-
-                    <div class="mt-8 flex justify-between">
-                        <button type="button" onclick="previousStep(2)" 
-                                class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center">
-                            <i class="fas fa-arrow-left mr-2"></i>
-                            Quay lại
-                        </button>
-                        <button type="button" onclick="nextStep(2)" id="nextStep2" disabled
-                                class="bg-elegant-gold hover:bg-yellow-500 text-elegant-navy font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
-                            Tiếp theo
-                            <i class="fas fa-arrow-right ml-2"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 3: Customer Information -->
-                <div id="step3-content" class="step-content hidden">
-                    <h3 class="text-xl font-semibold text-gray-900 mb-6">Thông tin khách hàng</h3>
-                    
-                    <form id="confirmForm">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Name -->
-                            <div>
-                                <label for="customer_name" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Họ tên *
-                                </label>
-                                <input type="text" id="customer_name" value="{{ auth()->check() ? auth()->user()->name : '' }}"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200"
-                                       required>
-                            </div>
-
-                            <!-- Phone -->
-                            <div>
-                                <label for="customer_phone" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Số điện thoại *
-                                </label>
-                                <input type="tel" id="customer_phone" value="{{ auth()->check() ? auth()->user()->phone : '' }}"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200"
-                                       required>
-                            </div>
-
-                            <!-- Email -->
-                            <div class="md:col-span-2">
-                                <label for="customer_email" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Email
-                                </label>
-                                <input type="email" id="customer_email" value="{{ auth()->check() ? auth()->user()->email : '' }}"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200">
-                            </div>
-
-                            <!-- Note -->
-                            <div class="md:col-span-2">
-                                <label for="note" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Ghi chú thêm
-                                </label>
-                                <textarea id="note" rows="3"
-                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-elegant-gold focus:border-elegant-gold transition duration-200"
-                                          placeholder="Yêu cầu đặc biệt, dịp kỷ niệm..."></textarea>
-                            </div>
-                        </div>
-
-                        <div class="mt-8 flex justify-between">
-                            <button type="button" onclick="previousStep(3)" 
-                                    class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center">
-                                <i class="fas fa-arrow-left mr-2"></i>
-                                Quay lại
-                            </button>
-                            <button type="submit" 
-                                    class="bg-elegant-gold hover:bg-yellow-500 text-elegant-navy font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center">
-                                <i class="fas fa-check mr-2"></i>
-                                Xác nhận đặt bàn
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Step 4: Confirmation -->
-                <div id="step4-content" class="step-content hidden">
-                    <div class="text-center py-8">
-                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-check-circle text-green-600 text-4xl"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Đặt bàn thành công!</h3>
-                        <p class="text-lg text-gray-600 mb-2">Mã đặt bàn của bạn:</p>
-                        <p class="text-2xl font-bold text-elegant-gold mb-6" id="reservationCode"></p>
-                        
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 max-w-md mx-auto">
-                            <div class="flex items-center">
-                                <i class="fas fa-info-circle text-blue-500 mr-3"></i>
-                                <p class="text-blue-800 text-sm">Chúng tôi sẽ gửi xác nhận qua SMS/Email. Vui lòng đến đúng giờ!</p>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                            <a href="{{ route('home') }}" 
-                               class="bg-elegant-gold hover:bg-yellow-500 text-elegant-navy font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center">
-                                <i class="fas fa-home mr-2"></i>
-                                Về trang chủ
-                            </a>
-                            <a href="{{ route('reservations.track') }}" 
-                               class="border border-elegant-gold text-elegant-gold hover:bg-elegant-gold hover:text-elegant-navy font-semibold px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center">
-                                <i class="fas fa-search mr-2"></i>
-                                Tra cứu đặt bàn
-                            </a>
-                        </div>
-                    </div>
+                <div class="w-16 h-1 bg-gray-300" id="line-2"></div>
+                <div class="flex items-center">
+                    <div id="step-icon-3" class="w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold">3</div>
+                    <span class="ml-2 text-sm font-medium text-gray-500">Xác nhận</span>
                 </div>
             </div>
         </div>
+
+        <!-- Step 1: Time Selection -->
+        <div id="step-1" class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Chọn thời gian</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ngày *</label>
+                    <input type="date" id="reservation_date" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Giờ bắt đầu *</label>
+                    <input type="time" id="reservation_time" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Thời lượng *</label>
+                    <select id="duration" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="60">1 giờ</option>
+                        <option value="120" selected>2 giờ</option>
+                        <option value="180">3 giờ</option>
+                        <option value="240">4 giờ</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Số người *</label>
+                    <input type="number" id="guest_count" value="2" min="1" max="20" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+            
+            <button onclick="checkAvailability()" 
+                    class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                Tìm bàn trống
+            </button>
+        </div>
+
+        <!-- Step 2: Table Selection -->
+        <div id="step-2" class="hidden bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Chọn bàn</h2>
+                <button onclick="goToStep(1)" class="text-blue-600 hover:text-blue-700 font-medium">← Quay lại</button>
+            </div>
+            
+            <!-- Loading -->
+            <div id="loading-tables" class="flex justify-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+            </div>
+            
+            <!-- Tables Grid -->
+            <div id="tables-grid" class="hidden">
+                <div id="tables-container" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Tables will be inserted here -->
+                </div>
+                
+                <button onclick="goToStep(3)" id="btn-next" disabled
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Tiếp tục
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Confirmation -->
+        <div id="step-3" class="hidden bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Xác nhận đặt bàn</h2>
+                <button onclick="goToStep(2)" class="text-blue-600 hover:text-blue-700 font-medium">← Quay lại</button>
+            </div>
+            
+            <!-- Booking Summary -->
+            <div class="bg-blue-50 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-3">Chi tiết đặt bàn</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Bàn:</span>
+                        <span class="font-medium" id="summary-table">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Thời gian:</span>
+                        <span class="font-medium" id="summary-time">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Thời lượng:</span>
+                        <span class="font-medium" id="summary-duration">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Giá/giờ:</span>
+                        <span class="font-medium" id="summary-rate">-</span>
+                    </div>
+                    <div class="flex justify-between border-t pt-2 mt-2">
+                        <span class="text-gray-800 font-semibold">Tổng tiền:</span>
+                        <span class="text-blue-600 font-bold text-lg" id="summary-price">0đ</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customer Info -->
+            <form id="customer-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Họ tên *</label>
+                    <input type="text" id="customer_name" value="{{ auth()->user()->name ?? '' }}" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Số điện thoại *</label>
+                    <input type="tel" id="customer_phone" value="{{ auth()->user()->phone ?? '' }}" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="customer_email" value="{{ auth()->user()->email ?? '' }}"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
+                    <textarea id="note" rows="3"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Yêu cầu đặc biệt..."></textarea>
+                </div>
+                
+                <!-- Payment Type -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Hình thức thanh toán</label>
+                    <div class="space-y-3">
+                        <label class="flex items-start cursor-pointer">
+                            <input type="radio" name="payment_type" value="online" class="mt-1 mr-3">
+                            <div>
+                                <div class="font-medium">Thanh toán online</div>
+                                <div class="text-sm text-gray-600">Xác nhận ngay, đảm bảo có bàn</div>
+                            </div>
+                        </label>
+                        <label class="flex items-start cursor-pointer">
+                            <input type="radio" name="payment_type" value="onsite" checked class="mt-1 mr-3">
+                            <div>
+                                <div class="font-medium">Thanh toán tại quán</div>
+                                <div class="text-sm text-gray-600">Thanh toán khi đến hoặc sau khi chơi</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition">
+                    Xác nhận đặt bàn
+                </button>
+            </form>
+        </div>
     </div>
 </div>
-@endif
+
+<!-- Success Modal -->
+<div id="success-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl p-8 max-w-md w-full text-center">
+        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">Đặt bàn thành công!</h3>
+        <p class="text-gray-600 mb-1">Mã đặt bàn:</p>
+        <p class="text-3xl font-bold text-blue-600 mb-6" id="reservation-code"></p>
+        <div class="space-y-2">
+            <button onclick="redirectToPayment()" id="btn-payment" class="hidden w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                Thanh toán ngay
+            </button>
+            <button onclick="window.location.href='{{ route('reservations.index') }}'" 
+                    class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 rounded-lg transition">
+                Xem đặt bàn của tôi
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
 let currentStep = 1;
-let selectedTable = localStorage.getItem('selectedTable') || null;
-let reservationData = JSON.parse(localStorage.getItem('reservationData')) || { date: null, time: null, duration: null };
+let selectedTableData = null;
+let reservationData = {};
+let createdReservationId = null;
 
-async function safeFetch(url, options = {}) {
-    const opts = {
-        credentials: 'same-origin', // gửi cookie/session Laravel
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json',
-            ...(options.headers || {})
-        },
-        ...options
-    };
-
-    const res = await fetch(url, opts);
-    let json = null;
-    try {
-        json = await res.json();
-    } catch (e) {
-        throw new Error(`Server trả lỗi không phải JSON (status ${res.status})`);
-    }
-    if (!res.ok) {
-        const message = json.message || json.error || `Server error ${res.status}`;
-        const errors = json.errors || null;
-        const err = new Error(message);
-        err.status = res.status;
-        err.errors = errors;
-        throw err;
-    }
-    return json;
-}
-
-// TỰ ĐỘNG CHUYỂN BƯỚC NẾU CÓ DỮ LIỆU (BƯỚC 2)
-document.addEventListener('DOMContentLoaded', function () {
-    if (selectedTable && reservationData.date && reservationData.time && reservationData.duration) {
-        showStep(3); // Tự động sang bước 3 khi reload
-    }
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('reservation_date').value = today;
+    document.getElementById('reservation_date').min = today;
+    
+    const nextHour = new Date();
+    nextHour.setHours(nextHour.getHours() + 1, 0, 0);
+    document.getElementById('reservation_time').value = nextHour.toTimeString().slice(0, 5);
 });
 
-function updateStepper(step) {
-    document.querySelectorAll('.step').forEach(s => {
-        s.classList.remove('bg-elegant-gold'); s.classList.add('bg-gray-300');
-    });
-    for (let i = 1; i <= step; i++) {
-        document.getElementById(`step${i}`).classList.remove('bg-gray-300');
-        document.getElementById(`step${i}`).classList.add('bg-elegant-gold');
-    }
-}
-
-function showStep(step) {
-    document.querySelectorAll('.step-content').forEach(c => c.classList.add('hidden'));
-    document.getElementById(`step${step}-content`).classList.remove('hidden');
-    updateStepper(step);
+function goToStep(step) {
+    document.getElementById('step-1').classList.add('hidden');
+    document.getElementById('step-2').classList.add('hidden');
+    document.getElementById('step-3').classList.add('hidden');
+    document.getElementById(`step-${step}`).classList.remove('hidden');
+    updateProgressBar(step);
     currentStep = step;
 }
 
-function nextStep(step) { showStep(step + 1); }
-function previousStep(step) { showStep(step - 1); }
+function updateProgressBar(step) {
+    for (let i = 1; i <= 3; i++) {
+        const icon = document.getElementById(`step-icon-${i}`);
+        const line = document.getElementById(`line-${i}`);
+        
+        if (i < step) {
+            icon.className = 'w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center font-bold';
+            icon.innerHTML = '✓';
+            if (line) line.className = 'w-16 h-1 bg-green-600';
+        } else if (i === step) {
+            icon.className = 'w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold';
+            icon.innerHTML = i;
+            if (line) line.className = 'w-16 h-1 bg-gray-300';
+        } else {
+            icon.className = 'w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold';
+            icon.innerHTML = i;
+        }
+    }
+}
 
 async function checkAvailability() {
     const date = document.getElementById('reservation_date').value;
     const time = document.getElementById('reservation_time').value;
     const duration = parseInt(document.getElementById('duration').value);
+    const guestCount = parseInt(document.getElementById('guest_count').value);
 
-    if (!date || !time || !duration) {
-        alert('Vui lòng nhập đầy đủ thông tin!');
+    if (!date || !time) {
+        alert('Vui lòng chọn ngày và giờ!');
         return;
     }
 
-    const container = document.getElementById('tableResults');
-    container.innerHTML = '<p class="text-center">Đang kiểm tra...</p>';
+    reservationData = {
+        reservation_time: `${date} ${time}`,
+        duration: duration,
+        guest_count: guestCount
+    };
+
+    goToStep(2);
+    document.getElementById('loading-tables').classList.remove('hidden');
+    document.getElementById('tables-grid').classList.add('hidden');
 
     try {
-        const payload = { date, time, duration };
-        const data = await safeFetch('{{ route("api.tables.available") }}', {
+        const response = await fetch('{{ route("api.tables.available") }}', {
             method: 'POST',
-            body: JSON.stringify(payload)
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ date, time, duration, guest_count: guestCount })
         });
 
-        // Hỗ trợ nhiều format backend: data.tables || data.data
-        const tables = data.tables || data.data || [];
-        displayTables(tables);
-
-        // Lưu reservationData theo 1 chuẩn duy nhất
-        const reservationTime = `${date} ${time}`; // "YYYY-MM-DD HH:mm"
-        reservationData = { reservation_time: reservationTime, duration: duration };
-        localStorage.setItem('reservationData', JSON.stringify(reservationData));
-
-    } catch (err) {
-        console.error('checkAvailability error:', err);
-        container.innerHTML = `<p class="text-center text-red-600">Lỗi: ${err.message}</p>`;
-        if (err.errors) console.log(err.errors);
+        const data = await response.json();
+        
+        document.getElementById('loading-tables').classList.add('hidden');
+        document.getElementById('tables-grid').classList.remove('hidden');
+        
+        displayTables(data.tables || data.data || []);
+    } catch (error) {
+        document.getElementById('loading-tables').classList.add('hidden');
+        alert('Lỗi: ' + error.message);
     }
 }
 
 function displayTables(tables) {
-    const container = document.getElementById('tableResults');
+    const container = document.getElementById('tables-container');
+    
     if (!tables || tables.length === 0) {
-        container.innerHTML = '<p class="text-center text-gray-500">Không có bàn trống</p>';
-        return;
-    }
-
-let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
-    tables.forEach(t => {
-        html += `
-            <div class="p-4 border rounded-lg cursor-pointer hover:bg-gray-50 table-option" 
-                 onclick="selectTable(${t.id})" data-id="${t.id}">
-                <h6 class="font-bold">${t.table_name}</h6>
-                <p>Sức chứa: ${t.capacity} người</p>
-                <p>Giá: ${t.hourly_rate}đ/giờ</p>
+        container.innerHTML = `
+            <div class="col-span-3 text-center py-12">
+                <p class="text-gray-500 mb-4">Không có bàn trống</p>
+                <button onclick="goToStep(1)" class="text-blue-600 hover:text-blue-700 font-medium">
+                    Chọn thời gian khác
+                </button>
             </div>
         `;
-    });
-    html += '</div>';
-    container.innerHTML = html;
-    showStep(2); // CHÍNH XÁC: chuyển sang bước 2
-}
-
-function selectTable(id) {
-    document.querySelectorAll('[data-id]').forEach(el => {
-        el.classList.remove('border-blue-500', 'bg-blue-50');
-    });
-    const el = document.querySelector(`[data-id="${id}"]`);
-    el.classList.add('border-blue-500', 'bg-blue-50');
-    selectedTable = id;
-    localStorage.setItem('selectedTable', id);
-    document.getElementById('nextStep2').disabled = false;
-}
-
-// Handle form submission
-document.getElementById('confirmForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    if (!selectedTable || !reservationData || !reservationData.reservation_time) {
-        alert('Vui lòng chọn bàn và thời gian!');
         return;
     }
 
+    container.innerHTML = tables.map(t => {
+        // ✅ Xử lý an toàn
+        const tableName = t.table_name || t.name || 'Bàn #' + t.id;
+        const tableNumber = t.table_number || tableName.substring(0, 3);
+        const hourlyRate = Number(t.hourly_rate || 0);
+        const totalPrice = Number(t.total_price || 0);
+        
+        return `
+            <div class="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition table-card" 
+                 onclick='selectTable(${JSON.stringify(t).replace(/'/g, "&apos;")})' 
+                 data-id="${t.id}">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+                        ${tableNumber}
+                    </div>
+                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Trống</span>
+                </div>
+                <div class="font-semibold text-gray-800 mb-2">${tableName}</div>
+                <div class="text-sm text-gray-600 space-y-1">
+                    <div>👥 ${t.capacity || 0} người</div>
+                    <div>💰 ${hourlyRate.toLocaleString()}đ/giờ</div>
+                    <div class="font-semibold text-blue-600 pt-2 border-t mt-2">
+                        Tổng: ${totalPrice.toLocaleString()}đ
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectTable(tableData) {
+    document.querySelectorAll('.table-card').forEach(el => {
+        el.classList.remove('border-blue-500', 'bg-blue-50');
+        el.classList.add('border-gray-200');
+    });
+    
+    const card = document.querySelector(`[data-id="${tableData.id}"]`);
+    card.classList.remove('border-gray-200');
+    card.classList.add('border-blue-500', 'bg-blue-50');
+    
+    selectedTableData = tableData;
+    document.getElementById('btn-next').disabled = false;
+    
+    updateSummary();
+}
+
+function updateSummary() {
+    if (!selectedTableData) return;
+    
+    const date = document.getElementById('reservation_date').value;
+    const time = document.getElementById('reservation_time').value;
+    const duration = document.getElementById('duration').value;
+    
+    document.getElementById('summary-table').textContent = selectedTableData.table_name || selectedTableData.name;
+    document.getElementById('summary-time').textContent = `${date} ${time}`;
+    document.getElementById('summary-duration').textContent = `${duration} phút`;
+    document.getElementById('summary-rate').textContent = Number(selectedTableData.hourly_rate || 0).toLocaleString() + 'đ/giờ';
+    document.getElementById('summary-price').textContent = Number(selectedTableData.total_price || 0).toLocaleString() + 'đ';
+}
+
+document.getElementById('customer-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!selectedTableData) {
+        alert('Vui lòng chọn bàn!');
+        return;
+    }
+
+    const paymentType = document.querySelector('input[name="payment_type"]:checked').value;
+
     const payload = {
-        table_id: selectedTable,
-        reservation_time: reservationData.reservation_time, // "YYYY-MM-DD HH:mm"
+        table_id: selectedTableData.id,
+        reservation_time: reservationData.reservation_time,
         duration: reservationData.duration,
-        guest_count: parseInt(document.getElementById('guest_count').value) || 1,
+        guest_count: reservationData.guest_count,
         customer_name: document.getElementById('customer_name').value,
         customer_phone: document.getElementById('customer_phone').value,
         customer_email: document.getElementById('customer_email').value || null,
         note: document.getElementById('note').value || null,
+        payment_type: paymentType
     };
 
     try {
-        const res = await safeFetch('{{ route("reservation.store") }}', {
+        const response = await fetch('{{ route("reservations.store") }}', {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
             body: JSON.stringify(payload)
         });
 
-        // success
-        document.getElementById('reservationCode').textContent = res.reservation_code || res.data?.reservation_code || '';
-        // clear storage
-        localStorage.removeItem('selectedTable');
-        localStorage.removeItem('reservationData');
-        selectedTable = null; reservationData = {};
-        showStep(4);
-
-    } catch (err) {
-        console.error('Reservation store error:', err);
-        if (err.errors) {
-            const errs = Object.values(err.errors).flat();
-            alert('Lỗi:\n• ' + errs.join('\n• '));
-        } else {
-            alert(err.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
-        }
+        const data = await response.json();
+        
+        if (data.success) {
+    createdReservationId = data.reservation?.id || data.data?.id;
+    document.getElementById('reservation-code').textContent = data.reservation_code || data.reservation?.reservation_code || data.data?.reservation_code;
+    
+    // ✅ SỬA PHẦN NÀY
+    if (paymentType === 'online' && data.redirect) {
+        // Redirect ngay đến trang thanh toán
+        window.location.href = data.redirect;
+        return;
+    }
+    
+    // Hiển thị modal cho onsite payment
+    document.getElementById('success-modal').classList.remove('hidden');
+} else {
+    alert(data.message || 'Có lỗi xảy ra!');
+}
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
     }
 });
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('reservation_date').value = today;
-    document.getElementById('reservation_date').min = today;
-
-    const nextHour = new Date();
-    nextHour.setHours(nextHour.getHours() + 1);
-    nextHour.setMinutes(0);
-    document.getElementById('reservation_time').value = nextHour.toTimeString().slice(0, 5);
-
-    $('#duration').select2({
-        minimumResultsForSearch: -1
-    });
-});
+function redirectToPayment() {
+    if (createdReservationId) {
+        window.location.href = `/reservation/${createdReservationId}/payment`;
+    }
+}
 </script>
+
+<style>
+.table-card {
+    transition: all 0.2s ease;
+}
+.table-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+</style>
 @endsection
