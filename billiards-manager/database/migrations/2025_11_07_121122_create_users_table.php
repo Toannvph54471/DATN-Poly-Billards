@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('email')->unique()->nullable(); // Nullable cho khách
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable(); // Nullable cho khách vãng lai
-            $table->foreignId('role_id')->constrained('roles');
+           $table->foreignId('role_id')->default(4)->constrained('roles');
             
             // -- Trường CRM (từ bảng customers cũ) --
             $table->string('customer_type', 50)->default('New')->nullable();
