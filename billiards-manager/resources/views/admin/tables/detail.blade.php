@@ -129,7 +129,7 @@
             color: #475569;
         }
 
-        /* Main Content Styles - UPDATED LAYOUT */
+        /* Main Content Styles */
         .main-content {
             display: flex;
             flex: 1;
@@ -366,7 +366,7 @@
             overflow: auto;
         }
 
-        /* Bill Details - NEW CENTER POSITION */
+        /* Bill Details */
         .bill-details {
             flex: 1;
             display: flex;
@@ -461,6 +461,7 @@
             gap: 0.5rem;
             text-decoration: none;
             transition: all 0.2s;
+            border: none;
         }
 
         .action-btn:hover {
@@ -470,7 +471,6 @@
         .action-btn-primary {
             background: #3b82f6;
             color: white;
-            border: none;
         }
 
         .action-btn-primary:hover {
@@ -480,7 +480,6 @@
         .action-btn-success {
             background: #10b981;
             color: white;
-            border: none;
         }
 
         .action-btn-success:hover {
@@ -490,7 +489,6 @@
         .action-btn-warning {
             background: #f59e0b;
             color: white;
-            border: none;
         }
 
         .action-btn-warning:hover {
@@ -664,9 +662,11 @@
             .left-panel {
                 width: 40%;
             }
+
             .center-panel {
                 width: 35%;
             }
+
             .right-panel {
                 width: 25%;
             }
@@ -676,18 +676,24 @@
             .main-content {
                 flex-direction: column;
             }
-            .left-panel, .center-panel, .right-panel {
+
+            .left-panel,
+            .center-panel,
+            .right-panel {
                 width: 100%;
                 border: none;
             }
+
             .center-panel {
                 order: 1;
                 border-top: 1px solid #e2e8f0;
                 border-bottom: 1px solid #e2e8f0;
             }
+
             .left-panel {
                 order: 2;
             }
+
             .right-panel {
                 order: 3;
             }
@@ -757,29 +763,6 @@
         <div class="main-content">
             <!-- Left Panel - Products & Combos -->
             <div class="left-panel">
-                <!-- Real-time Counter Banner -->
-                @if (
-                    $table->currentBill &&
-                        in_array($table->currentBill->status, ['Open', 'quick']) &&
-                        isset($timeInfo['is_running']) &&
-                        $timeInfo['is_running']
-                )
-                    <div class="real-time-banner pulse">
-                        <div>
-                            <div class="text-sm font-semibold">THỜI GIAN ĐANG CHẠY</div>
-                            <div id="realTimeCounter" class="time-counter">
-                                {{ floor($timeInfo['elapsed_minutes'] / 60) }}:{{ str_pad($timeInfo['elapsed_minutes'] % 60, 2, '0', STR_PAD_LEFT) }}
-                            </div>
-                        </div>
-                        <div>
-                            <div class="text-sm font-semibold">CHI PHÍ HIỆN TẠI</div>
-                            <div id="realTimeCost" class="time-counter">
-                                {{ number_format(round($timeInfo['current_cost'] ?? 0)) }} ₫
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
                 <!-- Time Tracking -->
                 <div class="card">
                     <div class="card-header">
@@ -1030,10 +1013,10 @@
                 </div>
             </div>
 
-            <!-- Center Panel - Bill Details (NEW POSITION) -->
+            <!-- Center Panel - Bill Details -->
             <div class="center-panel">
                 <div class="right-content">
-                    <!-- Bill Details - NOW IN CENTER -->
+                    <!-- Bill Details -->
                     <div class="card bill-details">
                         <div class="card-header">
                             <h2 class="section-title">
@@ -1188,27 +1171,29 @@
                                         THANH TOÁN BÀN LẺ
                                     </a>
                                 @else
-                                    <!-- Pause/Resume Buttons -->
-                                    @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
-                                        <form action="{{ route('bills.pause', $table->currentBill->id) }}"
-                                            method="POST" class="w-full">
-                                            @csrf
-                                            <button type="submit" class="action-btn action-btn-warning">
-                                                <i class="fas fa-pause"></i>
-                                                TẠM DỪNG
-                                            </button>
-                                        </form>
-                                    @endif
+                                    <!-- Pause/Resume Buttons - CHỈ HIỆN VỚI GIỜ THƯỜNG VÀ KHÔNG PHẢI COMBO -->
+                                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'regular')
+                                        @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
+                                            <form action="{{ route('bills.pause', $table->currentBill->id) }}"
+                                                method="POST" class="w-full">
+                                                @csrf
+                                                <button type="submit" class="action-btn action-btn-warning">
+                                                    <i class="fas fa-pause"></i>
+                                                    TẠM DỪNG
+                                                </button>
+                                            </form>
+                                        @endif
 
-                                    @if (isset($timeInfo['is_paused']) && $timeInfo['is_paused'])
-                                        <form action="{{ route('bills.resume', $table->currentBill->id) }}"
-                                            method="POST" class="w-full">
-                                            @csrf
-                                            <button type="submit" class="action-btn action-btn-success">
-                                                <i class="fas fa-play"></i>
-                                                TIẾP TỤC
-                                            </button>
-                                        </form>
+                                        @if (isset($timeInfo['is_paused']) && $timeInfo['is_paused'])
+                                            <form action="{{ route('bills.resume', $table->currentBill->id) }}"
+                                                method="POST" class="w-full">
+                                                @csrf
+                                                <button type="submit" class="action-btn action-btn-success">
+                                                    <i class="fas fa-play"></i>
+                                                    TIẾP TỤC
+                                                </button>
+                                            </form>
+                                        @endif
                                     @endif
 
                                     <!-- Thanh toán -->
@@ -1219,32 +1204,24 @@
                                     </a>
 
                                     <!-- Cập nhật tổng -->
-                                    <button onclick="updateBillTotal()" class="action-btn action-btn-secondary">
-                                        <i class="fas fa-sync-alt"></i>
-                                        CẬP NHẬT TỔNG
-                                    </button>
+                                    <form action="{{ route('bills.update-total', $table->currentBill->id) }}"
+                                        method="POST" class="w-full">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-secondary">
+                                            <i class="fas fa-sync-alt"></i>
+                                            CẬP NHẬT TỔNG
+                                        </button>
+                                    </form>
 
-                                    <!-- Gia hạn combo -->
+                                    <!-- Chuyển sang giờ thường - CHỈ HIỆN KHI ĐANG DÙNG COMBO VÀ ĐANG TẠM DỪNG -->
                                     @if (isset($timeInfo['mode']) &&
                                             $timeInfo['mode'] === 'combo' &&
-                                            isset($timeInfo['is_near_end']) &&
-                                            $timeInfo['is_near_end']
+                                            isset($timeInfo['is_paused']) &&
+                                            $timeInfo['is_paused']
                                     )
-                                        <form action="{{ route('bills.extend-combo', $table->currentBill->id) }}"
-                                            method="POST" class="w-full">
-                                            @csrf
-                                            <input type="hidden" name="extra_minutes" value="30">
-                                            <button type="submit" class="action-btn action-btn-warning">
-                                                <i class="fas fa-clock"></i>
-                                                GIA HẠN 30 PHÚT
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    <!-- Chuyển sang giờ thường -->
-                                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
                                         <form action="{{ route('bills.switch-regular', $table->currentBill->id) }}"
-                                            method="POST" onsubmit="return confirm('Chuyển sang tính giờ thường?')"
+                                            method="POST"
+                                            onsubmit="return confirm('Chuyển sang tính giờ thường? Thời gian combo còn lại sẽ không được tính.')"
                                             class="w-full">
                                             @csrf
                                             <button type="submit" class="action-btn action-btn-secondary">
@@ -1253,17 +1230,27 @@
                                             </button>
                                         </form>
                                     @endif
+
+                                    <!-- Chuyển bàn -->
+                                    <a href="{{ route('admin.bills.transfer.form', $table->currentBill->id) }}"
+                                        class="action-btn action-btn-secondary">
+                                        <i class="fas fa-exchange-alt"></i>
+                                        CHUYỂN BÀN
+                                    </a>
                                 @endif
 
-                                <!-- Chuyển thành bàn lẻ -->
-                                <form action="{{ route('bills.convert-to-quick', $table->currentBill->id) }}"
-                                    method="POST" onsubmit="return confirm('Chuyển thành bàn lẻ?')" class="w-full">
-                                    @csrf
-                                    <button type="submit" class="action-btn action-btn-secondary">
-                                        <i class="fas fa-coins"></i>
-                                        CHUYỂN BÀN LẺ
-                                    </button>
-                                </form>
+                                <!-- Chuyển thành bàn lẻ - KHÔNG CHO PHÉP KHI ĐANG DÙNG COMBO -->
+                                @if (!isset($timeInfo['mode']) || $timeInfo['mode'] !== 'combo')
+                                    <form action="{{ route('bills.convert-to-quick', $table->currentBill->id) }}"
+                                        method="POST" onsubmit="return confirm('Chuyển thành bàn lẻ?')"
+                                        class="w-full">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-secondary">
+                                            <i class="fas fa-coins"></i>
+                                            CHUYỂN BÀN LẺ
+                                        </button>
+                                    </form>
+                                @endif
                             @else
                                 <!-- Tạo bill mới -->
                                 <button onclick="showCreateBillModal()" class="action-btn action-btn-primary">
@@ -1299,13 +1286,30 @@
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Loại khách</span>
-                                    <span
-                                        class="info-value">{{ $table->currentBill->user->customer_type ?? 'Khách mới' }}</span>
+                                    <span class="info-value">
+                                        @php
+                                            $customerType = $table->currentBill->user->customer_type ?? 'Mới';
+                                            $typeClass = match ($customerType) {
+                                                'VIP' => 'text-red-600 font-bold',
+                                                'Thân thiết' => 'text-purple-600 font-semibold',
+                                                'Quay lại' => 'text-blue-600',
+                                                default => 'text-gray-600',
+                                            };
+                                        @endphp
+                                        <span class="{{ $typeClass }}">{{ $customerType }}</span>
+                                    </span>
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Số lần đến</span>
-                                    <span class="info-value">{{ $table->currentBill->user->total_visits ?? 0 }}
-                                        lần</span>
+                                    <span class="info-value font-bold text-green-600">
+                                        {{ $table->currentBill->user->total_visits ?? 1 }} lần
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Tổng chi tiêu</span>
+                                    <span class="info-value font-bold text-orange-600">
+                                        {{ number_format($table->currentBill->user->total_spent ?? 0) }} ₫
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -1343,10 +1347,11 @@
                 </div>
 
                 <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="hideCreateBillModal()" class="btn btn-secondary flex-1">
+                    <button type="button" onclick="hideCreateBillModal()"
+                        class="action-btn action-btn-secondary flex-1">
                         Hủy
                     </button>
-                    <button type="submit" class="btn btn-primary flex-1">
+                    <button type="submit" class="action-btn action-btn-primary flex-1">
                         <i class="fas fa-plus"></i> Tạo Hóa Đơn
                     </button>
                 </div>
@@ -1376,10 +1381,11 @@
                 </div>
 
                 <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="hideQuickBillModal()" class="btn btn-secondary flex-1">
+                    <button type="button" onclick="hideQuickBillModal()"
+                        class="action-btn action-btn-secondary flex-1">
                         Hủy
                     </button>
-                    <button type="submit" class="btn btn-warning flex-1">
+                    <button type="submit" class="action-btn action-btn-warning flex-1">
                         <i class="fas fa-bolt"></i> Tạo Bàn Lẻ
                     </button>
                 </div>
@@ -1454,27 +1460,6 @@
             // Current cost
             const currentCost = calculateCurrentCost(serverElapsedSeconds);
             document.getElementById('currentCostDisplay').textContent = formatCurrency(currentCost);
-
-            // Update real-time banner
-            updateRealTimeBanner(serverElapsedSeconds);
-        }
-
-        // Update real-time banner
-        function updateRealTimeBanner(elapsedSeconds) {
-            const counterElement = document.getElementById('realTimeCounter');
-            const costElement = document.getElementById('realTimeCost');
-
-            if (counterElement && costElement) {
-                const totalMinutes = elapsedSeconds / 60;
-                const hours = Math.floor(totalMinutes / 60);
-                const minutes = Math.floor(totalMinutes % 60);
-                const seconds = Math.floor(elapsedSeconds % 60);
-
-                counterElement.textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-
-                const currentCost = calculateCurrentCost(elapsedSeconds);
-                costElement.textContent = formatCurrency(currentCost);
-            }
         }
 
         // Real-time counter từ server data
@@ -1503,34 +1488,6 @@
 
         function hideQuickBillModal() {
             document.getElementById('quickBillModal').style.display = 'none';
-        }
-
-        // Update bill total
-        function updateBillTotal() {
-            @if ($table->currentBill)
-                const button = event.target;
-                const originalText = button.innerHTML;
-
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang cập nhật...';
-                button.disabled = true;
-
-                fetch('{{ route('bills.update-total', $table->currentBill->id) }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                }).then(r => r.json()).then(data => {
-                    if (data.success) {
-                        location.reload();
-                    }
-                }).catch(error => {
-                    console.error('Error:', error);
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                    alert('Có lỗi xảy ra khi cập nhật tổng tiền');
-                });
-            @endif
         }
 
         // Tab functionality
@@ -1759,9 +1716,6 @@
             if (isRunning && !isPaused) {
                 startServerBasedCounter();
             }
-
-            // Auto update bill total every 30 seconds
-            setInterval(updateBillTotal, 30000);
 
             // Setup tabs and search functionality
             setupTabs();

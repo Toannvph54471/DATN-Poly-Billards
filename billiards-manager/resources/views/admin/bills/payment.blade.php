@@ -75,7 +75,12 @@
                         <div class="bg-gray-50 rounded-xl p-4">
                             <div class="text-sm text-gray-500 mb-1">Bàn</div>
                             <div class="font-semibold text-gray-800">{{ $bill->table->table_name }}</div>
-                            <div class="text-xs text-gray-400">{{ $bill->table->tableRate->name ?? 'Chưa phân loại' }}
+                            <div class="text-xs text-gray-400">
+                                @if($bill->table->tableRate)
+                                    {{ $bill->table->tableRate->name }}
+                                @else
+                                    Chưa phân loại
+                                @endif
                             </div>
                         </div>
                         <div class="bg-gray-50 rounded-xl p-4">
@@ -108,9 +113,13 @@
                                         <div>
                                             <div class="font-semibold text-gray-800">Giờ chơi</div>
                                             <div class="text-sm text-gray-600">
-                                                {{ $timeDetails['total_minutes'] ?? 0 }} phút
+                                                @php
+                                                    $totalMinutes = $timeDetails['total_minutes'] ?? 0;
+                                                    $hourlyRate = $timeDetails['hourly_rate'] ?? 0;
+                                                @endphp
+                                                {{ $totalMinutes }} phút
                                                 @
-                                                {{ number_format(ceil(($timeDetails['hourly_rate'] ?? 0) / 1000) * 1000) }}₫/giờ
+                                                {{ number_format(ceil($hourlyRate / 1000) * 1000) }}₫/giờ
                                             </div>
                                         </div>
                                     </div>
@@ -122,7 +131,7 @@
                             @endif
 
                             <!-- Combos -->
-                            @foreach ($bill->billDetails->where('combo_id', '!=', null)->unique('combo_id') as $comboDetail)
+                            @foreach ($bill->billDetails->where('combo_id', '!=', null)->where('is_combo_component', false) as $comboDetail)
                                 @php
                                     $roundedComboPrice = ceil($comboDetail->unit_price / 1000) * 1000;
                                     $roundedComboTotal = ceil($comboDetail->total_price / 1000) * 1000;
@@ -140,13 +149,20 @@
                                             </div>
                                             <div class="text-sm text-gray-600">
                                                 @if ($comboDetail->combo)
-                                                    @foreach ($bill->billDetails->where('parent_bill_detail_id', $comboDetail->id) as $component)
-                                                        {{ $component->quantity }}x
-                                                        {{ $component->product->name ?? 'Sản phẩm' }}
-                                                        @if (!$loop->last)
-                                                            ,
-                                                        @endif
-                                                    @endforeach
+                                                    @php
+                                                        $components = $bill->billDetails->where('parent_bill_detail_id', $comboDetail->id);
+                                                    @endphp
+                                                    @if($components->count() > 0)
+                                                        @foreach ($components as $component)
+                                                            {{ $component->quantity }}x
+                                                            {{ $component->product->name ?? 'Sản phẩm' }}
+                                                            @if (!$loop->last)
+                                                                ,
+                                                            @endif
+                                                        @endforeach
+                                                    @else
+                                                        {{ $comboDetail->combo->description ?? 'Combo' }}
+                                                    @endif
                                                 @else
                                                     Combo đã bị xóa
                                                 @endif
@@ -164,35 +180,38 @@
 
                             <!-- Individual Products -->
                             @foreach ($bill->billDetails->whereNull('combo_id')->where('is_combo_component', false) as $item)
-                                @php
-                                    $roundedUnitPrice = ceil($item->unit_price / 1000) * 1000;
-                                    $roundedItemTotal = ceil($item->total_price / 1000) * 1000;
-                                @endphp
-                                <div
-                                    class="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
-                                    <div class="flex items-center">
-                                        <div
-                                            class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                                            <i class="fas fa-utensils text-green-600"></i>
+                                @if($item->product)
+                                    @php
+                                        $roundedUnitPrice = ceil($item->unit_price / 1000) * 1000;
+                                        $roundedItemTotal = ceil($item->total_price / 1000) * 1000;
+                                    @endphp
+                                    <div
+                                        class="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-center">
+                                            <div
+                                                class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                                <i class="fas fa-utensils text-green-600"></i>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-gray-800">
+                                                    {{ $item->product->name }}
+                                                </div>
+                                                <div class="text-sm text-gray-600">Đơn giá:
+                                                    {{ number_format($roundedUnitPrice) }} ₫</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div class="font-semibold text-gray-800">
-                                                {{ $item->product->name ?? 'Sản phẩm' }}</div>
-                                            <div class="text-sm text-gray-600">Đơn giá:
+                                        <div class="text-right">
+                                            <div class="text-sm text-gray-500">{{ $item->quantity }} x
                                                 {{ number_format($roundedUnitPrice) }} ₫</div>
+                                            <div class="font-bold text-gray-800">{{ number_format($roundedItemTotal) }} ₫
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="text-right">
-                                        <div class="text-sm text-gray-500">{{ $item->quantity }} x
-                                            {{ number_format($roundedUnitPrice) }} ₫</div>
-                                        <div class="font-bold text-gray-800">{{ number_format($roundedItemTotal) }} ₫
-                                        </div>
-                                    </div>
-                                </div>
+                                @endif
                             @endforeach
 
                             <!-- Extra Charges -->
-                            @foreach ($bill->billDetails->whereNull('product_id')->whereNull('combo_id') as $extra)
+                            @foreach ($bill->billDetails->whereNull('product_id')->whereNull('combo_id')->where('is_combo_component', false) as $extra)
                                 @php
                                     $roundedExtraPrice = ceil($extra->unit_price / 1000) * 1000;
                                     $roundedExtraTotal = ceil($extra->total_price / 1000) * 1000;
@@ -365,7 +384,7 @@
                             <!-- Cash Received -->
                             <div id="cashAmountSection" class="transition-all duration-300">
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Khách đưa</label>
-                                <input type="number" name="cash_received" value="{{ $finalAmount }}"
+                                <input type="number" id="cash_received" name="cash_received" value="{{ $finalAmount }}"
                                     class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg text-right focus:border-primary-500 focus:ring-0"
                                     oninput="calculateChange()" min="{{ $finalAmount }}" step="1000">
                             </div>
@@ -373,7 +392,7 @@
                             <!-- Change Amount -->
                             <div id="changeAmountSection" class="transition-all duration-300">
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Tiền thối lại</label>
-                                <input type="number" name="change_amount" value="0"
+                                <input type="number" id="change_amount" name="change_amount" value="0"
                                     class="w-full border-2 border-success-200 bg-success-50 rounded-xl px-4 py-3 text-lg font-bold text-success-600 text-right focus:ring-0"
                                     readonly>
                             </div>
@@ -452,11 +471,11 @@
 
         // Calculate change
         function calculateChange() {
-            const cashReceived = parseFloat(document.querySelector('input[name="cash_received"]').value) || 0;
+            const cashReceived = parseFloat(document.getElementById('cash_received').value) || 0;
             const changeAmount = Math.max(0, cashReceived - totalAmount);
             const roundedChange = Math.ceil(changeAmount / 1000) * 1000;
 
-            const changeInput = document.querySelector('input[name="change_amount"]');
+            const changeInput = document.getElementById('change_amount');
             changeInput.value = roundedChange;
 
             // Update styling based on change amount
@@ -472,7 +491,7 @@
         // Form submission
         document.getElementById('paymentForm').addEventListener('submit', function(e) {
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-            const cashReceived = parseFloat(document.querySelector('input[name="cash_received"]').value) || 0;
+            const cashReceived = parseFloat(document.getElementById('cash_received').value) || 0;
 
             if (paymentMethod === 'cash' && cashReceived < totalAmount) {
                 e.preventDefault();
@@ -485,15 +504,19 @@
                 e.preventDefault();
                 return false;
             }
+
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...';
+            submitBtn.disabled = true;
         });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('.payment-method-card[data-method="cash"]').click();
-            document.querySelector('input[name="cash_received"]').value = totalAmount;
+            document.getElementById('cash_received').value = totalAmount;
             calculateChange();
         });
     </script>
 </body>
-
 </html>
