@@ -355,4 +355,113 @@ class TableController extends Controller
             'bill_status' => 'regular'
         ];
     }
+
+    /**
+     * Hiển thị dashboard đơn giản
+     */
+    public function simpleDashboard()
+    {
+        try {
+            // Lấy toàn bộ dữ liệu tables kèm bill hiện tại
+            $tables = Table::with([
+                'tableRate',
+                'currentBill' => function ($query) {
+                    $query->whereIn('status', ['Open', 'quick'])
+                        ->with(['billTimeUsages', 'comboTimeUsages']);
+                }
+            ])->get();
+
+            // Thống kê
+            $totalTables = $tables->count();
+            $availableTables = $tables->where('status', 'available')->count();
+            $occupiedTables = $tables->where('status', 'occupied')->count();
+            $quickTables = $tables->where('status', 'quick')->count();
+
+            $occupancyRate = $totalTables > 0
+                ? round((($occupiedTables + $quickTables) / $totalTables) * 100)
+                : 0;
+
+            $stats = [
+                'total' => $totalTables,
+                'available' => $availableTables,
+                'occupied' => $occupiedTables,
+                'quick' => $quickTables,
+                'occupancy_rate' => $occupancyRate
+            ];
+
+            // Format table data
+            $formattedTables = $tables->map(function ($table) {
+                $currentBillData = null;
+
+                if ($table->currentBill) {
+                    $currentBillData = [
+                        'elapsed_time' => $this->calculateSimpleElapsedTime($table->currentBill)
+                    ];
+                }
+
+                return [
+                    'id' => $table->id,
+                    'table_number' => $table->table_number,
+                    'table_name' => $table->table_name,
+                    'capacity' => $table->capacity,
+                    'status' => $table->status,
+                    'hourly_rate' => $table->getHourlyRate(),
+                    'current_bill' => $currentBillData
+                ];
+            });
+
+            return view('admin.tables.simple-dashboard', [
+                'stats' => $stats,
+                'tables' => $formattedTables
+            ]);
+        } catch (\Exception $e) {
+            return view('admin.tables.simple-dashboard', [
+                'stats' => null,
+                'tables' => [],
+                'error' => 'Lỗi khi tải dữ liệu!'
+            ]);
+        }
+    }
+
+
+    /**
+     * Tính thời gian đã sử dụng (đơn giản)
+     */
+    private function calculateSimpleElapsedTime($bill)
+    {
+        if ($bill->status === 'quick') {
+            return 'BÀN LẺ';
+        }
+
+        // Kiểm tra combo time
+        $activeComboTime = $bill->comboTimeUsages
+            ->where('is_expired', false)
+            ->where('remaining_minutes', '>', 0)
+            ->whereNull('end_time')
+            ->first();
+
+        if ($activeComboTime) {
+            $start = Carbon::parse($activeComboTime->start_time);
+            $elapsedMinutes = $start->diffInMinutes(now());
+            return sprintf('%02d:%02d', floor($elapsedMinutes / 60), $elapsedMinutes % 60);
+        }
+
+        // Kiểm tra regular time
+        $activeRegularTime = $bill->billTimeUsages
+            ->whereNull('end_time')
+            ->first();
+
+        if ($activeRegularTime) {
+            $start = Carbon::parse($activeRegularTime->start_time);
+            $elapsedMinutes = $start->diffInMinutes(now());
+
+            if ($activeRegularTime->paused_duration) {
+                $elapsedMinutes -= $activeRegularTime->paused_duration;
+            }
+
+            return sprintf('%02d:%02d', floor($elapsedMinutes / 60), $elapsedMinutes % 60);
+        }
+
+        return '--:--';
+    }
 }

@@ -709,6 +709,40 @@
             font-size: 1.1rem;
             grid-column: 1 / -1;
         }
+
+        /* Warning Banner */
+        .warning-banner {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .warning-banner-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #92400e;
+        }
+
+        .warning-banner-content i {
+            font-size: 1.25rem;
+        }
+
+        .warning-banner-text {
+            flex: 1;
+        }
+
+        .warning-banner-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .warning-banner-description {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
     </style>
 </head>
 
@@ -776,6 +810,7 @@
                                     'regular' => '🕒 GIỜ THƯỜNG',
                                     'combo' => '🎁 COMBO TIME',
                                     'quick' => '⚡ BÀN LẺ',
+                                    'combo_ended' => '⏹️ COMBO ĐÃ HẾT',
                                     default => '⏸️ KHÔNG HOẠT ĐỘNG',
                                 };
                             @endphp
@@ -796,6 +831,8 @@
                             <div id="remainingTimeDisplay" class="time-value time-remaining">
                                 @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && isset($timeInfo['remaining_minutes']))
                                     {{ sprintf('%02d:%02d', floor($timeInfo['remaining_minutes'] / 60), $timeInfo['remaining_minutes'] % 60) }}
+                                @elseif (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo_ended')
+                                    <span class="text-red-500">00:00</span>
                                 @else
                                     --:--
                                 @endif
@@ -826,6 +863,28 @@
                                 <div id="progressBar" class="progress-fill"
                                     style="width: {{ isset($timeInfo['total_minutes']) && $timeInfo['total_minutes'] > 0 ? min(100, (($timeInfo['elapsed_minutes'] ?? 0) / $timeInfo['total_minutes']) * 100) : 0 }}%">
                                 </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Thông báo combo đã hết -->
+                    @if (isset($timeInfo['needs_switch']) && $timeInfo['needs_switch'])
+                        <div class="warning-banner">
+                            <div class="warning-banner-content">
+                                <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                                <div class="warning-banner-text">
+                                    <div class="warning-banner-title">Combo đã hết thời gian!</div>
+                                    <div class="warning-banner-description">Vui lòng chuyển sang giờ thường để tiếp tục
+                                        tính giờ.</div>
+                                </div>
+                                <form action="{{ route('admin.bills.switch-to-regular', $table->currentBill->id) }}"
+                                    method="POST">
+                                    @csrf
+                                    <button type="submit" class="action-btn action-btn-primary">
+                                        <i class="fas fa-exchange-alt"></i>
+                                        Chuyển
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     @endif
@@ -1171,15 +1230,15 @@
                                         THANH TOÁN BÀN LẺ
                                     </a>
                                 @else
-                                    <!-- Pause/Resume Buttons - CHỈ HIỆN VỚI GIỜ THƯỜNG VÀ KHÔNG PHẢI COMBO -->
-                                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'regular')
+                                    <!-- Pause/Resume Buttons - CHỈ HIỆN VỚI COMBO TIME -->
+                                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
                                         @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
                                             <form action="{{ route('bills.pause', $table->currentBill->id) }}"
                                                 method="POST" class="w-full">
                                                 @csrf
                                                 <button type="submit" class="action-btn action-btn-warning">
                                                     <i class="fas fa-pause"></i>
-                                                    TẠM DỪNG
+                                                    TẠM DỪNG COMBO
                                                 </button>
                                             </form>
                                         @endif
@@ -1190,7 +1249,7 @@
                                                 @csrf
                                                 <button type="submit" class="action-btn action-btn-success">
                                                     <i class="fas fa-play"></i>
-                                                    TIẾP TỤC
+                                                    TIẾP TỤC COMBO
                                                 </button>
                                             </form>
                                         @endif
@@ -1213,18 +1272,15 @@
                                         </button>
                                     </form>
 
-                                    <!-- Chuyển sang giờ thường - CHỈ HIỆN KHI ĐANG DÙNG COMBO VÀ ĐANG TẠM DỪNG -->
-                                    @if (isset($timeInfo['mode']) &&
-                                            $timeInfo['mode'] === 'combo' &&
-                                            isset($timeInfo['is_paused']) &&
-                                            $timeInfo['is_paused']
-                                    )
-                                        <form action="{{ route('bills.switch-regular', $table->currentBill->id) }}"
+                                    <!-- Chuyển sang giờ thường - CHỈ HIỆN KHI COMBO ĐÃ HẾT -->
+                                    @if (isset($timeInfo['needs_switch']) && $timeInfo['needs_switch'])
+                                        <form
+                                            action="{{ route('admin.bills.switch-to-regular', $table->currentBill->id) }}"
                                             method="POST"
-                                            onsubmit="return confirm('Chuyển sang tính giờ thường? Thời gian combo còn lại sẽ không được tính.')"
+                                            onsubmit="return confirm('Bạn có chắc chắn muốn chuyển sang tính giờ thường?')"
                                             class="w-full">
                                             @csrf
-                                            <button type="submit" class="action-btn action-btn-secondary">
+                                            <button type="submit" class="action-btn action-btn-success">
                                                 <i class="fas fa-exchange-alt"></i>
                                                 CHUYỂN GIỜ THƯỜNG
                                             </button>
@@ -1239,18 +1295,7 @@
                                     </a>
                                 @endif
 
-                                <!-- Chuyển thành bàn lẻ - KHÔNG CHO PHÉP KHI ĐANG DÙNG COMBO -->
-                                @if (!isset($timeInfo['mode']) || $timeInfo['mode'] !== 'combo')
-                                    <form action="{{ route('bills.convert-to-quick', $table->currentBill->id) }}"
-                                        method="POST" onsubmit="return confirm('Chuyển thành bàn lẻ?')"
-                                        class="w-full">
-                                        @csrf
-                                        <button type="submit" class="action-btn action-btn-secondary">
-                                            <i class="fas fa-coins"></i>
-                                            CHUYỂN BÀN LẺ
-                                        </button>
-                                    </form>
-                                @endif
+                                
                             @else
                                 <!-- Tạo bill mới -->
                                 <button onclick="showCreateBillModal()" class="action-btn action-btn-primary">
@@ -1402,6 +1447,7 @@
         const totalComboMinutes = Number({{ $timeInfo['total_minutes'] ?? 0 }});
         const elapsedMinutesFromServer = Number({{ $timeInfo['elapsed_minutes'] ?? 0 }});
         const currentBillId = {{ $table->currentBill->id ?? 'null' }};
+        const needsSwitch = {{ isset($timeInfo['needs_switch']) && $timeInfo['needs_switch'] ? 'true' : 'false' }};
 
         // Không sử dụng thời gian thực từ client, chỉ sử dụng dữ liệu từ server
         let serverElapsedSeconds = elapsedMinutesFromServer * 60;
@@ -1455,6 +1501,8 @@
                 const percent = totalComboSeconds > 0 ? Math.min(100, (serverElapsedSeconds / totalComboSeconds) * 100) : 0;
                 document.getElementById('progressBar').style.width = percent + '%';
                 document.getElementById('progressText').textContent = Math.round(percent) + '% đã sử dụng';
+            } else if (currentMode === 'combo_ended') {
+                document.getElementById('remainingTimeDisplay').innerHTML = '<span class="text-red-500">00:00</span>';
             }
 
             // Current cost
@@ -1465,7 +1513,7 @@
         // Real-time counter từ server data
         function startServerBasedCounter() {
             refreshInterval = setInterval(async () => {
-                if (isRunning && !isPaused) {
+                if (isRunning && !isPaused && currentMode !== 'combo_ended') {
                     // Tăng thời gian mỗi giây dựa trên dữ liệu server
                     serverElapsedSeconds += 1;
                     renderFromServer();
@@ -1713,7 +1761,7 @@
             renderFromServer();
 
             // Start server-based counter
-            if (isRunning && !isPaused) {
+            if (isRunning && !isPaused && currentMode !== 'combo_ended') {
                 startServerBasedCounter();
             }
 

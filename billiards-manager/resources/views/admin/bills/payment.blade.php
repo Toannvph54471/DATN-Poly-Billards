@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,7 +77,7 @@
                             <div class="text-sm text-gray-500 mb-1">Bàn</div>
                             <div class="font-semibold text-gray-800">{{ $bill->table->table_name }}</div>
                             <div class="text-xs text-gray-400">
-                                @if($bill->table->tableRate)
+                                @if ($bill->table->tableRate)
                                     {{ $bill->table->tableRate->name }}
                                 @else
                                     Chưa phân loại
@@ -150,9 +151,12 @@
                                             <div class="text-sm text-gray-600">
                                                 @if ($comboDetail->combo)
                                                     @php
-                                                        $components = $bill->billDetails->where('parent_bill_detail_id', $comboDetail->id);
+                                                        $components = $bill->billDetails->where(
+                                                            'parent_bill_detail_id',
+                                                            $comboDetail->id,
+                                                        );
                                                     @endphp
-                                                    @if($components->count() > 0)
+                                                    @if ($components->count() > 0)
                                                         @foreach ($components as $component)
                                                             {{ $component->quantity }}x
                                                             {{ $component->product->name ?? 'Sản phẩm' }}
@@ -180,7 +184,7 @@
 
                             <!-- Individual Products -->
                             @foreach ($bill->billDetails->whereNull('combo_id')->where('is_combo_component', false) as $item)
-                                @if($item->product)
+                                @if ($item->product)
                                     @php
                                         $roundedUnitPrice = ceil($item->unit_price / 1000) * 1000;
                                         $roundedItemTotal = ceil($item->total_price / 1000) * 1000;
@@ -203,7 +207,8 @@
                                         <div class="text-right">
                                             <div class="text-sm text-gray-500">{{ $item->quantity }} x
                                                 {{ number_format($roundedUnitPrice) }} ₫</div>
-                                            <div class="font-bold text-gray-800">{{ number_format($roundedItemTotal) }} ₫
+                                            <div class="font-bold text-gray-800">{{ number_format($roundedItemTotal) }}
+                                                ₫
                                             </div>
                                         </div>
                                     </div>
@@ -384,7 +389,8 @@
                             <!-- Cash Received -->
                             <div id="cashAmountSection" class="transition-all duration-300">
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">Khách đưa</label>
-                                <input type="number" id="cash_received" name="cash_received" value="{{ $finalAmount }}"
+                                <input type="number" id="cash_received" name="cash_received"
+                                    value="{{ $finalAmount }}"
                                     class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-lg text-right focus:border-primary-500 focus:ring-0"
                                     oninput="calculateChange()" min="{{ $finalAmount }}" step="1000">
                             </div>
@@ -418,6 +424,14 @@
                                 class="w-full bg-gray-500 hover:bg-gray-600 text-white py-4 px-6 rounded-xl transition-all text-center block font-semibold text-lg">
                                 <i class="fas fa-arrow-left mr-2"></i>
                                 Quay Lại
+                            </a>
+                        </div>
+
+                        <!-- Thêm vào phần header hoặc sau khi thanh toán thành công -->
+                        <div class="flex gap-2 mt-4">
+                            <a href="{{ route('admin.bills.print', $bill->id) }}" target="_blank"
+                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                🖨️ In hóa đơn
                             </a>
                         </div>
                     </form>
@@ -519,4 +533,5 @@
         });
     </script>
 </body>
+
 </html>

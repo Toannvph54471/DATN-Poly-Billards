@@ -141,25 +141,35 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
     // Detail Table
     Route::get('/tables/{id}/detail', [TableController::class, 'showDetail'])->name('admin.tables.detail');
+    // Bill Management
     Route::post('/bills/create', [BillController::class, 'createBill'])->name('bills.create');
+    Route::post('/bills/quick-create', [BillController::class, 'createQuickBill'])->name('bills.quick-create');
+    // Bill Items
     Route::post('/bills/{id}/add-combo', [BillController::class, 'addComboToBill'])->name('bills.add-combo');
     Route::post('/bills/{id}/add-product', [BillController::class, 'addProductToBill'])->name('bills.add-product');
-    Route::post('/bills/{id}/switch-regular', [BillController::class, 'switchToRegularTime'])->name('bills.switch-regular');
-    Route::post('/bills/{id}/extend-combo', [BillController::class, 'extendComboTime'])->name('bills.extend-combo');
-    Route::post('/bills/{id}/process-payment', [BillController::class, 'processPayment'])->name('bills.process-payment');
-    Route::get('/bills/{id}/payment', [BillController::class, 'showPayment'])->name('bills.payment-page');
-    Route::post('/bills/{id}/update-total', [BillController::class, 'updateBillTotal'])->name('bills.update-total');
-    Route::get('/admin/bills/{id}/time-info', [BillController::class, 'getBillTimeInfo'])->name('bills.time-info');
-    Route::post('/bills/quick-create', [BillController::class, 'createQuickBill'])->name('bills.quick-create');
-    Route::post('/bills/{id}/convert-to-quick', [BillController::class, 'convertToQuick'])->name('bills.convert-to-quick');
+    // Time Management
     Route::post('/bills/{id}/start-playing', [BillController::class, 'startPlaying'])->name('bills.start-playing');
-
     Route::post('/bills/{id}/pause', [BillController::class, 'pauseTime'])->name('bills.pause');
     Route::post('/bills/{id}/resume', [BillController::class, 'resumeTime'])->name('bills.resume');
-
+    Route::post('/bills/{id}/switch-to-regular', [BillController::class, 'switchToRegularTime'])->name('bills.switch-to-regular');
+    // Payment
+    Route::get('/bills/{id}/payment', [BillController::class, 'showPayment'])->name('bills.payment-page');
+    Route::post('/bills/{id}/process-payment', [BillController::class, 'processPayment'])->name('bills.process-payment');
+    // Utilities
+    Route::post('/bills/{id}/update-total', [BillController::class, 'updateBillTotal'])->name('bills.update-total');
+    Route::get('/admin/bills/{id}/time-info', [BillController::class, 'getBillTimeInfo'])->name('bills.time-info');
+    // Table Transfer
     Route::get('/bills/transfer/{billId}', [BillController::class, 'showTransferForm'])->name('admin.bills.transfer.form');
     Route::post('/bills/transfer', [BillController::class, 'transferTable'])->name('admin.bills.transfer');
     Route::get('/bills/transfer/available/{billId}', [BillController::class, 'getAvailableTables'])->name('admin.bills.transfer.available');
+
+    // Simple Dashboard routes
+    Route::get('/admin/tables/simple-dashboard', [TableController::class, 'simpleDashboard'])->name('admin.tables.simple-dashboard');
+    Route::get('/admin/tables/simple-dashboard-data', [TableController::class, 'getSimpleDashboardData'])->name('admin.tables.simple-dashboard.data');
+
+    // Route in bill
+    Route::get('/admin/bills/{id}/print', [BillController::class, 'printBill'])->name('admin.bills.print');
+    Route::get('/admin/bills/{id}/print-api', [BillController::class, 'printBillApi'])->name('admin.bills.print-api');
 
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');
