@@ -68,60 +68,68 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255|unique:users,email,' . $id,
-        'phone' => 'required|string|max:15',
-        'role_id' => 'required|exists:roles,id',
-        'status' => 'required|in:Active,Inactive',
-    ]);
+        // 1. Validate dữ liệu
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $id,
+            'phone' => 'required|string|max:15',
+            'role_id' => 'required|exists:roles,id', // Bắt buộc chọn Role hợp lệ
+            'status' => 'required|in:Active,Inactive',
+        ]);
 
-    $user = User::findOrFail($id);
-    $oldRoleSlug = $user->role ? $user->role->slug : null;
-    $newRole = Role::findOrFail($request->role_id);
-    $newRoleSlug = $newRole->slug;
+        $user = User::findOrFail($id);
+        
+        // Lấy slug của role cũ và mới để so sánh
+        $oldRoleSlug = $user->role ? $user->role->slug : '';
+        $newRole = Role::findOrFail($request->role_id);
+        $newRoleSlug = $newRole->slug;
 
-    // Lấy vai trò hiện tại để giữ nguyên nếu là admin hoặc manager
-    $currentRoleId = $user->role_id;
+        // 2. Cập nhật thông tin User (SỬA QUAN TRỌNG TẠI ĐÂY)
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'role_id' => $request->role_id, // Cho phép lưu role mới mà người dùng chọn
+            'status' => $request->status,
+        ]);
 
-    $user->update([
-        'name' => $request->name,
-        'email' => $request->email,
-        'phone' => $request->phone,
-        'role_id' => $newRoleSlug === User::ROLE_EMPLOYEE ? $request->role_id : $currentRoleId, // Giữ nguyên vai trò nếu không phải employee
-        'status' => $request->status,
-    ]);
-
-    // Đồng bộ với Employee chỉ khi vai trò là employee
-    if ($newRoleSlug === User::ROLE_EMPLOYEE) {
-        if (!$user->employee) {
-            Employee::create([
-                'user_id' => $user->id,
-                'employee_code' => 'EMP-' . Str::random(6),
-                'name' => $user->name,
-                'phone' => $user->phone,
-                'email' => $user->email,
-                'position' => 'staff',
-                'salary_type' => 'hourly',
-                'salary_rate' => 25000.00,
-                'start_date' => now(),
-                'status' => $request->status === 'Active' ? 0 : 1,
-            ]);
-        } else {
-            $user->employee->update([
-                'name' => $user->name,
-                'phone' => $user->phone,
-                'email' => $user->email,
-                'status' => $request->status === 'Active' ? 0 : 1,
-            ]);
+        // 3. Logic đồng bộ bảng Employees (Giữ nguyên logic hay của bạn)
+        // Chú ý: Thay User::ROLE_EMPLOYEE bằng 'employee' nếu model chưa khai báo const
+        
+        // Trường hợp 1: Chuyển thành Employee (Tạo mới hoặc cập nhật)
+        if ($newRoleSlug === 'employee') { 
+            if (!$user->employee) {
+                // Nếu chưa có thông tin nhân viên -> Tạo mới
+                Employee::create([
+                    'user_id' => $user->id,
+                    'employee_code' => 'EMP-' . Str::random(6),
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'email' => $user->email,
+                    'position' => 'staff',
+                    'salary_type' => 'hourly', // Mặc định
+                    'salary_rate' => 25000.00, // Mặc định
+                    'start_date' => now(),
+                    'status' => $request->status === 'Active' ? 0 : 1,
+                ]);
+            } else {
+                // Nếu đã có -> Cập nhật thông tin
+                $user->employee->update([
+                    'name' => $user->name,
+                    'phone' => $user->phone,
+                    'email' => $user->email,
+                    'status' => $request->status === 'Active' ? 0 : 1,
+                ]);
+            }
+        } 
+        // Trường hợp 2: Từ Employee chuyển sang role khác (Admin/Manager/Customer) -> Xóa thông tin nhân viên
+        elseif ($oldRoleSlug === 'employee' && $newRoleSlug !== 'employee') {
+            if ($user->employee) {
+                $user->employee->delete();
+            }
         }
-    } elseif ($oldRoleSlug === User::ROLE_EMPLOYEE && $newRoleSlug !== User::ROLE_EMPLOYEE) {
-        if ($user->employee) {
-            $user->employee->delete();
-        }
+
+        return redirect()->route('admin.users.index') // Nên về trang index để thấy danh sách cập nhật
+            ->with('success', 'Cập nhật người dùng và phân quyền thành công!');
     }
-
-        return redirect()->route('admin.users.edit', $user->id)
-            ->with('success', 'Cập nhật thông tin thành viên thành công!');
-        }
     }
