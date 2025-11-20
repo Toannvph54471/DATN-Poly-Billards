@@ -303,7 +303,7 @@
                         $finalAmount = ceil($bill->final_amount / 1000) * 1000;
                     @endphp
 
-                    <form action="{{ route('bills.process-payment', $bill->id) }}" method="POST" id="paymentForm">
+                    <form action="{{ route('admin.bills.process-payment', $bill->id) }}" method="POST" id="paymentForm">
                         @csrf
 
                         <!-- Payment Methods -->
