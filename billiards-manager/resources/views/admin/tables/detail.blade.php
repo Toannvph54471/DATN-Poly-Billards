@@ -947,7 +947,7 @@
                                     </div>
                                 </div>
                                 <div class="combo-actions flex gap-2">
-                                    <form action="{{ route('bills.pause', $table->currentBill->id) }}" method="POST">
+                                    <form action="{{ route('admin.bills.pause', $table->currentBill->id) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-warning"
                                             style="padding: 0.5rem 1rem;">
@@ -960,7 +960,7 @@
                                         <button type="submit" class="action-btn action-btn-danger"
                                             style="padding: 0.5rem 1rem;"
                                             onclick="return confirm('Bạn có chắc muốn DỪNG combo thời gian?')">
-                                            <i class="fas fa-stop"></i> Dừng Combo
+                                            <i class="fas fa-stop"></i> Tắt Combo
                                         </button>
                                     </form>
                                 </div>
@@ -983,7 +983,7 @@
                                     </div>
                                 </div>
                                 <div class="combo-actions flex gap-2">
-                                    <form action="{{ route('bills.resume', $table->currentBill->id) }}" method="POST">
+                                    <form action="{{ route('admin.bills.resume', $table->currentBill->id) }}" method="POST">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-success"
                                             style="padding: 0.5rem 1rem;">
@@ -1372,7 +1372,7 @@
                             @if ($table->currentBill)
                                 <!-- Xử lý bàn lẻ -->
                                 @if ($table->currentBill->status === 'quick')
-                                    <form action="{{ route('bills.start-playing', $table->currentBill->id) }}"
+                                    <form action="{{ route('admin.bills.start-playing', $table->currentBill->id) }}"
                                         method="POST" class="w-full">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-primary">
@@ -1381,21 +1381,21 @@
                                         </button>
                                     </form>
 
-                                    <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
+                                    <a href="{{ route('admin.bills.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-success">
                                         <i class="fas fa-credit-card"></i>
                                         THANH TOÁN BÀN LẺ
                                     </a>
                                 @else
                                     <!-- Thanh toán -->
-                                    <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
+                                    <a href="{{ route('admin.bills.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-primary">
                                         <i class="fas fa-credit-card"></i>
                                         THANH TOÁN
                                     </a>
 
                                     <!-- Cập nhật tổng -->
-                                    <form action="{{ route('bills.update-total', $table->currentBill->id) }}"
+                                    <form action="{{ route('admin.bills.update-total', $table->currentBill->id) }}"
                                         method="POST" class="w-full">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-secondary">
@@ -1421,7 +1421,7 @@
                                     @endif
 
                                     <!-- Chuyển bàn -->
-                                    <a href="{{ route('admin.bills.transfer.form', $table->currentBill->id) }}"
+                                    <a href="{{ route('admin.bills.transfer-form', $table->currentBill->id) }}"
                                         class="action-btn action-btn-secondary">
                                         <i class="fas fa-exchange-alt"></i>
                                         CHUYỂN BÀN
@@ -1502,7 +1502,7 @@
                 <h3 class="modal-title">Tạo Hóa Đơn Tính Giờ</h3>
                 <button class="close-btn" onclick="hideCreateBillModal()">&times;</button>
             </div>
-            <form id="createBillForm" action="{{ route('bills.create') }}" method="POST">
+            <form id="createBillForm" action="{{ route('admin.bills.create') }}" method="POST">
                 @csrf
                 <input type="hidden" name="table_id" value="{{ $table->id }}">
 
@@ -1542,7 +1542,7 @@
                 <h3 class="modal-title">Tạo Bàn Lẻ</h3>
                 <button class="close-btn" onclick="hideQuickBillModal()">&times;</button>
             </div>
-            <form id="quickBillForm" action="{{ route('bills.quick-create') }}" method="POST">
+            <form id="quickBillForm" action="{{ route('admin.bills.quick-create') }}" method="POST">
                 @csrf
                 <input type="hidden" name="table_id" value="{{ $table->id }}">
 
@@ -1732,7 +1732,7 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
 
-                fetch('{{ route('bills.add-product', $table->currentBill->id) }}', {
+                fetch('{{ route('admin.bills.add-product', $table->currentBill->id) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1771,7 +1771,7 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
 
-                fetch('{{ route('bills.add-combo', $table->currentBill->id) }}', {
+                fetch('{{ route('admin.bills.add-combo', $table->currentBill->id) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1894,7 +1894,7 @@
                             <div class="critical-warning-title">CẢNH BÁO: COMBO SẮP HẾT!</div>
                             <div class="critical-warning-description">
                                 Chỉ còn <strong>${remainingMinutes} phút</strong>. 
-                                Hệ thống sẽ tự động chuyển sang giờ thường khi hết thời gian.
+                                Bạn hãy thao tác để chuyển tiếp trạng thái 
                             </div>
                         </div>
                     </div>
