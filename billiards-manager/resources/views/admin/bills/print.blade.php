@@ -44,17 +44,48 @@
         .text-sm-print {
             font-size: 11px;
         }
+        .redirect-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
-    <!-- Nút in - chỉ hiển thị trên màn hình -->
+    <!-- Redirect Overlay -->
+    <div id="redirectOverlay" class="redirect-overlay no-print" style="display: none;">
+        <div class="text-center">
+            <div class="text-4xl mb-4">✅</div>
+            <h2 class="text-xl font-bold mb-2">In hóa đơn thành công!</h2>
+            <p class="text-lg mb-4">Tự động chuyển về danh sách bàn sau <span id="countdown" class="font-bold">3</span> giây...</p>
+            <div class="flex space-x-2">
+                <button onclick="redirectNow()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Chuyển ngay
+                </button>
+                <button onclick="stayHere()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    Ở lại
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nút điều khiển - chỉ hiển thị trên màn hình -->
     <div class="no-print fixed top-4 left-4 z-50">
         <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors">
             🖨️ In hóa đơn
         </button>
-        <a href="{{ route('admin.tables.index') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-700 transition-colors ml-2">
-            ❌ Đóng
-        </a>
+        <button onclick="redirectNow()" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-700 transition-colors ml-2">
+            📋 Về danh sách bàn
+        </button>
     </div>
 
     <!-- Nội dung hóa đơn -->
@@ -184,9 +215,12 @@
     </div>
 
     <script>
-        // Tự động in khi trang load (chỉ trên trình duyệt)
+        let countdown = 3;
+        let countdownInterval;
+        const redirectUrl = '{{ route("admin.tables.index") }}';
+
+        // Tự động in khi trang load
         document.addEventListener('DOMContentLoaded', function() {
-            // Chỉ tự động in nếu không phải là preview print
             if (!window.matchMedia('print').matches) {
                 setTimeout(() => {
                     window.print();
@@ -194,14 +228,67 @@
             }
         });
 
-        // Tự động đóng cửa sổ sau khi in (tuỳ chọn)
+        // Hàm chuyển hướng
+        function redirectNow() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            window.location.href = redirectUrl;
+        }
+
+        // Hàm ở lại trang
+        function stayHere() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            document.getElementById('redirectOverlay').style.display = 'none';
+        }
+
+        // Hiển thị overlay sau khi in
         window.onafterprint = function() {
-            setTimeout(() => {
-                if (confirm('Đóng cửa sổ in?')) {
-                    window.close();
+            // Hiển thị overlay chuyển hướng
+            document.getElementById('redirectOverlay').style.display = 'flex';
+            
+            // Bắt đầu đếm ngược
+            countdownInterval = setInterval(function() {
+                countdown--;
+                document.getElementById('countdown').textContent = countdown;
+                
+                if (countdown <= 0) {
+                    redirectNow();
                 }
             }, 1000);
         };
+
+        // Fallback: nếu onafterprint không hoạt động, sử dụng setTimeout
+        setTimeout(function() {
+            // Kiểm tra nếu đang ở chế độ màn hình (không phải print preview)
+            if (!window.matchMedia('print').matches && document.hasFocus()) {
+                // Chờ thêm 2 giây rồi hiển thị overlay
+                setTimeout(function() {
+                    if (!document.getElementById('redirectOverlay').style.display || 
+                        document.getElementById('redirectOverlay').style.display === 'none') {
+                        document.getElementById('redirectOverlay').style.display = 'flex';
+                        
+                        countdownInterval = setInterval(function() {
+                            countdown--;
+                            document.getElementById('countdown').textContent = countdown;
+                            
+                            if (countdown <= 0) {
+                                redirectNow();
+                            }
+                        }, 1000);
+                    }
+                }, 2000);
+            }
+        }, 3000);
+
+        // Cho phép đóng bằng phím ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                stayHere();
+            }
+        });
     </script>
 </body>
 </html>

@@ -187,23 +187,6 @@
             gap: 0.5rem;
         }
 
-        /* Real-time Banner */
-        .real-time-banner {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .time-counter {
-            font-size: 1.5rem;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-        }
-
         /* Time Tracking */
         .time-tracking {
             display: grid;
@@ -495,6 +478,15 @@
             background: #d97706;
         }
 
+        .action-btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .action-btn-danger:hover {
+            background: #dc2626;
+        }
+
         .action-btn-secondary {
             background: #f1f5f9;
             color: #475569;
@@ -606,108 +598,39 @@
             background: #94a3b8;
         }
 
-        /* Animation for real-time banner */
-        @keyframes pulse {
-            0% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.8;
-            }
-
-            100% {
-                opacity: 1;
-            }
+        /* Combo Status Banner */
+        .combo-status-banner {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
         }
 
-        .pulse {
-            animation: pulse 2s infinite;
+        .combo-status-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        /* Loading States */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
+        .combo-status-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
-        .btn-loading {
-            position: relative;
-            color: transparent;
+        .combo-status-text {
+            flex: 1;
         }
 
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-right-color: transparent;
-            animation: spin 1s linear infinite;
+        .combo-status-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1400px) {
-            .left-panel {
-                width: 40%;
-            }
-
-            .center-panel {
-                width: 35%;
-            }
-
-            .right-panel {
-                width: 25%;
-            }
-        }
-
-        @media (max-width: 1200px) {
-            .main-content {
-                flex-direction: column;
-            }
-
-            .left-panel,
-            .center-panel,
-            .right-panel {
-                width: 100%;
-                border: none;
-            }
-
-            .center-panel {
-                order: 1;
-                border-top: 1px solid #e2e8f0;
-                border-bottom: 1px solid #e2e8f0;
-            }
-
-            .left-panel {
-                order: 2;
-            }
-
-            .right-panel {
-                order: 3;
-            }
-        }
-
-        /* Empty State */
-        .products-grid:empty::after {
-            content: "Không có sản phẩm nào";
-            display: block;
-            text-align: center;
-            padding: 3rem;
-            color: #64748b;
-            font-size: 1.1rem;
-            grid-column: 1 / -1;
+        .combo-status-description {
+            font-size: 0.875rem;
+            opacity: 0.9;
         }
 
         /* Warning Banner */
@@ -742,6 +665,41 @@
         .warning-banner-description {
             font-size: 0.875rem;
             opacity: 0.8;
+        }
+
+        /* Expired Combo Banner */
+        .expired-combo-banner {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .expired-combo-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .expired-combo-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .expired-combo-text {
+            flex: 1;
+        }
+
+        .expired-combo-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .expired-combo-description {
+            font-size: 0.875rem;
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -822,7 +780,16 @@
                         <div class="time-box">
                             <div class="time-label">ĐÃ SỬ DỤNG</div>
                             <div id="elapsedTimeDisplay" class="time-value time-elapsed">
-                                {{ isset($timeInfo['elapsed_minutes']) ? sprintf('%02d:%02d:%02d', floor($timeInfo['elapsed_minutes'] / 60), $timeInfo['elapsed_minutes'] % 60, 0) : '00:00:00' }}
+                                @if (isset($timeInfo['elapsed_minutes']))
+                                    @php
+                                        $elapsedMinutes = $timeInfo['elapsed_minutes'];
+                                        $hours = floor($elapsedMinutes / 60);
+                                        $minutes = $elapsedMinutes % 60;
+                                    @endphp
+                                    {{ sprintf('%02d:%02d', $hours, $minutes) }}
+                                @else
+                                    00:00
+                                @endif
                             </div>
                         </div>
 
@@ -830,7 +797,12 @@
                             <div class="time-label">THỜI GIAN CÒN LẠI</div>
                             <div id="remainingTimeDisplay" class="time-value time-remaining">
                                 @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && isset($timeInfo['remaining_minutes']))
-                                    {{ sprintf('%02d:%02d', floor($timeInfo['remaining_minutes'] / 60), $timeInfo['remaining_minutes'] % 60) }}
+                                    @php
+                                        $remainingMinutes = $timeInfo['remaining_minutes'];
+                                        $hours = floor($remainingMinutes / 60);
+                                        $minutes = $remainingMinutes % 60;
+                                    @endphp
+                                    {{ sprintf('%02d:%02d', $hours, $minutes) }}
                                 @elseif (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo_ended')
                                     <span class="text-red-500">00:00</span>
                                 @else
@@ -867,24 +839,103 @@
                         </div>
                     @endif
 
-                    <!-- Thông báo combo đã hết -->
-                    @if (isset($timeInfo['needs_switch']) && $timeInfo['needs_switch'])
-                        <div class="warning-banner">
-                            <div class="warning-banner-content">
-                                <i class="fas fa-exclamation-triangle text-yellow-600"></i>
-                                <div class="warning-banner-text">
-                                    <div class="warning-banner-title">Combo đã hết thời gian!</div>
-                                    <div class="warning-banner-description">Vui lòng chuyển sang giờ thường để tiếp tục
-                                        tính giờ.</div>
+                    <!-- Combo đang chạy -->
+                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && $timeInfo['is_running'] && !$timeInfo['is_paused'])
+                        <div class="combo-status-banner">
+                            <div class="combo-status-content">
+                                <div class="combo-status-info">
+                                    <i class="fas fa-gift text-white text-xl"></i>
+                                    <div class="combo-status-text">
+                                        <div class="combo-status-title">COMBO TIME ĐANG CHẠY</div>
+                                        <div class="combo-status-description">
+                                            Thời gian còn lại: <strong>{{ $timeInfo['remaining_minutes'] ?? 0 }}
+                                                phút</strong>
+                                        </div>
+                                    </div>
                                 </div>
-                                <form action="{{ route('admin.bills.switch-to-regular', $table->currentBill->id) }}"
-                                    method="POST">
-                                    @csrf
-                                    <button type="submit" class="action-btn action-btn-primary">
-                                        <i class="fas fa-exchange-alt"></i>
-                                        Chuyển
-                                    </button>
-                                </form>
+                                <div class="combo-actions flex gap-2">
+                                    <form action="{{ route('bills.pause', $table->currentBill->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-warning"
+                                            style="padding: 0.5rem 1rem;">
+                                            <i class="fas fa-pause"></i> Tạm dừng
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('admin.bills.stop-combo', $table->currentBill->id) }}"
+                                        method="POST">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-danger"
+                                            style="padding: 0.5rem 1rem;"
+                                            onclick="return confirm('Bạn có chắc muốn DỪNG combo thời gian?')">
+                                            <i class="fas fa-stop"></i> Dừng Combo
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Combo đang tạm dừng -->
+                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && $timeInfo['is_paused'])
+                        <div class="combo-status-banner" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                            <div class="combo-status-content">
+                                <div class="combo-status-info">
+                                    <i class="fas fa-pause-circle text-white text-xl"></i>
+                                    <div class="combo-status-text">
+                                        <div class="combo-status-title">COMBO TIME ĐANG TẠM DỪNG</div>
+                                        <div class="combo-status-description">
+                                            Thời gian còn lại: <strong>{{ $timeInfo['remaining_minutes'] ?? 0 }}
+                                                phút</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="combo-actions flex gap-2">
+                                    <form action="{{ route('bills.resume', $table->currentBill->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-success"
+                                            style="padding: 0.5rem 1rem;">
+                                            <i class="fas fa-play"></i> Tiếp tục
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('admin.bills.stop-combo', $table->currentBill->id) }}"
+                                        method="POST">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-danger"
+                                            style="padding: 0.5rem 1rem;"
+                                            onclick="return confirm('Bạn có chắc muốn DỪNG combo thời gian?')">
+                                            <i class="fas fa-stop"></i> Dừng Combo
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Combo đã dừng (hết thời gian hoặc dừng thủ công) -->
+                    @if (isset($timeInfo['needs_switch']) &&
+                            $timeInfo['needs_switch'] &&
+                            (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo_ended'))
+                        <div class="expired-combo-banner">
+                            <div class="expired-combo-content">
+                                <div class="expired-combo-info">
+                                    <i class="fas fa-stop-circle text-white text-xl"></i>
+                                    <div class="expired-combo-text">
+                                        <div class="expired-combo-title">COMBO ĐÃ DỪNG</div>
+                                        <div class="expired-combo-description">
+                                            Combo time đã được dừng. Bấm nút bên để bắt đầu tính giờ thường.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="combo-actions flex gap-2">
+                                    <form action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
+                                        method="POST">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-success"
+                                            style="padding: 0.5rem 1rem;">
+                                            <i class="fas fa-play"></i> Bật giờ thường
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     @endif
@@ -913,8 +964,10 @@
                                     <tr class="bg-gray-50">
                                         <th class="p-3 text-left text-sm font-medium text-gray-600">Sản phẩm</th>
                                         <th class="p-3 text-right text-sm font-medium text-gray-600 w-24">Giá</th>
-                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-32">Số lượng</th>
-                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-20">Thao tác</th>
+                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-32">Số lượng
+                                        </th>
+                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-20">Thao tác
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1223,38 +1276,12 @@
                                         </button>
                                     </form>
 
-                                    <!-- NÚT THANH TOÁN CHO BÀN LẺ -->
                                     <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-success">
                                         <i class="fas fa-credit-card"></i>
                                         THANH TOÁN BÀN LẺ
                                     </a>
                                 @else
-                                    <!-- Pause/Resume Buttons - CHỈ HIỆN VỚI COMBO TIME -->
-                                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
-                                        @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
-                                            <form action="{{ route('bills.pause', $table->currentBill->id) }}"
-                                                method="POST" class="w-full">
-                                                @csrf
-                                                <button type="submit" class="action-btn action-btn-warning">
-                                                    <i class="fas fa-pause"></i>
-                                                    TẠM DỪNG COMBO
-                                                </button>
-                                            </form>
-                                        @endif
-
-                                        @if (isset($timeInfo['is_paused']) && $timeInfo['is_paused'])
-                                            <form action="{{ route('bills.resume', $table->currentBill->id) }}"
-                                                method="POST" class="w-full">
-                                                @csrf
-                                                <button type="submit" class="action-btn action-btn-success">
-                                                    <i class="fas fa-play"></i>
-                                                    TIẾP TỤC COMBO
-                                                </button>
-                                            </form>
-                                        @endif
-                                    @endif
-
                                     <!-- Thanh toán -->
                                     <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-primary">
@@ -1272,17 +1299,17 @@
                                         </button>
                                     </form>
 
-                                    <!-- Chuyển sang giờ thường - CHỈ HIỆN KHI COMBO ĐÃ HẾT -->
-                                    @if (isset($timeInfo['needs_switch']) && $timeInfo['needs_switch'])
+                                    <!-- Bật giờ thường khi combo hết HOẶC đã dừng combo -->
+                                    @if (
+                                        (isset($timeInfo['needs_switch']) && $timeInfo['needs_switch']) ||
+                                            (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo_ended'))
                                         <form
-                                            action="{{ route('admin.bills.switch-to-regular', $table->currentBill->id) }}"
-                                            method="POST"
-                                            onsubmit="return confirm('Bạn có chắc chắn muốn chuyển sang tính giờ thường?')"
-                                            class="w-full">
+                                            action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
+                                            method="POST" class="w-full">
                                             @csrf
                                             <button type="submit" class="action-btn action-btn-success">
-                                                <i class="fas fa-exchange-alt"></i>
-                                                CHUYỂN GIỜ THƯỜNG
+                                                <i class="fas fa-play"></i>
+                                                BẬT GIỜ THƯỜNG
                                             </button>
                                         </form>
                                     @endif
@@ -1294,8 +1321,6 @@
                                         CHUYỂN BÀN
                                     </a>
                                 @endif
-
-                                
                             @else
                                 <!-- Tạo bill mới -->
                                 <button onclick="showCreateBillModal()" class="action-btn action-btn-primary">
@@ -1440,85 +1465,15 @@
 
     <script>
         // Server data với giá trị mặc định
-        const isRunning = {{ isset($timeInfo['is_running']) && $timeInfo['is_running'] ? 'true' : 'false' }};
-        const isPaused = {{ isset($timeInfo['is_paused']) && $timeInfo['is_paused'] ? 'true' : 'false' }};
         const currentMode = '{{ $timeInfo['mode'] ?? 'none' }}';
-        const hourlyRate = Number({{ $timeInfo['hourly_rate'] ?? 0 }});
-        const totalComboMinutes = Number({{ $timeInfo['total_minutes'] ?? 0 }});
-        const elapsedMinutesFromServer = Number({{ $timeInfo['elapsed_minutes'] ?? 0 }});
         const currentBillId = {{ $table->currentBill->id ?? 'null' }};
         const needsSwitch = {{ isset($timeInfo['needs_switch']) && $timeInfo['needs_switch'] ? 'true' : 'false' }};
 
-        // Không sử dụng thời gian thực từ client, chỉ sử dụng dữ liệu từ server
-        let serverElapsedSeconds = elapsedMinutesFromServer * 60;
         let refreshInterval = null;
 
         // Format functions
         function pad(n) {
             return n.toString().padStart(2, '0');
-        }
-
-        function formatHMS(totalSeconds) {
-            const hrs = Math.floor(totalSeconds / 3600);
-            const mins = Math.floor((totalSeconds % 3600) / 60);
-            const secs = Math.floor(totalSeconds % 60);
-            return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
-        }
-
-        function formatHM(totalSeconds) {
-            const hrs = Math.floor(totalSeconds / 3600);
-            const mins = Math.floor((totalSeconds % 3600) / 60);
-            return `${pad(hrs)}:${pad(mins)}`;
-        }
-
-        function formatCurrency(amount) {
-            const rounded = Math.round(amount);
-            return new Intl.NumberFormat('vi-VN').format(rounded) + ' ₫';
-        }
-
-        function calculateCurrentCost(elapsedSeconds) {
-            if (currentMode === 'regular') {
-                return (hourlyRate / 3600) * elapsedSeconds;
-            } else if (currentMode === 'combo') {
-                const totalComboSeconds = totalComboMinutes * 60;
-                const extraSeconds = Math.max(0, elapsedSeconds - totalComboSeconds);
-                return (hourlyRate / 3600) * extraSeconds;
-            }
-            return 0;
-        }
-
-        // Update UI từ dữ liệu server
-        function renderFromServer() {
-            // Elapsed time từ server
-            document.getElementById('elapsedTimeDisplay').textContent = formatHMS(serverElapsedSeconds);
-
-            // Remaining time and progress
-            if (currentMode === 'combo') {
-                const totalComboSeconds = totalComboMinutes * 60;
-                const remainingSeconds = totalComboSeconds - serverElapsedSeconds;
-                document.getElementById('remainingTimeDisplay').textContent = formatHM(Math.max(0, remainingSeconds));
-
-                const percent = totalComboSeconds > 0 ? Math.min(100, (serverElapsedSeconds / totalComboSeconds) * 100) : 0;
-                document.getElementById('progressBar').style.width = percent + '%';
-                document.getElementById('progressText').textContent = Math.round(percent) + '% đã sử dụng';
-            } else if (currentMode === 'combo_ended') {
-                document.getElementById('remainingTimeDisplay').innerHTML = '<span class="text-red-500">00:00</span>';
-            }
-
-            // Current cost
-            const currentCost = calculateCurrentCost(serverElapsedSeconds);
-            document.getElementById('currentCostDisplay').textContent = formatCurrency(currentCost);
-        }
-
-        // Real-time counter từ server data
-        function startServerBasedCounter() {
-            refreshInterval = setInterval(async () => {
-                if (isRunning && !isPaused && currentMode !== 'combo_ended') {
-                    // Tăng thời gian mỗi giây dựa trên dữ liệu server
-                    serverElapsedSeconds += 1;
-                    renderFromServer();
-                }
-            }, 1000);
         }
 
         // Modal functions
@@ -1739,6 +1694,23 @@
             @endif
         }
 
+        // Hàm kiểm tra và cập nhật trạng thái combo từ server
+        async function checkComboStatus() {
+            if ((currentMode === 'combo' || needsSwitch) && currentBillId) {
+                try {
+                    const response = await fetch(`/admin/bills/${currentBillId}/check-combo-status`);
+                    const data = await response.json();
+
+                    // Nếu combo đã hết, reload trang để hiển thị nút bật giờ thường
+                    if (data.needs_switch && !data.has_active_combo) {
+                        location.reload();
+                    }
+                } catch (error) {
+                    console.error('Error checking combo status:', error);
+                }
+            }
+        }
+
         // Event listeners for buttons
         document.addEventListener('DOMContentLoaded', function() {
             // Product buttons
@@ -1757,12 +1729,9 @@
                 });
             });
 
-            // Render từ dữ liệu server ban đầu
-            renderFromServer();
-
-            // Start server-based counter
-            if (isRunning && !isPaused && currentMode !== 'combo_ended') {
-                startServerBasedCounter();
+            // Kiểm tra trạng thái combo định kỳ (mỗi 30 giây)
+            if (currentMode === 'combo' || needsSwitch) {
+                setInterval(checkComboStatus, 30000);
             }
 
             // Setup tabs and search functionality

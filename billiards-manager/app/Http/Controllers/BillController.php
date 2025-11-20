@@ -397,7 +397,56 @@ class BillController extends Controller
     }
 
     /**
-     * Chuyển từ combo time sang tính giờ thường - STAFF THAO TÁC THỦ CÔNG
+     * DỪNG COMBO TIME - KHI HẾT THỜI GIAN HOẶC NHÂN VIÊN DỪNG THỦ CÔNG
+     */
+    public function stopComboTime($billId)
+    {
+        try {
+            DB::beginTransaction();
+
+            $bill = Bill::findOrFail($billId);
+
+            // Tìm combo time đang chạy hoặc đang tạm dừng
+            $activeComboTime = ComboTimeUsage::where('bill_id', $billId)
+                ->where('is_expired', false)
+                ->first();
+
+            if (!$activeComboTime) {
+                return redirect()->back()->with('error', 'Không tìm thấy combo thời gian đang chạy');
+            }
+
+            // Tính thời gian đã sử dụng nếu đang chạy
+            if (is_null($activeComboTime->end_time)) {
+                $start = Carbon::parse($activeComboTime->start_time);
+                $elapsedMinutes = $start->diffInMinutes(now());
+                $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
+            } else {
+                // Đang tạm dừng, sử dụng remaining_minutes hiện tại
+                $remainingMinutes = $activeComboTime->remaining_minutes;
+            }
+
+            // Dừng combo time
+            $activeComboTime->update([
+                'end_time' => now(),
+                'remaining_minutes' => $remainingMinutes,
+                'is_expired' => true
+            ]);
+
+            // Cập nhật trạng thái bill nếu cần
+            $bill->refresh();
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Đã dừng combo thời gian. Bạn có thể bật giờ thường nếu cần.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error stopping combo time: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Lỗi khi dừng combo: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Chuyển từ combo time sang tính giờ thường
      */
     public function switchToRegularTime(Request $request, $billId)
     {
@@ -409,7 +458,6 @@ class BillController extends Controller
             // Kiểm tra xem có combo time đã hết hạn không
             $expiredComboTime = ComboTimeUsage::where('bill_id', $billId)
                 ->where('is_expired', true)
-                ->where('remaining_minutes', 0)
                 ->first();
 
             if (!$expiredComboTime) {
@@ -439,6 +487,140 @@ class BillController extends Controller
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Lỗi khi chuyển sang giờ thường: ' . $e->getMessage());
+        }
+    }
+
+    public function autoStopExpiredCombos()
+    {
+        try {
+            DB::beginTransaction();
+
+            // Tìm các combo time đang chạy và đã hết thời gian
+            $expiredCombos = ComboTimeUsage::where('is_expired', false)
+                ->whereNull('end_time')
+                ->where('remaining_minutes', '>', 0)
+                ->get();
+
+            $stoppedCount = 0;
+
+            foreach ($expiredCombos as $comboTime) {
+                $start = Carbon::parse($comboTime->start_time);
+                $elapsedMinutes = $start->diffInMinutes(now());
+                $remainingMinutes = max(0, $comboTime->remaining_minutes - $elapsedMinutes);
+
+                // Nếu hết thời gian
+                if ($remainingMinutes <= 0) {
+                    $comboTime->update([
+                        'end_time' => now(),
+                        'remaining_minutes' => 0,
+                        'is_expired' => true
+                    ]);
+
+                    $stoppedCount++;
+
+                    Log::info("Auto stopped combo for bill: {$comboTime->bill_id}, remaining: {$remainingMinutes} minutes");
+                }
+            }
+
+            DB::commit();
+
+            Log::info("Auto stopped {$stoppedCount} expired combos");
+            return $stoppedCount;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error auto stopping combos: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Kiểm tra và cập nhật trạng thái combo time real-time
+     */
+    public function checkComboTimeStatus($billId)
+    {
+        try {
+            $bill = Bill::findOrFail($billId);
+
+            $activeComboTime = ComboTimeUsage::where('bill_id', $billId)
+                ->where('is_expired', false)
+                ->where('remaining_minutes', '>', 0)
+                ->whereNull('end_time')
+                ->first();
+
+            // Kiểm tra combo đã dừng (hết thời gian hoặc dừng thủ công)
+            $stoppedComboTime = ComboTimeUsage::where('bill_id', $billId)
+                ->where('is_expired', true)
+                ->first();
+
+            if (!$activeComboTime && $stoppedComboTime) {
+                return [
+                    'has_active_combo' => false,
+                    'has_expired_combo' => true,
+                    'is_near_end' => false,
+                    'is_expired' => true,
+                    'needs_switch' => true, // Cần chuyển sang giờ thường
+                    'remaining_minutes' => 0,
+                    'mode' => 'combo_ended'
+                ];
+            }
+
+            if (!$activeComboTime) {
+                return [
+                    'has_active_combo' => false,
+                    'has_expired_combo' => false,
+                    'is_near_end' => false,
+                    'is_expired' => false,
+                    'needs_switch' => false,
+                    'remaining_minutes' => 0
+                ];
+            }
+
+            $start = Carbon::parse($activeComboTime->start_time);
+            $elapsedMinutes = $start->diffInMinutes(now());
+            $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
+
+            $isNearEnd = $remainingMinutes <= 10 && $remainingMinutes > 0;
+            $isExpired = $remainingMinutes <= 0;
+
+            // Tự động dừng nếu hết thời gian
+            if ($isExpired) {
+                $activeComboTime->update([
+                    'end_time' => now(),
+                    'remaining_minutes' => 0,
+                    'is_expired' => true
+                ]);
+
+                return [
+                    'has_active_combo' => false,
+                    'has_expired_combo' => true,
+                    'is_near_end' => false,
+                    'is_expired' => true,
+                    'needs_switch' => true,
+                    'remaining_minutes' => 0,
+                    'elapsed_minutes' => $elapsedMinutes,
+                    'mode' => 'combo_ended'
+                ];
+            }
+
+            return [
+                'has_active_combo' => true,
+                'has_expired_combo' => false,
+                'is_near_end' => $isNearEnd,
+                'is_expired' => false,
+                'needs_switch' => false,
+                'remaining_minutes' => $remainingMinutes,
+                'elapsed_minutes' => $elapsedMinutes,
+                'mode' => 'combo'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error checking combo time: ' . $e->getMessage());
+            return [
+                'has_active_combo' => false,
+                'has_expired_combo' => false,
+                'is_near_end' => false,
+                'is_expired' => false,
+                'needs_switch' => false
+            ];
         }
     }
 
@@ -659,11 +841,21 @@ class BillController extends Controller
 
                 DB::commit();
 
-                // LUÔN tự động in bill sau khi thanh toán
-                return redirect()->route('admin.bills.print', $bill->id)
-                    ->with('success', 'Thanh toán thành công! Đang in hóa đơn...');
+
+                // Sửa lại phần này: In bill và redirect về trang tables.index
+                if ($autoPrint) {
+                    // Chuyển hướng đến trang in bill trước
+                    return redirect()->route('admin.bills.print', $bill->id)
+                        ->with('success', 'Thanh toán thành công! Đang in hóa đơn...')
+                        ->with('redirect_to', route('admin.tables.index')); // Thêm thông tin redirect
+                } else {
+                    // Nếu không tự động in, về thẳng trang index
+                    return redirect()->route('admin.tables.index')
+                        ->with('success', 'Thanh toán thành công!');
+                }
             });
         } catch (Exception $e) {
+            DB::rollBack();
             Log::error('Lỗi thanh toán hóa đơn: ' . $e->getMessage(), [
                 'bill_id' => $billId,
                 'payment_method' => $request->payment_method ?? 'unknown'
@@ -766,7 +958,11 @@ class BillController extends Controller
             foreach ($activeRegularTime as $timeUsage) {
                 $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
                 $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
-                $timeCost = ($timeUsage->hourly_rate / 60) * max(0, $effectiveMinutes);
+
+                // LÀM TRÒN PHÚT: làm tròn lên đến phút
+                $roundedMinutes = ceil($effectiveMinutes);
+                $timeCost = ($timeUsage->hourly_rate / 60) * max(0, $roundedMinutes);
+
                 $totalTimeCost += $timeCost;
             }
         }
@@ -774,118 +970,6 @@ class BillController extends Controller
         return $totalTimeCost;
     }
 
-    /**
-     * Tự động dừng combo khi hết thời gian - CHỈ DỪNG, KHÔNG TỰ CHUYỂN SANG GIỜ THƯỜNG
-     */
-    public function autoStopExpiredCombos()
-    {
-        try {
-            DB::beginTransaction();
-
-            // Tìm các combo time đang chạy và đã hết thời gian
-            $expiredCombos = ComboTimeUsage::where('is_expired', false)
-                ->whereNull('end_time')
-                ->where('remaining_minutes', '>', 0)
-                ->get();
-
-            $stoppedCount = 0;
-
-            foreach ($expiredCombos as $comboTime) {
-                $start = Carbon::parse($comboTime->start_time);
-                $elapsedMinutes = $start->diffInMinutes(now());
-                $remainingMinutes = max(0, $comboTime->remaining_minutes - $elapsedMinutes);
-
-                // Nếu hết thời gian
-                if ($remainingMinutes <= 0) {
-                    $comboTime->update([
-                        'end_time' => now(),
-                        'remaining_minutes' => 0,
-                        'is_expired' => true
-                    ]);
-
-                    $stoppedCount++;
-
-                    Log::info("Auto stopped combo for bill: {$comboTime->bill_id}, remaining: {$remainingMinutes} minutes");
-                }
-            }
-
-            DB::commit();
-
-            Log::info("Auto stopped {$stoppedCount} expired combos");
-            return $stoppedCount;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error auto stopping combos: ' . $e->getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * Kiểm tra và cập nhật trạng thái combo time real-time - CHỈ DỪNG, KHÔNG TỰ CHUYỂN
-     */
-    public function checkComboTimeStatus($billId)
-    {
-        try {
-            $bill = Bill::findOrFail($billId);
-
-            $activeComboTime = ComboTimeUsage::where('bill_id', $billId)
-                ->where('is_expired', false)
-                ->where('remaining_minutes', '>', 0)
-                ->whereNull('end_time')
-                ->first();
-
-            if (!$activeComboTime) {
-                return [
-                    'has_active_combo' => false,
-                    'is_near_end' => false,
-                    'is_expired' => false,
-                    'needs_switch' => false
-                ];
-            }
-
-            $start = Carbon::parse($activeComboTime->start_time);
-            $elapsedMinutes = $start->diffInMinutes(now());
-            $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
-
-            $isNearEnd = $remainingMinutes <= 10 && $remainingMinutes > 0;
-            $isExpired = $remainingMinutes <= 0;
-
-            // Tự động dừng nếu hết thời gian, nhưng KHÔNG tự chuyển sang giờ thường
-            if ($isExpired) {
-                $activeComboTime->update([
-                    'end_time' => now(),
-                    'remaining_minutes' => 0,
-                    'is_expired' => true
-                ]);
-
-                return [
-                    'has_active_combo' => false,
-                    'is_near_end' => false,
-                    'is_expired' => true,
-                    'needs_switch' => true, // Cần staff chuyển sang giờ thường thủ công
-                    'remaining_minutes' => 0,
-                    'elapsed_minutes' => $elapsedMinutes
-                ];
-            }
-
-            return [
-                'has_active_combo' => true,
-                'is_near_end' => $isNearEnd,
-                'is_expired' => false,
-                'needs_switch' => false,
-                'remaining_minutes' => $remainingMinutes,
-                'elapsed_minutes' => $elapsedMinutes
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error checking combo time: ' . $e->getMessage());
-            return [
-                'has_active_combo' => false,
-                'is_near_end' => false,
-                'is_expired' => false,
-                'needs_switch' => false
-            ];
-        }
-    }
 
     /**
      * Dừng tất cả tính giờ
@@ -1076,34 +1160,7 @@ class BillController extends Controller
         }
     }
 
-    /**
-     * API lấy danh sách bàn trống (cho AJAX)
-     */
-    public function getAvailableTables($billId)
-    {
-        try {
-            $bill = Bill::with('table')->findOrFail($billId);
 
-            $availableTables = Table::where('status', 'available')
-                ->where('id', '!=', $bill->table_id)
-                ->get(['id', 'table_number', 'table_name', 'table_rate_id']);
-
-            return response()->json([
-                'success' => true,
-                'current_table' => [
-                    'id' => $bill->table->id,
-                    'table_number' => $bill->table->table_number,
-                    'table_name' => $bill->table->table_name
-                ],
-                'available_tables' => $availableTables
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
 
     /**
      * In hóa đơn
@@ -1142,6 +1199,17 @@ class BillController extends Controller
                 'printTime' => now()->format('H:i d/m/Y'),
                 'staff' => Auth::user()->name
             ];
+
+            // Kiểm tra nếu có redirect từ processPayment
+            if (session('redirect_after_print')) {
+                $redirectUrl = session('redirect_after_print');
+                session()->forget('redirect_after_print');
+
+                return view('admin.bills.print', array_merge($billData, [
+                    'autoRedirect' => true,
+                    'redirectUrl' => $redirectUrl
+                ]));
+            }
 
             return view('admin.bills.print', $billData);
         } catch (Exception $e) {

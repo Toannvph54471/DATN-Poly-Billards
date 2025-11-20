@@ -152,6 +152,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/bills/{id}/pause', [BillController::class, 'pauseTime'])->name('bills.pause');
     Route::post('/bills/{id}/resume', [BillController::class, 'resumeTime'])->name('bills.resume');
     Route::post('/bills/{id}/switch-to-regular', [BillController::class, 'switchToRegularTime'])->name('bills.switch-to-regular');
+    // Thêm các routes mới
+    Route::post('/bills/{bill}/stop-combo', [BillController::class, 'stopComboTime'])->name('admin.bills.stop-combo');
+    Route::post('/bills/{bill}/switch-regular', [BillController::class, 'switchToRegularTime'])->name('admin.bills.switch-regular');
     // Payment
     Route::get('/bills/{id}/payment', [BillController::class, 'showPayment'])->name('bills.payment-page');
     Route::post('/bills/{id}/process-payment', [BillController::class, 'processPayment'])->name('bills.process-payment');
@@ -162,11 +165,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/bills/transfer/{billId}', [BillController::class, 'showTransferForm'])->name('admin.bills.transfer.form');
     Route::post('/bills/transfer', [BillController::class, 'transferTable'])->name('admin.bills.transfer');
     Route::get('/bills/transfer/available/{billId}', [BillController::class, 'getAvailableTables'])->name('admin.bills.transfer.available');
-
     // Simple Dashboard routes
     Route::get('/admin/tables/simple-dashboard', [TableController::class, 'simpleDashboard'])->name('admin.tables.simple-dashboard');
     Route::get('/admin/tables/simple-dashboard-data', [TableController::class, 'getSimpleDashboardData'])->name('admin.tables.simple-dashboard.data');
-
     // Route in bill
     Route::get('/admin/bills/{id}/print', [BillController::class, 'printBill'])->name('admin.bills.print');
     Route::get('/admin/bills/{id}/print-api', [BillController::class, 'printBillApi'])->name('admin.bills.print-api');

@@ -8,14 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary: #3b82f6;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --purple: #8b5cf6;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -28,335 +20,166 @@
             min-height: 100vh;
         }
 
-        .app-container {
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .table-card {
+            background: #ffffff;
+            border-radius: 6px;
+            border: 2px solid #1a202c;
+            padding: 0.75rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            min-height: 100px;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-        }
-
-        /* Header Styles */
-        .header {
-            background: white;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            flex-shrink: 0;
-        }
-
-        .table-info {
-            display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            text-align: center;
         }
 
-        .table-title {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        .table-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-color: #374151;
         }
 
-        .back-btn {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            color: #475569;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-            transition: all 0.2s;
+        .table-card.selected {
+            border-color: #10b981;
+            background: #f0fdf4;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
         }
 
-        .back-btn:hover {
-            background: #e2e8f0;
-            transform: translateX(-2px);
-        }
-
-        .table-details h1 {
-            font-size: 1.5rem;
+        .table-number {
+            font-size: 1.125rem;
             font-weight: 700;
-            color: #1e293b;
+            color: #1a202c;
+            margin-bottom: 0.25rem;
         }
 
-        .table-meta {
-            display: flex;
-            gap: 1rem;
-            margin-top: 0.25rem;
+        .table-name {
+            font-size: 0.7rem;
             color: #64748b;
-            font-size: 0.875rem;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* Card Styles */
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border: 1px solid #e2e8f0;
-            margin-bottom: 1.5rem;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #f1f5f9;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1e293b;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        /* Info Grid */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .info-item {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 1.25rem;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .info-label {
-            font-size: 0.875rem;
-            color: #64748b;
-            font-weight: 500;
             margin-bottom: 0.5rem;
+        }
+
+        .table-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.6rem;
+            color: #64748b;
+            margin-bottom: 0.125rem;
+        }
+
+        .detail-value {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .table-status {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            padding: 0.15rem 0.4rem;
+            border-radius: 8px;
+            font-size: 0.55rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-available {
+            background: #10b981;
+            color: white;
+        }
+
+        .selection-badge {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #10b981;
+            color: white;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            font-size: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s ease;
         }
 
-        .info-value {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: #1e293b;
+        .table-card.selected .selection-badge {
+            opacity: 1;
         }
 
-        .info-value.bill-number {
-            color: #3b82f6;
-        }
-
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 2rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.75rem;
-            font-weight: 600;
-            color: #374151;
-            font-size: 1.125rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .form-select {
-            width: 100%;
-            padding: 1rem 1.25rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.2s;
-            background: white;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 1rem center;
-            background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
-        }
-
-        .form-select:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        /* Alert Styles */
-        .alert {
-            padding: 1.25rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            border: 1px solid;
-        }
-
-        .alert-info {
-            background: #dbeafe;
-            border-color: #93c5fd;
-            color: #1e40af;
-        }
-
-        .alert-warning {
-            background: #fef3c7;
-            border-color: #fcd34d;
-            color: #92400e;
-        }
-
-        .alert-success {
-            background: #dcfce7;
-            border-color: #86efac;
-            color: #166534;
-        }
-
-        /* Table Comparison */
-        .table-comparison {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .table-comparison th {
+        .rate-comparison {
             background: #f8fafc;
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: #374151;
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+        }
+
+        .comparison-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.2rem 0;
+            font-size: 0.6rem;
+        }
+
+        .comparison-row:not(:last-child) {
             border-bottom: 1px solid #e2e8f0;
         }
 
-        .table-comparison td {
-            padding: 1rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .table-comparison tr:last-child td {
-            border-bottom: none;
-        }
-
-        .rate-difference {
+        .rate-change {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
+            gap: 0.1rem;
+            padding: 0.15rem 0.3rem;
+            border-radius: 3px;
+            font-size: 0.55rem;
             font-weight: 600;
         }
 
-        .rate-higher {
+        .rate-up {
             background: #fef3c7;
             color: #92400e;
-            border: 1px solid #fcd34d;
         }
 
-        .rate-lower {
+        .rate-down {
             background: #dcfce7;
             color: #166534;
-            border: 1px solid #86efac;
         }
 
         .rate-same {
             background: #e0e7ff;
             color: #3730a3;
-            border: 1px solid #a5b4fc;
         }
 
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .btn {
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            text-decoration: none;
-            min-width: 160px;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn-primary {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2563eb;
-        }
-
-        .btn-secondary {
-            background: #f1f5f9;
-            color: #475569;
-            border: 1px solid #e2e8f0;
-        }
-
-        .btn-secondary:hover {
-            background: #e2e8f0;
-        }
-
-        .btn-success {
-            background: #10b981;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #059669;
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn:disabled:hover {
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 3rem 2rem;
             color: #64748b;
+            grid-column: 1 / -1;
         }
 
         .empty-state i {
@@ -365,391 +188,407 @@
             color: #cbd5e1;
         }
 
-        /* Loading */
-        .loading {
-            position: relative;
-            color: transparent;
-        }
-
-        .loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            top: 50%;
-            left: 50%;
-            margin-left: -10px;
-            margin-top: -10px;
-            border: 2px solid transparent;
-            border-top: 2px solid currentColor;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
         /* Responsive */
+        @media (max-width: 1536px) {
+            .table-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        @media (max-width: 1280px) {
+            .table-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .table-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
-            .main-content {
-                padding: 1rem;
+            .table-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
             }
-
-            .card {
-                padding: 1.5rem;
+            
+            .table-card {
+                padding: 0.5rem;
+                min-height: 90px;
             }
+            
+            .table-number {
+                font-size: 1rem;
+            }
+        }
 
-            .info-grid {
+        @media (max-width: 480px) {
+            .table-grid {
                 grid-template-columns: 1fr;
+                gap: 0.5rem;
             }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .btn {
-                min-width: auto;
-                width: 100%;
-            }
-
-            .table-comparison {
-                font-size: 0.875rem;
-            }
-
-            .table-comparison th,
-            .table-comparison td {
-                padding: 0.75rem 0.5rem;
-            }
-        }
-
-        /* Status Badge */
-        .status-badge {
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-
-        .status-occupied {
-            background: #fee2e2;
-            color: #991b1b;
         }
     </style>
 </head>
 
 <body>
-    <div class="app-container">
+    <div class="min-h-screen bg-gray-50">
         <!-- Header -->
-        <div class="header">
-            <div class="table-info">
-                <div class="table-title">
-                    <a href="{{ route('admin.tables.detail', $bill->table_id) }}" class="back-btn">
-                        <i class="fas fa-arrow-left"></i>
-                        Quay lại
-                    </a>
-                    <div class="table-details">
-                        <h1>Chuyển Bàn - {{ $bill->bill_number }}</h1>
-                        <div class="table-meta">
-                            <span>Bàn: {{ $bill->table->table_name }} ({{ $bill->table->table_number }})</span>
-                            <span>•</span>
-                            <span>Khách: {{ $bill->user->name ?? 'Khách vãng lai' }}</span>
-                            <span>•</span>
-                            <span class="status-badge status-occupied">ĐANG SỬ DỤNG</span>
+        <div class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-4">
+                        <a href="{{ route('admin.tables.detail', $bill->table_id) }}" 
+                           class="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Quay lại
+                        </a>
+                        <div class="border-l border-gray-300 h-6"></div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Chuyển Bàn</h1>
+                            <p class="text-sm text-gray-600 mt-1">
+                                Hóa đơn: {{ $bill->bill_number }} • Bàn: {{ $bill->table->table_name }} ({{ $bill->table->table_number }})
+                            </p>
                         </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                            <i class="fas fa-clock mr-1"></i>
+                            ĐANG SỬ DỤNG
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="main-content">
-            <!-- Current Bill Information -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-info-circle text-blue-500"></i>
-                        THÔNG TIN HÓA ĐƠN HIỆN TẠI
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Current Bill Info -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-receipt text-blue-600 mr-2"></i>
+                        Thông tin hóa đơn hiện tại
                     </h2>
+                    <div class="text-xs text-gray-500">
+                        Mở lúc: {{ $bill->start_time->format('H:i d/m/Y') }}
+                    </div>
                 </div>
 
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-label">
-                            <i class="fas fa-receipt text-blue-500"></i>
-                            Số hóa đơn
-                        </div>
-                        <div class="info-value bill-number">{{ $bill->bill_number }}</div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-600 mb-1">Số hóa đơn</div>
+                        <div class="text-sm font-bold text-blue-600">{{ $bill->bill_number }}</div>
                     </div>
-                    <div class="info-item">
-                        <div class="info-label">
-                            <i class="fas fa-table text-green-500"></i>
-                            Bàn hiện tại
-                        </div>
-                        <div class="info-value">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-600 mb-1">Bàn hiện tại</div>
+                        <div class="text-sm font-bold text-gray-900">
                             {{ $bill->table->table_name }} ({{ $bill->table->table_number }})
                         </div>
                     </div>
-                    <div class="info-item">
-                        <div class="info-label">
-                            <i class="fas fa-user text-purple-500"></i>
-                            Khách hàng
+                    <div class="text-center">
+                        <div class="text-xs text-gray-600 mb-1">Khách hàng</div>
+                        <div class="text-sm font-bold text-gray-900">
+                            {{ $bill->user->name ?? 'Khách vãng lai' }}
                         </div>
-                        <div class="info-value">{{ $bill->user->name ?? 'Khách vãng lai' }}</div>
                     </div>
-                    <div class="info-item">
-                        <div class="info-label">
-                            <i class="fas fa-clock text-orange-500"></i>
-                            Thời gian mở
+                    <div class="text-center">
+                        <div class="text-xs text-gray-600 mb-1">Giá giờ</div>
+                        <div class="text-sm font-bold text-green-600">
+                            {{ number_format($bill->table->tableRate->hourly_rate ?? 0) }} ₫/h
                         </div>
-                        <div class="info-value">{{ $bill->start_time->format('H:i d/m/Y') }}</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Transfer Form -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="section-title">
-                        <i class="fas fa-exchange-alt text-green-500"></i>
-                        CHUYỂN BÀN
+            <!-- Transfer Section -->
+            <div class="bg-white rounded-lg border border-gray-200 p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-exchange-alt text-green-600 mr-2"></i>
+                        Chọn bàn đích để chuyển
                     </h2>
+                    <div class="text-xs text-gray-500">
+                        {{ $availableTables->count() }} bàn có sẵn
+                    </div>
                 </div>
 
                 <form action="{{ route('admin.bills.transfer') }}" method="POST" id="transferForm">
                     @csrf
                     <input type="hidden" name="bill_id" value="{{ $bill->id }}">
+                    <input type="hidden" name="target_table_id" id="targetTableId">
 
-                    <div class="form-group">
-                        <label class="form-label" for="targetTableSelect">
-                            <i class="fas fa-arrow-right text-blue-500"></i>
-                            CHỌN BÀN ĐÍCH
-                        </label>
+                    @if ($availableTables->count() > 0)
+                        <!-- Table Grid - 6 bàn một hàng -->
+                        <div class="table-grid" id="tableGrid">
+                            @foreach ($availableTables as $table)
+                                <div class="table-card" 
+                                     data-table-id="{{ $table->id }}"
+                                     data-table-number="{{ $table->table_number }}"
+                                     data-table-name="{{ $table->table_name }}"
+                                     data-hourly-rate="{{ $table->tableRate->hourly_rate ?? 0 }}"
+                                     data-rate-name="{{ $table->tableRate->name ?? 'Không xác định' }}"
+                                     data-capacity="{{ $table->capacity }}"
+                                     data-current-hourly-rate="{{ $bill->table->tableRate->hourly_rate ?? 0 }}"
+                                     data-current-rate-name="{{ $bill->table->tableRate->name ?? 'Không xác định' }}">
+                                    
+                                    <div class="selection-badge">
+                                        <i class="fas fa-check"></i>
+                                    </div>
 
-                        @if ($availableTables->count() > 0)
-                            <select name="target_table_id" id="targetTableSelect" class="form-select" required>
-                                <option value="">-- Chọn bàn đích --</option>
-                                @foreach ($availableTables as $table)
-                                    <option value="{{ $table->id }}" data-rate="{{ $table->table_rate_id }}"
-                                        data-rate-name="{{ $table->tableRate->name ?? 'Không xác định' }}"
-                                        data-hourly-rate="{{ $table->tableRate->hourly_rate ?? 0 }}"
-                                        data-current-rate="{{ $bill->table->table_rate_id }}"
-                                        data-current-hourly-rate="{{ $bill->table->tableRate->hourly_rate ?? 0 }}">
-                                        {{ $table->table_name }} ({{ $table->table_number }})
-                                        - {{ $table->tableRate->name ?? 'Không xác định' }}
-                                        ({{ number_format($table->tableRate->hourly_rate ?? 0) }} ₫/h)
-                                    </option>
-                                @endforeach
-                            </select>
-                        @else
-                            <div class="empty-state">
-                                <i class="fas fa-table"></i>
-                                <h3 class="text-lg font-medium mb-2">Không có bàn trống</h3>
-                                <p class="text-sm">Tất cả các bàn đang được sử dụng hoặc bảo trì</p>
+                                    <div class="table-status status-available">
+                                        Trống
+                                    </div>
+
+                                    <div class="table-number">{{ $table->table_number }}</div>
+                                    <div class="table-name">{{ $table->table_name }}</div>
+
+                                    <div class="table-details">
+                                        <div class="detail-item">
+                                            <div class="detail-label">Sức chứa</div>
+                                            <div class="detail-value">{{ $table->capacity }}</div>
+                                        </div>
+                                        <div class="detail-item">
+                                            <div class="detail-label">Giá giờ</div>
+                                            <div class="detail-value">{{ number_format($table->tableRate->hourly_rate ?? 0) }} ₫</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Rate Comparison (hidden by default) -->
+                                    <div class="rate-comparison" style="display: none;">
+                                        <div class="comparison-row">
+                                            <span class="text-gray-600">Loại:</span>
+                                            <span class="font-medium">{{ $table->tableRate->name ?? 'N/A' }}</span>
+                                        </div>
+                                        <div class="comparison-row">
+                                            <span class="text-gray-600">Thay đổi:</span>
+                                            <span class="rate-change" id="rateChange{{ $table->id }}">
+                                                <!-- Will be populated by JavaScript -->
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <!-- Selected Table Info -->
+                        <div id="selectedTableInfo" class="mt-6 p-4 bg-blue-50 rounded border border-blue-200" style="display: none;">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-blue-900 mb-2">
+                                        <i class="fas fa-check-circle mr-1"></i>
+                                        Bàn đã chọn
+                                    </h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                        <div>
+                                            <span class="text-blue-600 font-medium">Bàn:</span>
+                                            <span id="selectedTableNumber" class="ml-1 font-semibold"></span>
+                                        </div>
+                                        <div>
+                                            <span class="text-blue-600 font-medium">Loại:</span>
+                                            <span id="selectedRateName" class="ml-1 font-semibold"></span>
+                                        </div>
+                                        <div>
+                                            <span class="text-blue-600 font-medium">Giá:</span>
+                                            <span id="selectedHourlyRate" class="ml-1 font-semibold"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="rateWarning" class="bg-yellow-100 border border-yellow-400 rounded px-3 py-1" style="display: none;">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-exclamation-triangle text-yellow-600 mr-1 text-xs"></i>
+                                        <span class="text-yellow-800 font-medium text-xs">Khác loại</span>
+                                    </div>
+                                </div>
                             </div>
-                        @endif
-                    </div>
-
-                    <!-- Rate Comparison -->
-                    <div id="rateComparison" style="display: none;">
-                        <div class="alert alert-info">
-                            <i class="fas fa-chart-line text-lg"></i>
-                            <div>
-                                <strong class="text-lg">SO SÁNH GIÁ GIỜ</strong>
-                                <div id="comparisonDetails" class="mt-2"></div>
-                            </div>
                         </div>
 
-                        <table class="table-comparison">
-                            <thead>
-                                <tr>
-                                    <th>LOẠI BÀN</th>
-                                    <th>GIÁ GIỜ HIỆN TẠI</th>
-                                    <th>GIÁ GIỜ BÀN ĐÍCH</th>
-                                    <th>SO SÁNH</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td id="currentRateName" class="font-semibold">-</td>
-                                    <td id="currentHourlyRate" class="font-semibold text-blue-600">-</td>
-                                    <td id="targetHourlyRate" class="font-semibold text-green-600">-</td>
-                                    <td id="rateDifference">-</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Rate Warning -->
-                    <div id="rateWarning" class="alert alert-warning" style="display: none;">
-                        <i class="fas fa-exclamation-triangle text-lg"></i>
-                        <div>
-                            <strong class="text-lg">CẢNH BÁO: KHÁC LOẠI BÀN</strong>
-                            <p class="mt-1">Bàn đích khác loại với bàn hiện tại. Giá giờ chơi có thể thay đổi sau khi
-                                chuyển bàn.</p>
-                        </div>
-                    </div>
-
-                    <!-- Important Notes -->
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle text-lg"></i>
-                        <div>
-                            <strong class="text-lg">LƯU Ý QUAN TRỌNG</strong>
-                            <ul class="mt-2 space-y-2">
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-check-circle text-green-500 mt-1"></i>
-                                    <span>Tất cả sản phẩm, combo và thời gian chơi sẽ được chuyển sang bàn mới</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-check-circle text-green-500 mt-1"></i>
-                                    <span>Bàn hiện tại sẽ được giải phóng và có thể sử dụng cho khách khác</span>
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <i class="fas fa-check-circle text-green-500 mt-1"></i>
-                                    <span>Lịch sử chuyển bàn sẽ được ghi lại trong hệ thống</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="action-buttons">
-                        <a href="{{ route('admin.tables.detail', $bill->table_id) }}" class="btn btn-secondary">
-                            <i class="fas fa-times"></i>
-                            HỦY BỎ
-                        </a>
-
-                        @if ($availableTables->count() > 0)
-                            <button type="submit" class="btn btn-success" id="submitBtn">
-                                <i class="fas fa-exchange-alt"></i>
-                                XÁC NHẬN CHUYỂN BÀN
+                        <!-- Action Buttons -->
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <a href="{{ route('admin.tables.detail', $bill->table_id) }}" 
+                               class="px-4 py-2 border border-gray-300 rounded text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-times mr-1"></i>
+                                Hủy
+                            </a>
+                            <button type="submit" 
+                                    id="submitBtn"
+                                    class="px-4 py-2 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled>
+                                <i class="fas fa-exchange-alt mr-1"></i>
+                                Xác nhận
                             </button>
-                        @else
-                            <button type="button" class="btn btn-primary" disabled>
-                                <i class="fas fa-ban"></i>
-                                KHÔNG THỂ CHUYỂN BÀN
-                            </button>
-                        @endif
-                    </div>
+                        </div>
+                    @else
+                        <!-- Empty State -->
+                        <div class="empty-state">
+                            <i class="fas fa-table"></i>
+                            <h3 class="text-base font-medium text-gray-900 mb-2">Không có bàn trống</h3>
+                            <p class="text-sm text-gray-500 mb-4">Tất cả các bàn đang được sử dụng hoặc bảo trì</p>
+                            <a href="{{ route('admin.tables.detail', $bill->table_id) }}" 
+                               class="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-arrow-left mr-1"></i>
+                                Quay lại
+                            </a>
+                        </div>
+                    @endif
                 </form>
+            </div>
+
+            <!-- Important Notes -->
+            <div class="bg-blue-50 rounded border border-blue-200 p-4 mt-4">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-2"></i>
+                    <div>
+                        <h3 class="text-sm font-semibold text-blue-900 mb-2">Lưu ý quan trọng</h3>
+                        <ul class="space-y-1 text-blue-800 text-xs">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5 mr-1 text-xs"></i>
+                                <span>Tất cả sản phẩm, combo và thời gian chơi sẽ được chuyển sang bàn mới</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5 mr-1 text-xs"></i>
+                                <span>Bàn hiện tại sẽ được giải phóng và có thể sử dụng cho khách khác</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-0.5 mr-1 text-xs"></i>
+                                <span>Lịch sử chuyển bàn sẽ được ghi lại trong hệ thống</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const targetTableSelect = document.getElementById('targetTableSelect');
-            const rateComparison = document.getElementById('rateComparison');
-            const rateWarning = document.getElementById('rateWarning');
+            const tableCards = document.querySelectorAll('.table-card');
+            const targetTableIdInput = document.getElementById('targetTableId');
             const submitBtn = document.getElementById('submitBtn');
+            const selectedTableInfo = document.getElementById('selectedTableInfo');
+            const rateWarning = document.getElementById('rateWarning');
             const transferForm = document.getElementById('transferForm');
+
+            let selectedTable = null;
 
             // Format currency
             function formatCurrency(amount) {
                 return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' ₫';
             }
 
-            // Update rate comparison
-            function updateRateComparison(selectedOption) {
-                if (!selectedOption || selectedOption.value === '') {
-                    rateComparison.style.display = 'none';
-                    rateWarning.style.display = 'none';
-                    return;
-                }
+            // Calculate rate difference
+            function calculateRateDifference(currentRate, targetRate) {
+                const difference = targetRate - currentRate;
+                const percentage = currentRate > 0 ? ((difference / currentRate) * 100) : 0;
+                
+                return {
+                    difference: difference,
+                    percentage: percentage,
+                    isHigher: difference > 0,
+                    isLower: difference < 0,
+                    isSame: difference === 0
+                };
+            }
 
-                const currentRateId = selectedOption.getAttribute('data-current-rate');
-                const targetRateId = selectedOption.getAttribute('data-rate');
-                const currentHourlyRate = parseFloat(selectedOption.getAttribute('data-current-hourly-rate'));
-                const targetHourlyRate = parseFloat(selectedOption.getAttribute('data-hourly-rate'));
-                const currentRateName = '{{ $bill->table->tableRate->name ?? 'Không xác định' }}';
-                const targetRateName = selectedOption.getAttribute('data-rate-name');
+            // Update rate comparison display
+            function updateRateComparison(card, currentRate, targetRate) {
+                const comparison = calculateRateDifference(currentRate, targetRate);
+                const rateChangeElement = card.querySelector('.rate-change');
+                const rateComparison = card.querySelector('.rate-comparison');
 
-                // Update comparison table
-                document.getElementById('currentRateName').textContent = currentRateName;
-                document.getElementById('targetRateName').textContent = targetRateName;
-                document.getElementById('currentHourlyRate').textContent = formatCurrency(currentHourlyRate) + '/h';
-                document.getElementById('targetHourlyRate').textContent = formatCurrency(targetHourlyRate) + '/h';
-
-                // Calculate and display difference
-                const difference = targetHourlyRate - currentHourlyRate;
-                const differenceElement = document.getElementById('rateDifference');
-
-                let differenceHtml = '';
-                if (difference > 0) {
-                    differenceHtml = `<span class="rate-difference rate-higher">
+                let html = '';
+                if (comparison.isHigher) {
+                    html = `<span class="rate-up">
                         <i class="fas fa-arrow-up"></i>
-                        Cao hơn ${formatCurrency(difference)}/h
+                        +${formatCurrency(comparison.difference)}
                     </span>`;
-                } else if (difference < 0) {
-                    differenceHtml = `<span class="rate-difference rate-lower">
+                } else if (comparison.isLower) {
+                    html = `<span class="rate-down">
                         <i class="fas fa-arrow-down"></i>
-                        Thấp hơn ${formatCurrency(Math.abs(difference))}/h
+                        ${formatCurrency(comparison.difference)}
                     </span>`;
                 } else {
-                    differenceHtml = `<span class="rate-difference rate-same">
+                    html = `<span class="rate-same">
                         <i class="fas fa-equals"></i>
-                        Không thay đổi
+                        Không đổi
                     </span>`;
                 }
 
-                differenceElement.innerHTML = differenceHtml;
-
-                // Show/hide warning
-                if (currentRateId !== targetRateId) {
-                    rateWarning.style.display = 'flex';
-                } else {
-                    rateWarning.style.display = 'none';
-                }
-
-                // Show comparison
+                rateChangeElement.innerHTML = html;
                 rateComparison.style.display = 'block';
             }
 
-            // Event listener for table selection
-            targetTableSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                updateRateComparison(selectedOption);
+            // Handle table selection
+            tableCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selection from all cards
+                    tableCards.forEach(c => {
+                        c.classList.remove('selected');
+                        c.querySelector('.rate-comparison').style.display = 'none';
+                    });
+
+                    // Add selection to clicked card
+                    this.classList.add('selected');
+                    
+                    // Show rate comparison
+                    const currentRate = parseFloat(this.dataset.currentHourlyRate);
+                    const targetRate = parseFloat(this.dataset.hourlyRate);
+                    updateRateComparison(this, currentRate, targetRate);
+
+                    // Update selected table info
+                    selectedTable = {
+                        id: this.dataset.tableId,
+                        number: this.dataset.tableNumber,
+                        name: this.dataset.tableName,
+                        rateName: this.dataset.rateName,
+                        hourlyRate: targetRate,
+                        currentRateName: this.dataset.currentRateName
+                    };
+
+                    document.getElementById('selectedTableNumber').textContent = 
+                        `${this.dataset.tableNumber} - ${this.dataset.tableName}`;
+                    document.getElementById('selectedRateName').textContent = this.dataset.rateName;
+                    document.getElementById('selectedHourlyRate').textContent = formatCurrency(targetRate) + '/h';
+
+                    // Show/hide rate warning
+                    if (this.dataset.rateName !== this.dataset.currentRateName) {
+                        rateWarning.style.display = 'block';
+                    } else {
+                        rateWarning.style.display = 'none';
+                    }
+
+                    // Update hidden input and enable submit button
+                    targetTableIdInput.value = this.dataset.tableId;
+                    submitBtn.disabled = false;
+
+                    // Show selected table info
+                    selectedTableInfo.style.display = 'block';
+                });
             });
 
             // Form submission
             transferForm.addEventListener('submit', function(e) {
-                const selectedTable = targetTableSelect.options[targetTableSelect.selectedIndex];
-
-                if (!selectedTable || selectedTable.value === '') {
+                if (!selectedTable) {
                     e.preventDefault();
                     alert('Vui lòng chọn bàn đích');
                     return;
                 }
 
-                const currentRateId = '{{ $bill->table->table_rate_id }}';
-                const targetRateId = selectedTable.getAttribute('data-rate');
-
                 // Confirm if rates are different
-                if (currentRateId !== targetRateId) {
-                    const currentRateName = '{{ $bill->table->tableRate->name ?? 'Không xác định' }}';
-                    const targetRateName = selectedTable.getAttribute('data-rate-name');
-
+                if (selectedTable.rateName !== selectedTable.currentRateName) {
                     if (!confirm(
-                            `Bàn đích (${targetRateName}) khác loại với bàn hiện tại (${currentRateName}).\n\nGiá giờ chơi sẽ thay đổi. Bạn có chắc chắn muốn chuyển bàn?`
-                        )) {
+                        `Bàn đích (${selectedTable.rateName}) khác loại với bàn hiện tại (${selectedTable.currentRateName}).\n\nGiá giờ chơi sẽ thay đổi. Bạn có chắc chắn muốn chuyển bàn?`
+                    )) {
                         e.preventDefault();
                         return;
                     }
                 }
 
                 // Show loading
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG CHUYỂN BÀN...';
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Đang chuyển...';
                 submitBtn.disabled = true;
             });
-
-            // Initialize if there's a selected value
-            if (targetTableSelect.value) {
-                const selectedOption = targetTableSelect.options[targetTableSelect.selectedIndex];
-                updateRateComparison(selectedOption);
-            }
         });
     </script>
 </body>
