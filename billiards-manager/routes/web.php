@@ -151,7 +151,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/bills/{id}/start-playing', [BillController::class, 'startPlaying'])->name('bills.start-playing');
     Route::post('/bills/{id}/pause', [BillController::class, 'pauseTime'])->name('bills.pause');
     Route::post('/bills/{id}/resume', [BillController::class, 'resumeTime'])->name('bills.resume');
-    Route::post('/bills/{id}/switch-to-regular', [BillController::class, 'switchToRegularTime'])->name('bills.switch-to-regular');
     // Thêm các routes mới
     Route::post('/bills/{bill}/stop-combo', [BillController::class, 'stopComboTime'])->name('admin.bills.stop-combo');
     Route::post('/bills/{bill}/switch-regular', [BillController::class, 'switchToRegularTime'])->name('admin.bills.switch-regular');
@@ -171,6 +170,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Route in bill
     Route::get('/admin/bills/{id}/print', [BillController::class, 'printBill'])->name('admin.bills.print');
     Route::get('/admin/bills/{id}/print-api', [BillController::class, 'printBillApi'])->name('admin.bills.print-api');
+    // Route xóa sản phẩm (chỉ cho sản phẩm thông thường)
+    Route::delete('/bills/{bill}/products/{billDetail}', [BillController::class, 'removeProductFromBill'])->name('admin.bills.remove-product');
 
     // Products
     Route::get('/products', [ProductController::class, 'index'])->name('admin.products.index');

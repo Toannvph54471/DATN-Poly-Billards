@@ -230,6 +230,60 @@ class BillController extends Controller
     }
 
     /**
+     * Xóa sản phẩm khỏi bill (chỉ áp dụng cho sản phẩm thông thường, không phải thành phần combo)
+     */
+    public function removeProductFromBill(Request $request, $billId, $billDetailId)
+    {
+        try {
+            DB::beginTransaction();
+
+            $bill = Bill::findOrFail($billId);
+            $billDetail = BillDetail::where('id', $billDetailId)
+                ->where('bill_id', $billId)
+                ->firstOrFail();
+
+            // Kiểm tra xem bill có đang ở trạng thái có thể xóa sản phẩm không
+            if (!in_array($bill->status, ['Open', 'quick'])) {
+                return redirect()->back()->with('error', 'Chỉ có thể xóa sản phẩm khỏi bill đang mở');
+            }
+
+            // KHÔNG cho phép xóa nếu là thành phần của combo
+            if ($billDetail->is_combo_component) {
+                return redirect()->back()->with('error', 'Không thể xóa sản phẩm là thành phần của combo');
+            }
+
+            // KHÔNG cho phép xóa nếu là combo
+            if ($billDetail->combo_id) {
+                return redirect()->back()->with('error', 'Không thể xóa combo bằng chức năng này. Vui lòng sử dụng chức năng xóa combo.');
+            }
+
+            // Chỉ xử lý với sản phẩm thông thường
+            if ($billDetail->product_id) {
+                // Hoàn trả tồn kho
+                $product = Product::find($billDetail->product_id);
+                if ($product) {
+                    $product->increment('stock_quantity', $billDetail->quantity);
+                    Log::info("Restored stock for product: {$product->name}, quantity: {$billDetail->quantity}");
+                }
+            }
+
+            // Xóa bản ghi bill detail
+            $billDetail->delete();
+
+            // Cập nhật lại tổng tiền bill
+            $this->calculateBillTotal($bill);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Xóa sản phẩm khỏi bill thành công');
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Remove product from bill error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Lỗi khi xóa sản phẩm: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Thêm combo vào bill
      */
     public function addComboToBill(Request $request, $billId)
@@ -453,7 +507,12 @@ class BillController extends Controller
         try {
             DB::beginTransaction();
 
-            $bill = Bill::findOrFail($billId);
+            $bill = Bill::with('table')->findOrFail($billId);
+
+            // Kiểm tra trạng thái bill
+            if ($bill->status !== 'Open') {
+                return redirect()->back()->with('error', 'Chỉ có thể chuyển sang giờ thường cho bill đang mở');
+            }
 
             // Kiểm tra xem có combo time đã hết hạn không
             $expiredComboTime = ComboTimeUsage::where('bill_id', $billId)
@@ -475,17 +534,24 @@ class BillController extends Controller
 
             // Bắt đầu tính giờ thường
             $hourlyRate = $this->getTableHourlyRate($bill->table);
+
             BillTimeUsage::create([
                 'bill_id' => $bill->id,
                 'start_time' => now(),
                 'hourly_rate' => $hourlyRate
             ]);
 
+            // Cập nhật lại tổng tiền bill
+            $this->calculateBillTotal($bill);
+            $bill->refresh();
+
             DB::commit();
 
-            return redirect()->back()->with('success', 'Đã chuyển sang tính giờ thường thành công');
+            return redirect()->route('admin.tables.detail', $bill->table_id)
+                ->with('success', 'Đã chuyển sang tính giờ thường thành công');
         } catch (Exception $e) {
             DB::rollBack();
+            Log::error('Error switching to regular time: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Lỗi khi chuyển sang giờ thường: ' . $e->getMessage());
         }
     }
@@ -552,6 +618,45 @@ class BillController extends Controller
                 ->where('is_expired', true)
                 ->first();
 
+            // TỰ ĐỘNG DỪNG COMBO KHI HẾT THỜI GIAN
+            if ($activeComboTime) {
+                $start = Carbon::parse($activeComboTime->start_time);
+                $elapsedMinutes = $start->diffInMinutes(now());
+                $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
+
+                // Nếu hết thời gian, tự động dừng combo
+                if ($remainingMinutes <= 0) {
+                    $activeComboTime->update([
+                        'end_time' => now(),
+                        'remaining_minutes' => 0,
+                        'is_expired' => true
+                    ]);
+
+                    return [
+                        'has_active_combo' => false,
+                        'has_expired_combo' => true,
+                        'is_near_end' => false,
+                        'is_expired' => true,
+                        'needs_switch' => true, // Cần chuyển sang giờ thường
+                        'remaining_minutes' => 0,
+                        'mode' => 'combo_ended'
+                    ];
+                }
+
+                $isNearEnd = $remainingMinutes <= 10 && $remainingMinutes > 0;
+
+                return [
+                    'has_active_combo' => true,
+                    'has_expired_combo' => false,
+                    'is_near_end' => $isNearEnd,
+                    'is_expired' => false,
+                    'needs_switch' => false,
+                    'remaining_minutes' => $remainingMinutes,
+                    'elapsed_minutes' => $elapsedMinutes,
+                    'mode' => 'combo'
+                ];
+            }
+
             if (!$activeComboTime && $stoppedComboTime) {
                 return [
                     'has_active_combo' => false,
@@ -564,53 +669,13 @@ class BillController extends Controller
                 ];
             }
 
-            if (!$activeComboTime) {
-                return [
-                    'has_active_combo' => false,
-                    'has_expired_combo' => false,
-                    'is_near_end' => false,
-                    'is_expired' => false,
-                    'needs_switch' => false,
-                    'remaining_minutes' => 0
-                ];
-            }
-
-            $start = Carbon::parse($activeComboTime->start_time);
-            $elapsedMinutes = $start->diffInMinutes(now());
-            $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
-
-            $isNearEnd = $remainingMinutes <= 10 && $remainingMinutes > 0;
-            $isExpired = $remainingMinutes <= 0;
-
-            // Tự động dừng nếu hết thời gian
-            if ($isExpired) {
-                $activeComboTime->update([
-                    'end_time' => now(),
-                    'remaining_minutes' => 0,
-                    'is_expired' => true
-                ]);
-
-                return [
-                    'has_active_combo' => false,
-                    'has_expired_combo' => true,
-                    'is_near_end' => false,
-                    'is_expired' => true,
-                    'needs_switch' => true,
-                    'remaining_minutes' => 0,
-                    'elapsed_minutes' => $elapsedMinutes,
-                    'mode' => 'combo_ended'
-                ];
-            }
-
             return [
-                'has_active_combo' => true,
+                'has_active_combo' => false,
                 'has_expired_combo' => false,
-                'is_near_end' => $isNearEnd,
+                'is_near_end' => false,
                 'is_expired' => false,
                 'needs_switch' => false,
-                'remaining_minutes' => $remainingMinutes,
-                'elapsed_minutes' => $elapsedMinutes,
-                'mode' => 'combo'
+                'remaining_minutes' => 0
             ];
         } catch (\Exception $e) {
             Log::error('Error checking combo time: ' . $e->getMessage());

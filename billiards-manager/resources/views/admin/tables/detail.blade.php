@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* CSS styles giữ nguyên từ code cũ */
         :root {
             --primary: #3b82f6;
             --success: #10b981;
@@ -667,39 +668,89 @@
             opacity: 0.8;
         }
 
-        /* Expired Combo Banner */
-        .expired-combo-banner {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+        /* Critical Warning Banner */
+        .critical-warning-banner {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
             padding: 1rem;
             border-radius: 8px;
             margin-top: 1rem;
+            animation: pulse 2s infinite;
         }
 
-        .expired-combo-content {
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .critical-warning-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        .expired-combo-info {
+        .critical-warning-info {
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        .expired-combo-text {
+        .critical-warning-text {
             flex: 1;
         }
 
-        .expired-combo-title {
+        .critical-warning-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 1.1rem;
+        }
+
+        .critical-warning-description {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* Combo Ended Info */
+        .combo-ended-info {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .combo-ended-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #92400e;
+        }
+
+        .combo-ended-content i {
+            font-size: 1.25rem;
+        }
+
+        .combo-ended-text {
+            flex: 1;
+        }
+
+        .combo-ended-title {
             font-weight: 600;
             margin-bottom: 0.25rem;
         }
 
-        .expired-combo-description {
+        .combo-ended-description {
             font-size: 0.875rem;
-            opacity: 0.9;
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -719,7 +770,7 @@
                         <div class="table-meta">
                             <span>Số: {{ $table->table_number }}</span>
                             <span>•</span>
-                            <span>{{ $table->category->name ?? 'Chưa phân loại' }}</span>
+                            <span>{{ $table->tableRate->name ?? 'Chưa phân loại' }}</span>
                         </div>
                     </div>
                 </div>
@@ -839,6 +890,48 @@
                         </div>
                     @endif
 
+                    <!-- CẢNH BÁO COMBO SẮP HẾT (5-10 phút) -->
+                    @if (isset($timeInfo['mode']) &&
+                            $timeInfo['mode'] === 'combo' &&
+                            isset($timeInfo['remaining_minutes']) &&
+                            $timeInfo['remaining_minutes'] <= 10 &&
+                            $timeInfo['remaining_minutes'] > 5)
+                        <div class="warning-banner">
+                            <div class="warning-banner-content">
+                                <i class="fas fa-exclamation-triangle text-amber-500"></i>
+                                <div class="warning-banner-text">
+                                    <div class="warning-banner-title">COMBO SẮP HẾT THỜI GIAN!</div>
+                                    <div class="warning-banner-description">
+                                        Chỉ còn <strong>{{ $timeInfo['remaining_minutes'] }} phút</strong> trong combo.
+                                        Chuẩn bị chuyển sang giờ thường.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- CẢNH BÁO KHẨN CẤP COMBO SẮP HẾT (0-5 phút) -->
+                    @if (isset($timeInfo['mode']) &&
+                            $timeInfo['mode'] === 'combo' &&
+                            isset($timeInfo['remaining_minutes']) &&
+                            $timeInfo['remaining_minutes'] <= 5 &&
+                            $timeInfo['remaining_minutes'] > 0)
+                        <div class="critical-warning-banner">
+                            <div class="critical-warning-content">
+                                <div class="critical-warning-info">
+                                    <i class="fas fa-exclamation-circle text-white text-xl"></i>
+                                    <div class="critical-warning-text">
+                                        <div class="critical-warning-title">CẢNH BÁO: COMBO SẮP HẾT!</div>
+                                        <div class="critical-warning-description">
+                                            Chỉ còn <strong>{{ $timeInfo['remaining_minutes'] }} phút</strong>.
+                                            Hệ thống sẽ tự động chuyển sang giờ thường khi hết thời gian.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Combo đang chạy -->
                     @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && $timeInfo['is_running'] && !$timeInfo['is_paused'])
                         <div class="combo-status-banner">
@@ -911,30 +1004,24 @@
                         </div>
                     @endif
 
-                    <!-- Combo đã dừng (hết thời gian hoặc dừng thủ công) -->
+                    <!-- Thông báo combo đã hết -->
                     @if (isset($timeInfo['needs_switch']) &&
                             $timeInfo['needs_switch'] &&
-                            (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo_ended'))
-                        <div class="expired-combo-banner">
-                            <div class="expired-combo-content">
-                                <div class="expired-combo-info">
-                                    <i class="fas fa-stop-circle text-white text-xl"></i>
-                                    <div class="expired-combo-text">
-                                        <div class="expired-combo-title">COMBO ĐÃ DỪNG</div>
-                                        <div class="expired-combo-description">
-                                            Combo time đã được dừng. Bấm nút bên để bắt đầu tính giờ thường.
-                                        </div>
+                            isset($timeInfo['mode']) &&
+                            $timeInfo['mode'] === 'combo_ended')
+                        <div class="combo-ended-info">
+                            <div class="combo-ended-content">
+                                <i class="fas fa-info-circle text-amber-500"></i>
+                                <div class="combo-ended-text">
+                                    <div class="combo-ended-title">COMBO ĐÃ KẾT THÚC</div>
+                                    <div class="combo-ended-description">
+                                        @if ($timeInfo['is_auto_stopped'] ?? false)
+                                            Combo đã tự động dừng khi hết thời gian. Vui lòng bật giờ thường để tiếp tục
+                                            tính giờ.
+                                        @else
+                                            Combo đã được dừng thủ công. Vui lòng bật giờ thường để tiếp tục tính giờ.
+                                        @endif
                                     </div>
-                                </div>
-                                <div class="combo-actions flex gap-2">
-                                    <form action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
-                                        method="POST">
-                                        @csrf
-                                        <button type="submit" class="action-btn action-btn-success"
-                                            style="padding: 0.5rem 1rem;">
-                                            <i class="fas fa-play"></i> Bật giờ thường
-                                        </button>
-                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -1152,6 +1239,7 @@
                                             <th width="80">SL</th>
                                             <th width="120">Đơn giá</th>
                                             <th width="140">Thành tiền</th>
+                                            <th width="80">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1178,6 +1266,23 @@
                                                 </td>
                                                 <td class="text-right font-semibold">
                                                     {{ number_format(round($item->total_price)) }} ₫</td>
+                                                <td class="text-center">
+                                                    @if ($item->product_id && !$item->is_combo_component && !$item->combo_id)
+                                                        <form
+                                                            action="{{ route('admin.bills.remove-product', ['bill' => $table->currentBill->id, 'billDetail' => $item->id]) }}"
+                                                            method="POST" class="d-inline">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit"
+                                                                class="text-red-500 hover:text-red-700"
+                                                                onclick="return confirm('Bạn có chắc muốn xóa sản phẩm {{ $item->product->name }} khỏi bill?')">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <span class="text-gray-400 text-xs">Không thể xóa</span>
+                                                    @endif
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -1299,16 +1404,17 @@
                                         </button>
                                     </form>
 
-                                    <!-- Bật giờ thường khi combo hết HOẶC đã dừng combo -->
-                                    @if (
-                                        (isset($timeInfo['needs_switch']) && $timeInfo['needs_switch']) ||
-                                            (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo_ended'))
+                                    <!-- NÚT BẬT GIỜ THƯỜNG KHI COMBO HẾT -->
+                                    @if (isset($timeInfo['needs_switch']) &&
+                                            $timeInfo['needs_switch'] &&
+                                            isset($timeInfo['mode']) &&
+                                            $timeInfo['mode'] === 'combo_ended')
                                         <form
                                             action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
                                             method="POST" class="w-full">
                                             @csrf
                                             <button type="submit" class="action-btn action-btn-success">
-                                                <i class="fas fa-play"></i>
+                                                <i class="fas fa-play-circle"></i>
                                                 BẬT GIỜ THƯỜNG
                                             </button>
                                         </form>
@@ -1701,12 +1807,116 @@
                     const response = await fetch(`/admin/bills/${currentBillId}/check-combo-status`);
                     const data = await response.json();
 
+                    // Cập nhật thời gian còn lại
+                    if (data.has_active_combo && data.remaining_minutes !== undefined) {
+                        const remainingMinutes = data.remaining_minutes;
+                        const hours = Math.floor(remainingMinutes / 60);
+                        const minutes = remainingMinutes % 60;
+
+                        document.getElementById('remainingTimeDisplay').textContent =
+                            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+                        // Cập nhật progress bar
+                        if (data.total_minutes && data.total_minutes > 0) {
+                            const progressPercent = Math.min(100, ((data.total_minutes - remainingMinutes) / data
+                                .total_minutes) * 100);
+                            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+                            document.getElementById('progressText').textContent = `${Math.round(progressPercent)}%`;
+                        }
+
+                        // Hiển thị cảnh báo nếu sắp hết thời gian
+                        updateWarningBanners(remainingMinutes);
+                    }
+
                     // Nếu combo đã hết, reload trang để hiển thị nút bật giờ thường
                     if (data.needs_switch && !data.has_active_combo) {
                         location.reload();
                     }
                 } catch (error) {
                     console.error('Error checking combo status:', error);
+                }
+            }
+        }
+
+        // Cập nhật cảnh báo combo sắp hết
+        function updateWarningBanners(remainingMinutes) {
+            // Xóa các banner cũ
+            removeExistingBanners();
+
+            // Hiển thị cảnh báo phù hợp
+            if (remainingMinutes <= 5 && remainingMinutes > 0) {
+                showCriticalWarningBanner(remainingMinutes);
+            } else if (remainingMinutes <= 10 && remainingMinutes > 5) {
+                showWarningBanner(remainingMinutes);
+            }
+        }
+
+        // Xóa các banner cảnh báo cũ
+        function removeExistingBanners() {
+            const warningBanner = document.querySelector('.warning-banner');
+            const criticalBanner = document.querySelector('.critical-warning-banner');
+
+            if (warningBanner) warningBanner.remove();
+            if (criticalBanner) criticalBanner.remove();
+        }
+
+        // Hiển thị cảnh báo thường (5-10 phút)
+        function showWarningBanner(remainingMinutes) {
+            const timeTrackingCard = document.querySelector('.card');
+            const warningBanner = document.createElement('div');
+            warningBanner.className = 'warning-banner';
+            warningBanner.innerHTML = `
+                <div class="warning-banner-content">
+                    <i class="fas fa-exclamation-triangle text-amber-500"></i>
+                    <div class="warning-banner-text">
+                        <div class="warning-banner-title">COMBO SẮP HẾT THỜI GIAN!</div>
+                        <div class="warning-banner-description">
+                            Chỉ còn <strong>${remainingMinutes} phút</strong> trong combo. 
+                            Chuẩn bị chuyển sang giờ thường.
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            insertBanner(warningBanner);
+        }
+
+        // Hiển thị cảnh báo khẩn cấp (0-5 phút)
+        function showCriticalWarningBanner(remainingMinutes) {
+            const timeTrackingCard = document.querySelector('.card');
+            const criticalBanner = document.createElement('div');
+            criticalBanner.className = 'critical-warning-banner';
+            criticalBanner.innerHTML = `
+                <div class="critical-warning-content">
+                    <div class="critical-warning-info">
+                        <i class="fas fa-exclamation-circle text-white text-xl"></i>
+                        <div class="critical-warning-text">
+                            <div class="critical-warning-title">CẢNH BÁO: COMBO SẮP HẾT!</div>
+                            <div class="critical-warning-description">
+                                Chỉ còn <strong>${remainingMinutes} phút</strong>. 
+                                Hệ thống sẽ tự động chuyển sang giờ thường khi hết thời gian.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            insertBanner(criticalBanner);
+        }
+
+        // Chèn banner vào đúng vị trí
+        function insertBanner(banner) {
+            const timeTrackingCard = document.querySelector('.card');
+            const progressContainer = document.querySelector('.progress-container');
+
+            if (progressContainer) {
+                progressContainer.parentNode.insertBefore(banner, progressContainer.nextSibling);
+            } else {
+                const timeTracking = document.querySelector('.time-tracking');
+                if (timeTracking) {
+                    timeTracking.parentNode.insertBefore(banner, timeTracking.nextSibling);
+                } else {
+                    timeTrackingCard.appendChild(banner);
                 }
             }
         }
@@ -1729,9 +1939,10 @@
                 });
             });
 
-            // Kiểm tra trạng thái combo định kỳ (mỗi 30 giây)
+            // Kiểm tra trạng thái combo định kỳ (mỗi 10 giây)
             if (currentMode === 'combo' || needsSwitch) {
-                setInterval(checkComboStatus, 30000);
+                setInterval(checkComboStatus, 10000); // Kiểm tra mỗi 10 giây
+                checkComboStatus(); // Kiểm tra ngay khi load
             }
 
             // Setup tabs and search functionality
