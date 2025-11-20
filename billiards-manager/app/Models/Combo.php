@@ -20,7 +20,7 @@ class Combo extends Model
         'status',
         'is_time_combo',
         'play_duration_minutes',
-        'table_rate_id', // Sử dụng table_rate_id thay vì table_category_id
+        'table_rate_id', 
     ];
 
     protected $casts = [

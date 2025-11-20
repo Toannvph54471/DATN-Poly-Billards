@@ -14,9 +14,9 @@
             <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-download mr-2"></i>Xuất báo cáo
             </button>
-            <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-                <i class="fas fa-plus mr-2"></i>Tạo đơn mới
-            </button>
+            <a href="{{ route('admin.tables.simple-dashboard') }}" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i>Tổng Quan Bàn
+            </a>
         </div>
     </div>
 
