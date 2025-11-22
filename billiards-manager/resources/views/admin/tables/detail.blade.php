@@ -752,24 +752,401 @@
             font-size: 0.875rem;
             opacity: 0.8;
         }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mobile Panel Tabs */
+        .mobile-panel-tabs {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            z-index: 1000;
+        }
+
+        .mobile-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .mobile-tab.active {
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .mobile-tab i {
+            display: block;
+            font-size: 1.25rem;
+            margin-bottom: 4px;
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .left-panel,
+            .center-panel,
+            .right-panel {
+                width: 100%;
+                height: auto;
+                border: none;
+            }
+
+            .panel {
+                display: none;
+            }
+
+            .panel.active {
+                display: flex;
+            }
+
+            .mobile-panel-tabs {
+                display: flex;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            .table-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .table-status {
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .time-tracking {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+            }
+
+            .time-box {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .time-value {
+                font-size: 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .right-content {
+                padding: 1rem;
+            }
+
+            .products-tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                flex: 1;
+                min-width: 120px;
+                text-align: center;
+                padding: 0.75rem 0.5rem;
+            }
+
+            .action-buttons {
+                gap: 0.5rem;
+            }
+
+            .action-btn {
+                padding: 0.6rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .table-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .back-btn {
+                align-self: flex-start;
+            }
+
+            .table-details h1 {
+                font-size: 1.25rem;
+            }
+
+            .table-meta {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .time-tracking {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .time-box {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+            }
+
+            .time-label {
+                margin-bottom: 0;
+                font-size: 0.8rem;
+            }
+
+            .time-value {
+                font-size: 1rem;
+            }
+
+            .combo-status-content {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .combo-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .combo-actions .action-btn {
+                flex: 1;
+                margin: 0 0.25rem;
+            }
+
+            .products-list table {
+                font-size: 0.875rem;
+            }
+
+            .bill-table {
+                font-size: 0.875rem;
+            }
+
+            .bill-table th,
+            .bill-table td {
+                padding: 0.5rem;
+            }
+
+            .total-amount {
+                font-size: 1.25rem;
+            }
+
+            .transfer-item {
+                padding: 0.75rem;
+            }
+
+            .transfer-item .grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .info-item {
+                padding: 0.5rem 0;
+                font-size: 0.875rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .mobile-tab {
+                padding: 10px 8px;
+                font-size: 0.7rem;
+            }
+
+            .mobile-tab i {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.75rem;
+            }
+
+            .table-details h1 {
+                font-size: 1.1rem;
+            }
+
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+
+            .hourly-rate {
+                font-size: 0.8rem;
+            }
+
+            .card {
+                padding: 0.75rem;
+                margin-bottom: 1rem;
+            }
+
+            .section-title {
+                font-size: 1rem;
+            }
+
+            .time-box {
+                padding: 0.6rem;
+            }
+
+            .time-label {
+                font-size: 0.75rem;
+            }
+
+            .time-value {
+                font-size: 0.9rem;
+            }
+
+            .products-tabs .tab {
+                padding: 0.6rem 0.4rem;
+                font-size: 0.8rem;
+            }
+
+            .search-box {
+                padding: 0.6rem;
+                font-size: 0.875rem;
+            }
+
+            .quantity-input {
+                width: 40px;
+                padding: 0.25rem;
+            }
+
+            .quantity-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            .add-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            .right-content {
+                padding: 0.75rem;
+            }
+
+            .action-btn {
+                padding: 0.5rem;
+                font-size: 0.8rem;
+            }
+
+            .mobile-tab {
+                padding: 8px 6px;
+                font-size: 0.65rem;
+            }
+
+            .mobile-tab i {
+                font-size: 1rem;
+                margin-bottom: 2px;
+            }
+
+            .empty-state {
+                padding: 1.5rem;
+            }
+
+            .empty-state i {
+                font-size: 2rem;
+            }
+        }
+
+        /* Utility classes for mobile */
+        .mobile-only {
+            display: none;
+        }
+
+        .desktop-only {
+            display: block;
+        }
+
+        @media (max-width: 1024px) {
+            .mobile-only {
+                display: block;
+            }
+
+            .desktop-only {
+                display: none;
+            }
+        }
+
+        /* Table responsive */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table-responsive table {
+            min-width: 600px;
+        }
+
+        @media (max-width: 768px) {
+            .table-responsive table {
+                min-width: 500px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .table-responsive table {
+                min-width: 400px;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="app-container">
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars text-lg"></i>
+        </button>
+
         <!-- Header -->
         <div class="header">
             <div class="table-info">
                 <div class="table-title">
                     <a href="{{ route('admin.tables.index') }}" class="back-btn">
                         <i class="fas fa-arrow-left"></i>
-                        Quay lại
+                        <span class="desktop-only">Quay lại</span>
                     </a>
                     <div class="table-details">
                         <h1>{{ $table->table_name }}</h1>
                         <div class="table-meta">
                             <span>Số: {{ $table->table_number }}</span>
-                            <span>•</span>
+                            <span class="desktop-only">•</span>
                             <span>{{ $table->tableRate->name ?? 'Chưa phân loại' }}</span>
                         </div>
                     </div>
@@ -805,7 +1182,7 @@
         <!-- Main Content -->
         <div class="main-content">
             <!-- Left Panel - Products & Combos -->
-            <div class="left-panel">
+            <div class="left-panel panel active" id="productsPanel">
                 <!-- Time Tracking -->
                 <div class="card">
                     <div class="card-header">
@@ -947,7 +1324,8 @@
                                     </div>
                                 </div>
                                 <div class="combo-actions flex gap-2">
-                                    <form action="{{ route('admin.bills.pause', $table->currentBill->id) }}" method="POST">
+                                    <form action="{{ route('admin.bills.pause', $table->currentBill->id) }}"
+                                        method="POST">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-warning"
                                             style="padding: 0.5rem 1rem;">
@@ -983,7 +1361,8 @@
                                     </div>
                                 </div>
                                 <div class="combo-actions flex gap-2">
-                                    <form action="{{ route('admin.bills.resume', $table->currentBill->id) }}" method="POST">
+                                    <form action="{{ route('admin.bills.resume', $table->currentBill->id) }}"
+                                        method="POST">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-success"
                                             style="padding: 0.5rem 1rem;">
@@ -1033,17 +1412,21 @@
                     <div class="products-tabs">
                         <div class="tab active" data-tab="products">
                             <i class="fas fa-utensils text-green-500"></i>
-                            SẢN PHẨM ({{ $products->count() }})
+                            <span class="desktop-only">SẢN PHẨM</span>
+                            <span class="mobile-only">SP</span>
+                            ({{ $products->count() }})
                         </div>
                         <div class="tab" data-tab="combos">
                             <i class="fas fa-gift text-purple-500"></i>
-                            COMBO ({{ $combos->count() }})
+                            <span class="desktop-only">COMBO</span>
+                            <span class="mobile-only">CB</span>
+                            ({{ $combos->count() }})
                         </div>
                     </div>
 
                     <input type="text" id="productSearch" placeholder="Tìm kiếm sản phẩm..." class="search-box">
 
-                    <div class="products-container">
+                    <div class="products-container table-responsive">
                         <!-- Products List -->
                         <div id="productsList" class="products-list">
                             <table class="w-full border-collapse">
@@ -1114,7 +1497,8 @@
                                                     data-product-id="{{ $product->id }}"
                                                     {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-plus mr-1"></i>
-                                                    Thêm
+                                                    <span class="desktop-only">Thêm</span>
+                                                    <span class="mobile-only">+</span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -1200,7 +1584,8 @@
                                                     data-combo-id="{{ $combo->id }}"
                                                     {{ $table->currentBill && $table->currentBill->status === 'quick' ? 'disabled' : '' }}>
                                                     <i class="fas fa-plus mr-1"></i>
-                                                    Thêm
+                                                    <span class="desktop-only">Thêm</span>
+                                                    <span class="mobile-only">+</span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -1213,7 +1598,7 @@
             </div>
 
             <!-- Center Panel - Bill Details -->
-            <div class="center-panel">
+            <div class="center-panel panel" id="billPanel">
                 <div class="right-content">
                     <!-- Bill Details -->
                     <div class="card bill-details">
@@ -1230,7 +1615,7 @@
                             </div>
                         </div>
 
-                        <div class="bill-container">
+                        <div class="bill-container table-responsive">
                             @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
                                 <table class="bill-table">
                                     <thead>
@@ -1294,6 +1679,149 @@
                                     <p class="text-sm">Thêm sản phẩm hoặc combo để bắt đầu</p>
                                 </div>
                             @endif
+
+                            <!-- PHẦN HIỂN THỊ CHI TIẾT CHUYỂN BÀN -->
+                            @if ($table->currentBill && $table->currentBill->billTimeUsages->count() > 1)
+                                <div class="table-transfer-details mt-6">
+                                    <h3 class="text-lg font-semibold mb-3 text-blue-600 border-b pb-2">
+                                        <i class="fas fa-exchange-alt mr-2"></i>LỊCH SỬ CHUYỂN BÀN
+                                    </h3>
+
+                                    <div class="space-y-3">
+                                        @php
+                                            $timeUsages = $table->currentBill->billTimeUsages->sortBy('created_at');
+                                            $transferCount = 0;
+                                        @endphp
+
+                                        @foreach ($timeUsages as $index => $timeUsage)
+                                            @if ($index > 0)
+                                                @php
+                                                    $previousUsage = $timeUsages[$index - 1];
+                                                    $transferCount++;
+                                                @endphp
+                                                <div
+                                                    class="transfer-item bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                                    <div class="flex justify-between items-start">
+                                                        <div class="flex-1">
+                                                            <div class="flex items-center mb-1">
+                                                                <span
+                                                                    class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
+                                                                    Lần {{ $transferCount }}
+                                                                </span>
+                                                                <span class="text-sm font-medium text-blue-900">
+                                                                    <i class="fas fa-arrow-right mr-1"></i>
+                                                                    Chuyển bàn
+                                                                </span>
+                                                            </div>
+
+                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                                <div>
+                                                                    <span class="text-gray-600">Từ bàn:</span>
+                                                                    <span
+                                                                        class="font-medium">{{ $previousUsage->table->table_number ?? 'N/A' }}</span>
+                                                                    <span
+                                                                        class="text-xs text-gray-500">({{ number_format($previousUsage->hourly_rate) }}₫/h)</span>
+                                                                </div>
+                                                                <div>
+                                                                    <span class="text-gray-600">Sang bàn:</span>
+                                                                    <span
+                                                                        class="font-medium">{{ $timeUsage->table->table_number ?? $table->table_number }}</span>
+                                                                    <span
+                                                                        class="text-xs text-gray-500">({{ number_format($timeUsage->hourly_rate) }}₫/h)</span>
+                                                                </div>
+                                                            </div>
+
+                                                            @if ($previousUsage->end_time)
+                                                                <div class="mt-2 text-xs text-gray-600">
+                                                                    <i class="far fa-clock mr-1"></i>
+                                                                    Thời gian sử dụng:
+                                                                    {{ \Carbon\Carbon::parse($previousUsage->start_time)->format('H:i') }}
+                                                                    →
+                                                                    {{ \Carbon\Carbon::parse($previousUsage->end_time)->format('H:i') }}
+                                                                    ({{ $previousUsage->duration_minutes ?? 0 }} phút)
+                                                                </div>
+                                                            @endif
+
+                                                            @if ($previousUsage->total_price > 0)
+                                                                <div class="mt-1 text-sm font-medium text-green-600">
+                                                                    <i class="fas fa-coins mr-1"></i>
+                                                                    Tiền giờ bàn cũ:
+                                                                    {{ number_format($previousUsage->total_price) }}₫
+                                                                </div>
+                                                            @endif
+                                                        </div>
+
+                                                        <div class="text-right">
+                                                            <div class="text-xs text-gray-500 mb-1">
+                                                                {{ \Carbon\Carbon::parse($previousUsage->end_time ?? $timeUsage->start_time)->format('d/m/Y H:i') }}
+                                                            </div>
+                                                            @if ($previousUsage->note)
+                                                                <div class="text-xs text-blue-600 italic">
+                                                                    "{{ $previousUsage->note }}"
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endforeach
+
+                                        <!-- Hiển thị bàn hiện tại -->
+                                        <div class="current-table bg-green-50 border border-green-200 rounded-lg p-3">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <div class="flex items-center mb-1">
+                                                        <span
+                                                            class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
+                                                            Hiện tại
+                                                        </span>
+                                                        <span class="text-sm font-medium text-green-900">
+                                                            <i class="fas fa-map-marker-alt mr-1"></i>
+                                                            Bàn {{ $table->table_number }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-sm text-gray-600">
+                                                        Giá giờ:
+                                                        {{ number_format($table->tableRate->hourly_rate ?? 0) }}₫/h
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <div class="text-xs text-gray-500">
+                                                        Bắt đầu:
+                                                        {{ \Carbon\Carbon::parse($timeUsages->last()->start_time)->format('H:i') }}
+                                                    </div>
+                                                    @if ($timeUsages->last()->note)
+                                                        <div class="text-xs text-green-600 italic">
+                                                            "{{ $timeUsages->last()->note }}"
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @elseif ($table->currentBill && $table->currentBill->billTimeUsages->count() == 1)
+                                <!-- Hiển thị thông tin bàn hiện tại nếu chưa chuyển bàn -->
+                                <div
+                                    class="current-table-simple bg-gray-50 border border-gray-200 rounded-lg p-3 mt-4">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-sm font-medium text-gray-900">
+                                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                                Bàn {{ $table->table_number }}
+                                            </span>
+                                            <span class="text-xs text-gray-600 ml-2">
+                                                ({{ number_format($table->tableRate->hourly_rate ?? 0) }}₫/h)
+                                            </span>
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            Bắt đầu:
+                                            {{ \Carbon\Carbon::parse($table->currentBill->billTimeUsages->first()->start_time)->format('H:i') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                            <!-- KẾT THÚC PHẦN HIỂN THỊ CHUYỂN BÀN -->
                         </div>
 
                         @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
@@ -1306,7 +1834,7 @@
             </div>
 
             <!-- Right Panel - Table Info & Actions -->
-            <div class="right-panel">
+            <div class="right-panel panel" id="infoPanel">
                 <div class="right-content">
                     <!-- Table Info -->
                     <div class="card info-section">
@@ -1377,21 +1905,24 @@
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-primary">
                                             <i class="fas fa-play"></i>
-                                            BẮT ĐẦU TÍNH GIỜ
+                                            <span class="desktop-only">BẮT ĐẦU TÍNH GIỜ</span>
+                                            <span class="mobile-only">BẮT ĐẦU GIỜ</span>
                                         </button>
                                     </form>
 
                                     <a href="{{ route('admin.bills.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-success">
                                         <i class="fas fa-credit-card"></i>
-                                        THANH TOÁN BÀN LẺ
+                                        <span class="desktop-only">THANH TOÁN BÀN LẺ</span>
+                                        <span class="mobile-only">THANH TOÁN</span>
                                     </a>
                                 @else
                                     <!-- Thanh toán -->
                                     <a href="{{ route('admin.bills.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-primary">
                                         <i class="fas fa-credit-card"></i>
-                                        THANH TOÁN
+                                        <span class="desktop-only">THANH TOÁN</span>
+                                        <span class="mobile-only">THANH TOÁN</span>
                                     </a>
 
                                     <!-- Cập nhật tổng -->
@@ -1400,7 +1931,8 @@
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-secondary">
                                             <i class="fas fa-sync-alt"></i>
-                                            CẬP NHẬT TỔNG
+                                            <span class="desktop-only">CẬP NHẬT TỔNG</span>
+                                            <span class="mobile-only">CẬP NHẬT</span>
                                         </button>
                                     </form>
 
@@ -1415,7 +1947,8 @@
                                             @csrf
                                             <button type="submit" class="action-btn action-btn-success">
                                                 <i class="fas fa-play-circle"></i>
-                                                BẬT GIỜ THƯỜNG
+                                                <span class="desktop-only">BẬT GIỜ THƯỜNG</span>
+                                                <span class="mobile-only">BẬT GIỜ</span>
                                             </button>
                                         </form>
                                     @endif
@@ -1424,20 +1957,23 @@
                                     <a href="{{ route('admin.bills.transfer-form', $table->currentBill->id) }}"
                                         class="action-btn action-btn-secondary">
                                         <i class="fas fa-exchange-alt"></i>
-                                        CHUYỂN BÀN
+                                        <span class="desktop-only">CHUYỂN BÀN</span>
+                                        <span class="mobile-only">CHUYỂN BÀN</span>
                                     </a>
                                 @endif
                             @else
                                 <!-- Tạo bill mới -->
                                 <button onclick="showCreateBillModal()" class="action-btn action-btn-primary">
                                     <i class="fas fa-plus"></i>
-                                    TẠO HÓA ĐƠN TÍNH GIỜ
+                                    <span class="desktop-only">TẠO HÓA ĐƠN TÍNH GIỜ</span>
+                                    <span class="mobile-only">TẠO HÓA ĐƠN</span>
                                 </button>
 
                                 <!-- Tạo bàn lẻ -->
                                 <button onclick="showQuickBillModal()" class="action-btn action-btn-warning">
                                     <i class="fas fa-bolt"></i>
-                                    TẠO BÀN LẺ
+                                    <span class="desktop-only">TẠO BÀN LẺ</span>
+                                    <span class="mobile-only">BÀN LẺ</span>
                                 </button>
                             @endif
                         </div>
@@ -1492,6 +2028,22 @@
                     @endif
                 </div>
             </div>
+        </div>
+
+        <!-- Mobile Panel Tabs -->
+        <div class="mobile-panel-tabs">
+            <button class="mobile-tab active" data-panel="productsPanel">
+                <i class="fas fa-clock"></i>
+                <span>Thời gian</span>
+            </button>
+            <button class="mobile-tab" data-panel="billPanel">
+                <i class="fas fa-receipt"></i>
+                <span>Hóa đơn</span>
+            </button>
+            <button class="mobile-tab" data-panel="infoPanel">
+                <i class="fas fa-info-circle"></i>
+                <span>Thông tin</span>
+            </button>
         </div>
     </div>
 
@@ -1576,6 +2128,26 @@
         const needsSwitch = {{ isset($timeInfo['needs_switch']) && $timeInfo['needs_switch'] ? 'true' : 'false' }};
 
         let refreshInterval = null;
+
+        // Mobile panel navigation
+        function setupMobilePanels() {
+            const mobileTabs = document.querySelectorAll('.mobile-tab');
+            const panels = document.querySelectorAll('.panel');
+
+            mobileTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const panelId = this.getAttribute('data-panel');
+                    
+                    // Remove active class from all tabs and panels
+                    mobileTabs.forEach(t => t.classList.remove('active'));
+                    panels.forEach(p => p.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding panel
+                    this.classList.add('active');
+                    document.getElementById(panelId).classList.add('active');
+                });
+            });
+        }
 
         // Format functions
         function pad(n) {
@@ -1923,6 +2495,9 @@
 
         // Event listeners for buttons
         document.addEventListener('DOMContentLoaded', function() {
+            // Setup mobile panels
+            setupMobilePanels();
+
             // Product buttons
             document.querySelectorAll('.add-product-btn').forEach(button => {
                 button.addEventListener('click', function() {

@@ -426,14 +426,6 @@
                                 Quay Lại
                             </a>
                         </div>
-
-                        <!-- Thêm vào phần header hoặc sau khi thanh toán thành công -->
-                        <div class="flex gap-2 mt-4">
-                            <a href="{{ route('admin.bills.print', $bill->id) }}" target="_blank"
-                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                                🖨️ In hóa đơn
-                            </a>
-                        </div>
                     </form>
                 </div>
             </div>
