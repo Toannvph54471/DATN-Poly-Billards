@@ -344,6 +344,13 @@ window.toast = window.Toast;
                                         </a>
                                     @endif
 
+                                    @if (Auth::user()->isEmployee())
+                                        <a href="{{ route('#') }}"
+                                            class="block px-4 py-3 hover:bg-gray-100 transition">
+                                            <i class="fas fa-cash-register mr-2"></i>POS
+                                        </a>
+                                    @endif
+
                                     <!-- Logout -->
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
