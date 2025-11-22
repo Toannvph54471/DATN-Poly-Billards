@@ -64,12 +64,6 @@
             <span class="font-medium">Tổng quan</span>
         </a>
 
-        <a href="{{ route('admin.tables.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fa-solid fa-table w-6 mr-3"></i>
-            <span class="font-medium">Quản lý bàn</span>
-        </a>
-
         <a href="{{ route('admin.table_rates.index') }}"
            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.table_rates.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
             <i class="fa-solid fa-clock w-6 mr-3"></i>
@@ -122,13 +116,18 @@
     @endif
 
     <!-- Menu cho Employee (admin/manager/employee đều thấy nếu không phải customer) -->
-    {{-- @if($isStaff && $userRole !== 'customer')
+    @if($isStaff && $userRole !== 'customer')
         <a href="{{ url('/employee/bills') }}" 
            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
             <i class="fas fa-cash-register w-6 mr-3"></i>
             <span class="font-medium">Bán hàng (POS)</span>
         </a>
-    @endif --}}
+        <a href="{{ route('admin.tables.index') }}"
+           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+            <i class="fa-solid fa-table w-6 mr-3"></i>
+            <span class="font-medium">Quản lý bàn</span>
+        </a>
+    @endif
 
     <!-- Menu cho Customer -->
     {{-- @if($userRole === 'customer')

@@ -21,7 +21,7 @@ use App\Http\Controllers\ReportController;
 // Admin + Manager area
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'role:admin,manager'])
+    ->middleware(['auth', 'role:admin,manager,employee'])
     ->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
