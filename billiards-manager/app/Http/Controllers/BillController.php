@@ -1154,6 +1154,9 @@ class BillController extends Controller
     /**
      * Xử lý chuyển bàn
      */
+    /**
+     * Xử lý chuyển bàn
+     */
     public function transferTable(Request $request)
     {
         $request->validate([
@@ -1183,27 +1186,88 @@ class BillController extends Controller
                     throw new \Exception('Không thể chuyển cùng một bàn');
                 }
 
-                // 4. Cập nhật bill sang bàn mới
+                // 4. XỬ LÝ THỜI GIAN VÀ GIÁ CẢ TRƯỚC KHI CHUYỂN
+
+                // Lấy giá giờ của bàn cũ và bàn mới
+                $sourceHourlyRate = $this->getTableHourlyRate($sourceTable);
+                $targetHourlyRate = $this->getTableHourlyRate($targetTable);
+
+                // Xử lý giờ thường đang chạy
+                $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
+                    ->whereNull('end_time')
+                    ->first();
+
+                if ($activeRegularTime) {
+                    // Tính thời gian đã sử dụng ở bàn cũ
+                    $startTime = Carbon::parse($activeRegularTime->start_time);
+                    $elapsedMinutes = $startTime->diffInMinutes(now());
+                    $effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0);
+
+                    // Tính tiền giờ đã sử dụng ở bàn cũ
+                    $timeCost = ($sourceHourlyRate / 60) * max(0, $effectiveMinutes);
+
+                    // Kết thúc session giờ thường ở bàn cũ
+                    $activeRegularTime->update([
+                        'end_time' => now(),
+                        'duration_minutes' => $elapsedMinutes,
+                        'total_price' => $timeCost
+                    ]);
+
+                    // Tạo session giờ thường mới ở bàn mới
+                    BillTimeUsage::create([
+                        'bill_id' => $bill->id,
+                        'start_time' => now(),
+                        'hourly_rate' => $targetHourlyRate
+                    ]);
+                }
+
+                // Xử lý combo time đang chạy
+                $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
+                    ->where('is_expired', false)
+                    ->whereNull('end_time')
+                    ->first();
+
+                if ($activeComboTime) {
+                    // Tính thời gian đã sử dụng của combo
+                    $startTime = Carbon::parse($activeComboTime->start_time);
+                    $elapsedMinutes = $startTime->diffInMinutes(now());
+                    $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
+
+                    // Cập nhật thời gian còn lại và tạm dừng combo
+                    $activeComboTime->update([
+                        'end_time' => now(),
+                        'remaining_minutes' => $remainingMinutes
+                    ]);
+
+                    // Chuyển combo sang bàn mới và tiếp tục
+                    $activeComboTime->update([
+                        'table_id' => $targetTable->id,
+                        'start_time' => now(),
+                        'end_time' => null
+                    ]);
+                }
+
+                // 5. Cập nhật bill sang bàn mới
                 $bill->update([
                     'table_id' => $targetTable->id,
                     'note' => $bill->note . " [Chuyển từ bàn {$sourceTable->table_number} lúc " . now()->format('H:i d/m/Y') . "]"
                 ]);
 
-                // 5. Cập nhật combo time usage nếu có
-                ComboTimeUsage::where('bill_id', $bill->id)
-                    ->where('table_id', $sourceTable->id)
-                    ->update(['table_id' => $targetTable->id]);
-
                 // 6. Cập nhật trạng thái bàn
                 $sourceTable->update(['status' => 'available']);
                 $targetTable->update(['status' => 'occupied']);
 
-                // 7. Log hoạt động
+                // 7. Cập nhật tổng tiền bill
+                $this->calculateBillTotal($bill);
+
+                // 8. Log hoạt động
                 Log::info('Chuyển bàn thành công', [
                     'bill_id' => $bill->id,
                     'bill_number' => $bill->bill_number,
                     'source_table' => $sourceTable->table_number,
                     'target_table' => $targetTable->table_number,
+                    'source_hourly_rate' => $sourceHourlyRate,
+                    'target_hourly_rate' => $targetHourlyRate,
                     'staff_id' => Auth::id()
                 ]);
 
@@ -1225,7 +1289,87 @@ class BillController extends Controller
         }
     }
 
+    /**
+     * Xử lý chuyển bàn với chi tiết thời gian
+     */
+    private function handleTableTransferTime(Bill $bill, Table $sourceTable, Table $targetTable)
+    {
+        $sourceHourlyRate = $this->getTableHourlyRate($sourceTable);
+        $targetHourlyRate = $this->getTableHourlyRate($targetTable);
 
+        $timeDetails = [
+            'source_hourly_rate' => $sourceHourlyRate,
+            'target_hourly_rate' => $targetHourlyRate,
+            'transfer_time' => now(),
+            'elapsed_minutes' => 0,
+            'time_cost' => 0
+        ];
+
+        // Xử lý giờ thường đang chạy
+        $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
+            ->whereNull('end_time')
+            ->first();
+
+        if ($activeRegularTime) {
+            // Tính thời gian đã sử dụng ở bàn cũ
+            $startTime = Carbon::parse($activeRegularTime->start_time);
+            $elapsedMinutes = $startTime->diffInMinutes(now());
+            $effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0);
+
+            // Tính tiền giờ đã sử dụng ở bàn cũ
+            $timeCost = ($sourceHourlyRate / 60) * max(0, $effectiveMinutes);
+
+            // Kết thúc session giờ thường ở bàn cũ
+            $activeRegularTime->update([
+                'end_time' => now(),
+                'duration_minutes' => $elapsedMinutes,
+                'total_price' => $timeCost
+            ]);
+
+            // Tạo session giờ thường mới ở bàn mới
+            BillTimeUsage::create([
+                'bill_id' => $bill->id,
+                'start_time' => now(),
+                'hourly_rate' => $targetHourlyRate,
+                'note' => "Chuyển từ bàn {$sourceTable->table_number}"
+            ]);
+
+            $timeDetails['elapsed_minutes'] = $effectiveMinutes;
+            $timeDetails['time_cost'] = $timeCost;
+            $timeDetails['has_regular_time'] = true;
+        }
+
+        // Xử lý combo time đang chạy
+        $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
+            ->where('is_expired', false)
+            ->whereNull('end_time')
+            ->first();
+
+        if ($activeComboTime) {
+            // Tính thời gian đã sử dụng của combo
+            $startTime = Carbon::parse($activeComboTime->start_time);
+            $elapsedMinutes = $startTime->diffInMinutes(now());
+            $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
+
+            // Cập nhật thời gian còn lại và tạm dừng combo
+            $activeComboTime->update([
+                'end_time' => now(),
+                'remaining_minutes' => $remainingMinutes
+            ]);
+
+            // Chuyển combo sang bàn mới và tiếp tục
+            $activeComboTime->update([
+                'table_id' => $targetTable->id,
+                'start_time' => now(),
+                'end_time' => null
+            ]);
+
+            $timeDetails['has_combo_time'] = true;
+            $timeDetails['combo_remaining_minutes'] = $remainingMinutes;
+        }
+
+        return $timeDetails;
+    }
 
     /**
      * In hóa đơn
@@ -1288,26 +1432,36 @@ class BillController extends Controller
             'totalCost' => 0,
             'totalMinutes' => 0,
             'sessions' => [],
-            'hourlyRate' => 0
+            'hourlyRate' => 0,
+            'tableTransfers' => [] // Thêm thông tin chuyển bàn
         ];
 
-        // 1. Tính tiền giờ thường đã kết thúc
-        $endedRegularTime = BillTimeUsage::where('bill_id', $bill->id)
-            ->whereNotNull('end_time')
+        // Lấy tất cả session giờ thường
+        $allRegularTime = BillTimeUsage::where('bill_id', $bill->id)
+            ->orderBy('created_at')
             ->get();
 
-        foreach ($endedRegularTime as $timeUsage) {
+        foreach ($allRegularTime as $timeUsage) {
             $sessionCost = $timeUsage->total_price ?? 0;
             $sessionMinutes = $timeUsage->duration_minutes ?? 0;
 
+            // Nếu là session đang chạy, tính toán thời gian thực
+            if (is_null($timeUsage->end_time)) {
+                $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
+                $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
+                $sessionCost = ($timeUsage->hourly_rate / 60) * max(0, $effectiveMinutes);
+                $sessionMinutes = $effectiveMinutes;
+            }
+
             $timeDetails['sessions'][] = [
-                'type' => 'regular_ended',
+                'type' => is_null($timeUsage->end_time) ? 'regular_active' : 'regular_ended',
                 'minutes' => $sessionMinutes,
                 'hours' => round($sessionMinutes / 60, 2),
                 'hourly_rate' => $timeUsage->hourly_rate,
                 'cost' => $sessionCost,
                 'description' => "Giờ thường: " . $this->formatDuration($sessionMinutes),
-                'calculation' => $this->formatTimeCalculation($timeUsage->hourly_rate, $sessionMinutes, $sessionCost)
+                'calculation' => $this->formatTimeCalculation($timeUsage->hourly_rate, $sessionMinutes, $sessionCost),
+                'table_note' => $timeUsage->note // Hiển thị ghi chú chuyển bàn nếu có
             ];
 
             $timeDetails['totalCost'] += $sessionCost;
@@ -1318,7 +1472,7 @@ class BillController extends Controller
             }
         }
 
-        // 2. Tính tiền giờ thường đang chạy
+        // Xử lý combo time (giữ nguyên như cũ)
         $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
             ->where('is_expired', false)
             ->where('remaining_minutes', '>', 0)
@@ -1330,23 +1484,7 @@ class BillController extends Controller
                 ->get();
 
             foreach ($activeRegularTime as $timeUsage) {
-                $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
-                $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
-                $sessionCost = ($timeUsage->hourly_rate / 60) * max(0, $effectiveMinutes);
-
-                $timeDetails['sessions'][] = [
-                    'type' => 'regular_active',
-                    'minutes' => $effectiveMinutes,
-                    'hours' => round($effectiveMinutes / 60, 2),
-                    'hourly_rate' => $timeUsage->hourly_rate,
-                    'cost' => $sessionCost,
-                    'description' => "Giờ đang chạy: " . $this->formatDuration($effectiveMinutes),
-                    'calculation' => $this->formatTimeCalculation($timeUsage->hourly_rate, $effectiveMinutes, $sessionCost)
-                ];
-
-                $timeDetails['totalCost'] += $sessionCost;
-                $timeDetails['totalMinutes'] += $effectiveMinutes;
-                $timeDetails['hourlyRate'] = $timeUsage->hourly_rate;
+                // Đã xử lý ở trên
             }
         }
 

@@ -13,124 +13,144 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
         :root {
             --primary: #1e40af;
             --primary-dark: #1e3a8a;
             --secondary: #f59e0b;
         }
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .sidebar { background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%); box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-        .nav-item { transition: all 0.3s ease; border-radius: 8px; margin: 4px 8px; }
-        .nav-item:hover { background: rgba(255,255,255,0.1); }
-        .nav-item.active { background: rgba(255,255,255,0.15); border-left: 4px solid var(--secondary); }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 4px 8px;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-left: 4px solid var(--secondary);
+        }
     </style>
     @yield('styles')
 </head>
 
 <body class="text-gray-800">
 
-@auth
-<div class="flex h-screen bg-gray-100">
+    @auth
+        <div class="flex h-screen bg-gray-100">
 
-    <!-- Sidebar -->
-    <div class="sidebar w-64 flex-shrink-0 text-white flex flex-col">
-        <!-- Logo -->
-        <div class="p-6 border-b border-blue-800">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-billiard-ball text-blue-600 text-xl"></i>
+            <!-- Sidebar -->
+            <div class="sidebar w-64 flex-shrink-0 text-white flex flex-col">
+                <!-- Logo -->
+                <div class="p-6 border-b border-blue-800">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                            <i class="fas fa-billiard-ball text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold">Poly Billiards</h1>
+                            <p class="text-blue-200 text-xs">{{ Auth::user()->name }}</p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-xl font-bold">Poly Billiards</h1>
-                    <p class="text-blue-200 text-xs">{{ Auth::user()->name }}</p>
-                </div>
-            </div>
-        </div>
 
-       <!-- Navigation -->
-<nav class="flex-1 p-4 space-y-1 overflow-y-auto">
-    @php
-        $userRole = Auth::user()->role->slug ?? '';
-        
-        $isAdminOrManager = in_array($userRole, ['admin', 'manager']);
-        $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
-    @endphp
+                <!-- Navigation -->
+                <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                    @php
+                        $userRole = Auth::user()->role->slug ?? '';
 
-    <!-- Menu cho Admin & Manager -->
-    @if($isAdminOrManager)
-        <a href="{{ route('admin.dashboard') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-chart-pie w-6 mr-3"></i>
-            <span class="font-medium">Tổng quan</span>
-        </a>
+                        $isAdminOrManager = in_array($userRole, ['admin', 'manager']);
+                        $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
+                    @endphp
 
-        <a href="{{ route('admin.table_rates.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.table_rates.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fa-solid fa-clock w-6 mr-3"></i>
-            <span class="font-medium">Giá giờ bàn</span>
-        </a>
+                    <!-- Menu cho Admin & Manager -->
+                    @if ($isAdminOrManager)
+                        <a href="{{ route('admin.dashboard') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-chart-pie w-6 mr-3"></i>
+                            <span class="font-medium">Tổng quan</span>
+                        </a>
 
-        <a href="{{ route('admin.combos.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.combos.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-th-large w-6 mr-3"></i>
-            <span class="font-medium">Quản lý Combo</span>
-        </a>
+                        <a href="{{ route('admin.table_rates.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.table_rates.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fa-solid fa-clock w-6 mr-3"></i>
+                            <span class="font-medium">Giá giờ bàn</span>
+                        </a>
 
-        <a href="{{ route('admin.products.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.products.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-cubes w-6 mr-3"></i>
-            <span class="font-medium">Sản phẩm</span>
-        </a>
+                        <a href="{{ route('admin.combos.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.combos.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-th-large w-6 mr-3"></i>
+                            <span class="font-medium">Quản lý Combo</span>
+                        </a>
 
-        <a href="{{ route('admin.promotions.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.promotions.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-percent w-6 mr-3"></i>
-            <span class="font-medium">Khuyến mại</span>
-        </a>
+                        <a href="{{ route('admin.products.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.products.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-cubes w-6 mr-3"></i>
+                            <span class="font-medium">Sản phẩm</span>
+                        </a>
 
-        {{-- <a href="{{ route('admin.customers.index') }}"
+                        <a href="{{ route('admin.promotions.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.promotions.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-percent w-6 mr-3"></i>
+                            <span class="font-medium">Khuyến mại</span>
+                        </a>
+
+                        {{-- <a href="{{ route('admin.customers.index') }}"
            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.customers.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
             <i class="fas fa-users w-6 mr-3"></i>
             <span class="font-medium">Khách hàng</span>
         </a> --}}
 
-        @if($userRole === 'admin')
-            <a href="{{ route('admin.users.index') }}"
-               class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                <i class="fas fa-users-cog w-6 mr-3"></i>
-                <span class="font-medium">Người dùng hệ thống</span>
-            </a>
+                        @if ($userRole === 'admin')
+                            <a href="{{ route('admin.users.index') }}"
+                                class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                                <i class="fas fa-users-cog w-6 mr-3"></i>
+                                <span class="font-medium">Người dùng hệ thống</span>
+                            </a>
 
-            <a href="{{ route('admin.employees.index') }}"
-               class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.employees.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                <i class="fas fa-user-tie w-6 mr-3"></i>
-                <span class="font-medium">Nhân viên</span>
-            </a>
+                            <a href="{{ route('admin.employees.index') }}"
+                                class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.employees.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                                <i class="fas fa-user-tie w-6 mr-3"></i>
+                                <span class="font-medium">Nhân viên</span>
+                            </a>
 
-            <a href="{{ route('admin.roles.index') }}"
-               class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.roles.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                <i class="fas fa-user-shield w-6 mr-3"></i>
-                <span class="font-medium">Phân quyền</span>
-            </a>
-        @endif
-    @endif
+                            <a href="{{ route('admin.roles.index') }}"
+                                class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.roles.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                                <i class="fas fa-user-shield w-6 mr-3"></i>
+                                <span class="font-medium">Phân quyền</span>
+                            </a>
+                        @endif
+                    @endif
+                    <!-- Menu cho Employee (admin/manager/employee đều thấy nếu không phải customer) -->
+                    @if ($isStaff && $userRole !== 'customer')
+                        <a href="{{ url('/employee/bills') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-cash-register w-6 mr-3"></i>
+                            <span class="font-medium">Bán hàng (POS)</span>
+                        </a>
+                        <a href="{{ route('admin.tables.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fa-solid fa-table w-6 mr-3"></i>
+                            <span class="font-medium">Quản lý bàn</span>
+                        </a>
+                    @endif
 
-    <!-- Menu cho Employee (admin/manager/employee đều thấy nếu không phải customer) -->
-    @if($isStaff && $userRole !== 'customer')
-        <a href="{{ url('/employee/bills') }}" 
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-cash-register w-6 mr-3"></i>
-            <span class="font-medium">Bán hàng (POS)</span>
-        </a>
-        <a href="{{ route('admin.tables.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fa-solid fa-table w-6 mr-3"></i>
-            <span class="font-medium">Quản lý bàn</span>
-        </a>
-    @endif
-
-    <!-- Menu cho Customer -->
-    {{-- @if($userRole === 'customer')
+                    <!-- Menu cho Customer -->
+                    {{-- @if ($userRole === 'customer')
         <a href="{{ route('reservations.index') }}"
            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('reservations.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
             <i class="fas fa-calendar-check w-6 mr-3"></i>
@@ -150,65 +170,69 @@
         </a>
     @endif --}}
 
-    <!-- Đăng xuất -->
-    <form method="POST" action="{{ route('logout') }}" class="mt-10">
-        @csrf
-        <button type="submit" class="w-full flex items-center p-3 text-left text-red-200 hover:text-white hover:bg-red-600 rounded-lg transition">
-            <i class="fas fa-sign-out-alt w-6 mr-3"></i>
-            <span class="font-medium">Đăng xuất</span>
-        </button>
-    </form>
-</nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-        <!-- Header -->
-        <header class="bg-white shadow-sm border-b border-gray-200">
-            <div class="flex justify-between items-center px-6 py-4">
-                <div class="flex-1 max-w-xl">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                        <input type="text" placeholder="Tìm kiếm..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-4">
-                    <div class="text-right">
-                        <p class="font-medium">{{ Auth::user()->name }}</p>
-                        <p class="text-xs text-gray-500 capitalize">{{ Str::replace('_', ' ', Auth::user()->role->name) }}</p>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                    </div>
-                </div>
+                    <!-- Đăng xuất -->
+                    <form method="POST" action="{{ route('logout') }}" class="mt-10">
+                        @csrf
+                        <button type="submit"
+                            class="w-full flex items-center p-3 text-left text-red-200 hover:text-white hover:bg-red-600 rounded-lg transition">
+                            <i class="fas fa-sign-out-alt w-6 mr-3"></i>
+                            <span class="font-medium">Đăng xuất</span>
+                        </button>
+                    </form>
+                </nav>
             </div>
-        </header>
 
-        <!-- Page Content -->
-        <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b border-gray-200">
+                    <div class="flex justify-between items-center px-6 py-4">
+                        <div class="flex-1 max-w-xl">
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                <input type="text" placeholder="Tìm kiếm..."
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <p class="font-medium">{{ Auth::user()->name }}</p>
+                                <p class="text-xs text-gray-500 capitalize">
+                                    {{ Str::replace('_', ' ', Auth::user()->role->name) }}</p>
+                            </div>
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Page Content -->
+                <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+                    @yield('content')
+                </main>
+            </div>
+        </div>
+    @else
+        <!-- Guest Layout -->
+        <div class="min-h-screen bg-gray-50">
             @yield('content')
-        </main>
-    </div>
-</div>
+        </div>
+    @endauth
 
-@else
-    <!-- Guest Layout -->
-    <div class="min-h-screen bg-gray-50">
-        @yield('content')
-    </div>
-@endauth
+    <!-- Component Sidebar Link (tạo file riêng để tái sử dụng) -->
+    @push('styles')
+        <style>
+            .nav-item.active {
+                background: rgba(255, 255, 255, 0.15) !important;
+                border-left: 4px solid #f59e0b;
+            }
+        </style>
+    @endpush
 
-<!-- Component Sidebar Link (tạo file riêng để tái sử dụng) -->
-@push('styles')
-<style>
-    .nav-item.active {
-        background: rgba(255,255,255,0.15) !important;
-        border-left: 4px solid #f59e0b;
-    }
-</style>
-@endpush
-
-@yield('scripts')
+    @yield('scripts')
 </body>
+
 </html>
