@@ -337,10 +337,17 @@ window.toast = window.Toast;
                                     </a>
 
                                     <!-- Quản trị -->
-                                    @if (Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isEmployee())
+                                    @if (Auth::user()->isAdmin() || Auth::user()->isManager())
                                         <a href="{{ route('admin.dashboard') }}"
                                             class="block px-4 py-3 hover:bg-gray-100 transition">
                                             <i class="fas fa-cog mr-2"></i>Quản trị
+                                        </a>
+                                    @endif
+
+                                    @if (Auth::user()->isEmployee())
+                                        <a href="{{ route('#') }}"
+                                            class="block px-4 py-3 hover:bg-gray-100 transition">
+                                            <i class="fas fa-cash-register mr-2"></i>POS
                                         </a>
                                     @endif
 
