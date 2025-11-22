@@ -101,6 +101,8 @@ Route::prefix('admin')
 
         // Bills
         Route::prefix('bills')->name('bills.')->group(function () {
+            Route::get('/', [BillController::class, 'index'])->name('index');
+            Route::get('/{id}', [BillController::class, 'show'])->name('show');
             Route::post('/create', [BillController::class, 'createBill'])->name('create');
             Route::post('/{id}/add-combo', [BillController::class, 'addComboToBill'])->name('add-combo');
             Route::post('/{id}/add-product', [BillController::class, 'addProductToBill'])->name('add-product');
