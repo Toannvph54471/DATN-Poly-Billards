@@ -337,7 +337,7 @@ window.toast = window.Toast;
                                     </a>
 
                                     <!-- Quản trị -->
-                                    @if (Auth::user()->isAdmin() || Auth::user()->isManager())
+                                    @if (Auth::user()->isAdmin() || Auth::user()->isManager() || Auth::user()->isEmployee())
                                         <a href="{{ route('admin.dashboard') }}"
                                             class="block px-4 py-3 hover:bg-gray-100 transition">
                                             <i class="fas fa-cog mr-2"></i>Quản trị
