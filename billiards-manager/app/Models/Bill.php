@@ -2,39 +2,33 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class Bill extends BaseModel
 {
     const STATUS_OPEN = 'open';
     const STATUS_PAUSED = 'paused';
-    const STATUS_PLAYING = 'playing';
-    const STATUS_PENDING_PAYMENT = 'pending_payment';
-    const STATUS_PAID = 'paid';
+    const STATUS_CLOSED = 'closed';
     const STATUS_CANCELLED = 'cancelled';
-
-    const PAYMENT_CASH = 'cash';
-    const PAYMENT_CARD = 'card';
-    const PAYMENT_TRANSFER = 'transfer';
-    const PAYMENT_WALLET = 'wallet';
 
     protected $fillable = [
         'bill_number',
-        'customer_id',
-        'reservation_id',
         'table_id',
+        'user_id',
+        'reservation_id',
         'staff_id',
         'start_time',
         'end_time',
         'paused_at',
-        'total_time',
-        'table_price',
-        'product_total',
         'total_amount',
-        'discount',
+        'discount_amount',
         'final_amount',
         'payment_method',
         'payment_status',
+        'is_paid',
+        'paid_at',
         'status',
-        'notes',
+        'note',
         'created_by',
         'updated_by',
         'paused_duration',
@@ -43,38 +37,33 @@ class Bill extends BaseModel
     protected $casts = [
         'start_time' => 'datetime',
         'end_time' => 'datetime',
-        'table_price' => 'decimal:2',
-        'product_total' => 'decimal:2',
+        'paid_at' => 'datetime',
+        'paused_at' => 'datetime',
         'total_amount' => 'decimal:2',
-        'discount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'final_amount' => 'decimal:2',
-        'total_time' => 'integer' // in minutes
+        'is_paid' => 'boolean',
+        'paused_duration' => 'integer',
     ];
-
-    // Relationships
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
 
     public function table()
     {
         return $this->belongsTo(Table::class);
     }
-    
-        public function reservation()
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function reservation()
     {
         return $this->belongsTo(Reservation::class);
     }
 
-    public function employee()
+    public function staff()
     {
-        return $this->belongsTo(Employee::class);
-    }
-
-    public function comboTimeUsages()
-    {
-        return $this->hasMany(ComboTimeUsage::class);
+        return $this->belongsTo(User::class, 'staff_id');
     }
 
     public function billDetails()
@@ -82,68 +71,124 @@ class Bill extends BaseModel
         return $this->hasMany(BillDetail::class);
     }
 
-    public function billTimeUsages()
+    public function billTimeUsages(): HasMany
     {
         return $this->hasMany(BillTimeUsage::class);
     }
 
-    public function payments()
+    public function comboTimeUsages()
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasMany(ComboTimeUsage::class, 'bill_id');
+    }
+
+    // === QUAN HỆ PAYMENT QUA RESERVATION ===
+    public function reservationPayments()
+    {
+        if (!$this->reservation_id) {
+            // Trả về collection rỗng nếu không có reservation
+            return $this->reservation()->getRelated()->newQuery()->whereNull('id');
+        }
+
+        return $this->hasManyThrough(
+            Payment::class,
+            Reservation::class,
+            'id',
+            'reservation_id',
+            'reservation_id',
+            'id'
+        );
+    }
+
+    public function completedPayments()
+    {
+        return $this->reservationPayments()->where('status', Payment::STATUS_COMPLETED);
+    }
+
+    // === TÍNH TOÁN PAYMENT ===
+    public function getTotalPaidAttribute(): float
+    {
+        if ($this->reservation_id) {
+            return Payment::where('reservation_id', $this->reservation_id)
+                ->where('status', Payment::STATUS_COMPLETED)
+                ->sum('amount');
+        }
+        return 0;
+    }
+
+    public function getRemainingAmountAttribute(): float
+    {
+        return max(0, $this->final_amount - $this->total_paid);
+    }
+
+    public function isFullyPaid(): bool
+    {
+        return $this->total_paid >= $this->final_amount;
     }
 
     // Scopes
     public function scopeOpen($query)
     {
-        return $query->whereIn('status', [self::STATUS_OPEN, self::STATUS_PLAYING]);
+        return $query->whereIn('status', [self::STATUS_OPEN, self::STATUS_PAUSED]);
     }
 
     public function scopePaid($query)
     {
-        return $query->where('status', self::STATUS_PAID);
+        return $query->where('is_paid', true);
     }
 
-    public function scopeToday($query)
+    public function scopeUnpaid($query)
     {
-        return $query->whereDate('created_at', today());
+        return $query->where('is_paid', false);
     }
 
-    // Methods
+    public function scopeClosed($query)
+    {
+        return $query->where('status', self::STATUS_CLOSED);
+    }
+
+    // Status Methods
     public function isOpen(): bool
     {
-        return in_array($this->status, [self::STATUS_OPEN, self::STATUS_PLAYING]);
+        return in_array($this->status, [self::STATUS_OPEN, self::STATUS_PAUSED]);
     }
 
     public function isPaid(): bool
     {
-        return $this->status === self::STATUS_PAID;
+        return $this->is_paid === true;
     }
 
-    public function calculateTotalTime(): int
+    public function isClosed(): bool
     {
-        if (!$this->start_time || !$this->end_time) {
-            return 0;
+        return $this->status === self::STATUS_CLOSED;
+    }
+
+    public function canBePaid(): bool
+    {
+        return $this->status === self::STATUS_CLOSED && !$this->is_paid;
+    }
+
+    // Label Methods
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            self::STATUS_OPEN => 'Đang mở',
+            self::STATUS_PAUSED => 'Tạm dừng',
+            self::STATUS_CLOSED => 'Đã đóng',
+            self::STATUS_CANCELLED => 'Đã hủy',
+            default => 'Không xác định'
+        };
+    }
+
+    public function getPaymentStatusLabelAttribute(): string
+    {
+        if ($this->is_paid) {
+            return 'Đã thanh toán';
         }
-        return $this->start_time->diffInMinutes($this->end_time);
-    }
 
-    public function calculateTableCharge(): float
-    {
-        $totalTime = $this->calculateTotalTime();
-        $hours = ceil($totalTime / 60);
-        return $hours * $this->table_price;
-    }
+        if ($this->total_paid > 0) {
+            return 'Thanh toán một phần';
+        }
 
-    public function markAsPaid(): bool
-    {
-        return $this->update([
-            'status' => self::STATUS_PAID,
-            'payment_status' => self::STATUS_PAID
-        ]);
-    }
-
-    public function staff()
-    {
-        return $this->belongsTo(User::class, 'staff_id');
+        return 'Chưa thanh toán';
     }
 }

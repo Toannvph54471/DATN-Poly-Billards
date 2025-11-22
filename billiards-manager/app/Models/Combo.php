@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Services\TablePricingService;
 
 class Combo extends Model
 {
@@ -21,7 +20,7 @@ class Combo extends Model
         'status',
         'is_time_combo',
         'play_duration_minutes',
-        'table_category_id',
+        'table_rate_id', 
     ];
 
     protected $casts = [
@@ -38,9 +37,9 @@ class Combo extends Model
         return $this->hasMany(ComboItem::class, 'combo_id');
     }
 
-    public function tableCategory(): BelongsTo
+    public function tableRate(): BelongsTo
     {
-        return $this->belongsTo(Category::class, 'table_category_id');
+        return $this->belongsTo(TableRate::class, 'table_rate_id');
     }
 
     public function timeUsages(): HasMany
@@ -80,14 +79,11 @@ class Combo extends Model
         $total = 0;
 
         // Giá sản phẩm tiêu dùng
-        $total += $this->comboItems()
-            ->get()
-            ->sum(fn($item) => $item->unit_price * $item->quantity);
+        $total += $this->getProductsTotal();
 
         // Giá bàn (nếu là combo thời gian)
-        if ($this->is_time_combo && $this->table_category_id && $this->play_duration_minutes) {
-            $tablePrice = $this->calculateTablePriceViaService();
-            $total += $tablePrice;
+        if ($this->is_time_combo) {
+            $total += $this->getTablePrice();
         }
 
         // Làm tròn tổng lên hàng nghìn
@@ -95,40 +91,25 @@ class Combo extends Model
     }
 
     /**
-     * Tính giá bàn cho combo thời gian
+     * Tính giá bàn cho combo thời gian - SỬ DỤNG TableRate TRỰC TIẾP
      */
     public function getTablePrice(): float
     {
-        if (!$this->is_time_combo || !$this->table_category_id || !$this->play_duration_minutes) {
+        if (!$this->is_time_combo || !$this->table_rate_id || !$this->play_duration_minutes) {
             return 0;
         }
 
-        return $this->calculateTablePriceViaService();
-    }
-
-    /**
-     * Helper: Tính giá bàn qua TablePricingService (dùng hourly_rate mặc định)
-     */
-    private function calculateTablePriceViaService(): float
-    {
-        $pricingService = app(TablePricingService::class);
-
-        $category = $this->tableCategory;
-        if (!$category) {
+        $tableRate = $this->tableRate;
+        if (!$tableRate) {
             return 0;
         }
 
-        $fakeTable = new Table([
-            'category_id' => $this->table_category_id,
-        ]);
-        $fakeTable->setRelation('category', $category);
+        $hourlyRate = $tableRate->hourly_rate;
+        $hours = $this->play_duration_minutes / 60;
 
-        // Dùng hourly_rate mặc định của category (không cần rate_code)
-        return $pricingService->calculateTablePrice(
-            $fakeTable,
-            $this->play_duration_minutes,
-            null // Không truyền rate_code
-        );
+        // Tính và làm tròn lên hàng nghìn
+        $tablePrice = $hourlyRate * $hours;
+        return ceil($tablePrice / 1000) * 1000;
     }
 
     /**
@@ -213,103 +194,6 @@ class Combo extends Model
             ->first();
     }
 
-    public function getActiveTimeUsages()
-    {
-        if (!$this->is_time_combo) {
-            return collect();
-        }
-
-        return $this->timeUsages()
-            ->where('is_expired', false)
-            ->where('remaining_minutes', '>', 0)
-            ->orderBy('start_time', 'desc')
-            ->get();
-    }
-
-    public function canBeAppliedToTable(Table $table): bool
-    {
-        if (!$this->is_time_combo) {
-            return true;
-        }
-
-        return $this->table_category_id === $table->category_id;
-    }
-
-    public function getAvailableTables()
-    {
-        if (!$this->is_time_combo || !$this->table_category_id) {
-            return collect();
-        }
-
-        return Table::where('category_id', $this->table_category_id)
-            ->where('status', 'available')
-            ->get();
-    }
-
-    // ============ INFO METHODS ============
-
-    public function getDetailedInfo(): array
-    {
-        return [
-            'id' => $this->id,
-            'code' => $this->combo_code,
-            'name' => $this->name,
-            'description' => $this->description,
-            'status' => $this->status,
-            'is_active' => $this->isActive(),
-            'is_time_combo' => $this->is_time_combo,
-            'play_duration_minutes' => $this->play_duration_minutes,
-            'table_category' => $this->tableCategory?->name,
-            'pricing' => $this->getPricingDetails(),
-            'items_count' => $this->comboItems()->count(),
-            'products' => $this->comboItems->map(fn($item) => [
-                'name' => $item->product->name,
-                'quantity' => $item->quantity,
-                'unit_price' => (float) $item->unit_price,
-                'subtotal' => (float) ($item->unit_price * $item->quantity),
-            ]),
-            'has_active_session' => $this->hasActiveSession(),
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
-        ];
-    }
-
-    public function isValid(): array
-    {
-        $errors = [];
-
-        if (empty($this->name)) {
-            $errors[] = 'Combo phải có tên';
-        }
-
-        if (empty($this->combo_code)) {
-            $errors[] = 'Combo phải có mã';
-        }
-
-        if ($this->comboItems()->count() == 0) {
-            $errors[] = 'Combo phải có ít nhất 1 sản phẩm';
-        }
-
-        if ($this->is_time_combo) {
-            if (!$this->table_category_id) {
-                $errors[] = 'Combo bàn phải có loại bàn';
-            }
-
-            if (!$this->play_duration_minutes) {
-                $errors[] = 'Combo bàn phải có thời gian chơi';
-            }
-        }
-
-        if ($this->price > $this->actual_value) {
-            $errors[] = 'Giá bán không được vượt quá giá trị thực (' . number_format($this->actual_value) . 'đ)';
-        }
-
-        return [
-            'is_valid' => count($errors) === 0,
-            'errors' => $errors,
-        ];
-    }
-
     public function getFormattedDuration(): string
     {
         if (!$this->play_duration_minutes) {
@@ -326,5 +210,36 @@ class Combo extends Model
         } else {
             return "{$minutes} phút";
         }
+    }
+
+    /**
+     * Lấy thông tin đầy đủ về combo
+     */
+    public function getDetailedInfo(): array
+    {
+        return [
+            'id' => $this->id,
+            'code' => $this->combo_code,
+            'name' => $this->name,
+            'description' => $this->description,
+            'status' => $this->status,
+            'is_active' => $this->isActive(),
+            'is_time_combo' => $this->is_time_combo,
+            'play_duration_minutes' => $this->play_duration_minutes,
+            'table_rate' => $this->tableRate?->name,
+            'table_rate_code' => $this->tableRate?->code,
+            'hourly_rate' => $this->tableRate?->hourly_rate,
+            'pricing' => $this->getPricingDetails(),
+            'items_count' => $this->comboItems()->count(),
+            'products' => $this->comboItems->map(fn($item) => [
+                'name' => $item->product->name ?? 'N/A',
+                'quantity' => $item->quantity,
+                'unit_price' => (float) $item->unit_price,
+                'subtotal' => (float) ($item->unit_price * $item->quantity),
+            ]),
+            'has_active_session' => $this->hasActiveSession(),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
 }

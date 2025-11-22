@@ -1,30 +1,22 @@
 <?php
 
-// routes/api.php
-
-use App\Http\Controllers\Api\ComboTimeController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\BillController;
+use App\Http\Controllers\ComboController;
 
-// ============ API ROUTES ============
-// Bạn có thể dùng routes này nếu muốn separate API endpoints
+// API routes (prefix /api is automatic)
+Route::post('/tables/available', [ReservationController::class, 'checkAvailability'])->name('api.tables.available');
+Route::post('/reservations/search', [ReservationController::class, 'search'])->name('api.reservations.search');
+Route::post('/reservations/{reservation}/checkin', [ReservationController::class, 'checkin'])->name('api.reservations.checkin');
+Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('api.reservations.cancel');
 
-Route::middleware('auth:sanctum')->group(function () {
+// API for bills: edit details
+Route::post('/bills/{bill}/details', [BillController::class, 'addProduct'])->name('api.bills.add-product');
+Route::put('/bills/{bill}/details/{detail}', [BillController::class, 'updateBillDetail'])->name('api.bills.update-detail');
+Route::delete('/bills/{bill}/details/{detail}', [BillController::class, 'deleteBillDetail'])->name('api.bills.delete-detail');
 
-    // ========== COMBO TIME SESSIONS API ==========
-    Route::prefix('combo-sessions')->name('combo-sessions.')->group(function () {
-        Route::post('/start', [ComboTimeController::class, 'start'])->name('start');
-        Route::get('/{id}', [ComboTimeController::class, 'info'])->name('info');
-        Route::post('/{id}/pause', [ComboTimeController::class, 'pause'])->name('pause');
-        Route::post('/{id}/resume', [ComboTimeController::class, 'resume'])->name('resume');
-        Route::post('/{id}/end', [ComboTimeController::class, 'end'])->name('end');
-        Route::post('/{id}/add-minutes', [ComboTimeController::class, 'addMinutes'])->name('addMinutes');
-        Route::get('/warnings', [ComboTimeController::class, 'checkWarnings'])->name('warnings');
-        Route::get('/{id}/history', [ComboTimeController::class, 'history'])->name('history');
-        Route::get('/report/daily', [ComboTimeControllereController::class, 'dailyReport'])->name('dailyReport');
-    });
-});
-
-// Public API endpoints (without auth if needed)
-Route::prefix('public')->group(function () {
-    // Add public API routes here
-});
+// Combos helper API (if used by frontend)
+Route::get('/combos/rates-by-category', [ComboController::class, 'getTableRatesByCategory'])->name('api.combos.rates-by-category');
+Route::post('/combos/preview-price', [ComboController::class, 'previewComboPrice'])->name('api.combos.preview-price');
+Route::get('/combos/calculate-table-price', [ComboController::class, 'calculateTablePriceAPI'])->name('api.combos.calculate-table-price');

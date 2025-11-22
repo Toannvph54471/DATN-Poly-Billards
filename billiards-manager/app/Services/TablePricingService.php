@@ -6,12 +6,8 @@ use App\Models\Table;
 use App\Models\Category;
 use App\Models\TableRate;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
-/**
- * Service tính giá bàn theo thứ tự ưu tiên:
- * 1. table_rates (gói đặc biệt, khuyến mãi)
- * 2. categories.hourly_rate (giá mặc định)
- */
 class TablePricingService
 {
     /**
@@ -19,61 +15,66 @@ class TablePricingService
      */
     public function getHourlyRate($table, ?Carbon $dateTime = null, ?string $rateCode = null): float
     {
-        $table = $table instanceof Table ? $table : Table::findOrFail($table);
+        $table = $table instanceof Table ? $table : Table::find($table);
+        if (!$table || !$table->category_id) {
+            return 0.0;
+        }
 
-        // Ưu tiên 1: TableRate đặc biệt (VIP, khuyến mãi, event...)
+        // 1. Ưu tiên: rateCode cụ thể
         if ($rateCode) {
-            $specialRate = $this->getSpecialRate($table->category_id, $rateCode);
-            if ($specialRate) {
-                return (float) $specialRate->hourly_rate;
+            $rate = $this->getSpecialRate($table->category_id, $rateCode);
+            if ($rate) {
+                return (float) $rate->hourly_rate;
             }
         }
 
-        // Ưu tiên 2: TableRate active cho category này
-        $activeRate = $this->getActiveTableRate($table->category_id, $dateTime);
+        // 2. Ưu tiên: TableRate active (theo thời gian)
+        $activeRate = $this->getActiveTableRate($table->category_id, $dateTime ?? now());
         if ($activeRate) {
             return (float) $activeRate->hourly_rate;
         }
 
-        // Ưu tiên 3: Category mặc định
-        $category = $table->category;
-        if ($category && $category->hourly_rate) {
-            return (float) $category->hourly_rate;
+        // 3. Ưu tiên: Category có hourly_rate
+        if ($table->category?->hourly_rate) {
+            return (float) $table->category->hourly_rate;
         }
 
-        // Fallback: Giá mặc định nếu không có gì
-        return 50000.00;
+        // 4. Fallback: giá mặc định
+        return 50000.0;
     }
 
     /**
-     * Tính tổng giá bàn theo số phút - LÀM TRÒN LÊN
+     * Tính giá bàn theo phút (làm tròn lên 1 phút)
      */
     public function calculateTablePrice($table, int $minutes, ?string $rateCode = null): float
     {
         $hourlyRate = $this->getHourlyRate($table, now(), $rateCode);
-        $hours = $minutes / 60;
-        $price = $hourlyRate * $hours;
+        if ($hourlyRate <= 0 || $minutes <= 0) {
+            return 0.0;
+        }
 
-        // Làm tròn lên đến hàng nghìn
-        return ceil($price / 1000) * 1000;
+        $hours = ceil($minutes / 60.0); // Làm tròn lên giờ
+        return round($hours * $hourlyRate, 2);
     }
 
     /**
-     * Lấy thông tin chi tiết giá bàn
+     * Chi tiết giá
      */
     public function getPricingDetails($table, int $minutes = 60, ?string $rateCode = null): array
     {
-        $table = $table instanceof Table ? $table : Table::findOrFail($table);
+        $table = $table instanceof Table ? $table : Table::find($table);
+        if (!$table) {
+            return ['error' => 'Table not found'];
+        }
 
         $hourlyRate = $this->getHourlyRate($table, now(), $rateCode);
         $totalPrice = $this->calculateTablePrice($table, $minutes, $rateCode);
-
         $source = $this->getPriceSource($table, $rateCode);
 
         return [
             'table_id' => $table->id,
-            'table_name' => $table->table_name,
-            'category_name' => $table->category?->name,
+            'table_name' => $table->table_name ?? 'N/A',
+            'category_name' => $table->category?->name ?? 'N/A',
             'hourly_rate' => $hourlyRate,
             'minutes' => $minutes,
             'hours' => round($minutes / 60, 2),
@@ -85,128 +86,91 @@ class TablePricingService
     }
 
     /**
-     * Lấy tất cả gói giá có sẵn cho category
+     * Lấy danh sách gói giá
      */
     public function getAvailableRates(int $categoryId): array
     {
-        $category = Category::find($categoryId);
+        $cacheKey = "table_rates_category_{$categoryId}";
+        return Cache::remember($cacheKey, 3600, function () use ($categoryId) {
+            $category = Category::find($categoryId);
+            if (!$category) return [];
 
-        $rates = [];
+            $rates = [];
 
-        // Giá mặc định
-        $rates[] = [
-            'code' => '',
-            'name' => 'Giá thường',
-            'hourly_rate' => $category?->hourly_rate ?? 50000,
-            'hourly_rate_formatted' => number_format($category?->hourly_rate ?? 50000) . 'đ/giờ',
-            'is_default' => true,
-            'description' => 'Giá mặc định của loại bàn',
-        ];
-
-        // Các gói đặc biệt
-        $specialRates = TableRate::where('category_id', $categoryId)
-            ->where('status', 'Active')
-            ->orderBy('hourly_rate')
-            ->get();
-
-        foreach ($specialRates as $rate) {
+            // Giá mặc định
+            $defaultRate = $category->hourly_rate ?? 50000;
             $rates[] = [
-                'code' => $rate->code,
-                'name' => $rate->name,
-                'hourly_rate' => (float) $rate->hourly_rate,
-                'hourly_rate_formatted' => number_format($rate->hourly_rate) . 'đ/giờ',
-                'is_default' => false,
-                'description' => "Gói đặc biệt: " . $rate->name,
-                'max_hours' => $rate->max_hours,
+                'code' => '',
+                'name' => 'Giá thường',
+                'hourly_rate' => (float) $defaultRate,
+                'hourly_rate_formatted' => number_format($defaultRate) . 'đ/giờ',
+                'is_default' => true,
+                'max_hours' => null,
             ];
-        }
 
-        return $rates;
+            // Gói đặc biệt
+            $specialRates = TableRate::where('category_id', $categoryId)
+                ->where('status', 'active')
+                ->orderBy('hourly_rate')
+                ->get();
+
+            foreach ($specialRates as $rate) {
+                $rates[] = [
+                    'code' => $rate->code,
+                    'name' => $rate->name,
+                    'hourly_rate' => (float) $rate->hourly_rate,
+                    'hourly_rate_formatted' => number_format($rate->hourly_rate) . 'đ/giờ',
+                    'is_default' => false,
+                    'max_hours' => $rate->max_hours,
+                    'description' => $rate->name,
+                ];
+            }
+
+            return $rates;
+        });
     }
 
-    /**
-     * Lấy gói giá đặc biệt theo code
-     */
     private function getSpecialRate(int $categoryId, string $rateCode): ?TableRate
     {
         return TableRate::where('category_id', $categoryId)
             ->where('code', $rateCode)
-            ->where('status', 'Active')
+            ->where('status', 'active')
             ->first();
     }
 
-    /**
-     * Lấy gói giá active hiện tại (cho khuyến mãi tự động)
-     */
-    private function getActiveTableRate(int $categoryId, ?Carbon $dateTime = null): ?TableRate
+    private function getActiveTableRate(int $categoryId, Carbon $dateTime): ?TableRate
     {
-        // TODO: Thêm logic kiểm tra thời gian khuyến mãi sau
+        // TODO: Thêm bảng khuyến mãi theo thời gian
         return null;
     }
 
-    /**
-     * Xác định nguồn giá
-     */
     private function getPriceSource($table, ?string $rateCode): array
     {
-        if ($rateCode) {
-            $rate = $this->getSpecialRate($table->category_id, $rateCode);
-            if ($rate) {
-                return [
-                    'type' => 'special_rate',
-                    'name' => $rate->name . ' (' . $rate->code . ')',
-                ];
-            }
+        if ($rateCode && ($rate = $this->getSpecialRate($table->category_id, $rateCode))) {
+            return ['type' => 'special', 'name' => $rate->name];
         }
 
-        $activeRate = $this->getActiveTableRate($table->category_id);
-        if ($activeRate) {
-            return [
-                'type' => 'active_rate',
-                'name' => $activeRate->name,
-            ];
+        if ($table->category?->hourly_rate) {
+            return ['type' => 'category', 'name' => 'Giá mặc định'];
         }
 
-        if ($table->category && $table->category->hourly_rate) {
-            return [
-                'type' => 'category',
-                'name' => 'Giá mặc định - ' . $table->category->name,
-            ];
-        }
-
-        return [
-            'type' => 'default',
-            'name' => 'Giá hệ thống',
-        ];
+        return ['type' => 'fallback', 'name' => 'Giá hệ thống'];
     }
 
-    /**
-     * Validate thời gian chơi theo gói
-     */
     public function validatePlayDuration(int $categoryId, int $minutes, ?string $rateCode = null): array
     {
-        if (!$rateCode) {
-            return ['valid' => true];
-        }
+        if (!$rateCode) return ['valid' => true];
 
         $rate = $this->getSpecialRate($categoryId, $rateCode);
+        if (!$rate || !$rate->max_hours) return ['valid' => true];
 
-        if (!$rate) {
+        $maxMinutes = $rate->max_hours * 60;
+        if ($minutes > $maxMinutes) {
             return [
                 'valid' => false,
-                'message' => 'Không tìm thấy gói giá này',
+                'message' => "Chỉ được chơi tối đa {$rate->max_hours} giờ với gói này",
+                'max_minutes' => $maxMinutes,
             ];
-        }
-
-        if ($rate->max_hours) {
-            $maxMinutes = $rate->max_hours * 60;
-            if ($minutes > $maxMinutes) {
-                return [
-                    'valid' => false,
-                    'message' => "Gói {$rate->name} chỉ cho phép tối đa {$rate->max_hours} giờ",
-                    'max_minutes' => $maxMinutes,
-                ];
-            }
         }
 
         return ['valid' => true];

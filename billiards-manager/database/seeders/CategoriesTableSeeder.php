@@ -3,24 +3,18 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\Category;
 use Illuminate\Support\Facades\DB;
 
 class CategoriesTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $categories = [
-            // Cho Products
-            ['name' => 'Dịch vụ', 'type' => 'product', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Nước ngọt', 'type' => 'product', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Snack', 'type' => 'product', 'created_at' => now(), 'updated_at' => now()],
-
-            // Cho Tables
-            ['name' => 'Khu vực Standard', 'type' => 'table', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Khu vực VIP', 'type' => 'table', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'Khu vực Thi đấu', 'type' => 'table', 'created_at' => now(), 'updated_at' => now()],
-        ];
-
-        DB::table('categories')->insert($categories);
+        DB::table('categories')->truncate();
+        
+        // Loại sản phẩm
+        Category::create(['name' => 'Đồ uống', 'type' => 'product']);
+        Category::create(attributes: ['name' => 'Đồ ăn vặt', 'type' => 'product']);
+        Category::create(['name' => 'Dịch vụ', 'type' => 'product']);
     }
 }

@@ -24,7 +24,7 @@ class ComboController extends Controller
 
     public function index(Request $request)
     {
-        $query = Combo::with(['comboItems.product', 'tableCategory'])
+        $query = Combo::with(['comboItems.product', 'tableRate'])
             ->withCount('comboItems');
 
         if ($request->filled('search')) {
@@ -56,7 +56,6 @@ class ComboController extends Controller
         return view('admin.combos.index', compact('combos', 'stats'));
     }
 
-    
     public function create()
     {
         $products = Product::where('status', 'active')
@@ -64,12 +63,12 @@ class ComboController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'price', 'product_code']);
 
-        $tableCategories = Category::where('type', 'table')
-            ->where('status', 'active')
+        // Lấy tất cả TableRate với thông tin đầy đủ
+        $tableRates = TableRate::where('status', 'Active')
             ->orderBy('name')
-            ->get(['id', 'name', 'hourly_rate']);
+            ->get();
 
-        return view('admin.combos.create', compact('products', 'tableCategories'));
+        return view('admin.combos.create', compact('products', 'tableRates'));
     }
 
     public function store(Request $request)
@@ -82,7 +81,7 @@ class ComboController extends Controller
                 $actualValue = $this->calculateActualValueViaService(
                     $validated['combo_items'] ?? [],
                     $validated['is_time_combo'] ?? false,
-                    $validated['table_category_id'] ?? null,
+                    $validated['table_rate_id'] ?? null,
                     $validated['play_duration_minutes'] ?? null
                 );
 
@@ -101,7 +100,7 @@ class ComboController extends Controller
                     'status' => $validated['status'] ?? 'active',
                     'is_time_combo' => $validated['is_time_combo'] ?? false,
                     'play_duration_minutes' => $validated['play_duration_minutes'] ?? null,
-                    'table_category_id' => $validated['table_category_id'] ?? null,
+                    'table_rate_id' => $validated['table_rate_id'] ?? null,
                 ]);
 
                 if (!empty($validated['combo_items'])) {
@@ -125,7 +124,7 @@ class ComboController extends Controller
     {
         $combo = Combo::with([
             'comboItems.product.category',
-            'tableCategory',
+            'tableRate',
             'timeUsages' => function ($query) {
                 $query->where('is_expired', false)
                     ->whereNull('end_time')
@@ -140,19 +139,18 @@ class ComboController extends Controller
 
     public function edit($id)
     {
-        $combo = Combo::with('comboItems.product')->findOrFail($id);
+        $combo = Combo::with('comboItems.product', 'tableRate')->findOrFail($id);
 
         $products = Product::where('status', 'active')
             ->where('product_type', 'Consumption')
             ->orderBy('name')
             ->get(['id', 'name', 'price', 'product_code']);
 
-        $tableCategories = Category::where('type', 'table')
-            ->where('status', 'active')
+        $tableRates = TableRate::where('status', 'Active')
             ->orderBy('name')
-            ->get(['id', 'name', 'hourly_rate']);
+            ->get();
 
-        return view('admin.combos.edit', compact('combo', 'products', 'tableCategories'));
+        return view('admin.combos.edit', compact('combo', 'products', 'tableRates'));
     }
 
     public function update(Request $request, $id)
@@ -169,7 +167,7 @@ class ComboController extends Controller
                 $actualValue = $this->calculateActualValueViaService(
                     $validated['combo_items'] ?? [],
                     $validated['is_time_combo'] ?? false,
-                    $validated['table_category_id'] ?? null,
+                    $validated['table_rate_id'] ?? null,
                     $validated['play_duration_minutes'] ?? null
                 );
 
@@ -188,7 +186,7 @@ class ComboController extends Controller
                     'status' => $validated['status'] ?? 'active',
                     'is_time_combo' => $validated['is_time_combo'] ?? false,
                     'play_duration_minutes' => $validated['play_duration_minutes'] ?? null,
-                    'table_category_id' => $validated['table_category_id'] ?? null,
+                    'table_rate_id' => $validated['table_rate_id'] ?? null,
                 ]);
 
                 if (!empty($validated['combo_items'])) {
@@ -228,35 +226,31 @@ class ComboController extends Controller
     // ============ API ENDPOINTS ============
 
     /**
-     * API: Tính giá bàn real-time
+     * API: Tính giá bàn real-time  
      */
     public function calculateTablePriceAPI(Request $request)
     {
         try {
-            $categoryId = $request->input('category_id');
+            $tableRateId = $request->input('table_rate_id');
             $minutes = $request->input('minutes', 60);
 
-            if (!$categoryId) {
-                return response()->json(['error' => 'Category ID required'], 400);
+            if (!$tableRateId) {
+                return response()->json(['error' => 'Table Rate ID required'], 400);
             }
 
-            $category = Category::find($categoryId);
-            if (!$category) {
-                return response()->json(['error' => 'Category not found'], 404);
+            $tableRate = TableRate::find($tableRateId);
+            if (!$tableRate) {
+                return response()->json(['error' => 'Table rate not found'], 404);
             }
 
-            // Tạo fake table để dùng service
-            $fakeTable = new Table(['category_id' => $categoryId]);
-            $fakeTable->setRelation('category', $category);
-
-            // Lấy hourly_rate từ category (không dùng rate_code)
-            $hourlyRate = $category->hourly_rate ?? 0;
-
+            $hourlyRate = $tableRate->hourly_rate;
             $hours = $minutes / 60;
             $tablePrice = ceil($hourlyRate * $hours); // Làm tròn lên
 
             return response()->json([
                 'success' => true,
+                'rate_name' => $tableRate->name,
+                'rate_code' => $tableRate->code,
                 'hourly_rate' => $hourlyRate,
                 'hourly_rate_formatted' => number_format($hourlyRate) . 'đ',
                 'minutes' => $minutes,
@@ -280,13 +274,13 @@ class ComboController extends Controller
         try {
             $items = $request->input('combo_items', []);
             $isTimeCombo = $request->boolean('is_time_combo');
-            $tableCategoryId = $request->input('table_category_id');
+            $tableRateId = $request->input('table_rate_id');
             $playDurationMinutes = $request->input('play_duration_minutes');
 
             $actualValue = $this->calculateActualValueViaService(
                 $items,
                 $isTimeCombo,
-                $tableCategoryId,
+                $tableRateId,
                 $playDurationMinutes
             );
 
@@ -326,7 +320,7 @@ class ComboController extends Controller
         // Chỉ validate time combo fields nếu is_time_combo = true
         if ($request->boolean('is_time_combo')) {
             $rules['play_duration_minutes'] = 'required|integer|min:15|max:1440';
-            $rules['table_category_id'] = 'required|exists:categories,id';
+            $rules['table_rate_id'] = 'required|exists:table_rates,id';
         }
 
         $messages = [
@@ -338,7 +332,7 @@ class ComboController extends Controller
             'combo_items.min' => 'Combo phải có ít nhất 1 sản phẩm',
             'play_duration_minutes.required' => 'Vui lòng nhập thời gian chơi',
             'play_duration_minutes.min' => 'Thời gian chơi tối thiểu 15 phút',
-            'table_category_id.required' => 'Vui lòng chọn loại bàn',
+            'table_rate_id.required' => 'Vui lòng chọn loại bàn',
         ];
 
         $validated = $request->validate($rules, $messages);
@@ -357,12 +351,12 @@ class ComboController extends Controller
     }
 
     /**
-     * Tính actual value SỬ DỤNG TablePricingService - LÀM TRÒN LÊN
+     * Tính actual value SỬ DỤNG TableRate - LÀM TRÒN LÊN
      */
     private function calculateActualValueViaService(
         array $items,
         bool $isTimeCombo,
-        ?int $tableCategoryId,
+        ?int $tableRateId,
         ?int $playDurationMinutes
     ): float {
         $total = 0;
@@ -377,21 +371,13 @@ class ComboController extends Controller
             }
         }
 
-        // Tính giá bàn qua service (không cần rate_code)
-        if ($isTimeCombo && $tableCategoryId && $playDurationMinutes) {
-            $category = Category::find($tableCategoryId);
-            if ($category) {
-                // Tạo fake table để dùng service
-                $fakeTable = new Table([
-                    'category_id' => $tableCategoryId,
-                ]);
-                $fakeTable->setRelation('category', $category);
-
-                // Tính giá bàn - dùng hourly_rate từ category
-                $hourlyRate = $category->hourly_rate ?? 0;
+        // Tính giá bàn từ TableRate
+        if ($isTimeCombo && $tableRateId && $playDurationMinutes) {
+            $tableRate = TableRate::find($tableRateId);
+            if ($tableRate) {
+                $hourlyRate = $tableRate->hourly_rate;
                 $hours = $playDurationMinutes / 60;
                 $tablePrice = ceil($hourlyRate * $hours); // Làm tròn lên
-
                 $total += $tablePrice;
             }
         }

@@ -4,53 +4,25 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Role;
+use App\Models\Permission;
 
 class RolePermissionsTableSeeder extends Seeder
 {
     public function run()
     {
-        // Admin - Tất cả permissions
-        $adminPermissions = DB::table('permissions')->pluck('id');
-        foreach ($adminPermissions as $permissionId) {
-            DB::table('role_permissions')->insert([
-                'role_id' => 1, // Admin
-                'permission_id' => $permissionId,
-                'created_at' => now()
-            ]);
-        }
+        DB::table('role_permissions')->truncate();
 
-        // Manager - Hầu hết permissions, trừ delete_users
-        $managerPermissions = DB::table('permissions')
-            ->whereNotIn('name', ['delete_users'])
-            ->pluck('id');
-        
-        foreach ($managerPermissions as $permissionId) {
-            DB::table('role_permissions')->insert([
-                'role_id' => 2, // Manager
-                'permission_id' => $permissionId,
-                'created_at' => now()
-            ]);
-        }
+        // Admin: Gán tất cả quyền
+        $adminRole = Role::where('slug', 'admin')->first();
+        $allPermissions = Permission::pluck('id');
+        $adminRole->permissions()->attach($allPermissions);
 
-        // Staff - Chỉ permissions cơ bản
-        $staffPermissions = DB::table('permissions')
-            ->whereIn('name', [
-                'view_tables', 
-                'open_bills',
-                'add_order_items',
-                'view_products',
-                'view_reservations',
-                'create_reservations',
-                'confirm_checkin'
-            ])
-            ->pluck('id');
+        // Manager: Gán quyền trừ quản lý User/Role
+        $managerRole = Role::where('slug', 'manager')->first();
+        $managerPermissions = Permission::whereNotIn('module', ['User', 'Role'])->pluck('id');
+        $managerRole->permissions()->attach($managerPermissions);
         
-        foreach ($staffPermissions as $permissionId) {
-            DB::table('role_permissions')->insert([
-                'role_id' => 3, // Employee:
-                'permission_id' => $permissionId,
-                'created_at' => now()
-            ]);
-        }
+        // (Bạn có thể gán quyền chi tiết hơn cho Employee và Customer ở đây)
     }
 }
