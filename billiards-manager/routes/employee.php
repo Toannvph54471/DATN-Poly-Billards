@@ -30,7 +30,7 @@ Route::prefix('admin')
         Route::prefix('tables')->name('tables.')->group(function () {
             Route::post('/{id}/checkin', [TableController::class, 'checkin'])->name('checkin');
             Route::post('/{id}/checkout', [TableController::class, 'checkout'])->name('checkout');
-            
+
             // Employee có thể xem chi tiết bàn
             Route::get('/{id}/detail', [TableController::class, 'showDetail'])->name('detail');
 
@@ -42,6 +42,9 @@ Route::prefix('admin')
         // BILL ACTIONS (POS functions)
         // ============================
         Route::prefix('bills')->name('bills.')->group(function () {
+            // Bill
+            Route::get('index', [BillController::class, 'index'])->name('index');
+            Route::get('/{id}/show', [BillController::class, 'show'])->name('show');
             // Tạo bill
             Route::post('/create', [BillController::class, 'createBill'])->name('create');
             Route::post('/quick-create', [BillController::class, 'createQuickBill'])->name('quick-create');

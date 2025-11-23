@@ -330,15 +330,15 @@
                                     <div class="p-4">
                                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                                             <!-- Tạo Bill Nhanh -->
-                                            <button @click="openCreateBillModal()"
+                                            <a href="{{ route('admin.bills.index') }}"
                                                 class="p-3 bg-blue-50 hover:bg-blue-100 transition-colors group border-2 border-blue-200"
                                                 data-tooltip="Tạo bill mới nhanh">
                                                 <div class="text-center">
                                                     <i
                                                         class="fas fa-plus-circle text-blue-600 text-xl group-hover:scale-110 transition-transform"></i>
-                                                    <p class="mt-1 text-sm font-medium text-gray-700">Tạo Bill</p>
+                                                    <p class="mt-1 text-sm font-medium text-gray-700"> Hóa đơn</p>
                                                 </div>
-                                            </button>
+                                            </a>
 
                                             <!-- Đặt Bàn -->
                                             <a href="{{ route('admin.reservations.create') }}"

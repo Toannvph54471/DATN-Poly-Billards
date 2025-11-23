@@ -55,4 +55,9 @@ class BillDetail extends Model
     {
         return $this->hasMany(BillDetail::class, 'parent_bill_detail_id');
     }
+
+    public function children()
+    {
+        return $this->hasMany(BillDetail::class, 'parent_bill_detail_id');
+    }
 }

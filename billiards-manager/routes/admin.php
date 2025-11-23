@@ -98,6 +98,8 @@ Route::prefix('admin')
         // Bills Management (Advanced functions)
         Route::prefix('bills')->name('bills.')->group(function () {
             // Advanced bill functions only for admin/manager
+            Route::get('index', [BillController::class, 'index'])->name('index');
+            Route::get('/{id}/show', [BillController::class, 'show'])->name('show');
             Route::post('/{id}/switch-regular', [BillController::class, 'switchToRegularTime'])->name('switch-regular');
             Route::post('/{id}/extend-combo', [BillController::class, 'extendComboTime'])->name('extend-combo');
             Route::post('/{id}/update-total', [BillController::class, 'updateBillTotal'])->name('update-total');
@@ -108,7 +110,7 @@ Route::prefix('admin')
             // Print bill
             Route::get('/{id}/print', [BillController::class, 'printBill'])->name('print');
         });
-        
+
         // Payments Management
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/{id}/payment', [PaymentController::class, 'showPayment'])->name('payment-page');

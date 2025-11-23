@@ -82,6 +82,11 @@
                     <i class="fa-solid fa-table w-6 mr-3"></i>
                     <span class="font-medium">Quản lý bàn</span>
                 </a>
+                <a href="{{ route('admin.bills.index') }}"
+                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fa-solid fa-table w-6 mr-3"></i>
+                    <span class="font-medium">Hóa đơn </span>
+                </a>
 
                 <a href="{{ route('admin.table_rates.index') }}"
                    class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.table_rates.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
@@ -131,7 +136,7 @@
 
             <!-- Menu cho Employee -->
             @if($isStaff)
-                <a href=""
+                <a href="{{ route('admin.pos.dashboard') }}"
                    class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
                     <i class="fas fa-cash-register w-6 mr-3"></i>
                     <span class="font-medium">Bán hàng (POS)</span>

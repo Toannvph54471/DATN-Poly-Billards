@@ -184,10 +184,10 @@ class PaymentController extends Controller
                     // Chuyển hướng đến trang in bill trước
                     return redirect()->route('admin.bills.print', $bill->id)
                         ->with('success', 'Thanh toán thành công! Đang in hóa đơn...')
-                        ->with('redirect_to', route('admin.tables.index')); // Thêm thông tin redirect
+                        ->with('redirect_to', route('admin.bills.index')); // Thêm thông tin redirect
                 } else {
                     // Nếu không tự động in, về thẳng trang index
-                    return redirect()->route('admin.tables.index')
+                    return redirect()->route('admin.bills.index')
                         ->with('success', 'Thanh toán thành công!');
                 }
             });
