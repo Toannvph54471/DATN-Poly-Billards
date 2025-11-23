@@ -82,93 +82,124 @@
             <span class="font-medium">Sản phẩm</span>
         </a>
 
-        <a href="{{ route('admin.promotions.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.promotions.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-percent w-6 mr-3"></i>
-            <span class="font-medium">Khuyến mại</span>
-        </a>
+                <!-- Navigation -->
+                <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                    @php
+                        $userRole = Auth::user()->role->slug ?? '';
 
-        {{-- <a href="{{ route('admin.customers.index') }}"
+                        $isAdminOrManager = in_array($userRole, ['admin', 'manager']);
+                        $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
+                    @endphp
+
+                    <!-- Menu cho Admin & Manager -->
+                    @if ($isAdminOrManager)
+                        <a href="{{ route('admin.dashboard') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-chart-pie w-6 mr-3"></i>
+                            <span class="font-medium">Tổng quan</span>
+                        </a>
+
+                        <a href="{{ route('admin.tables.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fa-solid fa-table w-6 mr-3"></i>
+                            <span class="font-medium">Quản lý bàn</span>
+                        </a>
+
+                        <a href="{{ route('admin.table_rates.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.table_rates.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fa-solid fa-clock w-6 mr-3"></i>
+                            <span class="font-medium">Giá giờ bàn</span>
+                        </a>
+
+                        <a href="{{ route('admin.combos.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.combos.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-th-large w-6 mr-3"></i>
+                            <span class="font-medium">Quản lý Combo</span>
+                        </a>
+
+                        <a href="{{ route('admin.products.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.products.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-cubes w-6 mr-3"></i>
+                            <span class="font-medium">Sản phẩm</span>
+                        </a>
+
+                        <a href="{{ route('admin.promotions.index') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.promotions.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-percent w-6 mr-3"></i>
+                            <span class="font-medium">Khuyến mại</span>
+                        </a>
+
+                        {{-- <a href="{{ route('admin.customers.index') }}"
            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.customers.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
             <i class="fas fa-users w-6 mr-3"></i>
             <span class="font-medium">Khách hàng</span>
         </a> --}}
 
-        @if($userRole === 'admin')
-            <a href="{{ route('admin.users.index') }}"
-               class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                <i class="fas fa-users-cog w-6 mr-3"></i>
-                <span class="font-medium">Người dùng hệ thống</span>
-            </a>
+                        @if ($userRole === 'admin')
+                            <a href="{{ route('admin.users.index') }}"
+                                class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                                <i class="fas fa-users-cog w-6 mr-3"></i>
+                                <span class="font-medium">Người dùng hệ thống</span>
+                            </a>
 
-            <a href="{{ route('admin.employees.index') }}"
-               class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.employees.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                <i class="fas fa-user-tie w-6 mr-3"></i>
-                <span class="font-medium">Nhân viên</span>
-            </a>
+                            <a href="{{ route('admin.employees.index') }}"
+                                class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.employees.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                                <i class="fas fa-user-tie w-6 mr-3"></i>
+                                <span class="font-medium">Nhân viên</span>
+                            </a>
 
-            <a href="{{ route('admin.roles.index') }}"
-               class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.roles.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                <i class="fas fa-user-shield w-6 mr-3"></i>
-                <span class="font-medium">Phân quyền</span>
-            </a>
-        @endif
-    @endif
+                            <a href="{{ route('admin.roles.index') }}"
+                                class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.roles.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                                <i class="fas fa-user-shield w-6 mr-3"></i>
+                                <span class="font-medium">Phân quyền</span>
+                            </a>
+                        @endif
+                    @endif
+                    <!-- Menu cho Employee (admin/manager/employee đều thấy nếu không phải customer) -->
+                    @if ($isStaff && $userRole === 'employee')
+                        <a href="{{ route('admin.pos.dashboard') }}"
+                            class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-cash-register w-6 mr-3"></i>
+                            <span class="font-medium">Bán hàng (POS)</span>
+                        </a>
+                    @endif
 
-    <!-- Menu cho Employee (admin/manager/employee đều thấy nếu không phải customer) -->
-    @if($isStaff && $userRole !== 'customer')
-        <a href="{{ url('/employee/bills') }}" 
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-cash-register w-6 mr-3"></i>
-            <span class="font-medium">Bán hàng (POS)</span>
-        </a>
-        <a href="{{ route('admin.tables.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fa-solid fa-table w-6 mr-3"></i>
-            <span class="font-medium">Quản lý bàn</span>
-        </a>
-        <a href="{{ route('admin.bills.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('bills.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-file-invoice-dollar w-6 mr-3"></i>
-            <span class="font-medium">Hóa đơn của tôi</span>
-        </a>
-    @endif
+                    <!-- Đăng xuất -->
+                    <form method="POST" action="{{ route('logout') }}" class="mt-10">
+                        @csrf
+                        <button type="submit"
+                            class="w-full flex items-center p-3 text-left text-red-200 hover:text-white hover:bg-red-600 rounded-lg transition">
+                            <i class="fas fa-sign-out-alt w-6 mr-3"></i>
+                            <span class="font-medium">Đăng xuất</span>
+                        </button>
+                    </form>
+                </nav>
+            </div>
 
-    <!-- Menu cho Customer -->
-    {{-- @if($userRole === 'customer')
-        <a href="{{ route('reservations.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('reservations.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-calendar-check w-6 mr-3"></i>
-            <span class="font-medium">Đặt bàn</span>
-        </a>
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b border-gray-200">
+                    <div class="flex justify-between items-center px-6 py-4">
+                        <div class="flex-1 max-w-xl">
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                <input type="text" placeholder="Tìm kiếm..."
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
 
-        <a href="{{ route('client.profile.index') }}"
-           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('client.profile.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-            <i class="fas fa-user-circle w-6 mr-3"></i>
-            <span class="font-medium">Hồ sơ cá nhân</span>
-        </a>
-    @endif --}}
-
-    <!-- Đăng xuất -->
-    <form method="POST" action="{{ route('logout') }}" class="mt-10">
-        @csrf
-        <button type="submit" class="w-full flex items-center p-3 text-left text-red-200 hover:text-white hover:bg-red-600 rounded-lg transition">
-            <i class="fas fa-sign-out-alt w-6 mr-3"></i>
-            <span class="font-medium">Đăng xuất</span>
-        </button>
-    </form>
-</nav>
-    </div>
-
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-        <!-- Header -->
-        <header class="bg-white shadow-sm border-b border-gray-200">
-            <div class="flex justify-between items-center px-6 py-4">
-                <div class="flex-1 max-w-xl">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                        <input type="text" placeholder="Tìm kiếm..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <p class="font-medium">{{ Auth::user()->name }}</p>
+                                <p class="text-xs text-gray-500 capitalize">
+                                    {{ Str::replace('_', ' ', Auth::user()->role->name) }}</p>
+                            </div>
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                            </div>
+                        </div>
                     </div>
                 </div>
 

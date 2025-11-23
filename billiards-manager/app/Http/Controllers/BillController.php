@@ -5,15 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Bill;
 use App\Models\Table;
 use App\Models\User;
-use App\Models\Combo;
+use App\Models\Combo;   
 use App\Models\Product;
 use App\Models\ComboTimeUsage;
 use App\Models\BillTimeUsage;
 use App\Models\BillDetail;
-use App\Models\Payment;
 use App\Models\TableRate;
 use App\Models\Reservation;
-use App\Models\DailyReport;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -372,93 +370,6 @@ class BillController extends Controller
         }
     }
 
-    /**
-     * Tạm dừng tính giờ - CHỈ ÁP DỤNG CHO COMBO TIME
-     */
-    public function pauseTime($billId)
-    {
-        try {
-            DB::beginTransaction();
-
-            $bill = Bill::with('table')->findOrFail($billId);
-
-            // Kiểm tra trạng thái bill
-            if ($bill->status !== 'Open') {
-                return redirect()->back()->with('error', 'Chỉ có thể tạm dừng bill đang mở');
-            }
-
-            // CHỈ cho phép pause khi đang dùng combo time
-            $activeComboTime = ComboTimeUsage::where('bill_id', $billId)
-                ->where('is_expired', false)
-                ->where('remaining_minutes', '>', 0)
-                ->whereNull('end_time')
-                ->first();
-
-            if (!$activeComboTime) {
-                return redirect()->back()->with('error', 'Chỉ có thể tạm dừng khi đang sử dụng combo thời gian');
-            }
-
-            // Tính thời gian đã chạy
-            $start = Carbon::parse($activeComboTime->start_time);
-            $elapsedMinutes = $start->diffInMinutes(now());
-
-            // Cập nhật thời gian pause cho combo
-            $activeComboTime->update([
-                'end_time' => now(),
-                'remaining_minutes' => max(0, $activeComboTime->remaining_minutes - $elapsedMinutes)
-            ]);
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Đã tạm dừng combo thời gian');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error pausing combo time: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Lỗi khi tạm dừng: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Tiếp tục tính giờ - CHỈ ÁP DỤNG CHO COMBO TIME
-     */
-    public function resumeTime($billId)
-    {
-        try {
-            DB::beginTransaction();
-
-            $bill = Bill::with('table')->findOrFail($billId);
-
-            // Kiểm tra trạng thái bill
-            if ($bill->status !== 'Open') {
-                return redirect()->back()->with('error', 'Chỉ có thể tiếp tục bill đang mở');
-            }
-
-            // CHỈ cho phép resume combo time đang pause
-            $pausedComboTime = ComboTimeUsage::where('bill_id', $billId)
-                ->where('is_expired', false)
-                ->where('remaining_minutes', '>', 0)
-                ->whereNotNull('end_time')
-                ->first();
-
-            if (!$pausedComboTime) {
-                return redirect()->back()->with('error', 'Không tìm thấy combo thời gian đang tạm dừng');
-            }
-
-            // Tiếp tục combo time
-            $pausedComboTime->update([
-                'start_time' => now(),
-                'end_time' => null
-            ]);
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Đã tiếp tục combo thời gian');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error resuming combo time: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Lỗi khi tiếp tục: ' . $e->getMessage());
-        }
-    }
 
     /**
      * DỪNG COMBO TIME - KHI HẾT THỜI GIAN HOẶC NHÂN VIÊN DỪNG THỦ CÔNG
@@ -566,48 +477,7 @@ class BillController extends Controller
         }
     }
 
-    public function autoStopExpiredCombos()
-    {
-        try {
-            DB::beginTransaction();
 
-            // Tìm các combo time đang chạy và đã hết thời gian
-            $expiredCombos = ComboTimeUsage::where('is_expired', false)
-                ->whereNull('end_time')
-                ->where('remaining_minutes', '>', 0)
-                ->get();
-
-            $stoppedCount = 0;
-
-            foreach ($expiredCombos as $comboTime) {
-                $start = Carbon::parse($comboTime->start_time);
-                $elapsedMinutes = $start->diffInMinutes(now());
-                $remainingMinutes = max(0, $comboTime->remaining_minutes - $elapsedMinutes);
-
-                // Nếu hết thời gian
-                if ($remainingMinutes <= 0) {
-                    $comboTime->update([
-                        'end_time' => now(),
-                        'remaining_minutes' => 0,
-                        'is_expired' => true
-                    ]);
-
-                    $stoppedCount++;
-
-                    Log::info("Auto stopped combo for bill: {$comboTime->bill_id}, remaining: {$remainingMinutes} minutes");
-                }
-            }
-
-            DB::commit();
-
-            Log::info("Auto stopped {$stoppedCount} expired combos");
-            return $stoppedCount;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error auto stopping combos: ' . $e->getMessage());
-            return 0;
-        }
-    }
 
     /**
      * Kiểm tra và cập nhật trạng thái combo time real-time
@@ -754,193 +624,42 @@ class BillController extends Controller
         }
     }
 
-    /**
-     * Hiển thị trang thanh toán
-     */
-    public function showPayment($id)
+    private function stopAllTimeUsage(Bill $bill)
     {
-        $bill = Bill::with([
-            'table',
-            'user',
-            'billDetails.product',
-            'billDetails.combo'
-        ])->findOrFail($id);
+        // Dừng regular time chưa kết thúc
+        $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
+            ->whereNull('end_time')
+            ->get();
 
-        // Tính toán chi phí giờ chơi
-        $timeCost = $this->calculateTimeCharge($bill);
+        foreach ($activeRegularTime as $timeUsage) {
+            $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
+            $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
 
-        // Tính tổng tiền sản phẩm và combo
-        $productTotal = BillDetail::where('bill_id', $bill->id)
-            ->where('is_combo_component', false)
-            ->sum('total_price');
-
-        return view('admin.bills.payment', compact('bill', 'timeCost', 'productTotal'));
-    }
-
-    /**
-     * Xử lý thanh toán
-     */
-    public function processPayment(Request $request, $billId)
-    {
-        $request->validate([
-            'payment_method' => 'required|string|in:cash,bank_transfer,card,vnpay,momo',
-            'discount_amount' => 'nullable|numeric|min:0',
-            'note' => 'nullable|string|max:500',
-            'auto_print' => 'nullable|boolean' // Thêm field auto_print
-        ]);
-
-        try {
-            return DB::transaction(function () use ($request, $billId) {
-                $paymentMethod = $request->payment_method;
-                $discountAmount = $request->discount_amount ?? 0;
-                $note = $request->note;
-                $autoPrint = $request->boolean('auto_print', true); // Mặc định là true
-
-                // 1. Lấy bill - cho phép cả Open và quick status
-                $bill = Bill::with(['table.tableRate', 'billDetails.product', 'billDetails.combo'])
-                    ->whereIn('status', ['Open', 'quick'])
-                    ->where('payment_status', 'Pending')
-                    ->findOrFail($billId);
-
-                $isQuickBill = $bill->status === 'quick';
-
-                // 2. Xử lý thời gian chơi (chỉ cho bill Open, không xử lý cho quick)
-                $timePrice = 0;
-                $totalMinutesPlayed = 0;
-                $endTime = now();
-
-                if (!$isQuickBill) {
-                    // TÌM BillTimeUsage
-                    $timeUsage = BillTimeUsage::where('bill_id', $bill->id)
-                        ->whereNull('end_time')
-                        ->first();
-
-                    if ($timeUsage) {
-                        // Có BillTimeUsage đang chạy -> tính tiền giờ
-                        $startTime = Carbon::parse($timeUsage->start_time);
-                        $totalMinutesPlayed = $startTime->diffInMinutes($endTime);
-
-                        // Trừ thời gian pause nếu có
-                        if ($timeUsage->paused_duration) {
-                            $totalMinutesPlayed -= $timeUsage->paused_duration;
-                        }
-
-                        $hourlyRate = $timeUsage->hourly_rate ?? ($bill->table->tableRate->hourly_rate ?? 0);
-                        $timePrice = round(($totalMinutesPlayed / 60) * $hourlyRate, 2);
-
-                        // Cập nhật BillTimeUsage
-                        $timeUsage->update([
-                            'end_time' => $endTime,
-                            'duration_minutes' => $totalMinutesPlayed,
-                            'total_price' => $timePrice,
-                        ]);
-                    } else {
-                        // Không có BillTimeUsage đang chạy, kiểm tra xem có BillTimeUsage đã kết thúc không
-                        $endedTimeUsage = BillTimeUsage::where('bill_id', $bill->id)
-                            ->whereNotNull('end_time')
-                            ->first();
-
-                        if ($endedTimeUsage) {
-                            // Sử dụng giá trị từ BillTimeUsage đã kết thúc
-                            $timePrice = $endedTimeUsage->total_price ?? 0;
-                            $totalMinutesPlayed = $endedTimeUsage->duration_minutes ?? 0;
-                        }
-                        // Nếu không có cả hai, timePrice vẫn = 0 (trường hợp bill chưa tính giờ)
-                    }
-                }
-
-                // 3. Tính tiền sản phẩm (không tính thành phần combo)
-                $productTotal = $bill->billDetails()
-                    ->where('is_combo_component', 0)
-                    ->sum('total_price');
-
-                // 4. Tổng tiền trước giảm giá
-                $totalAmount = $isQuickBill ? $productTotal : ($timePrice + $productTotal);
-
-                // 5. Áp dụng giảm giá
-                $discountAmount = max(0, (float) $discountAmount);
-                $finalAmount = max(0, $totalAmount - $discountAmount);
-
-                // 6. Cập nhật bill
-                $bill->update([
-                    'end_time' => $isQuickBill ? $bill->end_time : $endTime,
-                    'total_amount' => $totalAmount,
-                    'discount_amount' => $discountAmount,
-                    'final_amount' => $finalAmount,
-                    'payment_method' => $paymentMethod,
-                    'payment_status' => 'Paid',
-                    'status' => 'Closed',
-                    'note' => $note ?? $bill->note,
-                ]);
-
-                // 7. Lưu thanh toán vào bảng payments
-                Payment::create([
-                    'bill_id' => $bill->id,
-                    'amount' => $finalAmount,
-                    'currency' => 'VND',
-                    'payment_method' => $paymentMethod,
-                    'payment_type' => 'full',
-                    'status' => 'completed',
-                    'transaction_id' => 'BILL_' . $bill->bill_number . '_' . now()->format('YmdHis'),
-                    'paid_at' => now(),
-                    'completed_at' => now(),
-                    'processed_by' => Auth::id(),
-                    'note' => $note,
-                    'payment_data' => json_encode([
-                        'bill_number' => $bill->bill_number,
-                        'table' => $bill->table->table_number,
-                        'bill_type' => $isQuickBill ? 'quick' : 'regular',
-                        'play_minutes' => $isQuickBill ? 0 : $totalMinutesPlayed,
-                        'time_price' => $timePrice,
-                        'product_total' => $productTotal,
-                        'discount' => $discountAmount,
-                    ]),
-                ]);
-
-                // 8. Giải phóng bàn
-                $bill->table->update(['status' => 'available']);
-
-                // 9. Cập nhật báo cáo hàng ngày
-                $this->updateDailyReport($bill);
-
-                // 10. Log hoạt động
-                Log::info('Thanh toán hóa đơn thành công', [
-                    'bill_id' => $bill->id,
-                    'bill_number' => $bill->bill_number,
-                    'bill_type' => $isQuickBill ? 'quick' : 'regular',
-                    'final_amount' => $finalAmount,
-                    'payment_method' => $paymentMethod,
-                    'staff_id' => Auth::id(),
-                    'auto_print' => $autoPrint
-                ]);
-
-                DB::commit();
-
-
-                // Sửa lại phần này: In bill và redirect về trang tables.index
-                if ($autoPrint) {
-                    // Chuyển hướng đến trang in bill trước
-                    return redirect()->route('admin.bills.print', $bill->id)
-                        ->with('success', 'Thanh toán thành công! Đang in hóa đơn...')
-                        ->with('redirect_to', route('admin.tables.index')); // Thêm thông tin redirect
-                } else {
-                    // Nếu không tự động in, về thẳng trang index
-                    return redirect()->route('admin.tables.index')
-                        ->with('success', 'Thanh toán thành công!');
-                }
-            });
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::error('Lỗi thanh toán hóa đơn: ' . $e->getMessage(), [
-                'bill_id' => $billId,
-                'payment_method' => $request->payment_method ?? 'unknown'
+            $timeUsage->update([
+                'end_time' => now(),
+                'duration_minutes' => $elapsedMinutes,
+                'total_price' => ($timeUsage->hourly_rate / 60) * max(0, $effectiveMinutes)
             ]);
+        }
 
-            return redirect()
-                ->route('admin.tables.index')
-                ->with('error', 'Lỗi khi thanh toán: ' . $e->getMessage());
+        // Dừng combo time chưa kết thúc
+        $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
+            ->where('is_expired', false)
+            ->whereNull('end_time')
+            ->get();
+
+        foreach ($activeComboTime as $comboTime) {
+            $elapsedMinutes = Carbon::parse($comboTime->start_time)->diffInMinutes(now());
+
+            $comboTime->update([
+                'end_time' => now(),
+                'total_minutes' => $comboTime->total_minutes,
+                'remaining_minutes' => max(0, $comboTime->total_minutes - $elapsedMinutes),
+                'is_expired' => true
+            ]);
         }
     }
+
 
     /**
      * Kích hoạt combo time
@@ -1045,73 +764,6 @@ class BillController extends Controller
         return $totalTimeCost;
     }
 
-
-    /**
-     * Dừng tất cả tính giờ
-     */
-    private function stopAllTimeUsage(Bill $bill)
-    {
-        // Dừng regular time chưa kết thúc
-        $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
-            ->whereNull('end_time')
-            ->get();
-
-        foreach ($activeRegularTime as $timeUsage) {
-            $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
-            $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
-
-            $timeUsage->update([
-                'end_time' => now(),
-                'duration_minutes' => $elapsedMinutes,
-                'total_price' => ($timeUsage->hourly_rate / 60) * max(0, $effectiveMinutes)
-            ]);
-        }
-
-        // Dừng combo time chưa kết thúc
-        $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
-            ->where('is_expired', false)
-            ->whereNull('end_time')
-            ->get();
-
-        foreach ($activeComboTime as $comboTime) {
-            $elapsedMinutes = Carbon::parse($comboTime->start_time)->diffInMinutes(now());
-
-            $comboTime->update([
-                'end_time' => now(),
-                'total_minutes' => $comboTime->total_minutes,
-                'remaining_minutes' => max(0, $comboTime->total_minutes - $elapsedMinutes),
-                'is_expired' => true
-            ]);
-        }
-    }
-
-    /**
-     * Cập nhật báo cáo hàng ngày
-     */
-    private function updateDailyReport(Bill $bill)
-    {
-        $reportDate = now()->format('Y-m-d');
-
-        $dailyReport = DailyReport::where('report_date', $reportDate)->first();
-
-        if ($dailyReport) {
-            $dailyReport->update([
-                'total_revenue' => $dailyReport->total_revenue + $bill->final_amount,
-                'total_bills' => $dailyReport->total_bills + 1,
-                'total_customers' => $dailyReport->total_customers + ($bill->user_id ? 1 : 0),
-                'average_bill_value' => ($dailyReport->total_revenue + $bill->final_amount) / ($dailyReport->total_bills + 1)
-            ]);
-        } else {
-            DailyReport::create([
-                'report_date' => $reportDate,
-                'total_revenue' => $bill->final_amount,
-                'total_bills' => 1,
-                'total_customers' => $bill->user_id ? 1 : 0,
-                'average_bill_value' => $bill->final_amount
-            ]);
-        }
-    }
-
     /**
      * Lấy giá giờ của bàn
      */
@@ -1161,9 +813,6 @@ class BillController extends Controller
         }
     }
 
-    /**
-     * Xử lý chuyển bàn
-     */
     /**
      * Xử lý chuyển bàn
      */
