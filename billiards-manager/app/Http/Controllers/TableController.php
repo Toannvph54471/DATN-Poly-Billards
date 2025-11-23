@@ -18,47 +18,55 @@ class TableController extends Controller
     // Hiện thị
     public function index(Request $request)
     {
-        $query = Table::query();
+        $query = Table::with([
+            'tableRate',
+            'currentBill',
+            'currentBill.user',
+            'currentBill.billTimeUsages' => function ($q) {
+                $q->whereNull('end_time');
+            },
+            'currentBill.comboTimeUsages' => function ($q) {
+                $q->where('is_expired', false)
+                    ->where('remaining_minutes', '>', 0);
+            }
+        ]);
 
-        // Lọc theo status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // Lọc theo tyable_rate_id
-        if ($request->filled('table_rate_id')) {
-            $query->where('table_rate_id', $request->table_rate_id);
-        }
-
-        // Tìm kiếm
-        if ($request->filled('search')) {
-            $search = $request->search;
-
-            $query->where(function ($q) use ($search) {
-                $q->where('table_number', 'like', "%{$search}%")
-                    ->orWhere('table_name', 'like', "%{$search}%");
+        // Filter theo search
+        if ($request->has('search') && $request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('table_number', 'like', '%' . $request->search . '%')
+                    ->orWhere('table_name', 'like', '%' . $request->search . '%');
             });
         }
 
-        // Quan trọng: dùng query đã lọc
-        $tables = $query->with('tableRate')->paginate(10);
+        // Filter theo status
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter theo loại bàn
+        if ($request->has('table_rate_id') && $request->table_rate_id) {
+            $query->where('table_rate_id', $request->table_rate_id);
+        }
+
+        $tables = $query->paginate(20);
+
+        // Tính toán thông tin thời gian cho mỗi bàn
+        foreach ($tables as $table) {
+            $table->time_info = $this->getTimeInfoForTable($table);
+        }
 
         $tableRates = TableRate::where('status', 'Active')->get();
-
         $statuses = [
-            Table::STATUS_AVAILABLE => 'Available',
-            Table::STATUS_OCCUPIED => 'Occupied',
-            Table::STATUS_PAUSED => 'Paused',
-            Table::STATUS_MAINTENANCE => 'Maintenance',
-            Table::STATUS_RESERVED => 'Reserved',
-            'quick' => 'Quick',
+            'available' => 'Trống',
+            'occupied' => 'Đang sử dụng',
+            'paused' => 'Tạm dừng',
+            'maintenance' => 'Bảo trì',
+            'reserved' => 'Đã đặt',
+            'quick' => 'Bàn lẻ'
         ];
 
-        return view('admin.tables.index', compact(
-            'tables',
-            'statuses',
-            'tableRates'
-        ));
+        return view('admin.tables.index', compact('tables', 'tableRates', 'statuses'));
     }
 
     // hien thi form sua 
@@ -209,6 +217,21 @@ class TableController extends Controller
         }
 
         return view('admin.tables.detail', compact('table', 'combos', 'products', 'timeInfo'));
+    }
+
+    // Thêm vào TableController
+    public function getTimeInfoForTable($table)
+    {
+        if ($table->status === 'occupied' && $table->currentBill) {
+            return $this->calculateCurrentTimeInfo($table);
+        }
+
+        return [
+            'mode' => 'none',
+            'remaining_minutes' => 0,
+            'is_running' => false,
+            'is_paused' => false
+        ];
     }
 
     private function calculateCurrentTimeInfo($table)

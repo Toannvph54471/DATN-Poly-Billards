@@ -63,6 +63,101 @@
         </div>
     </div>
 
+    <!-- CẢNH BÁO COMBO SẮP HẾT - HIỂN THỊ TRÊN CÙNG -->
+    @php
+        $criticalComboTables = collect();
+        $warningComboTables = collect();
+
+        foreach ($tables as $table) {
+            $timeInfo = $table->time_info;
+            if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && isset($timeInfo['remaining_minutes'])) {
+                $remainingMinutes = $timeInfo['remaining_minutes'];
+
+                if ($remainingMinutes <= 5 && $remainingMinutes > 0) {
+                    $criticalComboTables->push([
+                        'table' => $table,
+                        'remaining_minutes' => $remainingMinutes,
+                        'time_info' => $timeInfo,
+                    ]);
+                } elseif ($remainingMinutes <= 10 && $remainingMinutes > 5) {
+                    $warningComboTables->push([
+                        'table' => $table,
+                        'remaining_minutes' => $remainingMinutes,
+                        'time_info' => $timeInfo,
+                    ]);
+                }
+            }
+        }
+    @endphp
+
+    @if ($criticalComboTables->count() > 0)
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 animate-pulse">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-xl mr-3"></i>
+                    <div>
+                        <h3 class="text-lg font-semibold text-red-800">CẢNH BÁO KHẨN CẤP: COMBO SẮP HẾT!</h3>
+                        <p class="text-red-600">
+                            Có <strong>{{ $criticalComboTables->count() }} bàn</strong> sắp hết thời gian combo
+                        </p>
+                    </div>
+                </div>
+                <span class="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                    <i class="fas fa-clock mr-1"></i>
+                    CẦN XỬ LÝ NGAY
+                </span>
+            </div>
+
+            <!-- Hiển thị danh sách bàn cần xử lý -->
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                @foreach ($criticalComboTables as $comboTable)
+                    <div class="bg-red-100 border border-red-300 rounded p-2 flex justify-between items-center">
+                        <span class="font-semibold text-red-800">
+                            {{ $comboTable['table']->table_number }} - {{ $comboTable['table']->table_name }}
+                        </span>
+                        <span class="bg-red-500 text-white px-2 py-1 rounded text-sm font-bold">
+                            {{ $comboTable['remaining_minutes'] }} phút
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    @if ($warningComboTables->count() > 0)
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-amber-500 text-xl mr-3"></i>
+                    <div>
+                        <h3 class="text-lg font-semibold text-amber-800">CẢNH BÁO: COMBO SẮP HẾT</h3>
+                        <p class="text-amber-600">
+                            Có <strong>{{ $warningComboTables->count() }} bàn</strong> sắp hết thời gian combo
+                        </p>
+                    </div>
+                </div>
+                <span class="bg-amber-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                    <i class="fas fa-clock mr-1"></i>
+                    CHUẨN BỊ XỬ LÝ
+                </span>
+            </div>
+
+            <!-- Hiển thị danh sách bàn cần chú ý -->
+            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                @foreach ($warningComboTables as $comboTable)
+                    <div class="bg-amber-100 border border-amber-300 rounded p-2 flex justify-between items-center">
+                        <span class="font-semibold text-amber-800">
+                            {{ $comboTable['table']->table_number }} - {{ $comboTable['table']->table_name }}
+                        </span>
+                        <span class="bg-amber-500 text-white px-2 py-1 rounded text-sm font-bold">
+                            {{ $comboTable['remaining_minutes'] }} phút
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <!-- Filters và Search -->
     <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <form action="{{ route('admin.tables.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -133,26 +228,73 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Giá theo giờ</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Thời gian còn lại</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Thao tác</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach ($tables as $table)
-                            <tr class="hover:bg-gray-50 group relative cursor-pointer"
+                            @php
+                                $timeInfo = $table->time_info;
+                                $hasComboWarning = false;
+                                $hasCriticalWarning = false;
+                                $remainingMinutes = null;
+
+                                if (
+                                    isset($timeInfo['mode']) &&
+                                    $timeInfo['mode'] === 'combo' &&
+                                    isset($timeInfo['remaining_minutes'])
+                                ) {
+                                    $remainingMinutes = $timeInfo['remaining_minutes'];
+                                    if ($remainingMinutes <= 10) {
+                                        $hasComboWarning = true;
+                                        if ($remainingMinutes <= 5) {
+                                            $hasCriticalWarning = true;
+                                        }
+                                    }
+                                }
+                            @endphp
+
+                            <tr class="hover:bg-gray-50 group relative cursor-pointer 
+                                @if ($hasCriticalWarning) bg-red-50 border-l-4 border-l-red-500 animate-pulse @endif
+                                @if ($hasComboWarning && !$hasCriticalWarning) bg-amber-50 border-l-4 border-l-amber-500 @endif"
                                 onclick="window.location='{{ route('admin.tables.detail', $table->id) }}'">
 
-                                <!-- Các cột dữ liệu -->
+                                <!-- Cột Thông tin bàn -->
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">#{{ $table->table_number }}</div>
-                                    <div class="text-sm text-gray-500">{{ $table->table_name }}</div>
-                                    @if ($table->currentBill)
-                                        <div class="text-xs text-red-500 mt-1 font-semibold">
-                                            <i class="fas fa-clock mr-1"></i>Đang sử dụng
-                                            @if ($table->currentBill->user)
-                                                - {{ $table->currentBill->user->name }}
+                                    <div class="flex items-center">
+                                        @if ($hasCriticalWarning)
+                                            <div class="mr-3">
+                                                <i class="fas fa-exclamation-triangle text-red-500 text-lg"
+                                                    title="Combo sắp hết!"></i>
+                                            </div>
+                                        @elseif($hasComboWarning)
+                                            <div class="mr-3">
+                                                <i class="fas fa-clock text-amber-500 text-lg" title="Combo sắp hết"></i>
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900 flex items-center">
+                                                #{{ $table->table_number }}
+                                                @if ($table->currentBill && $table->currentBill->status === 'quick')
+                                                    <span
+                                                        class="ml-2 bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full">
+                                                        <i class="fas fa-bolt mr-1"></i>Bàn lẻ
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <div class="text-sm text-gray-500">{{ $table->table_name }}</div>
+                                            @if ($table->currentBill)
+                                                <div class="text-xs text-red-500 mt-1 font-semibold">
+                                                    <i class="fas fa-clock mr-1"></i>Đang sử dụng
+                                                    @if ($table->currentBill->user)
+                                                        - {{ $table->currentBill->user->name }}
+                                                    @endif
+                                                </div>
                                             @endif
                                         </div>
-                                    @endif
+                                    </div>
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -235,6 +377,16 @@
                                         @endif
                                         {{ $statusLabels[$table->status] ?? $table->status }}
                                     </span>
+
+                                    <!-- Hiển thị trạng thái combo -->
+                                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
+                                        <div class="mt-1">
+                                            <span
+                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                <i class="fas fa-gift mr-1"></i>Combo Time
+                                            </span>
+                                        </div>
+                                    @endif
                                 </td>
 
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -244,7 +396,36 @@
                                     {{ number_format($hourlyRate, 0, ',', '.') }} đ/giờ
                                 </td>
 
-                                <!-- Cột Actions - ĐƠN GIẢN HÓA -->
+                                <!-- Cột Thời gian còn lại -->
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    @if ($hasComboWarning && $remainingMinutes !== null)
+                                        <div class="flex items-center">
+                                            @if ($hasCriticalWarning)
+                                                <span class="text-red-600 font-bold text-lg mr-2">
+                                                    {{ $remainingMinutes }}'
+                                                </span>
+                                                <span class="text-red-500 text-xs">
+                                                    <i class="fas fa-exclamation-triangle mr-1"></i>Sắp hết!
+                                                </span>
+                                            @else
+                                                <span class="text-amber-600 font-semibold mr-2">
+                                                    {{ $remainingMinutes }}'
+                                                </span>
+                                                <span class="text-amber-500 text-xs">
+                                                    <i class="fas fa-clock mr-1"></i>Sắp hết
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @elseif(isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && isset($timeInfo['remaining_minutes']))
+                                        <span class="text-green-600 font-medium">
+                                            {{ $timeInfo['remaining_minutes'] }}' còn lại
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400">--</span>
+                                    @endif
+                                </td>
+
+                                <!-- Cột Actions -->
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2" onclick="event.stopPropagation()">
                                         <!-- Xem chi tiết -->
@@ -374,6 +555,43 @@
             .cursor-not-allowed {
                 opacity: 0.5;
             }
+
+            /* Animation cho cảnh báo khẩn cấp */
+            @keyframes pulse {
+
+                0%,
+                100% {
+                    opacity: 1;
+                }
+
+                50% {
+                    opacity: 0.7;
+                }
+            }
+
+            .animate-pulse {
+                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
         </style>
+    @endpush
+
+    @push('scripts')
+        <script>
+            // Auto-refresh trang mỗi 30 giây để cập nhật trạng thái combo
+            setInterval(() => {
+                // Chỉ refresh nếu có bàn đang sử dụng combo sắp hết
+                const hasCriticalCombo = document.querySelector('.bg-red-50.animate-pulse');
+                const hasWarningCombo = document.querySelector('.bg-amber-50');
+
+                if (hasCriticalCombo || hasWarningCombo) {
+                    window.location.reload();
+                }
+            }, 30000); // 30 giây
+
+            // Hoặc có thể refresh mỗi 60 giây nếu muốn
+            setInterval(() => {
+                window.location.reload();
+            }, 60000); // 60 giây
+        </script>
     @endpush
 @endsection
