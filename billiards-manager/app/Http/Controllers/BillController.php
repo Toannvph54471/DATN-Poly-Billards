@@ -22,9 +22,19 @@ use Illuminate\Support\Str;
 
 class BillController extends Controller
 {
-    /**
-     * Tạo bill tính giờ thường
-     */
+          public function index()
+    {
+        $bill = Bill::latest()->paginate(10);
+        return view('admin.bills.index', compact('bill'));
+    }
+
+    // ✅ Hàm hiển thị chi tiết hóa đơn
+    public function show($id)
+    {
+        $bill = Bill::findOrFail($id);
+        return view('admin.bills.show', compact('bill'));
+    }
+
     public function createBill(Request $request)
     {
         $request->validate([

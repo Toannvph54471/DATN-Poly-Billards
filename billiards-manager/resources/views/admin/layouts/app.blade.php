@@ -13,60 +13,74 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
         :root {
             --primary: #1e40af;
             --primary-dark: #1e3a8a;
             --secondary: #f59e0b;
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-        }
-
-        .sidebar {
-            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-item {
-            transition: all 0.3s ease;
-            border-radius: 8px;
-            margin: 4px 8px;
-        }
-
-        .nav-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-item.active {
-            background: rgba(255, 255, 255, 0.15);
-            border-left: 4px solid var(--secondary);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar { background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%); box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .nav-item { transition: all 0.3s ease; border-radius: 8px; margin: 4px 8px; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); }
+        .nav-item.active { background: rgba(255,255,255,0.15); border-left: 4px solid var(--secondary); }
     </style>
     @yield('styles')
 </head>
 
 <body class="text-gray-800">
 
-    @auth
-        <div class="flex h-screen bg-gray-100">
+@auth
+<div class="flex h-screen bg-gray-100">
 
-            <!-- Sidebar -->
-            <div class="sidebar w-64 flex-shrink-0 text-white flex flex-col">
-                <!-- Logo -->
-                <div class="p-6 border-b border-blue-800">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                            <i class="fas fa-billiard-ball text-blue-600 text-xl"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-xl font-bold">Poly Billiards</h1>
-                            <p class="text-blue-200 text-xs">{{ Auth::user()->name }}</p>
-                        </div>
-                    </div>
+    <!-- Sidebar -->
+    <div class="sidebar w-64 flex-shrink-0 text-white flex flex-col">
+        <!-- Logo -->
+        <div class="p-6 border-b border-blue-800">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                    <i class="fas fa-billiard-ball text-blue-600 text-xl"></i>
                 </div>
+                <div>
+                    <h1 class="text-xl font-bold">Poly Billiards</h1>
+                    <p class="text-blue-200 text-xs">{{ Auth::user()->name }}</p>
+                </div>
+            </div>
+        </div>
+
+       <!-- Navigation -->
+<nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+    @php
+        $userRole = Auth::user()->role->slug ?? '';
+        
+        $isAdminOrManager = in_array($userRole, ['admin', 'manager']);
+        $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
+    @endphp
+
+    <!-- Menu cho Admin & Manager -->
+    @if($isAdminOrManager)
+        <a href="{{ route('admin.dashboard') }}"
+           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+            <i class="fas fa-chart-pie w-6 mr-3"></i>
+            <span class="font-medium">Tổng quan</span>
+        </a>
+
+        <a href="{{ route('admin.table_rates.index') }}"
+           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.table_rates.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+            <i class="fa-solid fa-clock w-6 mr-3"></i>
+            <span class="font-medium">Giá giờ bàn</span>
+        </a>
+
+        <a href="{{ route('admin.combos.index') }}"
+           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.combos.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+            <i class="fas fa-th-large w-6 mr-3"></i>
+            <span class="font-medium">Quản lý Combo</span>
+        </a>
+
+        <a href="{{ route('admin.products.index') }}"
+           class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.products.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+            <i class="fas fa-cubes w-6 mr-3"></i>
+            <span class="font-medium">Sản phẩm</span>
+        </a>
 
                 <!-- Navigation -->
                 <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -187,32 +201,44 @@
                             </div>
                         </div>
                     </div>
-                </header>
+                </div>
 
-                <!-- Page Content -->
-                <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
-                    @yield('content')
-                </main>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="font-medium">{{ Auth::user()->name }}</p>
+                        <p class="text-xs text-gray-500 capitalize">{{ Str::replace('_', ' ', Auth::user()->role->name) }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                    </div>
+                </div>
             </div>
-        </div>
-    @else
-        <!-- Guest Layout -->
-        <div class="min-h-screen bg-gray-50">
+        </header>
+
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
             @yield('content')
-        </div>
-    @endauth
+        </main>
+    </div>
+</div>
 
-    <!-- Component Sidebar Link (tạo file riêng để tái sử dụng) -->
-    @push('styles')
-        <style>
-            .nav-item.active {
-                background: rgba(255, 255, 255, 0.15) !important;
-                border-left: 4px solid #f59e0b;
-            }
-        </style>
-    @endpush
+@else
+    <!-- Guest Layout -->
+    <div class="min-h-screen bg-gray-50">
+        @yield('content')
+    </div>
+@endauth
 
-    @yield('scripts')
+<!-- Component Sidebar Link (tạo file riêng để tái sử dụng) -->
+@push('styles')
+<style>
+    .nav-item.active {
+        background: rgba(255,255,255,0.15) !important;
+        border-left: 4px solid #f59e0b;
+    }
+</style>
+@endpush
+
+@yield('scripts')
 </body>
-
 </html>
