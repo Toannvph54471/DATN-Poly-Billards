@@ -32,14 +32,6 @@ class TablesTableSeeder extends Seeder
             'table_rate_id' => $regularRate->id ?? null,
             'status' => 'available'
         ]);
-
-        Table::create([
-            'table_number' => 'A03',
-            'table_name' => 'Bàn A03',
-            'table_rate_id' => $regularRate->id ?? null,
-            'status' => 'occupied'
-        ]);
-
         Table::create([
             'table_number' => 'V01',
             'table_name' => 'Bàn VIP 01',

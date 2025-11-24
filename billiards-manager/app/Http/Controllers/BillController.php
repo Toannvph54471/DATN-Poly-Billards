@@ -22,7 +22,8 @@ use Illuminate\Support\Str;
 
 class BillController extends Controller
 {
-          public function index()
+    // ✅ Hàm hiển thị danh sách hóa đơn
+    public function index()
     {
         $bill = Bill::latest()->paginate(10);
         return view('admin.bills.index', compact('bill'));
@@ -35,6 +36,9 @@ class BillController extends Controller
         return view('admin.bills.show', compact('bill'));
     }
 
+    /**
+     * Tạo bill tính giờ thường
+     */
     public function createBill(Request $request)
     {
         $request->validate([
@@ -98,7 +102,7 @@ class BillController extends Controller
 
             // Khởi tạo tính giờ
             BillTimeUsage::create([
-                'bill_id' => $bill->id,
+'bill_id' => $bill->id,
                 'start_time' => now(),
                 'hourly_rate' => $hourlyRate
             ]);
@@ -183,7 +187,7 @@ class BillController extends Controller
             DB::commit();
 
             return redirect()->route('admin.tables.detail', $table->id)
-                ->with('success', 'Tạo hóa đơn bàn lẻ thành công');
+->with('success', 'Tạo hóa đơn bàn lẻ thành công');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Lỗi khi tạo hóa đơn: ' . $e->getMessage());
@@ -262,7 +266,7 @@ class BillController extends Controller
 
             // KHÔNG cho phép xóa nếu là combo
             if ($billDetail->combo_id) {
-                return redirect()->back()->with('error', 'Không thể xóa combo bằng chức năng này. Vui lòng sử dụng chức năng xóa combo.');
+return redirect()->back()->with('error', 'Không thể xóa combo bằng chức năng này. Vui lòng sử dụng chức năng xóa combo.');
             }
 
             // Chỉ xử lý với sản phẩm thông thường
@@ -337,7 +341,7 @@ class BillController extends Controller
             // Xử lý các sản phẩm trong combo
             foreach ($combo->comboItems as $item) {
                 if ($item->product_id) {
-                    BillDetail::create([
+BillDetail::create([
                         'bill_id' => $bill->id,
                         'product_id' => $item->product_id,
                         'parent_bill_detail_id' => $comboDetail->id,
@@ -415,7 +419,7 @@ class BillController extends Controller
             return redirect()->back()->with('success', 'Đã dừng combo thời gian. Bạn có thể bật giờ thường nếu cần.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error stopping combo time: ' . $e->getMessage());
+Log::error('Error stopping combo time: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Lỗi khi dừng combo: ' . $e->getMessage());
         }
     }
@@ -497,8 +501,7 @@ class BillController extends Controller
             $stoppedComboTime = ComboTimeUsage::where('bill_id', $billId)
                 ->where('is_expired', true)
                 ->first();
-
-            // TỰ ĐỘNG DỪNG COMBO KHI HẾT THỜI GIAN
+// TỰ ĐỘNG DỪNG COMBO KHI HẾT THỜI GIAN
             if ($activeComboTime) {
                 $start = Carbon::parse($activeComboTime->start_time);
                 $elapsedMinutes = $start->diffInMinutes(now());
@@ -576,8 +579,7 @@ class BillController extends Controller
     {
         try {
             DB::beginTransaction();
-
-            $bill = Bill::findOrFail($billId);
+$bill = Bill::findOrFail($billId);
 
             // Chỉ cho phép nếu bill đang là quick
             if ($bill->status !== 'quick') {
@@ -664,7 +666,7 @@ class BillController extends Controller
     /**
      * Kích hoạt combo time
      */
-    private function activateComboTime(Bill $bill, Combo $combo, BillDetail $comboDetail)
+private function activateComboTime(Bill $bill, Combo $combo, BillDetail $comboDetail)
     {
         // Tính toán và lưu giá trị giờ thường đã sử dụng trước khi chuyển sang combo
         $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
@@ -745,7 +747,7 @@ class BillController extends Controller
 
         // Chỉ tính giờ thường nếu không có combo active
         if (!$activeComboTime) {
-            $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
+$activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
                 ->whereNull('end_time')
                 ->get();
 
@@ -834,8 +836,7 @@ class BillController extends Controller
 
                 $sourceTable = $bill->table;
                 $targetTable = Table::findOrFail($request->target_table_id);
-
-                // 2. Kiểm tra bàn đích có trống không
+// 2. Kiểm tra bàn đích có trống không
                 if ($targetTable->status !== 'available') {
                     throw new \Exception('Bàn đích đang được sử dụng hoặc bảo trì');
                 }
@@ -899,7 +900,7 @@ class BillController extends Controller
                     ]);
 
                     // Chuyển combo sang bàn mới và tiếp tục
-                    $activeComboTime->update([
+$activeComboTime->update([
                         'table_id' => $targetTable->id,
                         'start_time' => now(),
                         'end_time' => null
@@ -973,7 +974,7 @@ class BillController extends Controller
             // Tính thời gian đã sử dụng ở bàn cũ
             $startTime = Carbon::parse($activeRegularTime->start_time);
             $elapsedMinutes = $startTime->diffInMinutes(now());
-            $effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0);
+$effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0);
 
             // Tính tiền giờ đã sử dụng ở bàn cũ
             $timeCost = ($sourceHourlyRate / 60) * max(0, $effectiveMinutes);
@@ -1055,8 +1056,7 @@ class BillController extends Controller
 
             $totalAmount = $timeCost + $productTotal;
             $finalAmount = $totalAmount - $bill->discount_amount;
-
-            // Dữ liệu cho bill
+// Dữ liệu cho bill
             $billData = [
                 'bill' => $bill,
                 'timeCost' => $timeCost,
@@ -1125,8 +1125,7 @@ class BillController extends Controller
 
             $timeDetails['totalCost'] += $sessionCost;
             $timeDetails['totalMinutes'] += $sessionMinutes;
-
-            if ($timeUsage->hourly_rate > 0) {
+if ($timeUsage->hourly_rate > 0) {
                 $timeDetails['hourlyRate'] = $timeUsage->hourly_rate;
             }
         }
