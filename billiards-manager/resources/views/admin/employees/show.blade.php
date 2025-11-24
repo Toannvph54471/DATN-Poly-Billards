@@ -89,6 +89,12 @@
                     <p class="text-gray-900 font-medium">{{ $employee->start_date->format('d/m/Y') }}</p>
                 </div>
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ngày kết thúc</label>
+                    <p class="text-gray-900 font-medium">
+                        {{ $employee->end_date ? $employee->end_date->format('d/m/Y') : 'Hiện tại' }}
+                    </p>
+                </div>
+                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
                     <span class="px-2 py-1 text-xs font-medium rounded-full {{ $employee->status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                         {{ $employee->status === 'Active' ? 'Đang hoạt động' : 'Ngừng hoạt động' }}

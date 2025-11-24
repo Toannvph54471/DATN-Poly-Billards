@@ -947,7 +947,6 @@
 
         /* Mobile Styles */
         @media (max-width: 1024px) {
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
             .main-content {
                 flex-direction: column;
             }
@@ -983,8 +982,6 @@
 
 <body>
     <div class="app-container">
-<<<<<<< HEAD
-=======
         <!-- Toast Container -->
         <div class="toast-container" id="toastContainer"></div>
 
@@ -1004,17 +1001,10 @@
             $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
         @endphp
 
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         <!-- Header -->
         <div class="header">
             <div class="table-info">
                 <div class="table-title">
-<<<<<<< HEAD
-                    <a href="{{ route('admin.tables.index') }}" class="back-btn">
-                        <i class="fas fa-arrow-left"></i>
-                        Quay lại
-                    </a>
-=======
                     @if (in_array($userRole, ['admin', 'manager']))
                         <a href="{{ route('admin.tables.index') }}" class="back-btn">
                             <i class="fas fa-arrow-left"></i> <span class="desktop-only">Quay lại</span>
@@ -1024,7 +1014,6 @@
                             <i class="fas fa-arrow-left"></i> <span class="desktop-only">Quay lại</span>
                         </a>
                     @endif
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                     <div class="table-details">
                         <h1>{{ $table->table_name }}</h1>
                         <div class="table-meta">
@@ -1155,8 +1144,6 @@
                             </div>
                         </div>
                     @endif
-<<<<<<< HEAD
-=======
 
                     <!-- CẢNH BÁO COMBO SẮP HẾT (5-10 phút) -->
                     @if (isset($timeInfo['mode']) &&
@@ -1251,7 +1238,6 @@
                             </div>
                         </div>
                     @endif
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                 </div>
 
                 <!-- Products & Combos Section -->
@@ -1464,7 +1450,7 @@
                                             <th width="120">Đơn giá</th>
                                             <th width="140">Thành tiền</th>
                                         </tr>
-                                    </thead>
+                                    </t >
                                     <tbody>
                                         @foreach ($table->currentBill->billDetails as $item)
                                             <tr class="fade-in">
@@ -1489,12 +1475,10 @@
                                                 </td>
                                                 <td class="text-right font-semibold">
                                                     {{ number_format(round($item->total_price)) }} ₫</td>
-<<<<<<< HEAD
-=======
                                                 <td class="text-center">
                                                     @if ($item->product_id && !$item->is_combo_component && !$item->combo_id)
                                                         <form
-                                                            action="{{ route('admin.bills.remove-product', ['bill' => $table->currentBill->id, 'billDetail' => $item->id]) }}"
+                                                            action="{{ route('admin.bills.remove-product', ['id' => $table->currentBill->id, 'detailId' => $item->id]) }}"
                                                             method="POST" class="d-inline">
                                                             @csrf
                                                             @method('DELETE')
@@ -1509,7 +1493,6 @@
                                                         <span class="text-gray-400 text-xs">Không thể xóa</span>
                                                     @endif
                                                 </td>
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -1521,9 +1504,6 @@
                                     <p class="text-sm">Thêm sản phẩm hoặc combo để bắt đầu</p>
                                 </div>
                             @endif
-<<<<<<< HEAD
-=======
-
                             <!-- PHẦN HIỂN THỊ CHI TIẾT CHUYỂN BÀN -->
                             @if ($table->currentBill && $table->currentBill->billTimeUsages->count() > 1)
                                 <div class="table-transfer-details mt-6">
@@ -1667,7 +1647,6 @@
                                 </div>
                             @endif
                             <!-- KẾT THÚC PHẦN HIỂN THỊ CHUYỂN BÀN -->
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                         </div>
 
                         @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
@@ -1746,7 +1725,7 @@
                             @if ($table->currentBill)
                                 <!-- Xử lý bàn lẻ -->
                                 @if ($table->currentBill->status === 'quick')
-                                    <form action="{{ route('bills.start-playing', $table->currentBill->id) }}"
+                                    <form action="{{ route('admin.bills.start-playing', $table->currentBill->id) }}"
                                         method="POST" class="w-full">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-primary">
@@ -1755,24 +1734,15 @@
                                         </button>
                                     </form>
 
-<<<<<<< HEAD
                                     <!-- NÚT THANH TOÁN CHO BÀN LẺ -->
-                                    <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
-=======
-                                    <a href="{{ route('admin.payments.payment-page', $table->currentBill->id) }}"
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
+                                    <a href="{{ route('admin.bills.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-success">
                                         <i class="fas fa-credit-card"></i>
                                         THANH TOÁN BÀN LẺ
                                     </a>
                                 @else
-<<<<<<< HEAD
-                                    <!-- Pause/Resume Buttons -->
-                                    @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
-                                        <form action="{{ route('bills.pause', $table->currentBill->id) }}"
-=======
                                     <!-- Thanh toán -->
-                                    <a href="{{ route('admin.payments.payment-page', $table->currentBill->id) }}"
+                                    <a href="{{ route('admin.bills.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-primary">
                                         <i class="fas fa-credit-card"></i>
                                         <span class="desktop-only">THANH TOÁN</span>
@@ -1797,7 +1767,6 @@
                                             $timeInfo['mode'] === 'combo_ended')
                                         <form
                                             action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                                             method="POST" class="w-full">
                                             @csrf
                                             <button type="submit" class="action-btn action-btn-warning">
@@ -1808,7 +1777,7 @@
                                     @endif
 
                                     @if (isset($timeInfo['is_paused']) && $timeInfo['is_paused'])
-                                        <form action="{{ route('bills.resume', $table->currentBill->id) }}"
+                                        <form action="{{ route('admin.bills.resume', $table->currentBill->id) }}"
                                             method="POST" class="w-full">
                                             @csrf
                                             <button type="submit" class="action-btn action-btn-success">
@@ -1819,7 +1788,7 @@
                                     @endif
 
                                     <!-- Thanh toán -->
-                                    <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
+                                    <a href="{{ route('admin.bills.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-primary">
                                         <i class="fas fa-credit-card"></i>
                                         THANH TOÁN
@@ -1837,7 +1806,7 @@
                                             isset($timeInfo['is_near_end']) &&
                                             $timeInfo['is_near_end']
                                     )
-                                        <form action="{{ route('bills.extend-combo', $table->currentBill->id) }}"
+                                        <form action="{{ route('admin.bills.extend-combo', $table->currentBill->id) }}"
                                             method="POST" class="w-full">
                                             @csrf
                                             <input type="hidden" name="extra_minutes" value="30">
@@ -1850,7 +1819,7 @@
 
                                     <!-- Chuyển sang giờ thường -->
                                     @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
-                                        <form action="{{ route('bills.switch-regular', $table->currentBill->id) }}"
+                                        <form action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
                                             method="POST" onsubmit="return confirm('Chuyển sang tính giờ thường?')"
                                             class="w-full">
                                             @csrf
@@ -1863,7 +1832,7 @@
                                 @endif
 
                                 <!-- Chuyển thành bàn lẻ -->
-                                <form action="{{ route('bills.convert-to-quick', $table->currentBill->id) }}"
+                                <form action="{{ route('admin.bills.convert-to-quick', $table->currentBill->id) }}"
                                     method="POST" onsubmit="return confirm('Chuyển thành bàn lẻ?')" class="w-full">
                                     @csrf
                                     <button type="submit" class="action-btn action-btn-secondary">
@@ -1929,7 +1898,7 @@
                 <h3 class="modal-title">Tạo Hóa Đơn Tính Giờ</h3>
                 <button class="close-btn" onclick="hideCreateBillModal()">&times;</button>
             </div>
-            <form id="createBillForm" action="{{ route('bills.create') }}" method="POST">
+            <form id="createBillForm" action="{{ route('admin.bills.create') }}" method="POST">
                 @csrf
                 <input type="hidden" name="table_id" value="{{ $table->id }}">
 
@@ -1968,7 +1937,7 @@
                 <h3 class="modal-title">Tạo Bàn Lẻ</h3>
                 <button class="close-btn" onclick="hideQuickBillModal()">&times;</button>
             </div>
-            <form id="quickBillForm" action="{{ route('bills.quick-create') }}" method="POST">
+            <form id="quickBillForm" action="{{ route('admin.bills.quick-create') }}" method="POST">
                 @csrf
                 <input type="hidden" name="table_id" value="{{ $table->id }}">
 
@@ -2093,8 +2062,6 @@
             document.getElementById('loadingOverlay').classList.remove('active');
         }
 
-<<<<<<< HEAD
-=======
         // Mobile panel navigation
         function setupMobilePanels() {
             const mobileTabs = document.querySelectorAll('.mobile-tab');
@@ -2120,14 +2087,11 @@
                 });
             });
         }
-
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         // Format functions
         function pad(n) {
             return n.toString().padStart(2, '0');
         }
 
-<<<<<<< HEAD
         function formatHMS(totalSeconds) {
             const hrs = Math.floor(totalSeconds / 3600);
             const mins = Math.floor((totalSeconds % 3600) / 60);
@@ -2211,9 +2175,7 @@
         }
 
         // Modal functions
-=======
-        // Modal functions with animations
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
+
         function showCreateBillModal() {
             const modal = document.getElementById('createBillModal');
             modal.classList.add('active');
@@ -2238,7 +2200,6 @@
             document.body.style.overflow = 'auto';
         }
 
-<<<<<<< HEAD
         // Update bill total
         function updateBillTotal() {
             @if ($table->currentBill)
@@ -2248,7 +2209,7 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang cập nhật...';
                 button.disabled = true;
 
-                fetch('{{ route('bills.update-total', $table->currentBill->id) }}', {
+                fetch('{{ route('admin.bills.update-total', $table->currentBill->id) }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2267,8 +2228,6 @@
             @endif
         }
 
-        // Tab functionality
-=======
         // Delete Confirmation Modal
         function showDeleteConfirmModal(productName, form) {
             currentDeleteForm = form;
@@ -2329,7 +2288,6 @@
         }
 
         // Tab functionality with animations
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         function setupTabs() {
             const tabs = document.querySelectorAll('.tab');
             const productsList = document.getElementById('productsList');
@@ -2498,14 +2456,10 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
 
-<<<<<<< HEAD
-                fetch('{{ route('bills.add-product', $table->currentBill->id) }}', {
-=======
                 // Add pulse effect to button
                 button.classList.add('pulse');
 
                 fetch('{{ route('admin.bills.add-product', $table->currentBill->id) }}', {
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2550,14 +2504,10 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
 
-<<<<<<< HEAD
-                fetch('{{ route('bills.add-combo', $table->currentBill->id) }}', {
-=======
                 // Add pulse effect to button
                 button.classList.add('pulse');
 
                 fetch('{{ route('admin.bills.add-combo', $table->currentBill->id) }}', {
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2591,8 +2541,6 @@
             @endif
         }
 
-<<<<<<< HEAD
-=======
         // Hàm kiểm tra và cập nhật trạng thái combo từ server
         async function checkComboStatus() {
             if ((currentMode === 'combo' || needsSwitch) && currentBillId) {
@@ -2717,7 +2665,6 @@
             }
         }
 
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         // Event listeners for buttons
         document.addEventListener('DOMContentLoaded', function() {
             // Product buttons
@@ -2736,14 +2683,6 @@
                 });
             });
 
-<<<<<<< HEAD
-            // Render từ dữ liệu server ban đầu
-            renderFromServer();
-
-            // Start server-based counter
-            if (isRunning && !isPaused) {
-                startServerBasedCounter();
-=======
             // Setup delete confirmations
             setupDeleteConfirmations();
 
@@ -2751,7 +2690,6 @@
             if (currentMode === 'combo' || needsSwitch) {
                 setInterval(checkComboStatus, 10000); // Kiểm tra mỗi 10 giây
                 checkComboStatus(); // Kiểm tra ngay khi load
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
             }
 
             // Auto update bill total every 30 seconds
