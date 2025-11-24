@@ -8,7 +8,6 @@
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -52,227 +51,63 @@
         href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
 
-    @yield('styles')
+    @stack('styles')
+    
+    <style>
+    /* Toast Animation */
+    @keyframes slideInRight {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+
+    .toast-enter {
+        animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    .toast-exit {
+        animation: slideOutRight 0.3s ease-in;
+    }
+
+    .toast-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 4px;
+        background: currentColor;
+        opacity: 0.3;
+        animation: progress linear;
+    }
+
+    @keyframes progress {
+        from { width: 100%; }
+        to { width: 0%; }
+    }
+    </style>
 </head>
 
-<div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-3 pointer-events-none">
-    <!-- Toasts will be inserted here -->
-</div>
-
-<style>
-/* Toast Animation */
-@keyframes slideInRight {
-    from {
-        transform: translateX(400px);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideOutRight {
-    from {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(400px);
-        opacity: 0;
-    }
-}
-
-.toast-enter {
-    animation: slideInRight 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.toast-exit {
-    animation: slideOutRight 0.3s ease-in;
-}
-
-.toast-progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 4px;
-    background: currentColor;
-    opacity: 0.3;
-    animation: progress linear;
-}
-
-@keyframes progress {
-    from { width: 100%; }
-    to { width: 0%; }
-}
-</style>
-
-<script>
-// ===== TOAST NOTIFICATION SYSTEM =====
-window.Toast = (function() {
-    const container = document.getElementById('toast-container');
-    let toastCount = 0;
-
-    const icons = {
-        success: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>`,
-        error: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>`,
-        warning: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-        </svg>`,
-        info: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>`,
-        loading: `<svg class="w-6 h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>`
-    };
-
-    const colors = {
-        success: {
-            bg: 'bg-white',
-            border: 'border-l-4 border-green-500',
-            icon: 'text-green-500',
-            text: 'text-gray-800',
-            progress: 'text-green-500'
-        },
-        error: {
-            bg: 'bg-white',
-            border: 'border-l-4 border-red-500',
-            icon: 'text-red-500',
-            text: 'text-gray-800',
-            progress: 'text-red-500'
-        },
-        warning: {
-            bg: 'bg-white',
-            border: 'border-l-4 border-yellow-500',
-            icon: 'text-yellow-500',
-            text: 'text-gray-800',
-            progress: 'text-yellow-500'
-        },
-        info: {
-            bg: 'bg-white',
-            border: 'border-l-4 border-blue-500',
-            icon: 'text-blue-500',
-            text: 'text-gray-800',
-            progress: 'text-blue-500'
-        },
-        loading: {
-            bg: 'bg-white',
-            border: 'border-l-4 border-gray-500',
-            icon: 'text-gray-500',
-            text: 'text-gray-800',
-            progress: 'text-gray-500'
-        }
-    };
-
-    function show(message, type = 'info', duration = 4000) {
-        const id = `toast-${++toastCount}`;
-        const color = colors[type] || colors.info;
-        
-        const toast = document.createElement('div');
-        toast.id = id;
-        toast.className = `${color.bg} ${color.border} rounded-lg shadow-2xl p-4 max-w-md pointer-events-auto toast-enter relative overflow-hidden`;
-        
-        toast.innerHTML = `
-            <div class="flex items-start">
-                <div class="flex-shrink-0 ${color.icon}">
-                    ${icons[type] || icons.info}
-                </div>
-                <div class="ml-3 flex-1">
-                    <p class="text-sm font-medium ${color.text}">
-                        ${message}
-                    </p>
-                </div>
-                <button onclick="Toast.close('${id}')" class="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                </button>
-            </div>
-            ${type !== 'loading' ? `<div class="toast-progress ${color.progress}" style="animation-duration: ${duration}ms"></div>` : ''}
-        `;
-        
-        container.appendChild(toast);
-        
-        // Auto remove
-        if (type !== 'loading' && duration > 0) {
-            setTimeout(() => {
-                close(id);
-            }, duration);
-        }
-        
-        return id;
-    }
-
-    function close(id) {
-        const toast = document.getElementById(id);
-        if (toast) {
-            toast.classList.remove('toast-enter');
-            toast.classList.add('toast-exit');
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
-        }
-    }
-
-    function success(message, duration = 4000) {
-        return show(message, 'success', duration);
-    }
-
-    function error(message, duration = 5000) {
-        return show(message, 'error', duration);
-    }
-
-    function warning(message, duration = 4000) {
-        return show(message, 'warning', duration);
-    }
-
-    function info(message, duration = 4000) {
-        return show(message, 'info', duration);
-    }
-
-    function loading(message) {
-        return show(message, 'loading', 0);
-    }
-
-    function promise(promise, messages) {
-        const loadingId = loading(messages.loading || 'Đang xử lý...');
-        
-        return promise
-            .then((result) => {
-                close(loadingId);
-                success(messages.success || 'Thành công!');
-                return result;
-            })
-            .catch((error) => {
-                close(loadingId);
-                error(messages.error || 'Có lỗi xảy ra!');
-                throw error;
-            });
-    }
-
-    return {
-        show,
-        success,
-        error,
-        warning,
-        info,
-        loading,
-        close,
-        promise
-    };
-})();
-
-// Shorthand
-window.toast = window.Toast;
-</script>
 <body class="font-body bg-elegant-cream">
+    <div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-3 pointer-events-none">
+        <!-- Toasts will be inserted here -->
+    </div>
     <!-- Header -->
-    <nav class="bg-elegant-navy shadow-lg border-b-4 border-elegant-gold">
+    <nav class="bg-elegant-navy shadow-lg border-b-4 border-elegant-gold relative z-[100]">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between items-center h-20">
                 <!-- Logo -->
@@ -327,39 +162,39 @@ window.toast = window.Toast;
 
                                 <!-- Dropdown -->
                                 <div
-                                    class="absolute right-0 mt-2 w-48 bg-white text-gray-800 rounded-lg shadow-xl 
-        border border-gray-200 hidden group-hover:block z-50">
-
-                                    <!-- Trang cá nhân -->
-                                    <a href="{{ route('client.profile.index') }}"
-                                        class="block px-4 py-3 hover:bg-gray-100 transition">
-                                        <i class="fas fa-user-circle mr-2"></i>Trang cá nhân
-                                    </a>
-
-                                    <!-- Quản trị -->
-                                    @if (Auth::user()->isAdmin() || Auth::user()->isManager())
-                                        <a href="{{ route('admin.dashboard') }}"
+                                    class="absolute right-0 top-full pt-2 w-48 hidden group-hover:block z-50">
+                                    <div class="bg-white text-gray-800 rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+                                        <!-- Trang cá nhân -->
+                                        <a href="{{ route('client.profile.index') }}"
                                             class="block px-4 py-3 hover:bg-gray-100 transition">
-                                            <i class="fas fa-cog mr-2"></i>Quản trị
+                                            <i class="fas fa-user-circle mr-2"></i>Trang cá nhân
                                         </a>
-                                    @endif
 
-                                    @if (Auth::user()->isEmployee())
-                                        <a href="{{ route('#') }}"
-                                            class="block px-4 py-3 hover:bg-gray-100 transition">
-                                            <i class="fas fa-cash-register mr-2"></i>POS
-                                        </a>
-                                    @endif
+                                        <!-- QR Check-in (Employee only) -->
+                                        @if(Auth::user()->employee)
+                                            <a href="{{ route('attendance.scan') }}"
+                                                class="block px-4 py-3 hover:bg-gray-100 transition text-blue-600 font-medium">
+                                                <i class="fas fa-qrcode mr-2"></i>Quét mã Check-in
+                                            </a>
+                                        @endif
 
-                                    <!-- Logout -->
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit"
-                                            class="w-full text-left px-4 py-3 hover:bg-gray-100 transition">
-                                            <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
-                                        </button>
-                                    </form>
+                                        <!-- Quản trị -->
+                                        @if (Auth::user()->isAdmin() || Auth::user()->isManager())
+                                            <a href="{{ route('admin.users.index') }}"
+                                                class="block px-4 py-3 hover:bg-gray-100 transition">
+                                                <i class="fas fa-cog mr-2"></i>Quản trị
+                                            </a>
+                                        @endif
 
+                                        <!-- Logout -->
+                                        <form method="POST" action="{{ route('logout') }}">
+                                            @csrf
+                                            <button type="submit"
+                                                class="w-full text-left px-4 py-3 hover:bg-gray-100 transition">
+                                                <i class="fas fa-sign-out-alt mr-2"></i>Đăng xuất
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         @else
@@ -439,6 +274,13 @@ window.toast = window.Toast;
                             <a href="{{ route('admin.users.index') }}"
                                 class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
                                 <i class="fas fa-cog mr-3"></i>Quản trị
+                            </a>
+                        @endif
+
+                        @if(Auth::user()->employee)
+                            <a href="{{ route('attendance.scan') }}"
+                                class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200 text-yellow-400">
+                                <i class="fas fa-qrcode mr-3"></i>Quét mã Check-in
                             </a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}">

@@ -13,20 +13,21 @@ class EmployeeShift extends BaseModel
         'employee_id',
         'shift_id',
         'shift_date',
-        'check_in',
-        'check_out',
-        'actual_hours',
+        'actual_start_time',
+        'actual_end_time',
+        'total_hours',
         'notes',
         'status',
+        'confirmed_by',
         'created_by',
         'updated_by'
     ];
 
     protected $casts = [
         'shift_date' => 'date',
-        'check_in' => 'datetime',
-        'check_out' => 'datetime',
-        'actual_hours' => 'decimal:2'
+        'actual_start_time' => 'datetime',
+        'actual_end_time' => 'datetime',
+        'total_hours' => 'decimal:2'
     ];
 
     // Relationships
@@ -60,24 +61,25 @@ class EmployeeShift extends BaseModel
     public function checkIn(): bool
     {
         return $this->update([
-            'check_in' => now(),
+            'actual_start_time' => now(),
             'status' => self::STATUS_ACTIVE
         ]);
     }
 
     public function checkOut(): bool
     {
-        $actualHours = $this->check_in ? $this->check_in->diffInHours(now()) : 0;
+        // Calculate precise hours (e.g., 1.5 hours)
+        $actualHours = $this->actual_start_time ? $this->actual_start_time->floatDiffInHours(now()) : 0;
 
         return $this->update([
-            'check_out' => now(),
-            'actual_hours' => $actualHours,
+            'actual_end_time' => now(),
+            'total_hours' => $actualHours,
             'status' => self::STATUS_COMPLETED
         ]);
     }
 
     public function isCheckedIn(): bool
     {
-        return !is_null($this->check_in) && is_null($this->check_out);
+        return !is_null($this->actual_start_time) && is_null($this->actual_end_time);
     }
 }

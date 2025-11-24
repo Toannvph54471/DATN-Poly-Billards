@@ -9,11 +9,12 @@ class Shift extends BaseModel
         'start_time',
         'end_time',
         'status',
+        'salary_multiplier',
     ];
 
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime'
+        // 'start_time' => 'datetime', // Removed to prevent date attachment
+        // 'end_time' => 'datetime'    // Treated as string "H:i:s"
     ];
 
     // Relationships
@@ -23,15 +24,22 @@ class Shift extends BaseModel
     }
 
     // Methods
+    // Methods
     public function getDuration(): int
     {
-        return $this->start_time->diffInHours($this->end_time);
+        $start = \Carbon\Carbon::parse($this->start_time);
+        $end = \Carbon\Carbon::parse($this->end_time);
+        
+        if ($end->lt($start)) {
+            $end->addDay();
+        }
+        
+        return $start->diffInHours($end);
     }
 
     public function isCurrentShift(): bool
     {
         $now = now()->format('H:i:s');
-        return $now >= $this->start_time->format('H:i:s') &&
-            $now <= $this->end_time->format('H:i:s');
+        return $now >= $this->start_time && $now <= $this->end_time;
     }
 }

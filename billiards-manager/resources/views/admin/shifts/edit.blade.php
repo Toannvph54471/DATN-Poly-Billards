@@ -104,7 +104,7 @@
                                 Thời Gian Bắt Đầu <span class="text-red-500">*</span>
                             </label>
                             <input type="time" id="start_time" name="start_time" lang="vi"
-                                value="{{ old('start_time', $shift->start_time ? $shift->start_time->format('H:i') : '') }}"
+                                value="{{ old('start_time', $shift->start_time ? \Carbon\Carbon::parse($shift->start_time)->format('H:i') : '') }}"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 required>
                             @error('start_time')
@@ -118,7 +118,7 @@
                                 Thời Gian Kết Thúc <span class="text-red-500">*</span>
                             </label>
                             <input type="time" id="end_time" name="end_time"
-                                value="{{ old('end_time', $shift->end_time ? $shift->end_time->format('H:i') : '') }}"
+                                value="{{ old('end_time', $shift->end_time ? \Carbon\Carbon::parse($shift->end_time)->format('H:i') : '') }}"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 required>
                             @error('end_time')

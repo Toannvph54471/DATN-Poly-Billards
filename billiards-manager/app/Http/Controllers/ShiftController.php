@@ -27,13 +27,12 @@ class ShiftController extends Controller
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'start_time'  => 'required|date_format:H:i',
-            'end_time'    => 'required|date_format:H:i|after:start_time',
+            'end_time'    => 'required|date_format:H:i',
             'status'      => 'required|boolean',
         ], [
             'name.required'        => 'Vui lòng nhập tên ca làm việc.',
             'start_time.required'  => 'Vui lòng nhập thời gian bắt đầu.',
             'end_time.required'    => 'Vui lòng nhập thời gian kết thúc.',
-            'end_time.after'       => 'Thời gian kết thúc phải sau thời gian bắt đầu.',
             'status.required'      => 'Vui lòng chọn trạng thái ca làm việc.',
         ]);
 
@@ -54,13 +53,12 @@ class ShiftController extends Controller
         $validated = $request->validate([
             'name'        => 'required|string|max:255',
             'start_time'  => 'required|date_format:H:i',
-            'end_time'    => 'required|date_format:H:i|after:start_time',
+            'end_time'    => 'required|date_format:H:i',
             'status'      => 'required|in:active,inactive',
         ], [
             'name.required'        => 'Vui lòng nhập tên ca làm việc.',
             'start_time.required'  => 'Vui lòng nhập thời gian bắt đầu.',
             'end_time.required'    => 'Vui lòng nhập thời gian kết thúc.',
-            'end_time.after'       => 'Thời gian kết thúc phải sau thời gian bắt đầu.',
         ]);
 
         $shift = Shift::findOrFail($id);

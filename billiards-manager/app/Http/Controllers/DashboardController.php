@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -50,6 +51,15 @@ class DashboardController extends Controller
             // Thống kê đặt bàn
             $reservationStats = $this->getReservationStats($today);
 
+            // [NEW] Thống kê tháng
+            $monthlyStats = $this->getMonthlyStats($startOfMonth, $endOfMonth);
+
+            // [NEW] Cảnh báo kho
+            $lowStockProducts = $this->getLowStockProducts(5);
+
+            // [NEW] Ca làm việc
+            $shiftStats = $this->getShiftStats($today);
+
             return view('admin.dashboard', compact(
                 'todayRevenue',
                 'yesterdayRevenue',
@@ -64,7 +74,10 @@ class DashboardController extends Controller
                 'topProducts',
                 'recentBills',
                 'activeEmployees',
-                'reservationStats'
+                'reservationStats',
+                'monthlyStats',
+                'lowStockProducts',
+                'shiftStats'
             ));
         } catch (\Exception $e) {
             // Fallback data nếu có lỗi
@@ -123,30 +136,30 @@ class DashboardController extends Controller
      */
     private function getTableStats()
     {
-        $totalTables = DB::table('tables')->count();
+        return Cache::remember('dashboard.table_stats', 300, function () {
+            $stats = DB::table('tables')
+                ->select(
+                    DB::raw('COUNT(*) as total'),
+                    DB::raw('SUM(CASE WHEN status = "occupied" THEN 1 ELSE 0 END) as occupied'),
+                    DB::raw('SUM(CASE WHEN status = "reserved" THEN 1 ELSE 0 END) as reserved'),
+                    DB::raw('SUM(CASE WHEN status = "maintenance" THEN 1 ELSE 0 END) as maintenance'),
+                    DB::raw('SUM(CASE WHEN status = "available" THEN 1 ELSE 0 END) as available')
+                )
+                ->first();
 
-        $occupiedTables = DB::table('tables')
-            ->where('status', 'occupied')
-            ->count();
+            $total = $stats->total ?? 0;
+            $occupied = $stats->occupied ?? 0;
+            $reserved = $stats->reserved ?? 0;
 
-        $reservedTables = DB::table('tables')
-            ->where('status', 'reserved')
-            ->count();
-
-        $maintenanceTables = DB::table('tables')
-            ->where('status', 'maintenance')
-            ->count();
-
-        $availableTables = $totalTables - $occupiedTables - $reservedTables - $maintenanceTables;
-
-        return [
-            'total' => $totalTables,
-            'occupied' => $occupiedTables,
-            'reserved' => $reservedTables,
-            'available' => $availableTables,
-            'maintenance' => $maintenanceTables,
-            'occupancy_rate' => $totalTables > 0 ? (($occupiedTables + $reservedTables) / $totalTables) * 100 : 0
-        ];
+            return [
+                'total' => $total,
+                'occupied' => $occupied,
+                'reserved' => $reserved,
+                'available' => $stats->available ?? 0,
+                'maintenance' => $stats->maintenance ?? 0,
+                'occupancy_rate' => $total > 0 ? (($occupied + $reserved) / $total) * 100 : 0
+            ];
+        });
     }
 
     /**
@@ -214,22 +227,22 @@ class DashboardController extends Controller
      */
     private function getTopProducts($limit = 5)
     {
-        $products = DB::table('bill_details')
-            ->join('products', 'bill_details.product_id', '=', 'products.id')
-            ->join('categories', 'products.category_id', '=', 'categories.id')
-            ->select(
-                'products.name',
-                'categories.name as category_name',
-                DB::raw('SUM(bill_details.quantity) as total_quantity'),
-                DB::raw('SUM(bill_details.total_price) as total_revenue')
-            )
-            ->whereNotNull('bill_details.product_id')
-            ->groupBy('products.id', 'products.name', 'categories.name')
-            ->orderByDesc('total_quantity')
-            ->limit($limit)
-            ->get();
-
-        return $products;
+        return Cache::remember('dashboard.top_products', 600, function () use ($limit) {
+            return DB::table('bill_details')
+                ->join('products', 'bill_details.product_id', '=', 'products.id')
+                ->join('categories', 'products.category_id', '=', 'categories.id')
+                ->select(
+                    'products.name',
+                    'categories.name as category_name',
+                    DB::raw('SUM(bill_details.quantity) as total_quantity'),
+                    DB::raw('SUM(bill_details.total_price) as total_revenue')
+                )
+                ->whereNotNull('bill_details.product_id')
+                ->groupBy('products.id', 'products.name', 'categories.name')
+                ->orderByDesc('total_quantity')
+                ->limit($limit)
+                ->get();
+        });
     }
 
     /**
@@ -355,6 +368,78 @@ class DashboardController extends Controller
             'labels' => collect($data)->pluck('day')->toArray(),
             'revenues' => collect($data)->pluck('revenue')->toArray()
         ]);
+    }
+
+    /**
+     * Lấy thống kê tháng này
+     */
+    private function getMonthlyStats($startOfMonth, $endOfMonth)
+    {
+        $revenue = DB::table('bills')
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+            ->where('payment_status', 'Paid')
+            ->sum('final_amount') ?? 0;
+
+        $bills = DB::table('bills')
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+            ->count();
+
+        $customers = DB::table('users')
+            ->where('role_id', 4) // Customer
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+            ->count();
+
+        return [
+            'revenue' => $revenue,
+            'bills' => $bills,
+            'customers' => $customers
+        ];
+    }
+
+    /**
+     * Lấy danh sách sản phẩm sắp hết hàng
+     */
+    private function getLowStockProducts($limit = 5)
+    {
+        return DB::table('products')
+            ->whereRaw('stock_quantity <= min_stock_level')
+            ->whereNull('deleted_at')
+            ->orderBy('stock_quantity')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Lấy thống kê ca làm việc hôm nay
+     */
+    private function getShiftStats($today)
+    {
+        // Số nhân viên đang làm việc (active shift)
+        $activeShifts = DB::table('employee_shifts')
+            ->whereDate('shift_date', $today)
+            ->where('status', 'active')
+            ->count();
+
+        // Tổng giờ làm việc hôm nay (của các shift đã kết thúc)
+        $totalHours = DB::table('employee_shifts')
+            ->whereDate('shift_date', $today)
+            ->where('status', 'completed')
+            ->sum('total_hours') ?? 0;
+
+        // Danh sách nhân viên đang làm
+        $workingEmployees = DB::table('employee_shifts')
+            ->join('employees', 'employee_shifts.employee_id', '=', 'employees.id')
+            ->whereDate('employee_shifts.shift_date', $today)
+            ->where('employee_shifts.status', 'active')
+            ->select('employees.name', 'employee_shifts.actual_start_time')
+            ->limit(5)
+            ->get();
+
+        return [
+            'active_count' => $activeShifts,
+            'total_hours' => $totalHours,
+            'working_employees' => $workingEmployees
+        ];
     }
 
 }
