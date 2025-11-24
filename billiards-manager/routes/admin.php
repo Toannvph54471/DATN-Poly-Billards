@@ -129,6 +129,7 @@ Route::prefix('admin')
         Route::post('shiftE/schedule', [ShiftController::class, 'scheduleShifts'])->name('shiftEmployee.schedule');
         Route::post('shiftE/save-weekly', [ShiftController::class, 'saveWeeklySchedule'])->name('shiftEmployee.saveWeekly');
         Route::post('shiftE/bulk-schedule', [ShiftController::class, 'bulkScheduleShifts'])->name('shiftEmployee.bulkSchedule');
+        Route::post('/shifts/copy-previous-week', [ShiftController::class, 'copyPreviousWeek'])->name('shifts.copy-previous-week');
 
         // Promotions Management
         Route::resource('promotions', PromotionController::class)->except(['destroy'])->names('promotions');

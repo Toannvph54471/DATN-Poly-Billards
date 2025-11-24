@@ -77,13 +77,18 @@ class ShiftController extends Controller
             ? Carbon::parse($request->get('week_start'))->startOfWeek()
             : Carbon::now()->startOfWeek();
 
+        // Kiểm tra xem tuần này đã qua chưa
+        $isPastWeek = $weekStart->lt(Carbon::now()->startOfWeek());
+
         // Tạo danh sách 7 ngày trong tuần (Thứ 2 → Chủ Nhật)
-        $weekDays = collect(range(0, 6))->map(function ($i) use ($weekStart) {
+        $weekDays = collect(range(0, 6))->map(function ($i) use ($weekStart, $isPastWeek) {
             $date = $weekStart->copy()->addDays($i);
             return [
                 'day_name' => $this->getVietnameseDayName($date->dayOfWeek),
                 'date' => $date->format('d'),
                 'full_date' => $date->format('Y-m-d'),
+                'is_past' => $date->lt(Carbon::now()->startOfDay()), // Ngày đã qua
+                'is_today' => $date->isToday(),
             ];
         })->all();
 
@@ -110,22 +115,10 @@ class ShiftController extends Controller
             'employees',
             'weekDays',
             'weekStart',
-            'shifts'
+            'shifts',
+            'isPastWeek'
         ));
     }
-    
-    private function getShiftColorClass($shiftCode)
-    {
-        $colors = [
-            'MA' => 'bg-blue-100 text-blue-800 border-blue-200',
-            'CH' => 'bg-orange-100 text-orange-800 border-orange-200',
-            'TO' => 'bg-purple-100 text-purple-800 border-purple-200',
-            'default' => 'bg-gray-100 text-gray-800 border-gray-200'
-        ];
-
-        return $colors[$shiftCode] ?? $colors['default'];
-    }
-
 
     public function scheduleShifts(Request $request)
     {
@@ -135,6 +128,15 @@ class ShiftController extends Controller
         ]);
 
         $date = $request->shift_date;
+        $selectedDate = Carbon::parse($date);
+
+        // Kiểm tra nếu ngày đã qua thì không cho phép sửa
+        if ($selectedDate->lt(Carbon::now()->startOfDay())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể sửa ca làm việc của ngày đã qua: ' . $selectedDate->format('d/m/Y')
+            ], 403);
+        }
 
         // Nếu assignments rỗng (xóa ca), chỉ cần xóa ca cũ
         if (empty($request->assignments)) {
@@ -186,6 +188,15 @@ class ShiftController extends Controller
         ]);
 
         $weekStart = Carbon::parse($request->week_start);
+
+        // Kiểm tra nếu tuần đã qua thì không cho phép sửa
+        if ($weekStart->lt(Carbon::now()->startOfWeek())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể sửa lịch làm việc của tuần đã qua'
+            ], 403);
+        }
+
         $weekEnd = $weekStart->copy()->addDays(6);
 
         DB::transaction(function () use ($request, $weekStart, $weekEnd) {
@@ -198,13 +209,16 @@ class ShiftController extends Controller
             // Tạo ca mới
             foreach ($request->schedule as $assignment) {
                 if (!empty($assignment['shift_id'])) {
-                    EmployeeShift::create([
-                        'employee_id' => $assignment['employee_id'],
-                        'shift_id' => $assignment['shift_id'],
-                        'shift_date' => $assignment['date'],
-                        'status' => EmployeeShift::STATUS_SCHEDULED,
-                        'comfirmed_by' => 'user_id',
-                    ]);
+                    // Kiểm tra từng ngày xem có phải ngày đã qua không
+                    $assignmentDate = Carbon::parse($assignment['date']);
+                    if ($assignmentDate->gte(Carbon::now()->startOfDay())) {
+                        EmployeeShift::create([
+                            'employee_id' => $assignment['employee_id'],
+                            'shift_id' => $assignment['shift_id'],
+                            'shift_date' => $assignment['date'],
+                            'status' => EmployeeShift::STATUS_SCHEDULED,
+                        ]);
+                    }
                 }
             }
         });
@@ -223,6 +237,17 @@ class ShiftController extends Controller
             'assignments.*.shift_date' => 'required|date',
             'assignments.*.shift_id' => 'nullable|exists:shifts,id',
         ]);
+
+        // Kiểm tra xem có ngày nào đã qua không
+        foreach ($request->assignments as $assignment) {
+            $assignmentDate = Carbon::parse($assignment['shift_date']);
+            if ($assignmentDate->lt(Carbon::now()->startOfDay())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể sửa ca làm việc của ngày đã qua: ' . $assignmentDate->format('d/m/Y')
+                ], 403);
+            }
+        }
 
         DB::transaction(function () use ($request) {
             foreach ($request->assignments as $assignment) {
@@ -249,6 +274,64 @@ class ShiftController extends Controller
         ]);
     }
 
+    // Thêm method mới: Copy ca từ tuần trước
+    public function copyPreviousWeek(Request $request)
+    {
+        $request->validate([
+            'target_week_start' => 'required|date',
+        ]);
+
+        $targetWeekStart = Carbon::parse($request->target_week_start);
+
+        // Kiểm tra xem tuần mục tiêu có phải là tuần đã qua không
+        if ($targetWeekStart->lt(Carbon::now()->startOfWeek())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể sao chép ca vào tuần đã qua'
+            ], 403);
+        }
+
+        $previousWeekStart = $targetWeekStart->copy()->subWeek();
+
+        DB::transaction(function () use ($targetWeekStart, $previousWeekStart) {
+            // Xóa tất cả ca trong tuần mục tiêu (chỉ những ngày chưa qua)
+            EmployeeShift::whereBetween('shift_date', [
+                $targetWeekStart->format('Y-m-d'),
+                $targetWeekStart->copy()->addDays(6)->format('Y-m-d')
+            ])->whereDate('shift_date', '>=', Carbon::now()->format('Y-m-d'))
+                ->delete();
+
+            // Lấy ca từ tuần trước
+            $previousShifts = EmployeeShift::with('shift')
+                ->whereBetween('shift_date', [
+                    $previousWeekStart->format('Y-m-d'),
+                    $previousWeekStart->copy()->addDays(6)->format('Y-m-d')
+                ])->get();
+
+            // Sao chép ca sang tuần mới (chỉ những ngày chưa qua)
+            foreach ($previousShifts as $previousShift) {
+                $newDate = $targetWeekStart->copy()->addDays(
+                    Carbon::parse($previousShift->shift_date)->diffInDays($previousWeekStart)
+                );
+
+                // Chỉ sao chép nếu ngày đó chưa qua
+                if ($newDate->gte(Carbon::now()->startOfDay())) {
+                    EmployeeShift::create([
+                        'employee_id' => $previousShift->employee_id,
+                        'shift_id' => $previousShift->shift_id,
+                        'shift_date' => $newDate->format('Y-m-d'),
+                        'status' => EmployeeShift::STATUS_SCHEDULED,
+                    ]);
+                }
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã sao chép ca từ tuần trước sang tuần ' . $targetWeekStart->format('d/m/Y')
+        ]);
+    }
+
     // Helper methods
     private function getVietnameseDayName($dayOfWeek)
     {
@@ -263,5 +346,17 @@ class ShiftController extends Controller
         ];
 
         return $days[$dayOfWeek] ?? 'Unknown';
+    }
+
+    private function getShiftColorClass($shiftCode)
+    {
+        $colors = [
+            'MA' => 'bg-blue-100 text-blue-800 border-blue-200',
+            'CH' => 'bg-orange-100 text-orange-800 border-orange-200',
+            'TO' => 'bg-purple-100 text-purple-800 border-purple-200',
+            'default' => 'bg-gray-100 text-gray-800 border-gray-200'
+        ];
+
+        return $colors[$shiftCode] ?? $colors['default'];
     }
 }

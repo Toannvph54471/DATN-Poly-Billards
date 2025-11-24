@@ -37,6 +37,11 @@ class Attendance extends BaseModel
         return $this->belongsTo(EmployeeShift::class);
     }
 
+    public function confirmedByUser()
+    {
+        return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
     // Scopes
     public function scopeToday($query)
     {

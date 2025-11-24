@@ -143,4 +143,9 @@ class Payment extends Model
     {
         return $query->whereDate('created_at', today());
     }
+
+    public function processedBy()
+    {
+        return $this->belongsTo(User::class, 'processed_by');
+    }
 }

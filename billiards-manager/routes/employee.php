@@ -28,8 +28,6 @@ Route::prefix('admin')
         // TABLE ACTIONS FOR STAFF
         // ============================
         Route::prefix('tables')->name('tables.')->group(function () {
-            Route::post('/{id}/checkin', [TableController::class, 'checkin'])->name('checkin');
-            Route::post('/{id}/checkout', [TableController::class, 'checkout'])->name('checkout');
 
             // Employee có thể xem chi tiết bàn
             Route::get('/{id}/detail', [TableController::class, 'showDetail'])->name('detail');
