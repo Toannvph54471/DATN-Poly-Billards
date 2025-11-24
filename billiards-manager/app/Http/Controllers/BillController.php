@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bill;
 use App\Models\Table;
 use App\Models\User;
-use App\Models\Combo;   
+use App\Models\Combo;
 use App\Models\Product;
 use App\Models\ComboTimeUsage;
 use App\Models\BillTimeUsage;
@@ -22,8 +22,7 @@ use Illuminate\Support\Str;
 
 class BillController extends Controller
 {
-   
-   public function index()
+    public function index()
     {
         $bills = Bill::with([
             'table',
@@ -89,6 +88,12 @@ class BillController extends Controller
                         'status' => 'Active'
                     ]
                 );
+
+                // CẬP NHẬT SỐ LẦN GHÉ QUA - THÊM ĐOẠN NÀY
+                $user->increment('total_visits');
+
+                // Hoặc nếu bạn muốn cập nhật customer_type dựa trên số lần ghé qua
+                $this->updateCustomerType($user);
             }
 
             // Xử lý reservation nếu có
@@ -145,6 +150,24 @@ class BillController extends Controller
             Log::error('Create bill error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Lỗi khi tạo hóa đơn: ' . $e->getMessage());
         }
+    }
+
+    // THÊM HÀM NÀY ĐỂ CẬP NHẬT LOẠI KHÁCH HÀNG
+    private function updateCustomerType(User $user)
+    {
+        $visitCount = $user->total_visits;
+
+        if ($visitCount >= 10) {
+            $user->customer_type = 'VIP';
+        } elseif ($visitCount >= 5) {
+            $user->customer_type = 'Regular';
+        } elseif ($visitCount >= 1) {
+            $user->customer_type = 'Returning';
+        } else {
+            $user->customer_type = 'New';
+        }
+
+        $user->save();
     }
 
     /**
@@ -1194,5 +1217,20 @@ if ($timeUsage->hourly_rate > 0) {
         $costFormatted = number_format($cost, 0, ',', '.');
 
         return "{$hourlyRateFormatted}₫/h × {$hours}h = {$costFormatted}₫";
+    }
+
+    public function getCustomerStats($userId)
+    {
+        $user = User::find($userId);
+
+        $stats = [
+            'total_visits' => $user->total_visits,
+            'total_spent' => $user->total_spent,
+            'average_spent' => $user->total_visits > 0 ? $user->total_spent / $user->total_visits : 0,
+            'customer_type' => $user->customer_type,
+            'last_visit' => $user->last_visit_date,
+        ];
+
+        return $stats;
     }
 }

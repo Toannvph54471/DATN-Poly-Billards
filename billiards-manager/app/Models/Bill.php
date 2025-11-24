@@ -50,6 +50,10 @@ class Bill extends BaseModel
     {
         return $this->belongsTo(Table::class);
     }
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
 
     public function user()
     {
@@ -64,6 +68,17 @@ class Bill extends BaseModel
     public function staff()
     {
         return $this->belongsTo(User::class, 'staff_id');
+    }
+
+    public function scopeByStaff($query, $staffId)
+    {
+        return $query->where('staff_id', $staffId);
+    }
+
+    public function scopePaidByCurrentStaff($query)
+    {
+        return $query->where('staff_id', auth()->id())
+            ->where('payment_status', 'Paid');
     }
 
     public function billDetails()

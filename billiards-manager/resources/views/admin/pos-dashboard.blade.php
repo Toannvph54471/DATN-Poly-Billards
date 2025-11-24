@@ -137,7 +137,7 @@
                 <div>
                     <p class="text-blue-100 text-xs md:text-sm">Bills đang mở</p>
                     <h3 class="text-lg md:text-2xl font-bold mt-1" id="openBillsCount">
-{{ $stats['open_bills'] ?? 0 }}
+                        {{ $stats['open_bills'] ?? 0 }}
                     </h3>
                 </div>
                 <i class="fas fa-receipt text-lg md:text-2xl opacity-80"></i>
@@ -196,7 +196,7 @@
                     <div class="grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-3">
                         <!-- Tạo Bill Nhanh -->
                         <a href="{{ route('admin.bills.index') }}"
-                            class="quick-action-btn p-2 md:p-3 bg-blue-50 hover:bg-blue-100 transition-colors group border-2 border-blue-200 rounded-lg text-center">
+                           class="quick-action-btn p-2 md:p-3 bg-blue-50 hover:bg-blue-100 transition-colors group border-2 border-blue-200 rounded-lg text-center">
                             <div>
                                 <i class="fas fa-plus-circle text-blue-600 text-base md:text-xl group-hover:scale-110 transition-transform"></i>
                                 <p class="mt-1 text-xs md:text-sm font-medium text-gray-700">Hóa đơn</p>
@@ -204,7 +204,7 @@
                         </a>
 
                         <!-- Đặt Bàn -->
-                        <a href=""
+                        <a href="{{ route('admin.reservations.create') }}"
                            class="quick-action-btn p-2 md:p-3 bg-green-50 hover:bg-green-100 transition-colors group border-2 border-green-200 rounded-lg text-center">
                             <div>
                                 <i class="fas fa-calendar-plus text-green-600 text-base md:text-xl group-hover:scale-110 transition-transform"></i>
@@ -222,7 +222,7 @@
                         </a>
 
                         <!-- Danh sách Đặt Bàn -->
-                        <a href=""
+                        <a href="{{ route('admin.reservations.index') }}"
                            class="quick-action-btn p-2 md:p-3 bg-orange-50 hover:bg-orange-100 transition-colors group border-2 border-orange-200 rounded-lg text-center">
                             <div>
                                 <i class="fas fa-list text-orange-600 text-base md:text-xl group-hover:scale-110 transition-transform"></i>
@@ -235,7 +235,7 @@
                                 class="quick-action-btn p-2 md:p-3 bg-red-50 hover:bg-red-100 transition-colors group border-2 border-red-200 rounded-lg text-center">
                             <div>
                                 <i class="fas fa-credit-card text-red-600 text-base md:text-xl group-hover:scale-110 transition-transform"></i>
-                            <p class="mt-1 text-xs md:text-sm font-medium text-gray-700">Thanh Toán</p>
+                                <p class="mt-1 text-xs md:text-sm font-medium text-gray-700">Thanh Toán</p>
                             </div>
                         </button>
 
@@ -282,7 +282,7 @@
                 </div>
                 <div class="p-3 md:p-4">
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-@forelse($availableTables as $table)
+                        @forelse($availableTables as $table)
                             <button onclick="selectTable({{ $table->id }})"
                                     class="table-card p-3 md:p-4 bg-green-50 border-2 border-green-200 hover:border-green-400 hover:bg-green-100 transition-colors rounded-lg text-center group">
                                 <i class="fas fa-table text-green-600 text-base md:text-xl group-hover:scale-110 transition-transform mb-1 md:mb-2"></i>
@@ -324,7 +324,7 @@
                                     <div class="flex-1 min-w-0">
                                         <h4 class="font-semibold text-gray-800 flex items-center text-sm md:text-base">
                                             <i class="fas fa-receipt text-blue-600 mr-2"></i>
-<span class="truncate">Bill #{{ $bill->bill_number }}</span>
+                                            <span class="truncate">Bill #{{ $bill->bill_number }}</span>
                                         </h4>
                                         <p class="text-xs md:text-sm text-gray-600 truncate">
                                             Bàn: <strong>{{ $bill->table->table_name ?? 'N/A' }}</strong>
@@ -364,7 +364,7 @@
                             </div>
                         @empty
                             <div class="text-center py-6 md:py-8 text-gray-500">
-<i class="fas fa-receipt text-2xl md:text-4xl mb-2 md:mb-3 opacity-50"></i>
+                                <i class="fas fa-receipt text-2xl md:text-4xl mb-2 md:mb-3 opacity-50"></i>
                                 <p class="text-sm md:text-base">Không có bill nào đang mở</p>
                             </div>
                         @endforelse
@@ -410,7 +410,7 @@
                                 <p class="mt-1">Không có đặt bàn nào</p>
                             </div>
                         @endforelse
-</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -498,7 +498,7 @@
                 .catch(error => {
                     console.error('Error:', error);
                     Swal.fire({
-title: 'Lỗi!',
+                        title: 'Lỗi!',
                         text: 'Có lỗi xảy ra khi check-in',
                         icon: 'error',
                         confirmButtonText: 'OK'

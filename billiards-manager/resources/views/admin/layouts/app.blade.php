@@ -149,18 +149,6 @@
                     <i class="fas fa-percent w-5 md:w-6 mr-3"></i>
                     <span class="font-medium text-sm md:text-base">Khuyến mại</span>
                 </a>
-
-                <a href="{{ route('admin.attendance.monitor') }}" onclick="closeMobileMenu()"
-                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.attendance.monitor') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-user-clock w-5 md:w-6 mr-3"></i>
-                    <span class="font-medium text-sm md:text-base">Giám sát ca làm</span>
-                </a>
-
-                <a href="{{ route('admin.bills.index') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.promotions.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-percent w-6 mr-3"></i>
-                    <span class="font-medium">Hóa đơn</span>
-                </a>
             @endif
 
             <!-- Menu chỉ dành cho Admin -->
@@ -175,12 +163,6 @@
                    class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.employees.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
                     <i class="fas fa-user-tie w-5 md:w-6 mr-3"></i>
                     <span class="font-medium text-sm md:text-base">Nhân viên</span>
-                </a>
-
-                <a href="{{ route('admin.payroll.index') }}" onclick="closeMobileMenu()"
-                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.payroll.index') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-money-bill-wave w-5 md:w-6 mr-3"></i>
-                    <span class="font-medium text-sm md:text-base">Quản lý lương</span>
                 </a>
 
                 <a href="{{ route('admin.roles.index') }}" onclick="closeMobileMenu()"

@@ -176,13 +176,8 @@ class Payment extends Model
         return $query->whereDate('created_at', today());
     }
 
-    public function scopeByMethod($query, $method)
+    public function processedBy()
     {
-        return $query->where('payment_method', $method);
-    }
-
-    public function scopeByType($query, $type)
-    {
-        return $query->where('payment_type', $type);
+        return $this->belongsTo(User::class, 'processed_by');
     }
 }

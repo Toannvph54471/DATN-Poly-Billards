@@ -33,8 +33,19 @@
                     <span class="font-medium">{{ $bill->table->table_name }} ({{ $bill->table->table_number }})</span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Nhân viên:</span>
+                    <span class="text-gray-600">Nhân viên phục vụ:</span>
                     <span class="font-medium">{{ $bill->staff->name }}</span>
+                </div>
+                {{-- Thêm thông tin nhân viên thanh toán --}}
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Nhân viên thanh toán:</span>
+                    <span class="font-medium">
+                        @if($bill->payments->count() > 0 && $bill->payments->first()->processed_by)
+                            {{ $bill->payments->first()->processedBy->name ?? 'Chưa xác định' }}
+                        @else
+                            Chưa thanh toán
+                        @endif
+                    </span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Khách hàng:</span>
@@ -52,7 +63,13 @@
                         {{ $bill->status === 'Open' ? 'bg-green-100 text-green-700' :
                            ($bill->status === 'quick' ? 'bg-yellow-100 text-yellow-700' :
                            'bg-gray-100 text-gray-700') }}">
-                        {{ $bill->status }}
+                        @if($bill->status === 'Open')
+                            Đang mở
+                        @elseif($bill->status === 'quick')
+                            Thanh toán nhanh
+                        @else
+                            Đã đóng
+                        @endif
                     </span>
                 </div>
                 <div class="flex justify-between">
@@ -60,17 +77,38 @@
                     <span class="px-2 py-1 rounded text-sm
                         {{ $bill->payment_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
                            'bg-green-100 text-green-700' }}">
-                        {{ $bill->payment_status }}
+                        @if($bill->payment_status === 'Pending')
+                            Chờ thanh toán
+                        @else
+                            Đã thanh toán
+                        @endif
                     </span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Phương thức:</span>
-                    <span class="font-medium">{{ $bill->payment_method ?? 'Chưa chọn' }}</span>
+                    <span class="font-medium">
+                        @if($bill->payment_method === 'cash')
+                            Tiền mặt
+                        @elseif($bill->payment_method === 'banking')
+                            Chuyển khoản
+                        @elseif($bill->payment_method === 'vnpay')
+                            VNPay
+                        @else
+                            Chưa chọn
+                        @endif
+                    </span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Thời gian bắt đầu:</span>
                     <span class="font-medium">{{ \Carbon\Carbon::parse($bill->start_time)->format('d/m/Y H:i') }}</span>
                 </div>
+                {{-- Thêm thời gian thanh toán --}}
+                @if($bill->payments->count() > 0 && $bill->payments->first()->paid_at)
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Thời gian thanh toán:</span>
+                    <span class="font-medium">{{ \Carbon\Carbon::parse($bill->payments->first()->paid_at)->format('d/m/Y H:i') }}</span>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -130,11 +168,86 @@
                             @elseif($detail->combo)
                                 {{ $detail->combo->name }}
                                 <span class="text-sm text-gray-500">(Combo)</span>
+                                {{-- Hiển thị chi tiết combo --}}
+                                @if($detail->combo->comboItems->count() > 0)
+                                <div class="text-xs text-gray-500 mt-1">
+                                    Bao gồm:
+                                    @foreach($detail->combo->comboItems as $comboItem)
+                                        {{ $comboItem->product->name }} (x{{ $comboItem->quantity }}),
+                                    @endforeach
+                                </div>
+                                @endif
                             @endif
                         </td>
                         <td class="px-4 py-2">{{ $detail->quantity }}</td>
                         <td class="px-4 py-2">{{ number_format($detail->unit_price) }} ₫</td>
                         <td class="px-4 py-2 font-medium">{{ number_format($detail->total_price) }} ₫</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    {{-- Thông tin thanh toán chi tiết --}}
+    @if($bill->payments->count() > 0)
+    <div class="border border-gray-200 rounded-lg p-4 mb-6">
+        <h3 class="font-semibold text-lg mb-3">Thông tin thanh toán</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full border border-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-2 text-left">Mã giao dịch</th>
+                        <th class="px-4 py-2 text-left">Số tiền</th>
+                        <th class="px-4 py-2 text-left">Phương thức</th>
+                        <th class="px-4 py-2 text-left">Trạng thái</th>
+                        <th class="px-4 py-2 text-left">Thời gian</th>
+                        <th class="px-4 py-2 text-left">Nhân viên xử lý</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($bill->payments as $payment)
+                    <tr class="border-t">
+                        <td class="px-4 py-2">{{ $payment->transaction_id ?? 'N/A' }}</td>
+                        <td class="px-4 py-2 font-medium">{{ number_format($payment->amount) }} ₫</td>
+                        <td class="px-4 py-2">
+                            @if($payment->payment_method === 'cash')
+                                Tiền mặt
+                            @elseif($payment->payment_method === 'banking')
+                                Chuyển khoản
+                            @elseif($payment->payment_method === 'vnpay')
+                                VNPay
+                            @else
+                                {{ $payment->payment_method }}
+                            @endif
+                        </td>
+                        <td class="px-4 py-2">
+                            <span class="px-2 py-1 rounded text-sm
+                                {{ $payment->status === 'completed' ? 'bg-green-100 text-green-700' :
+                                   ($payment->status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                   'bg-red-100 text-red-700') }}">
+                                @if($payment->status === 'completed')
+                                    Hoàn thành
+                                @elseif($payment->status === 'pending')
+                                    Chờ xử lý
+                                @elseif($payment->status === 'failed')
+                                    Thất bại
+                                @else
+                                    Đã hoàn tiền
+                                @endif
+                            </span>
+                        </td>
+                        <td class="px-4 py-2">
+                            @if($payment->paid_at)
+                                {{ \Carbon\Carbon::parse($payment->paid_at)->format('d/m/Y H:i') }}
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td class="px-4 py-2">
+                            {{ $payment->processedBy->name ?? 'Hệ thống' }}
+                        </td>
                     </tr>
                     @endforeach
                 </tbody>

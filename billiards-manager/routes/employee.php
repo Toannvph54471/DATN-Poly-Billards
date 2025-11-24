@@ -32,11 +32,8 @@ Route::prefix('admin')
         // TABLE MANAGEMENT & ACTIONS
         // ============================
         Route::prefix('tables')->name('tables.')->group(function () {
-            // Check in / Check out
-            Route::post('/{id}/checkin', [TableController::class, 'checkin'])->name('checkin');
-            Route::post('/{id}/checkout', [TableController::class, 'checkout'])->name('checkout');
-            
-            // Xem chi tiết bàn
+
+            // Employee có thể xem chi tiết bàn
             Route::get('/{id}/detail', [TableController::class, 'showDetail'])->name('detail');
 
             // Simple dashboard cho POS
@@ -47,6 +44,9 @@ Route::prefix('admin')
         // BILL MANAGEMENT (POS functions)
         // ============================
         Route::prefix('bills')->name('bills.')->group(function () {
+            // Bill
+            Route::get('index', [BillController::class, 'index'])->name('index');
+            Route::get('/{id}/show', [BillController::class, 'show'])->name('show');
             // Tạo bill
 
             Route::get('/index', [BillController::class, 'index'])->name('index');

@@ -112,6 +112,8 @@ Route::prefix('admin')
             Route::get('/{id}/show', [BillController::class, 'show'])->name('show');
 
             // Advanced bill functions only for admin/manager
+            Route::get('index', [BillController::class, 'index'])->name('index');
+            Route::get('/{id}/show', [BillController::class, 'show'])->name('show');
             Route::post('/{id}/switch-regular', [BillController::class, 'switchToRegularTime'])->name('switch-regular');
             Route::post('/{id}/extend-combo', [BillController::class, 'extendComboTime'])->name('extend-combo');
             Route::post('/{id}/update-total', [BillController::class, 'updateBillTotal'])->name('update-total');
@@ -122,7 +124,7 @@ Route::prefix('admin')
             // Print bill
             Route::get('/{id}/print', [BillController::class, 'printBill'])->name('print');
         });
-        
+
         // Payments Management
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/{id}/payment', [PaymentController::class, 'showPayment'])->name('payment-page');
@@ -141,6 +143,7 @@ Route::prefix('admin')
         Route::post('shiftE/schedule', [ShiftController::class, 'scheduleShifts'])->name('shiftEmployee.schedule');
         Route::post('shiftE/save-weekly', [ShiftController::class, 'saveWeeklySchedule'])->name('shiftEmployee.saveWeekly');
         Route::post('shiftE/bulk-schedule', [ShiftController::class, 'bulkScheduleShifts'])->name('shiftEmployee.bulkSchedule');
+        Route::post('/shifts/copy-previous-week', [ShiftController::class, 'copyPreviousWeek'])->name('shifts.copy-previous-week');
 
         // Promotions Management
         Route::resource('promotions', PromotionController::class)->except(['destroy'])->names('promotions');
