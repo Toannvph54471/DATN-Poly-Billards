@@ -531,6 +531,14 @@
             align-items: center;
             justify-content: center;
             z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
 
         .modal-content {
@@ -541,6 +549,14 @@
             max-width: 500px;
             max-height: 90vh;
             overflow: auto;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+            opacity: 1;
         }
 
         .modal-header {
@@ -587,6 +603,171 @@
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Custom Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 350px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.hide {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        .toast-success {
+            background-color: #10b981;
+        }
+
+        .toast-error {
+            background-color: #ef4444;
+        }
+
+        .toast-warning {
+            background-color: #f59e0b;
+        }
+
+        .toast-info {
+            background-color: #3b82f6;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Fade In Animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Slide In Animation */
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Pulse Animation */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        /* Bounce Animation */
+        .bounce {
+            animation: bounce 0.5s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            80% {
+                transform: translateY(-5px);
+            }
         }
 
         /* Scrollbar Styling */
@@ -672,7 +853,101 @@
             }
         }
 
+<<<<<<< HEAD
         @media (max-width: 1200px) {
+=======
+        .combo-ended-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #92400e;
+        }
+
+        .combo-ended-content i {
+            font-size: 1.25rem;
+        }
+
+        .combo-ended-text {
+            flex: 1;
+        }
+
+        .combo-ended-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .combo-ended-description {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        /* Delete Confirmation Modal Styles */
+        .delete-confirm-icon {
+            animation: pulse 1.5s infinite;
+        }
+
+        .delete-product-btn {
+            transition: all 0.3s ease;
+        }
+
+        .delete-product-btn:hover {
+            transform: scale(1.1);
+            background: #fef2f2 !important;
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mobile Panel Tabs */
+        .mobile-panel-tabs {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            z-index: 1000;
+        }
+
+        .mobile-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .mobile-tab.active {
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .mobile-tab i {
+            display: block;
+            font-size: 1.25rem;
+            margin-bottom: 4px;
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 1024px) {
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
             .main-content {
                 flex-direction: column;
             }
@@ -708,14 +983,48 @@
 
 <body>
     <div class="app-container">
+<<<<<<< HEAD
+=======
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars text-lg"></i>
+        </button>
+
+        @php
+            $userRole = Auth::user()->role->slug ?? '';
+            $isAdminOrManager = in_array($userRole, ['admin', 'manager']);
+            $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
+        @endphp
+
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         <!-- Header -->
         <div class="header">
             <div class="table-info">
                 <div class="table-title">
+<<<<<<< HEAD
                     <a href="{{ route('admin.tables.index') }}" class="back-btn">
                         <i class="fas fa-arrow-left"></i>
                         Quay lại
                     </a>
+=======
+                    @if (in_array($userRole, ['admin', 'manager']))
+                        <a href="{{ route('admin.tables.index') }}" class="back-btn">
+                            <i class="fas fa-arrow-left"></i> <span class="desktop-only">Quay lại</span>
+                        </a>
+                    @elseif($userRole === 'employee')
+                        <a href="{{ route('admin.pos.dashboard') }}" class="back-btn">
+                            <i class="fas fa-arrow-left"></i> <span class="desktop-only">Quay lại</span>
+                        </a>
+                    @endif
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                     <div class="table-details">
                         <h1>{{ $table->table_name }}</h1>
                         <div class="table-meta">
@@ -846,6 +1155,103 @@
                             </div>
                         </div>
                     @endif
+<<<<<<< HEAD
+=======
+
+                    <!-- CẢNH BÁO COMBO SẮP HẾT (5-10 phút) -->
+                    @if (isset($timeInfo['mode']) &&
+                            $timeInfo['mode'] === 'combo' &&
+                            isset($timeInfo['remaining_minutes']) &&
+                            $timeInfo['remaining_minutes'] <= 10 &&
+                            $timeInfo['remaining_minutes'] > 5)
+                        <div class="warning-banner">
+                            <div class="warning-banner-content">
+                                <i class="fas fa-exclamation-triangle text-amber-500"></i>
+                                <div class="warning-banner-text">
+                                    <div class="warning-banner-title">COMBO SẮP HẾT THỜI GIAN!</div>
+                                    <div class="warning-banner-description">
+                                        Chỉ còn <strong>{{ $timeInfo['remaining_minutes'] }} phút</strong> trong combo.
+                                        Chuẩn bị chuyển sang giờ thường.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- CẢNH BÁO KHẨN CẤP COMBO SẮP HẾT (0-5 phút) -->
+                    @if (isset($timeInfo['mode']) &&
+                            $timeInfo['mode'] === 'combo' &&
+                            isset($timeInfo['remaining_minutes']) &&
+                            $timeInfo['remaining_minutes'] <= 5 &&
+                            $timeInfo['remaining_minutes'] > 0)
+                        <div class="critical-warning-banner">
+                            <div class="critical-warning-content">
+                                <div class="critical-warning-info">
+                                    <i class="fas fa-exclamation-circle text-white text-xl"></i>
+                                    <div class="critical-warning-text">
+                                        <div class="critical-warning-title">CẢNH BÁO: COMBO SẮP HẾT!</div>
+                                        <div class="critical-warning-description">
+                                            Chỉ còn <strong>{{ $timeInfo['remaining_minutes'] }} phút</strong>.
+                                            Hệ thống sẽ tự động chuyển sang giờ thường khi hết thời gian.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Combo đang chạy -->
+                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && $timeInfo['is_running'] && !$timeInfo['is_paused'])
+                        <div class="combo-status-banner">
+                            <div class="combo-status-content">
+                                <div class="combo-status-info">
+                                    <i class="fas fa-gift text-white text-xl"></i>
+                                    <div class="combo-status-text">
+                                        <div class="combo-status-title">COMBO TIME ĐANG CHẠY</div>
+                                        <div class="combo-status-description">
+                                            Thời gian còn lại: <strong>{{ $timeInfo['remaining_minutes'] ?? 0 }}
+                                                phút</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="combo-actions flex gap-2">
+                                    <form action="{{ route('admin.bills.stop-combo', $table->currentBill->id) }}"
+                                        method="POST">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-danger"
+                                            style="padding: 0.5rem 1rem;"
+                                            onclick="return confirm('Bạn có chắc muốn DỪNG combo thời gian?')">
+                                            <i class="fas fa-stop"></i> Tắt Combo
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Thông báo combo đã hết -->
+                    @if (isset($timeInfo['needs_switch']) &&
+                            $timeInfo['needs_switch'] &&
+                            isset($timeInfo['mode']) &&
+                            $timeInfo['mode'] === 'combo_ended')
+                        <div class="combo-ended-info">
+                            <div class="combo-ended-content">
+                                <i class="fas fa-info-circle text-amber-500"></i>
+                                <div class="combo-ended-text">
+                                    <div class="combo-ended-title">COMBO ĐÃ KẾT THÚC</div>
+                                    <div class="combo-ended-description">
+                                        @if ($timeInfo['is_auto_stopped'] ?? false)
+                                            Combo đã tự động dừng khi hết thời gian. Vui lòng bật giờ thường để tiếp tục
+                                            tính giờ.
+                                        @else
+                                            Combo đã được dừng thủ công. Vui lòng bật giờ thường để tiếp tục tính giờ.
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                 </div>
 
                 <!-- Products & Combos Section -->
@@ -877,7 +1283,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($products as $product)
-                                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                        <tr class="border-b border-gray-100 hover:bg-gray-50 fade-in">
                                             <td class="p-3">
                                                 <div class="flex items-center gap-3">
                                                     @if ($product->image)
@@ -956,7 +1362,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($combos as $combo)
-                                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                        <tr class="border-b border-gray-100 hover:bg-gray-50 fade-in">
                                             <td class="p-3">
                                                 <div class="flex items-center gap-3">
                                                     @if ($combo->image)
@@ -1061,7 +1467,7 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($table->currentBill->billDetails as $item)
-                                            <tr>
+                                            <tr class="fade-in">
                                                 <td>
                                                     @if ($item->product_id && $item->product)
                                                         <i class="fas fa-utensils text-green-500 mr-2"></i>
@@ -1083,6 +1489,27 @@
                                                 </td>
                                                 <td class="text-right font-semibold">
                                                     {{ number_format(round($item->total_price)) }} ₫</td>
+<<<<<<< HEAD
+=======
+                                                <td class="text-center">
+                                                    @if ($item->product_id && !$item->is_combo_component && !$item->combo_id)
+                                                        <form
+                                                            action="{{ route('admin.bills.remove-product', ['bill' => $table->currentBill->id, 'billDetail' => $item->id]) }}"
+                                                            method="POST" class="d-inline">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="button"
+                                                                class="delete-product-btn text-red-500 hover:text-red-700 transition-colors duration-200 p-2 rounded hover:bg-red-50"
+                                                                title="Xóa sản phẩm"
+                                                                data-product-name="{{ $item->product->name }}">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <span class="text-gray-400 text-xs">Không thể xóa</span>
+                                                    @endif
+                                                </td>
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -1094,6 +1521,153 @@
                                     <p class="text-sm">Thêm sản phẩm hoặc combo để bắt đầu</p>
                                 </div>
                             @endif
+<<<<<<< HEAD
+=======
+
+                            <!-- PHẦN HIỂN THỊ CHI TIẾT CHUYỂN BÀN -->
+                            @if ($table->currentBill && $table->currentBill->billTimeUsages->count() > 1)
+                                <div class="table-transfer-details mt-6">
+                                    <h3 class="text-lg font-semibold mb-3 text-blue-600 border-b pb-2">
+                                        <i class="fas fa-exchange-alt mr-2"></i>LỊCH SỬ CHUYỂN BÀN
+                                    </h3>
+
+                                    <div class="space-y-3">
+                                        @php
+                                            $timeUsages = $table->currentBill->billTimeUsages->sortBy('created_at');
+                                            $transferCount = 0;
+                                        @endphp
+
+                                        @foreach ($timeUsages as $index => $timeUsage)
+                                            @if ($index > 0)
+                                                @php
+                                                    $previousUsage = $timeUsages[$index - 1];
+                                                    $transferCount++;
+                                                @endphp
+                                                <div
+                                                    class="transfer-item bg-blue-50 border border-blue-200 rounded-lg p-3 slide-in">
+                                                    <div class="flex justify-between items-start">
+                                                        <div class="flex-1">
+                                                            <div class="flex items-center mb-1">
+                                                                <span
+                                                                    class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
+                                                                    Lần {{ $transferCount }}
+                                                                </span>
+                                                                <span class="text-sm font-medium text-blue-900">
+                                                                    <i class="fas fa-arrow-right mr-1"></i>
+                                                                    Chuyển bàn
+                                                                </span>
+                                                            </div>
+
+                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                                <div>
+                                                                    <span class="text-gray-600">Từ bàn:</span>
+                                                                    <span
+                                                                        class="font-medium">{{ $previousUsage->table->table_number ?? 'N/A' }}</span>
+                                                                    <span
+                                                                        class="text-xs text-gray-500">({{ number_format($previousUsage->hourly_rate) }}₫/h)</span>
+                                                                </div>
+                                                                <div>
+                                                                    <span class="text-gray-600">Sang bàn:</span>
+                                                                    <span
+                                                                        class="font-medium">{{ $timeUsage->table->table_number ?? $table->table_number }}</span>
+                                                                    <span
+                                                                        class="text-xs text-gray-500">({{ number_format($timeUsage->hourly_rate) }}₫/h)</span>
+                                                                </div>
+                                                            </div>
+
+                                                            @if ($previousUsage->end_time)
+                                                                <div class="mt-2 text-xs text-gray-600">
+                                                                    <i class="far fa-clock mr-1"></i>
+                                                                    Thời gian sử dụng:
+                                                                    {{ \Carbon\Carbon::parse($previousUsage->start_time)->format('H:i') }}
+                                                                    →
+                                                                    {{ \Carbon\Carbon::parse($previousUsage->end_time)->format('H:i') }}
+                                                                    ({{ $previousUsage->duration_minutes ?? 0 }} phút)
+                                                                </div>
+                                                            @endif
+
+                                                            @if ($previousUsage->total_price > 0)
+                                                                <div class="mt-1 text-sm font-medium text-green-600">
+                                                                    <i class="fas fa-coins mr-1"></i>
+                                                                    Tiền giờ bàn cũ:
+                                                                    {{ number_format($previousUsage->total_price) }}₫
+                                                                </div>
+                                                            @endif
+                                                        </div>
+
+                                                        <div class="text-right">
+                                                            <div class="text-xs text-gray-500 mb-1">
+                                                                {{ \Carbon\Carbon::parse($previousUsage->end_time ?? $timeUsage->start_time)->format('d/m/Y H:i') }}
+                                                            </div>
+                                                            @if ($previousUsage->note)
+                                                                <div class="text-xs text-blue-600 italic">
+                                                                    "{{ $previousUsage->note }}"
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @endforeach
+
+                                        <!-- Hiển thị bàn hiện tại -->
+                                        <div
+                                            class="current-table bg-green-50 border border-green-200 rounded-lg p-3 fade-in">
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <div class="flex items-center mb-1">
+                                                        <span
+                                                            class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
+                                                            Hiện tại
+                                                        </span>
+                                                        <span class="text-sm font-medium text-green-900">
+                                                            <i class="fas fa-map-marker-alt mr-1"></i>
+                                                            Bàn {{ $table->table_number }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-sm text-gray-600">
+                                                        Giá giờ:
+                                                        {{ number_format($table->tableRate->hourly_rate ?? 0) }}₫/h
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <div class="text-xs text-gray-500">
+                                                        Bắt đầu:
+                                                        {{ \Carbon\Carbon::parse($timeUsages->last()->start_time)->format('H:i') }}
+                                                    </div>
+                                                    @if ($timeUsages->last()->note)
+                                                        <div class="text-xs text-green-600 italic">
+                                                            "{{ $timeUsages->last()->note }}"
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @elseif ($table->currentBill && $table->currentBill->billTimeUsages->count() == 1)
+                                <!-- Hiển thị thông tin bàn hiện tại nếu chưa chuyển bàn -->
+                                <div
+                                    class="current-table-simple bg-gray-50 border border-gray-200 rounded-lg p-3 mt-4 fade-in">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-sm font-medium text-gray-900">
+                                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                                Bàn {{ $table->table_number }}
+                                            </span>
+                                            <span class="text-xs text-gray-600 ml-2">
+                                                ({{ number_format($table->tableRate->hourly_rate ?? 0) }}₫/h)
+                                            </span>
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            Bắt đầu:
+                                            {{ \Carbon\Carbon::parse($table->currentBill->billTimeUsages->first()->start_time)->format('H:i') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                            <!-- KẾT THÚC PHẦN HIỂN THỊ CHUYỂN BÀN -->
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                         </div>
 
                         @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
@@ -1181,16 +1755,49 @@
                                         </button>
                                     </form>
 
+<<<<<<< HEAD
                                     <!-- NÚT THANH TOÁN CHO BÀN LẺ -->
                                     <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
+=======
+                                    <a href="{{ route('admin.payments.payment-page', $table->currentBill->id) }}"
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                                         class="action-btn action-btn-success">
                                         <i class="fas fa-credit-card"></i>
                                         THANH TOÁN BÀN LẺ
                                     </a>
                                 @else
+<<<<<<< HEAD
                                     <!-- Pause/Resume Buttons -->
                                     @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
                                         <form action="{{ route('bills.pause', $table->currentBill->id) }}"
+=======
+                                    <!-- Thanh toán -->
+                                    <a href="{{ route('admin.payments.payment-page', $table->currentBill->id) }}"
+                                        class="action-btn action-btn-primary">
+                                        <i class="fas fa-credit-card"></i>
+                                        <span class="desktop-only">THANH TOÁN</span>
+                                        <span class="mobile-only">THANH TOÁN</span>
+                                    </a>
+
+                                    <!-- Cập nhật tổng -->
+                                    <form action="{{ route('admin.bills.update-total', $table->currentBill->id) }}"
+                                        method="POST" class="w-full">
+                                        @csrf
+                                        <button type="submit" class="action-btn action-btn-secondary">
+                                            <i class="fas fa-sync-alt"></i>
+                                            <span class="desktop-only">CẬP NHẬT TỔNG</span>
+                                            <span class="mobile-only">CẬP NHẬT</span>
+                                        </button>
+                                    </form>
+
+                                    <!-- NÚT BẬT GIỜ THƯỜNG KHI COMBO HẾT -->
+                                    @if (isset($timeInfo['needs_switch']) &&
+                                            $timeInfo['needs_switch'] &&
+                                            isset($timeInfo['mode']) &&
+                                            $timeInfo['mode'] === 'combo_ended')
+                                        <form
+                                            action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                                             method="POST" class="w-full">
                                             @csrf
                                             <button type="submit" class="action-btn action-btn-warning">
@@ -1316,7 +1923,7 @@
     </div>
 
     <!-- Create Bill Modal -->
-    <div id="createBillModal" class="modal-overlay" style="display: none;">
+    <div id="createBillModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Tạo Hóa Đơn Tính Giờ</h3>
@@ -1355,7 +1962,7 @@
     </div>
 
     <!-- Quick Bill Modal -->
-    <div id="quickBillModal" class="modal-overlay" style="display: none;">
+    <div id="quickBillModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Tạo Bàn Lẻ</h3>
@@ -1387,6 +1994,35 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Xác nhận xóa</h3>
+                <button class="close-btn" onclick="hideDeleteConfirmModal()">&times;</button>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center justify-center mb-4">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                    </div>
+                </div>
+                <p id="deleteConfirmMessage" class="text-center text-gray-700 mb-6">
+                    Bạn có chắc muốn xóa sản phẩm này khỏi hóa đơn?
+                </p>
+                <div class="flex gap-3">
+                    <button type="button" onclick="hideDeleteConfirmModal()"
+                        class="action-btn action-btn-secondary flex-1">
+                        <i class="fas fa-times mr-2"></i> Hủy
+                    </button>
+                    <button id="confirmDeleteBtn" class="action-btn action-btn-danger flex-1">
+                        <i class="fas fa-trash mr-2"></i> Xóa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Server data với giá trị mặc định
         const isRunning = {{ isset($timeInfo['is_running']) && $timeInfo['is_running'] ? 'true' : 'false' }};
@@ -1400,12 +2036,98 @@
         // Không sử dụng thời gian thực từ client, chỉ sử dụng dữ liệu từ server
         let serverElapsedSeconds = elapsedMinutesFromServer * 60;
         let refreshInterval = null;
+        let currentDeleteForm = null;
 
+        // Toast Notification System
+        function showToast(message, type = 'info', duration = 5000) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            // Set icon based on type
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
+            if (type === 'warning') icon = 'exclamation-triangle';
+
+            toast.innerHTML = `
+                <i class="fas fa-${icon}"></i>
+                <span>${message}</span>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Show toast with animation
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            // Auto hide after duration
+            setTimeout(() => {
+                hideToast(toast);
+            }, duration);
+
+            // Click to dismiss
+            toast.addEventListener('click', () => {
+                hideToast(toast);
+            });
+        }
+
+        function hideToast(toast) {
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+
+        // Loading Overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+<<<<<<< HEAD
+=======
+        // Mobile panel navigation
+        function setupMobilePanels() {
+            const mobileTabs = document.querySelectorAll('.mobile-tab');
+            const panels = document.querySelectorAll('.panel');
+
+            mobileTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const panelId = this.getAttribute('data-panel');
+
+                    // Remove active class from all tabs and panels
+                    mobileTabs.forEach(t => t.classList.remove('active'));
+                    panels.forEach(p => p.classList.remove('active'));
+
+                    // Add active class to clicked tab and corresponding panel
+                    this.classList.add('active');
+                    document.getElementById(panelId).classList.add('active');
+
+                    // Add animation effect
+                    document.getElementById(panelId).classList.add('fade-in');
+                    setTimeout(() => {
+                        document.getElementById(panelId).classList.remove('fade-in');
+                    }, 500);
+                });
+            });
+        }
+
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         // Format functions
         function pad(n) {
             return n.toString().padStart(2, '0');
         }
 
+<<<<<<< HEAD
         function formatHMS(totalSeconds) {
             const hrs = Math.floor(totalSeconds / 3600);
             const mins = Math.floor((totalSeconds % 3600) / 60);
@@ -1489,22 +2211,34 @@
         }
 
         // Modal functions
+=======
+        // Modal functions with animations
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         function showCreateBillModal() {
-            document.getElementById('createBillModal').style.display = 'flex';
+            const modal = document.getElementById('createBillModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
         function hideCreateBillModal() {
-            document.getElementById('createBillModal').style.display = 'none';
+            const modal = document.getElementById('createBillModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
 
         function showQuickBillModal() {
-            document.getElementById('quickBillModal').style.display = 'flex';
+            const modal = document.getElementById('quickBillModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
         function hideQuickBillModal() {
-            document.getElementById('quickBillModal').style.display = 'none';
+            const modal = document.getElementById('quickBillModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
         }
 
+<<<<<<< HEAD
         // Update bill total
         function updateBillTotal() {
             @if ($table->currentBill)
@@ -1534,6 +2268,68 @@
         }
 
         // Tab functionality
+=======
+        // Delete Confirmation Modal
+        function showDeleteConfirmModal(productName, form) {
+            currentDeleteForm = form;
+            const modal = document.getElementById('deleteConfirmModal');
+            const message = document.getElementById('deleteConfirmMessage');
+
+            message.innerHTML = `Bạn có chắc muốn xóa sản phẩm <strong>"${productName}"</strong> khỏi hóa đơn?`;
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Add animation to icon
+            const icon = modal.querySelector('.fa-exclamation-triangle');
+            icon.classList.add('delete-confirm-icon');
+        }
+
+        function hideDeleteConfirmModal() {
+            const modal = document.getElementById('deleteConfirmModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            currentDeleteForm = null;
+
+            // Remove animation
+            const icon = modal.querySelector('.fa-exclamation-triangle');
+            icon.classList.remove('delete-confirm-icon');
+        }
+
+        function confirmDelete() {
+            if (currentDeleteForm) {
+                // Show loading state
+                const confirmBtn = document.getElementById('confirmDeleteBtn');
+                const originalHtml = confirmBtn.innerHTML;
+                confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xóa...';
+                confirmBtn.disabled = true;
+
+                // Submit form after a small delay for better UX
+                setTimeout(() => {
+                    currentDeleteForm.submit();
+                }, 500);
+            }
+        }
+
+        // Setup delete confirmation
+        function setupDeleteConfirmations() {
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.delete-product-btn')) {
+                    e.preventDefault();
+                    const form = e.target.closest('form');
+                    const productName = e.target.getAttribute('data-product-name') ||
+                        e.target.closest('tr').querySelector('td:first-child').textContent.trim();
+
+                    showDeleteConfirmModal(productName, form);
+                }
+            });
+
+            // Confirm delete button event
+            document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+        }
+
+        // Tab functionality with animations
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         function setupTabs() {
             const tabs = document.querySelectorAll('.tab');
             const productsList = document.getElementById('productsList');
@@ -1548,16 +2344,28 @@
                     // Add active class to clicked tab
                     tab.classList.add('active');
 
-                    // Show/hide lists
+                    // Show/hide lists with animation
                     const tabName = tab.getAttribute('data-tab');
                     if (tabName === 'products') {
                         productsList.style.display = 'block';
                         combosList.style.display = 'none';
                         searchBox.placeholder = 'Tìm kiếm sản phẩm...';
+
+                        // Add animation
+                        productsList.classList.add('fade-in');
+                        setTimeout(() => {
+                            productsList.classList.remove('fade-in');
+                        }, 500);
                     } else {
                         productsList.style.display = 'none';
                         combosList.style.display = 'block';
                         searchBox.placeholder = 'Tìm kiếm combo...';
+
+                        // Add animation
+                        combosList.classList.add('fade-in');
+                        setTimeout(() => {
+                            combosList.classList.remove('fade-in');
+                        }, 500);
                     }
 
                     // Reset search
@@ -1589,13 +2397,14 @@
                 const name = row.querySelector('.font-medium').textContent.toLowerCase();
                 if (name.includes(term)) {
                     row.style.display = '';
+                    row.classList.add('fade-in');
                 } else {
                     row.style.display = 'none';
                 }
             });
         }
 
-        // Quantity controls functionality
+        // Quantity controls functionality with animations
         function setupQuantityControls() {
             // Plus buttons
             document.querySelectorAll('.quantity-btn.plus').forEach(btn => {
@@ -1611,6 +2420,14 @@
                         const currentValue = parseInt(input.value) || 1;
                         if (currentValue < max) {
                             input.value = currentValue + 1;
+
+                            // Add animation effect
+                            this.classList.add('bounce');
+                            setTimeout(() => {
+                                this.classList.remove('bounce');
+                            }, 500);
+                        } else {
+                            showToast('Đã đạt số lượng tối đa', 'warning', 3000);
                         }
                     }
                 });
@@ -1629,6 +2446,14 @@
                         const currentValue = parseInt(input.value) || 1;
                         if (currentValue > 1) {
                             input.value = currentValue - 1;
+
+                            // Add animation effect
+                            this.classList.add('bounce');
+                            setTimeout(() => {
+                                this.classList.remove('bounce');
+                            }, 500);
+                        } else {
+                            showToast('Số lượng tối thiểu là 1', 'warning', 3000);
                         }
                     }
                 });
@@ -1641,8 +2466,14 @@
                     const max = parseInt(this.getAttribute('max')) || 999;
                     let value = parseInt(this.value) || min;
 
-                    if (value < min) value = min;
-                    if (value > max) value = max;
+                    if (value < min) {
+                        value = min;
+                        showToast('Số lượng tối thiểu là ' + min, 'warning', 3000);
+                    }
+                    if (value > max) {
+                        value = max;
+                        showToast('Số lượng tối đa là ' + max, 'warning', 3000);
+                    }
 
                     this.value = value;
                 });
@@ -1656,17 +2487,25 @@
             return input ? parseInt(input.value) || 1 : 1;
         }
 
-        // Add product to bill
+        // Add product to bill with improved UX
         function addProductToBill(productId, quantity = null) {
             @if ($table->currentBill)
                 const finalQuantity = quantity || getQuantity('.product-quantity', productId);
                 const button = event.target;
                 const originalText = button.innerHTML;
 
+                // Show loading state
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
 
+<<<<<<< HEAD
                 fetch('{{ route('bills.add-product', $table->currentBill->id) }}', {
+=======
+                // Add pulse effect to button
+                button.classList.add('pulse');
+
+                fetch('{{ route('admin.bills.add-product', $table->currentBill->id) }}', {
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1678,34 +2517,47 @@
                     })
                 }).then(response => {
                     if (response.ok) {
-                        location.reload();
+                        showToast('Đã thêm sản phẩm vào hóa đơn', 'success', 3000);
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
                     } else {
-                        alert('Có lỗi xảy ra khi thêm sản phẩm');
+                        showToast('Có lỗi xảy ra khi thêm sản phẩm', 'error', 5000);
                         button.innerHTML = originalText;
                         button.disabled = false;
+                        button.classList.remove('pulse');
                     }
                 }).catch(error => {
                     console.error('Error:', error);
-                    alert('Có lỗi xảy ra khi thêm sản phẩm');
+                    showToast('Có lỗi xảy ra khi thêm sản phẩm', 'error', 5000);
                     button.innerHTML = originalText;
                     button.disabled = false;
+                    button.classList.remove('pulse');
                 });
             @else
-                alert('Vui lòng tạo hóa đơn trước khi thêm sản phẩm');
+                showToast('Vui lòng tạo hóa đơn trước khi thêm sản phẩm', 'warning', 5000);
             @endif
         }
 
-        // Add combo to bill
+        // Add combo to bill with improved UX
         function addComboToBill(comboId, quantity = null) {
             @if ($table->currentBill)
                 const finalQuantity = quantity || getQuantity('.combo-quantity', comboId);
                 const button = event.target;
                 const originalText = button.innerHTML;
 
+                // Show loading state
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
 
+<<<<<<< HEAD
                 fetch('{{ route('bills.add-combo', $table->currentBill->id) }}', {
+=======
+                // Add pulse effect to button
+                button.classList.add('pulse');
+
+                fetch('{{ route('admin.bills.add-combo', $table->currentBill->id) }}', {
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1717,23 +2569,155 @@
                     })
                 }).then(response => {
                     if (response.ok) {
-                        location.reload();
+                        showToast('Đã thêm combo vào hóa đơn', 'success', 3000);
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
                     } else {
-                        alert('Có lỗi xảy ra khi thêm combo');
+                        showToast('Có lỗi xảy ra khi thêm combo', 'error', 5000);
                         button.innerHTML = originalText;
                         button.disabled = false;
+                        button.classList.remove('pulse');
                     }
                 }).catch(error => {
                     console.error('Error:', error);
-                    alert('Có lỗi xảy ra khi thêm combo');
+                    showToast('Có lỗi xảy ra khi thêm combo', 'error', 5000);
                     button.innerHTML = originalText;
                     button.disabled = false;
+                    button.classList.remove('pulse');
                 });
             @else
-                alert('Vui lòng tạo hóa đơn trước khi thêm combo');
+                showToast('Vui lòng tạo hóa đơn trước khi thêm combo', 'warning', 5000);
             @endif
         }
 
+<<<<<<< HEAD
+=======
+        // Hàm kiểm tra và cập nhật trạng thái combo từ server
+        async function checkComboStatus() {
+            if ((currentMode === 'combo' || needsSwitch) && currentBillId) {
+                try {
+                    const response = await fetch(`/admin/bills/${currentBillId}/check-combo-status`);
+                    const data = await response.json();
+
+                    // Cập nhật thời gian còn lại
+                    if (data.has_active_combo && data.remaining_minutes !== undefined) {
+                        const remainingMinutes = data.remaining_minutes;
+                        const hours = Math.floor(remainingMinutes / 60);
+                        const minutes = remainingMinutes % 60;
+
+                        document.getElementById('remainingTimeDisplay').textContent =
+                            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+                        // Cập nhật progress bar
+                        if (data.total_minutes && data.total_minutes > 0) {
+                            const progressPercent = Math.min(100, ((data.total_minutes - remainingMinutes) / data
+                                .total_minutes) * 100);
+                            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+                            document.getElementById('progressText').textContent = `${Math.round(progressPercent)}%`;
+                        }
+
+                        // Hiển thị cảnh báo nếu sắp hết thời gian
+                        updateWarningBanners(remainingMinutes);
+                    }
+
+                    // Nếu combo đã hết, reload trang để hiển thị nút bật giờ thường
+                    if (data.needs_switch && !data.has_active_combo) {
+                        showToast('Combo đã kết thúc, vui lòng bật giờ thường', 'info', 5000);
+                        setTimeout(() => {
+                            location.reload();
+                        }, 2000);
+                    }
+                } catch (error) {
+                    console.error('Error checking combo status:', error);
+                }
+            }
+        }
+
+        // Cập nhật cảnh báo combo sắp hết
+        function updateWarningBanners(remainingMinutes) {
+            // Xóa các banner cũ
+            removeExistingBanners();
+
+            // Hiển thị cảnh báo phù hợp
+            if (remainingMinutes <= 5 && remainingMinutes > 0) {
+                showCriticalWarningBanner(remainingMinutes);
+            } else if (remainingMinutes <= 10 && remainingMinutes > 5) {
+                showWarningBanner(remainingMinutes);
+            }
+        }
+
+        // Xóa các banner cảnh báo cũ
+        function removeExistingBanners() {
+            const warningBanner = document.querySelector('.warning-banner');
+            const criticalBanner = document.querySelector('.critical-warning-banner');
+
+            if (warningBanner) warningBanner.remove();
+            if (criticalBanner) criticalBanner.remove();
+        }
+
+        // Hiển thị cảnh báo thường (5-10 phút)
+        function showWarningBanner(remainingMinutes) {
+            const timeTrackingCard = document.querySelector('.card');
+            const warningBanner = document.createElement('div');
+            warningBanner.className = 'warning-banner fade-in';
+            warningBanner.innerHTML = `
+                <div class="warning-banner-content">
+                    <i class="fas fa-exclamation-triangle text-amber-500"></i>
+                    <div class="warning-banner-text">
+                        <div class="warning-banner-title">COMBO SẮP HẾT THỜI GIAN!</div>
+                        <div class="warning-banner-description">
+                            Chỉ còn <strong>${remainingMinutes} phút</strong> trong combo. 
+                            Chuẩn bị chuyển sang giờ thường.
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            insertBanner(warningBanner);
+        }
+
+        // Hiển thị cảnh báo khẩn cấp (0-5 phút)
+        function showCriticalWarningBanner(remainingMinutes) {
+            const timeTrackingCard = document.querySelector('.card');
+            const criticalBanner = document.createElement('div');
+            criticalBanner.className = 'critical-warning-banner fade-in';
+            criticalBanner.innerHTML = `
+                <div class="critical-warning-content">
+                    <div class="critical-warning-info">
+                        <i class="fas fa-exclamation-circle text-white text-xl"></i>
+                        <div class="critical-warning-text">
+                            <div class="critical-warning-title">CẢNH BÁO: COMBO SẮP HẾT!</div>
+                            <div class="critical-warning-description">
+                                Chỉ còn <strong>${remainingMinutes} phút</strong>. 
+                                Bạn hãy thao tác để chuyển tiếp trạng thái 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            insertBanner(criticalBanner);
+        }
+
+        // Chèn banner vào đúng vị trí
+        function insertBanner(banner) {
+            const timeTrackingCard = document.querySelector('.card');
+            const progressContainer = document.querySelector('.progress-container');
+
+            if (progressContainer) {
+                progressContainer.parentNode.insertBefore(banner, progressContainer.nextSibling);
+            } else {
+                const timeTracking = document.querySelector('.time-tracking');
+                if (timeTracking) {
+                    timeTracking.parentNode.insertBefore(banner, timeTracking.nextSibling);
+                } else {
+                    timeTrackingCard.appendChild(banner);
+                }
+            }
+        }
+
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         // Event listeners for buttons
         document.addEventListener('DOMContentLoaded', function() {
             // Product buttons
@@ -1752,12 +2736,22 @@
                 });
             });
 
+<<<<<<< HEAD
             // Render từ dữ liệu server ban đầu
             renderFromServer();
 
             // Start server-based counter
             if (isRunning && !isPaused) {
                 startServerBasedCounter();
+=======
+            // Setup delete confirmations
+            setupDeleteConfirmations();
+
+            // Kiểm tra trạng thái combo định kỳ (mỗi 10 giây)
+            if (currentMode === 'combo' || needsSwitch) {
+                setInterval(checkComboStatus, 10000); // Kiểm tra mỗi 10 giây
+                checkComboStatus(); // Kiểm tra ngay khi load
+>>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
             }
 
             // Auto update bill total every 30 seconds
@@ -1772,9 +2766,21 @@
             document.querySelectorAll('.modal-overlay').forEach(modal => {
                 modal.addEventListener('click', function(e) {
                     if (e.target === this) {
-                        this.style.display = 'none';
+                        if (this.id === 'createBillModal') {
+                            hideCreateBillModal();
+                        } else if (this.id === 'quickBillModal') {
+                            hideQuickBillModal();
+                        } else if (this.id === 'deleteConfirmModal') {
+                            hideDeleteConfirmModal();
+                        }
                     }
                 });
+            });
+
+            // Add animation to page load
+            document.querySelectorAll('.card').forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.classList.add('fade-in');
             });
         });
 

@@ -24,6 +24,7 @@ class Bill extends BaseModel
         'discount_amount',
         'final_amount',
         'payment_method',
+        'payment_status',
         'is_paid',
         'paid_at',
         'status',
@@ -31,9 +32,7 @@ class Bill extends BaseModel
         'created_by',
         'updated_by',
         'paused_duration',
-        'note'
     ];
-
 
     protected $casts = [
         'start_time' => 'datetime',
@@ -47,16 +46,14 @@ class Bill extends BaseModel
         'paused_duration' => 'integer',
     ];
 
-
-    public function timeUsages()
-    {
-        return $this->belongsTo(User::class, 'customer_id');
-    }
-
-
     public function table()
     {
         return $this->belongsTo(Table::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function reservation()
@@ -74,20 +71,63 @@ class Bill extends BaseModel
         return $this->hasMany(BillDetail::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+    
     public function billTimeUsages(): HasMany
     {
         return $this->hasMany(BillTimeUsage::class);
     }
 
-    // *** THÊM MỚI: Payment relationship ***
-    public function payments()
+    public function comboTimeUsages()
     {
-        return $this->morphMany(Payment::class, 'payable');
+        return $this->hasMany(ComboTimeUsage::class, 'bill_id');
+    }
+
+    // === QUAN HỆ PAYMENT QUA RESERVATION ===
+    public function reservationPayments()
+    {
+        if (!$this->reservation_id) {
+            // Trả về collection rỗng nếu không có reservation
+            return $this->reservation()->getRelated()->newQuery()->whereNull('id');
+        }
+
+        return $this->hasManyThrough(
+            Payment::class,
+            Reservation::class,
+            'id',
+            'reservation_id',
+            'reservation_id',
+            'id'
+        );
     }
 
     public function completedPayments()
     {
-        return $this->payments()->where('status', Payment::STATUS_COMPLETED);
+        return $this->reservationPayments()->where('status', Payment::STATUS_COMPLETED);
+    }
+
+    // === TÍNH TOÁN PAYMENT ===
+    public function getTotalPaidAttribute(): float
+    {
+        if ($this->reservation_id) {
+            return Payment::where('reservation_id', $this->reservation_id)
+                ->where('status', Payment::STATUS_COMPLETED)
+                ->sum('amount');
+        }
+        return 0;
+    }
+
+    public function getRemainingAmountAttribute(): float
+    {
+        return max(0, $this->final_amount - $this->total_paid);
+    }
+
+    public function isFullyPaid(): bool
+    {
+        return $this->total_paid >= $this->final_amount;
     }
 
     // Scopes
@@ -104,11 +144,6 @@ class Bill extends BaseModel
     public function scopeUnpaid($query)
     {
         return $query->where('is_paid', false);
-    }
-
-    public function scopePending($query)
-    {
-        return $query->where('payment_status', 'Pending');
     }
 
     public function scopeClosed($query)
@@ -135,50 +170,6 @@ class Bill extends BaseModel
     public function canBePaid(): bool
     {
         return $this->status === self::STATUS_CLOSED && !$this->is_paid;
-    }
-
-    // *** THÊM MỚI: Payment calculation methods ***
-    public function getTotalPaidAttribute(): float
-    {
-        return $this->completedPayments()->sum('amount');
-    }
-
-    public function getRemainingAmountAttribute(): float
-    {
-        return max(0, $this->final_amount - $this->total_paid);
-    }
-
-    public function isFullyPaid(): bool
-    {
-        return $this->total_paid >= $this->final_amount;
-    }
-
-    // Calculate Methods
-    public function calculateTotalTime(): int
-    {
-        if (!$this->start_time || !$this->end_time) {
-            return 0;
-        }
-
-        // Pause active combo time usages
-        $this->activeComboTimeUsages->each->pause();
-
-        return true;
-    }
-
-    public function getTotalTimeAttribute(): int
-    {
-        return $this->calculateTotalTime();
-    }
-
-    public function getProductTotalAttribute(): float
-    {
-        return $this->billDetails()->sum('total_price');
-    }
-
-    public function getTablePriceAttribute(): float
-    {
-        return $this->billTimeUsages()->sum('total_price');
     }
 
     // Label Methods
