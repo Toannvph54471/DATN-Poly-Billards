@@ -83,8 +83,7 @@ class PaymentController extends Controller
                         // Có BillTimeUsage đang chạy -> tính tiền giờ
                         $startTime = Carbon::parse($timeUsage->start_time);
                         $totalMinutesPlayed = $startTime->diffInMinutes($endTime);
-
-                        // Trừ thời gian pause nếu có
+// Trừ thời gian pause nếu có
                         if ($timeUsage->paused_duration) {
                             $totalMinutesPlayed -= $timeUsage->paused_duration;
                         }
@@ -144,7 +143,7 @@ class PaymentController extends Controller
                     'amount' => $finalAmount,
                     'currency' => 'VND',
                     'payment_method' => $paymentMethod,
-                    'payment_type' => 'full',
+'payment_type' => 'full',
                     'status' => 'completed',
                     'transaction_id' => 'BILL_' . $bill->bill_number . '_' . now()->format('YmdHis'),
                     'paid_at' => now(),
@@ -213,7 +212,7 @@ class PaymentController extends Controller
 
         if ($dailyReport) {
             $dailyReport->update([
-                'total_revenue' => $dailyReport->total_revenue + $bill->final_amount,
+'total_revenue' => $dailyReport->total_revenue + $bill->final_amount,
                 'total_bills' => $dailyReport->total_bills + 1,
                 'total_customers' => $dailyReport->total_customers + ($bill->user_id ? 1 : 0),
                 'average_bill_value' => ($dailyReport->total_revenue + $bill->final_amount) / ($dailyReport->total_bills + 1)
