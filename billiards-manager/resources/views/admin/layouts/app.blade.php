@@ -155,6 +155,12 @@
                     <i class="fas fa-user-clock w-5 md:w-6 mr-3"></i>
                     <span class="font-medium text-sm md:text-base">Giám sát ca làm</span>
                 </a>
+
+                <a href="{{ route('admin.bills.index') }}"
+                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.promotions.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-percent w-6 mr-3"></i>
+                    <span class="font-medium">Hóa đơn</span>
+                </a>
             @endif
 
             <!-- Menu chỉ dành cho Admin -->
