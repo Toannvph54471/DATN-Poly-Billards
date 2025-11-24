@@ -14,9 +14,9 @@
             <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                 <i class="fas fa-download mr-2"></i>Xuất báo cáo
             </button>
-            <a href="{{ route('admin.tables.simple-dashboard') }}" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-                <i class="fas fa-plus mr-2"></i>Tổng Quan Bàn
-            </a>
+            <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i>Tạo đơn mới
+            </button>
         </div>
     </div>
 
@@ -85,8 +85,41 @@
         </div>
     </div>
 
+    <!-- Monthly Stats Section -->
+    <div class="mt-8">
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Thống kê tháng {{ date('m/Y') }}</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Monthly Revenue -->
+            <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">Doanh thu tháng</h3>
+                    <i class="fas fa-calendar-alt text-blue-500"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ number_format($monthlyStats['revenue'], 0, ',', '.') }}₫</p>
+            </div>
+
+            <!-- Monthly Bills -->
+            <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">Tổng đơn hàng</h3>
+                    <i class="fas fa-file-invoice text-green-500"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ $monthlyStats['bills'] }}</p>
+            </div>
+
+            <!-- Monthly Customers -->
+            <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-500">Khách hàng mới</h3>
+                    <i class="fas fa-user-plus text-purple-500"></i>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ $monthlyStats['customers'] }}</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Charts and Tables Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <!-- Doanh thu theo tuần -->
         <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-6">
@@ -152,7 +185,7 @@
     </div>
 
     <!-- Recent Bills and Statistics -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <!-- Bill gần đây -->
         <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-4">
@@ -247,6 +280,52 @@
                         <div class="bg-blue-600 h-2 rounded-full transition-all duration-500" 
                              style="width: {{ $tableStats['occupancy_rate'] }}%"></div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Cảnh báo kho (Low Stock) -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Cảnh báo kho</h3>
+                <div class="space-y-3">
+                    @foreach($lowStockProducts as $product)
+                    <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-exclamation-circle text-red-500"></i>
+                            <span class="text-sm font-medium text-gray-900">{{ $product->name }}</span>
+                        </div>
+                        <span class="text-sm font-bold text-red-600">{{ $product->stock_quantity }} <span class="text-xs font-normal text-gray-500">/{{ $product->min_stock_level }}</span></span>
+                    </div>
+                    @endforeach
+                    @if($lowStockProducts->count() == 0)
+                    <div class="text-center py-4 text-gray-400">
+                        <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
+                        <p class="text-sm">Kho hàng ổn định</p>
+                    </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Ca làm việc (Shift Stats) -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Ca làm việc hôm nay</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500">Đang làm việc</p>
+                        <p class="text-xl font-bold text-blue-600">{{ $shiftStats['active_count'] }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500">Tổng giờ công</p>
+                        <p class="text-xl font-bold text-green-600">{{ number_format($shiftStats['total_hours'], 1) }}h</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xs font-medium text-gray-500 uppercase">Nhân viên đang trực:</p>
+                    @foreach($shiftStats['working_employees'] as $emp)
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-700">{{ $emp->name }}</span>
+                        <span class="text-gray-500 text-xs">{{ \Carbon\Carbon::parse($emp->actual_start_time)->format('H:i') }}</span>
+                    </div>
+                    @endforeach
                 </div>
             </div>
 

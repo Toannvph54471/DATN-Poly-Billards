@@ -24,7 +24,13 @@
         }
         .sidebar { 
             background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%); 
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1); 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 50;
+        }
+        .sidebar.mobile-open {
+            transform: translateX(0);
         }
         .nav-item { 
             transition: all 0.3s ease; 
@@ -38,6 +44,31 @@
             background: rgba(255,255,255,0.15); 
             border-left: 4px solid var(--secondary); 
         }
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+        }
+        .mobile-overlay.active {
+            display: block;
+        }
+        @media (min-width: 768px) {
+            .sidebar {
+                transform: translateX(0);
+                position: relative;
+            }
+            .mobile-menu-btn {
+                display: none;
+            }
+            .mobile-overlay {
+                display: none !important;
+            }
+        }
     </style>
     @yield('styles')
 </head>
@@ -45,20 +76,26 @@
 <body class="text-gray-800">
 
 @auth
-<div class="flex h-screen bg-gray-100">
+<!-- Mobile Overlay -->
+<div id="mobileOverlay" class="mobile-overlay" onclick="closeMobileMenu()"></div>
+
+<div class="flex h-screen bg-gray-100 overflow-hidden">
     <!-- Sidebar -->
-    <div class="sidebar w-64 flex-shrink-0 text-white flex flex-col">
+    <div id="sidebar" class="sidebar w-64 flex-shrink-0 text-white flex flex-col fixed md:relative h-full">
         <!-- Logo -->
-        <div class="p-6 border-b border-blue-800">
+        <div class="p-4 md:p-6 border-b border-blue-800 flex justify-between items-center md:block">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-billiard-ball text-blue-600 text-xl"></i>
+                <div class="w-8 h-8 md:w-10 md:h-10 bg-white rounded-lg flex items-center justify-center">
+                    <i class="fas fa-billiard-ball text-blue-600 text-lg md:text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold">Poly Billiards</h1>
+                    <h1 class="text-lg md:text-xl font-bold">Poly Billiards</h1>
                     <p class="text-blue-200 text-xs">{{ Auth::user()->name }}</p>
                 </div>
             </div>
+            <button onclick="closeMobileMenu()" class="md:hidden text-white p-1">
+                <i class="fas fa-times text-lg"></i>
+            </button>
         </div>
 
         <!-- Navigation -->
@@ -71,40 +108,52 @@
 
             <!-- Menu cho Admin & Manager -->
             @if($isAdminOrManager)
-                <a href="{{ route('admin.dashboard') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-chart-pie w-6 mr-3"></i>
-                    <span class="font-medium">Tổng quan</span>
+                <a href="{{ route('admin.dashboard') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-chart-pie w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Tổng quan</span>
                 </a>
 
-                <a href="{{ route('admin.tables.index') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fa-solid fa-table w-6 mr-3"></i>
-                    <span class="font-medium">Quản lý bàn</span>
+                <a href="{{ route('admin.tables.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fa-solid fa-table w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Quản lý bàn</span>
+                </a>
+                
+                <a href="{{ route('admin.bills.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.bills.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fa-solid fa-receipt w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Hóa đơn</span>
                 </a>
 
-                <a href="{{ route('admin.table_rates.index') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.table_rates.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fa-solid fa-clock w-6 mr-3"></i>
-                    <span class="font-medium">Giá giờ bàn</span>
+                <a href="{{ route('admin.table_rates.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.table_rates.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fa-solid fa-clock w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Giá giờ bàn</span>
                 </a>
 
-                <a href="{{ route('admin.combos.index') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.combos.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-th-large w-6 mr-3"></i>
-                    <span class="font-medium">Quản lý Combo</span>
+                <a href="{{ route('admin.combos.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.combos.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-th-large w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Quản lý Combo</span>
                 </a>
 
-                <a href="{{ route('admin.products.index') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.products.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-cubes w-6 mr-3"></i>
-                    <span class="font-medium">Sản phẩm</span>
+                <a href="{{ route('admin.products.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.products.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-cubes w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Sản phẩm</span>
                 </a>
 
-                <a href="{{ route('admin.promotions.index') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.promotions.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-percent w-6 mr-3"></i>
-                    <span class="font-medium">Khuyến mại</span>
+                <a href="{{ route('admin.promotions.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.promotions.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-percent w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Khuyến mại</span>
+                </a>
+
+                <a href="{{ route('admin.attendance.monitor') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.attendance.monitor') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-user-clock w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Giám sát ca làm</span>
                 </a>
 
                 <a href="{{ route('admin.bills.index') }}"
@@ -116,67 +165,78 @@
 
             <!-- Menu chỉ dành cho Admin -->
             @if($userRole === 'admin')
-                <a href="{{ route('admin.users.index') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-users-cog w-6 mr-3"></i>
-                    <span class="font-medium">Người dùng hệ thống</span>
+                <a href="{{ route('admin.users.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-users-cog w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Người dùng hệ thống</span>
                 </a>
 
-                <a href="{{ route('admin.employees.index') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.employees.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-user-tie w-6 mr-3"></i>
-                    <span class="font-medium">Nhân viên</span>
+                <a href="{{ route('admin.employees.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.employees.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-user-tie w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Nhân viên</span>
                 </a>
 
-                <a href="{{ route('admin.roles.index') }}"
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.roles.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-user-shield w-6 mr-3"></i>
-                    <span class="font-medium">Phân quyền</span>
+                <a href="{{ route('admin.payroll.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.payroll.index') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-money-bill-wave w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Quản lý lương</span>
+                </a>
+
+                <a href="{{ route('admin.roles.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.roles.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-user-shield w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Phân quyền</span>
                 </a>
             @endif
 
             <!-- Menu cho Employee -->
             @if($isStaff)
-                <a href=""
-                   class="flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-cash-register w-6 mr-3"></i>
-                    <span class="font-medium">Bán hàng (POS)</span>
+                <a href="{{ route('admin.pos.dashboard') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-cash-register w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Bán hàng (POS)</span>
                 </a>
             @endif
 
             <!-- Đăng xuất -->
-            <form method="POST" action="{{ route('logout') }}" class="mt-10">
+            <form method="POST" action="{{ route('logout') }}" class="mt-6 md:mt-10">
                 @csrf
-                <button type="submit"
-                        class="w-full flex items-center p-3 text-left text-red-200 hover:text-white hover:bg-red-600 rounded-lg transition">
-                    <i class="fas fa-sign-out-alt w-6 mr-3"></i>
-                    <span class="font-medium">Đăng xuất</span>
+                <button type="submit" onclick="closeMobileMenu()"
+                        class="nav-item w-full flex items-center p-3 text-left text-red-200 hover:text-white hover:bg-red-600 rounded-lg transition">
+                    <i class="fas fa-sign-out-alt w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Đăng xuất</span>
                 </button>
             </form>
         </nav>
     </div>
 
     <!-- Main Content -->
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex-1 flex flex-col overflow-hidden md:ml-0">
         <!-- Header -->
         <header class="bg-white shadow-sm border-b border-gray-200">
-            <div class="flex justify-between items-center px-6 py-4">
-                <div class="flex-1 max-w-xl">
+            <div class="flex justify-between items-center px-4 md:px-6 py-3 md:py-4">
+                <!-- Mobile Menu Button -->
+                <button onclick="toggleMobileMenu()" class="mobile-menu-btn md:hidden p-2 text-gray-600">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+
+                <div class="flex-1 max-w-xl mx-2 md:mx-0">
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                         <input type="text" placeholder="Tìm kiếm..."
-                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base">
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-4">
-                    <div class="text-right">
-                        <p class="font-medium">{{ Auth::user()->name }}</p>
+                <div class="flex items-center space-x-3 md:space-x-4">
+                    <div class="text-right hidden sm:block">
+                        <p class="font-medium text-sm md:text-base">{{ Auth::user()->name }}</p>
                         <p class="text-xs text-gray-500 capitalize">
                             {{ Str::replace('_', ' ', Auth::user()->role->name ?? 'user') }}
                         </p>
                     </div>
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm md:text-base">
                         {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                     </div>
                 </div>
@@ -184,7 +244,7 @@
         </header>
 
         <!-- Page Content -->
-        <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+        <main class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
             @yield('content')
         </main>
     </div>
@@ -196,6 +256,51 @@
         @yield('content')
     </div>
 @endauth
+
+<script>
+    // Mobile menu functions
+    function toggleMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+        document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+    }
+
+    function closeMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileOverlay');
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close menu when clicking on links (for mobile)
+    document.addEventListener('DOMContentLoaded', function() {
+        const navLinks = document.querySelectorAll('#sidebar a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth < 768) {
+                    closeMobileMenu();
+                }
+            });
+        });
+
+        // Close menu when pressing ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeMobileMenu();
+            }
+        });
+
+        // Close menu when window is resized to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                closeMobileMenu();
+            }
+        });
+    });
+</script>
 
 @yield('scripts')
 </body>

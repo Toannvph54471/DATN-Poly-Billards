@@ -276,8 +276,8 @@
                                             data-shift-id="{{ $shift->shift_id }}">
                                             <div class="font-semibold">{{ $shift->shift->name }}</div>
                                             <div class="shift-time">
-                                                {{ $shift->shift->start_time->format('H:i') }} -
-                                                {{ $shift->shift->end_time->format('H:i') }}
+                                                {{ \Carbon\Carbon::parse($shift->shift->start_time)->format('H:i') }} -
+                                                {{ \Carbon\Carbon::parse($shift->shift->end_time)->format('H:i') }}
                                             </div>
                                             <div class="text-xs mt-1 text-gray-500">
                                                 @switch($shift->status)

@@ -257,7 +257,7 @@
     <script>
         let countdown = 3;
         let countdownInterval;
-        const redirectUrl = '{{ route('admin.tables.index') }}';
+        const redirectUrl = '{{ route('admin.bills.index') }}';
 
         // Tự động in khi trang load
         document.addEventListener('DOMContentLoaded', function() {

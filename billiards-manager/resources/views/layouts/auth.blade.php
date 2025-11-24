@@ -75,6 +75,18 @@
             icon.classList.toggle('fa-bars');
             icon.classList.toggle('fa-times');
         });
+
+        // Prevent double submission
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function() {
+                const btn = this.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...';
+                }
+            });
+        });
     </script>
 
     @stack('scripts')

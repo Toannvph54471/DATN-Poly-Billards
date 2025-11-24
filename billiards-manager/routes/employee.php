@@ -2,8 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BillController;
-use App\Http\Controllers\TableController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\TableController;
+use App\Http\Controllers\BillDetailController;
+use App\Http\Controllers\BillTimeUsageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DashboardController;
 
@@ -21,17 +23,20 @@ Route::prefix('admin')
     ->middleware(['auth', 'role:admin,manager,employee'])
     ->group(function () {
 
-        // Dashboard cho nhân viên
+        // ============================
+        // DASHBOARD
+        // ============================
         Route::get('/pos-dashboard', [DashboardController::class, 'posDashboard'])->name('pos.dashboard');
 
         // ============================
-        // TABLE ACTIONS FOR STAFF
+        // TABLE MANAGEMENT & ACTIONS
         // ============================
         Route::prefix('tables')->name('tables.')->group(function () {
+            // Check in / Check out
             Route::post('/{id}/checkin', [TableController::class, 'checkin'])->name('checkin');
             Route::post('/{id}/checkout', [TableController::class, 'checkout'])->name('checkout');
             
-            // Employee có thể xem chi tiết bàn
+            // Xem chi tiết bàn
             Route::get('/{id}/detail', [TableController::class, 'showDetail'])->name('detail');
 
             // Simple dashboard cho POS
@@ -39,24 +44,30 @@ Route::prefix('admin')
         });
 
         // ============================
-        // BILL ACTIONS (POS functions)
+        // BILL MANAGEMENT (POS functions)
         // ============================
         Route::prefix('bills')->name('bills.')->group(function () {
             // Tạo bill
+
+            Route::get('/index', [BillController::class, 'index'])->name('index');
+            Route::get('/{id}/show', [BillController::class, 'show'])->name('show');
             Route::post('/create', [BillController::class, 'createBill'])->name('create');
             Route::post('/quick-create', [BillController::class, 'createQuickBill'])->name('quick-create');
 
-            // Thêm sản phẩm/combo
+            // Thêm sản phẩm/combo vào bill
             Route::post('/{id}/add-product', [BillController::class, 'addProductToBill'])->name('add-product');
             Route::post('/{id}/add-combo', [BillController::class, 'addComboToBill'])->name('add-combo');
 
-            // Quản lý thời gian
+            // Xóa sản phẩm khỏi bill
+            Route::delete('/{bill}/products/{billDetail}', [BillController::class, 'removeProductFromBill'])->name('remove-product');
+
+            // Quản lý thời gian chơi
             Route::post('/{id}/start-playing', [BillController::class, 'startPlaying'])->name('start-playing');
             Route::post('/{id}/pause', [BillController::class, 'pauseTime'])->name('pause');
             Route::post('/{id}/resume', [BillController::class, 'resumeTime'])->name('resume');
 
-            // Xóa sản phẩm
-            Route::delete('/{bill}/products/{billDetail}', [BillController::class, 'removeProductFromBill'])->name('remove-product');
+            // Cập nhật tổng tiền
+            Route::post('/{id}/update-total', [BillController::class, 'updateBillTotal'])->name('update-total');
 
             // Chuyển bàn
             Route::get('/{id}/transfer', [BillController::class, 'showTransferForm'])->name('transfer-form');
@@ -71,14 +82,18 @@ Route::prefix('admin')
         // PAYMENT ACTIONS (POS)
         // ============================
         Route::prefix('payments')->name('payments.')->group(function () {
+            // Hiển thị trang thanh toán
             Route::get('/{id}/payment', [PaymentController::class, 'showPayment'])->name('payment-page');
+            
+            // Xử lý thanh toán
             Route::post('/{id}/process', [PaymentController::class, 'processPayment'])->name('process-payment');
         });
 
         // ============================
-        // RESERVATION FOR EMPLOYEE
+        // RESERVATION MANAGEMENT
         // ============================
         Route::prefix('reservations')->name('reservations.')->group(function () {
+            // CRUD cơ bản
             Route::get('/', [ReservationController::class, 'index'])->name('index');
             Route::get('/create', [ReservationController::class, 'create'])->name('create');
             Route::post('/', [ReservationController::class, 'store'])->name('store');

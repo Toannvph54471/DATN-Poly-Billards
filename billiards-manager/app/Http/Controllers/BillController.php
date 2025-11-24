@@ -22,17 +22,35 @@ use Illuminate\Support\Str;
 
 class BillController extends Controller
 {
-    // ✅ Hàm hiển thị danh sách hóa đơn
-    public function index()
+   
+   public function index()
     {
-        $bill = Bill::latest()->paginate(10);
-        return view('admin.bills.index', compact('bill'));
+        $bills = Bill::with([
+            'table',
+            'staff',
+            'billTimeUsages',
+            'billDetails.product'
+        ])
+            ->latest()
+            ->paginate(10);
+
+        return view('admin.bills.index', compact('bills'));
     }
 
     // ✅ Hàm hiển thị chi tiết hóa đơn
-    public function show($id)
+   public function show($id)
     {
-        $bill = Bill::findOrFail($id);
+        $bill = Bill::with([
+            'table.tableRate',
+            'user',
+            'staff',
+            'billTimeUsages',
+            'billDetails.product.category',
+            'billDetails.combo.comboItems.product',
+            'payments'
+        ])
+            ->findOrFail($id);
+
         return view('admin.bills.show', compact('bill'));
     }
 

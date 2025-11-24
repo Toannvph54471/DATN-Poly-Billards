@@ -34,12 +34,21 @@ class ProductController extends Controller
             $query->where('status', $status);
         }
 
-        $totalProducts = Product::count();
-        $availableProducts = Product::where('status', 'Active')->count();
-        $unavailableProducts = Product::where('status', 'Inactive')->count();
-        $lowStockProducts = Product::whereColumn('stock_quantity', '<=', 'min_stock_level')->count();
+        // Optimize statistics with single query
+        $stats = Product::selectRaw('
+            COUNT(*) as total,
+            SUM(CASE WHEN status = "Active" THEN 1 ELSE 0 END) as available,
+            SUM(CASE WHEN status = "Inactive" THEN 1 ELSE 0 END) as unavailable,
+            SUM(CASE WHEN stock_quantity <= min_stock_level THEN 1 ELSE 0 END) as low_stock
+        ')->first();
 
-        $products = $query->orderBy('created_at', 'desc')->paginate(10);
+        $totalProducts = $stats->total ?? 0;
+        $availableProducts = $stats->available ?? 0;
+        $unavailableProducts = $stats->unavailable ?? 0;
+        $lowStockProducts = $stats->low_stock ?? 0;
+
+        // Add eager loading for category
+        $products = $query->with('category')->orderBy('created_at', 'desc')->paginate(10);
         $products->appends($request->all());
 
         $categories = Category::where('type', 'product')->pluck('name', 'id');
@@ -153,7 +162,8 @@ class ProductController extends Controller
 
     public function trashed()
     {
-        $products = Product::onlyTrashed()->paginate(10);
+        // Add eager loading for category
+        $products = Product::onlyTrashed()->with('category')->paginate(10);
         return view('admin.products.trashed', compact('products'));
     }
 
