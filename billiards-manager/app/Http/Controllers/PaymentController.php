@@ -47,7 +47,7 @@ class PaymentController extends Controller
     public function processPayment(Request $request, $billId)
     {
         $request->validate([
-            'payment_method' => 'required|string|in:cash,bank,card', // Sửa lại cho phù hợp với form
+            'payment_method' => 'required|string|in:cash,bank,card',
             'amount' => 'required|numeric|min:0',
             'cash_received' => 'nullable|numeric|min:0',
             'change_amount' => 'nullable|numeric|min:0',
@@ -58,7 +58,7 @@ class PaymentController extends Controller
             return DB::transaction(function () use ($request, $billId) {
                 $paymentMethod = $request->payment_method;
                 $note = $request->note;
-                $staffId = Auth::id(); // Lấy ID nhân viên hiện tại
+                $staffId = Auth::id(); // Lấy ID nhân viên thanh toán
 
                 // 1. Lấy bill - cho phép cả Open và quick status
                 $bill = Bill::with(['table.tableRate', 'billDetails.product', 'billDetails.combo'])
@@ -125,7 +125,7 @@ class PaymentController extends Controller
                 $discountAmount = $bill->discount_amount ?? 0;
                 $finalAmount = max(0, $totalAmount - $discountAmount);
 
-                // 6. Cập nhật bill - THÊM STAFF_ID
+                // 6. Cập nhật bill - KHÔNG CẬP NHẬT STAFF_ID (giữ nguyên nhân viên mở bàn)
                 $bill->update([
                     'end_time' => $isQuickBill ? $bill->end_time : $endTime,
                     'total_amount' => $totalAmount,
@@ -134,11 +134,11 @@ class PaymentController extends Controller
                     'payment_method' => $paymentMethod,
                     'payment_status' => 'Paid',
                     'status' => 'Closed',
-                    'staff_id' => $staffId, 
+                    // KHÔNG cập nhật staff_id ở đây để giữ nguyên nhân viên mở bàn
                     'note' => $note ?? $bill->note,
                 ]);
 
-                // 7. Lưu thanh toán vào bảng payments
+                // 7. Lưu thanh toán vào bảng payments - LƯU CẢ NHÂN VIÊN THANH TOÁN
                 Payment::create([
                     'bill_id' => $bill->id,
                     'amount' => $finalAmount,
@@ -149,7 +149,7 @@ class PaymentController extends Controller
                     'transaction_id' => 'BILL_' . $bill->bill_number . '_' . now()->format('YmdHis'),
                     'paid_at' => now(),
                     'completed_at' => now(),
-                    'processed_by' => $staffId, // Cũng lưu ở đây
+                    'processed_by' => $staffId, // Lưu nhân viên thanh toán ở đây
                     'note' => $note,
                     'payment_data' => json_encode([
                         'bill_number' => $bill->bill_number,
@@ -159,7 +159,10 @@ class PaymentController extends Controller
                         'time_price' => $timePrice,
                         'product_total' => $productTotal,
                         'discount' => $discountAmount,
-                        'staff_id' => $staffId, // Lưu thêm trong payment_data
+                        'opened_by_staff_id' => $bill->staff_id, // Lưu nhân viên mở bàn
+                        'closed_by_staff_id' => $staffId, // Lưu nhân viên thanh toán
+                        'opened_by_staff_name' => $bill->staff->name ?? 'N/A',
+                        'closed_by_staff_name' => Auth::user()->name,
                     ]),
                 ]);
 
@@ -169,23 +172,27 @@ class PaymentController extends Controller
                 // 9. Cập nhật báo cáo hàng ngày
                 $this->updateDailyReport($bill);
 
-                // 10. Log hoạt động - THÊM THÔNG TIN NHÂN VIÊN
+                // 10. Log hoạt động - GHI RÕ NHÂN VIÊN MỞ BÀN VÀ THANH TOÁN
                 Log::info('Thanh toán hóa đơn thành công', [
                     'bill_id' => $bill->id,
                     'bill_number' => $bill->bill_number,
                     'bill_type' => $isQuickBill ? 'quick' : 'regular',
                     'final_amount' => $finalAmount,
                     'payment_method' => $paymentMethod,
-                    'staff_id' => $staffId,
-                    'staff_name' => Auth::user()->name, // Log cả tên nhân viên
+                    'opened_by_staff_id' => $bill->staff_id,
+                    'opened_by_staff_name' => $bill->staff->name ?? 'N/A',
+                    'closed_by_staff_id' => $staffId,
+                    'closed_by_staff_name' => Auth::user()->name,
                     'auto_print' => $request->boolean('auto_print', true)
                 ]);
 
                 DB::commit();
 
-                // Redirect về trang bills index
-                return redirect()->route('admin.bills.index')
-                    ->with('success', 'Thanh toán thành công! Nhân viên: ' . Auth::user()->name);
+                return redirect()->route('admin.bills.print', [
+                    'id' => $bill->id,
+                    'auto_print' => 'true',
+                    'success' => 'Thanh toán thành công! Nhân viên thanh toán: ' . Auth::user()->name
+                ]);
             });
         } catch (Exception $e) {
             DB::rollBack();

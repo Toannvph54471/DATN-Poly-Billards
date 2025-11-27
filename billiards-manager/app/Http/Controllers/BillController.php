@@ -33,6 +33,14 @@ class BillController extends Controller
             ->latest()
             ->paginate(10);
 
+        // Đánh dấu hóa đơn mới (thanh toán trong vòng 5 phút)
+        $fiveMinutesAgo = now()->subMinutes(5);
+
+        foreach ($bills as $bill) {
+            $bill->is_new = $bill->payment_status === 'Paid' &&
+                $bill->updated_at > $fiveMinutesAgo;
+        }
+
         return view('admin.bills.index', compact('bills'));
     }
 

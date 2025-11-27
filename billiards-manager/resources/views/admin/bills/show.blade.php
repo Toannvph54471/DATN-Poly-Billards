@@ -32,18 +32,23 @@
                     <span class="text-gray-600">Bàn:</span>
                     <span class="font-medium">{{ $bill->table->table_name }} ({{ $bill->table->table_number }})</span>
                 </div>
+                {{-- Thông tin nhân viên tạo --}}
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Nhân viên phục vụ:</span>
-                    <span class="font-medium">{{ $bill->staff->name }}</span>
+                    <span class="text-gray-600">Nhân viên tạo:</span>
+                    <span class="font-medium text-blue-600">
+                        {{ $bill->staff->name ?? 'Chưa xác định' }}
+                    </span>
                 </div>
-                {{-- Thêm thông tin nhân viên thanh toán --}}
+                {{-- Thông tin nhân viên thanh toán --}}
                 <div class="flex justify-between">
                     <span class="text-gray-600">Nhân viên thanh toán:</span>
-                    <span class="font-medium">
-                        @if($bill->payments->count() > 0 && $bill->payments->first()->processed_by)
+                    <span class="font-medium text-green-600">
+                        @if($bill->processed_by && $bill->processedBy)
+                            {{ $bill->processedBy->name }}
+                        @elseif($bill->payments->count() > 0 && $bill->payments->first()->processed_by)
                             {{ $bill->payments->first()->processedBy->name ?? 'Chưa xác định' }}
                         @else
-                            Chưa thanh toán
+                            <span class="text-yellow-600">Chưa thanh toán</span>
                         @endif
                     </span>
                 </div>
@@ -99,14 +104,20 @@
                     </span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Thời gian bắt đầu:</span>
-                    <span class="font-medium">{{ \Carbon\Carbon::parse($bill->start_time)->format('d/m/Y H:i') }}</span>
+                    <span class="text-gray-600">Thời gian tạo:</span>
+                    <span class="font-medium">{{ \Carbon\Carbon::parse($bill->created_at)->format('d/m/Y H:i') }}</span>
                 </div>
-                {{-- Thêm thời gian thanh toán --}}
-                @if($bill->payments->count() > 0 && $bill->payments->first()->paid_at)
+                {{-- Thời gian thanh toán --}}
+                @if($bill->payment_status === 'Paid')
                 <div class="flex justify-between">
                     <span class="text-gray-600">Thời gian thanh toán:</span>
-                    <span class="font-medium">{{ \Carbon\Carbon::parse($bill->payments->first()->paid_at)->format('d/m/Y H:i') }}</span>
+                    <span class="font-medium text-green-600">
+                        @if($bill->payments->count() > 0 && $bill->payments->first()->paid_at)
+                            {{ \Carbon\Carbon::parse($bill->payments->first()->paid_at)->format('d/m/Y H:i') }}
+                        @else
+                            {{ \Carbon\Carbon::parse($bill->updated_at)->format('d/m/Y H:i') }}
+                        @endif
+                    </span>
                 </div>
                 @endif
             </div>
@@ -246,7 +257,9 @@
                             @endif
                         </td>
                         <td class="px-4 py-2">
-                            {{ $payment->processedBy->name ?? 'Hệ thống' }}
+                            <span class="font-medium text-green-600">
+                                {{ $payment->processedBy->name ?? 'Hệ thống' }}
+                            </span>
                         </td>
                     </tr>
                     @endforeach
@@ -272,6 +285,62 @@
                 <span class="text-gray-600 font-semibold">Thành tiền:</span>
                 <span class="font-bold text-lg text-blue-600">{{ number_format($bill->final_amount) }} ₫</span>
             </div>
+        </div>
+    </div>
+
+    {{-- Phần tóm tắt nhân viên --}}
+    <div class="border border-gray-200 rounded-lg p-4 mt-6 bg-gray-50">
+        <h3 class="font-semibold text-lg mb-3">Tóm tắt nhân viên xử lý</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex items-center p-3 bg-white rounded-lg border">
+                <div class="bg-blue-100 text-blue-600 p-3 rounded-lg mr-3">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Nhân viên tạo hóa đơn</p>
+                    <p class="font-semibold text-blue-600">{{ $bill->staff->name ?? 'Chưa xác định' }}</p>
+                    <p class="text-xs text-gray-400">Thời gian: {{ \Carbon\Carbon::parse($bill->created_at)->format('d/m/Y H:i') }}</p>
+                </div>
+            </div>
+            
+            @if($bill->payment_status === 'Paid')
+            <div class="flex items-center p-3 bg-white rounded-lg border">
+                <div class="bg-green-100 text-green-600 p-3 rounded-lg mr-3">
+                    <i class="fa-solid fa-cash-register"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Nhân viên thanh toán</p>
+                    <p class="font-semibold text-green-600">
+                        @if($bill->processed_by && $bill->processedBy)
+                            {{ $bill->processedBy->name }}
+                        @elseif($bill->payments->count() > 0 && $bill->payments->first()->processed_by)
+                            {{ $bill->payments->first()->processedBy->name ?? 'Chưa xác định' }}
+                        @else
+                            Chưa xác định
+                        @endif
+                    </p>
+                    <p class="text-xs text-gray-400">
+                        Thời gian: 
+                        @if($bill->payments->count() > 0 && $bill->payments->first()->paid_at)
+                            {{ \Carbon\Carbon::parse($bill->payments->first()->paid_at)->format('d/m/Y H:i') }}
+                        @else
+                            {{ \Carbon\Carbon::parse($bill->updated_at)->format('d/m/Y H:i') }}
+                        @endif
+                    </p>
+                </div>
+            </div>
+            @else
+            <div class="flex items-center p-3 bg-white rounded-lg border">
+                <div class="bg-yellow-100 text-yellow-600 p-3 rounded-lg mr-3">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Trạng thái thanh toán</p>
+                    <p class="font-semibold text-yellow-600">Chờ thanh toán</p>
+                    <p class="text-xs text-gray-400">Hóa đơn chưa được thanh toán</p>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>
