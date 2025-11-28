@@ -114,6 +114,10 @@
                 </thead>
                 <tbody id="bills-table-body">
                     @forelse ($bills as $bill)
+                        @php
+                            // Sử dụng cùng logic làm tròn như các trang khác
+                            $roundedFinalAmount = ceil($bill->final_amount / 1000) * 1000;
+                        @endphp
                         <tr class="border-t hover:bg-gray-50 transition-all duration-200 bill-row 
                               {{ $bill->is_new ? 'new-bill bg-blue-50 border-l-4 border-l-blue-500' : '' }}"
                             data-id="{{ $bill->id }}" data-status="{{ $bill->status }}"
@@ -136,7 +140,7 @@
                             </td>
                             <td class="px-4 py-3">{{ $bill->staff->name ?? 'N/A' }}</td>
                             <td class="px-4 py-3 font-medium">
-                                {{ number_format($bill->final_amount) }} ₫
+                                {{ number_format($roundedFinalAmount) }} ₫
                             </td>
                             <td class="px-4 py-3">
                                 <span
@@ -175,6 +179,12 @@
                                         class="text-blue-600 hover:text-blue-800 transition-colors bill-action"
                                         title="Xem chi tiết">
                                         <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    {{-- Nút in hóa đơn --}}
+                                    <a href="{{ route('admin.bills.print', $bill->id) }}" target="_blank"
+                                        class="text-purple-600 hover:text-purple-800 transition-colors bill-action"
+                                        title="In hóa đơn">
+                                        <i class="fa-solid fa-print"></i>
                                     </a>
                                     @if ($bill->status === 'Open')
                                         <a href="#"

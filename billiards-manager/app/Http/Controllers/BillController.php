@@ -64,11 +64,8 @@ class BillController extends Controller
     public function createBill(Request $request)
     {
         $request->validate([
-            'table_id' => 'required|exists:tables,id',
             'user_phone' => 'nullable|string',
             'user_name' => 'nullable|string|max:255',
-            'guest_count' => 'required|integer|min:1',
-            'reservation_id' => 'nullable|exists:reservations,id'
         ]);
 
         try {
@@ -1118,8 +1115,10 @@ class BillController extends Controller
                 'staff' => Auth::user()->name
             ];
 
-            // Kiểm tra nếu có redirect từ processPayment
-            if (session('redirect_after_print')) {
+            // CHỈ autoRedirect khi có redirect_after_print từ session (tức là từ processPayment)
+            $autoRedirect = session()->has('redirect_after_print');
+
+            if ($autoRedirect) {
                 $redirectUrl = session('redirect_after_print');
                 session()->forget('redirect_after_print');
 
@@ -1129,7 +1128,11 @@ class BillController extends Controller
                 ]));
             }
 
-            return view('admin.bills.print', $billData);
+            // KHÔNG autoRedirect khi in từ danh sách hóa đơn
+            return view('admin.bills.print', array_merge($billData, [
+                'autoRedirect' => false,
+                'redirectUrl' => route('admin.bills.index')
+            ]));
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Lỗi khi in hóa đơn: ' . $e->getMessage());
         }
