@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\Bill;
 use App\Models\BillDetail;
 use App\Models\BillTimeUsage;
-use App\Models\ComboTimeUsage;
 use App\Models\Payment;
+use App\Models\Promotion;
 use App\Models\DailyReport;
 use Carbon\Carbon;
 use Exception;
@@ -25,7 +26,7 @@ class PaymentController extends Controller
         $bill = Bill::with([
             'table',
             'user',
-            'staff', // Thêm quan hệ staff
+            'staff',
             'billDetails.product',
             'billDetails.combo'
         ])->findOrFail($id);
@@ -38,7 +39,417 @@ class PaymentController extends Controller
             ->where('is_combo_component', false)
             ->sum('total_price');
 
-        return view('admin.payments.payment', compact('bill', 'timeCost', 'productTotal'));
+        // Lấy danh sách mã giảm giá khả dụng
+        $availablePromotions = Promotion::where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('start_date')
+                    ->orWhere('start_date', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now());
+            })
+            ->get();
+
+        // Tính tổng tiền tạm tính
+        $totalAmount = $timeCost + $productTotal;
+
+        // Lấy thông tin khuyến mãi đã áp dụng (nếu có)
+        $appliedPromotion = null;
+        $discountAmount = $bill->discount_amount ?? 0;
+
+        // SỬA LẠI: Sử dụng phương thức extractPromotionInfo
+        if ($discountAmount > 0) {
+            $appliedPromotion = $this->extractPromotionInfo($bill->note);
+        }
+
+        $finalAmount = max(0, $totalAmount - $discountAmount);
+
+        return view('admin.payments.payment', compact(
+            'bill',
+            'timeCost',
+            'productTotal',
+            'availablePromotions',
+            'totalAmount',
+            'discountAmount',
+            'finalAmount',
+            'appliedPromotion'
+        ));
+    }
+
+    /**
+     * Trích xuất thông tin khuyến mãi từ note
+     */
+    private function extractPromotionInfo($note)
+    {
+        if (!$note) {
+            return null;
+        }
+
+        // Pattern để trích xuất thông tin khuyến mãi từ note
+        // Format: "Mã KM: CODE - Tên khuyến mãi"
+        if (preg_match('/Mã KM:\s*(\w+)\s*-\s*(.+?)(?:\s*\||$)/', $note, $matches)) {
+            return [
+                'code' => trim($matches[1]),
+                'name' => trim($matches[2])
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Kiểm tra mã giảm giá
+     */
+    public function checkPromotion(Request $request)
+    {
+        $request->validate([
+            'promotion_code' => 'required|string',
+            'bill_id' => 'required|exists:bills,id',
+        ]);
+
+        try {
+            $bill = Bill::with(['table', 'billDetails.product'])->find($request->bill_id);
+
+            if ($bill->payment_status !== 'Pending') {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Không thể áp dụng mã giảm giá cho hóa đơn đã thanh toán'
+                ]);
+            }
+
+            // Tính tổng tiền hiện tại
+            $timeCost = $this->calculateTimeCharge($bill);
+            $productTotal = BillDetail::where('bill_id', $bill->id)
+                ->where('is_combo_component', false)
+                ->sum('total_price');
+            $totalAmount = $timeCost + $productTotal;
+
+            $promotion = Promotion::where('promotion_code', $request->promotion_code)
+                ->where('status', 'active')
+                ->where(function ($query) {
+                    $query->whereNull('start_date')
+                        ->orWhere('start_date', '<=', now());
+                })
+                ->where(function ($query) {
+                    $query->whereNull('end_date')
+                        ->orWhere('end_date', '>=', now());
+                })
+                ->first();
+
+            if (!$promotion) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Mã khuyến mãi không tồn tại hoặc đã hết hạn'
+                ]);
+            }
+
+            // Kiểm tra điều kiện áp dụng
+            if (!$this->checkPromotionConditions($promotion, $bill, $totalAmount)) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Mã khuyến mãi không đáp ứng điều kiện áp dụng'
+                ]);
+            }
+
+            // Tính toán discount
+            $discountAmount = 0;
+            if ($promotion->discount_type === 'percent') {
+                $discountAmount = $totalAmount * ($promotion->discount_value / 100);
+            } else {
+                $discountAmount = min($promotion->discount_value, $totalAmount);
+            }
+
+            return response()->json([
+                'valid' => true,
+                'message' => 'Mã khuyến mãi hợp lệ',
+                'discount_amount' => $discountAmount,
+                'promotion' => [
+                    'name' => $promotion->name,
+                    'code' => $promotion->promotion_code,
+                ]
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Lỗi khi kiểm tra mã giảm giá: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Áp dụng mã giảm giá
+     */
+    public function applyPromotion(Request $request)
+    {
+        $request->validate([
+            'promotion_code' => 'required|string',
+            'bill_id' => 'required|exists:bills,id',
+        ]);
+
+        try {
+            $bill = Bill::with(['table', 'billDetails.product'])->find($request->bill_id);
+
+            if ($bill->payment_status !== 'Pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể áp dụng mã giảm giá cho hóa đơn đã thanh toán'
+                ]);
+            }
+
+            // Tính tổng tiền hiện tại
+            $timeCost = $this->calculateTimeCharge($bill);
+            $productTotal = BillDetail::where('bill_id', $bill->id)
+                ->where('is_combo_component', false)
+                ->sum('total_price');
+            $totalAmount = $timeCost + $productTotal;
+
+            $promotion = Promotion::where('promotion_code', $request->promotion_code)
+                ->where('status', 'active')
+                ->where(function ($query) {
+                    $query->whereNull('start_date')
+                        ->orWhere('start_date', '<=', now());
+                })
+                ->where(function ($query) {
+                    $query->whereNull('end_date')
+                        ->orWhere('end_date', '>=', now());
+                })
+                ->first();
+
+            if (!$promotion) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mã khuyến mãi không tồn tại hoặc đã hết hạn'
+                ]);
+            }
+
+            // Kiểm tra điều kiện áp dụng
+            if (!$this->checkPromotionConditions($promotion, $bill, $totalAmount)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mã khuyến mãi không đáp ứng điều kiện áp dụng'
+                ]);
+            }
+
+            // Tính toán discount
+            $discountAmount = 0;
+            if ($promotion->discount_type === 'percent') {
+                $discountAmount = $totalAmount * ($promotion->discount_value / 100);
+            } else {
+                $discountAmount = min($promotion->discount_value, $totalAmount);
+            }
+
+            // Tạo note mới với thông tin khuyến mãi
+            $promotionNote = "Mã KM: {$promotion->promotion_code} - {$promotion->name}";
+            $newNote = $promotionNote . ($bill->note ? " | {$bill->note}" : '');
+
+            // Cập nhật bill với discount_amount
+            $bill->update([
+                'discount_amount' => $discountAmount,
+                'final_amount' => $totalAmount - $discountAmount,
+                'note' => $newNote
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Áp dụng mã giảm giá thành công',
+                'discount_amount' => $discountAmount,
+                'final_amount' => $totalAmount - $discountAmount,
+                'promotion' => [
+                    'name' => $promotion->name,
+                    'code' => $promotion->promotion_code,
+                ]
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi áp dụng mã giảm giá: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Xóa mã giảm giá đã áp dụng
+     */
+    public function removePromotion(Request $request)
+    {
+        $request->validate([
+            'bill_id' => 'required|exists:bills,id',
+        ]);
+
+        try {
+            $bill = Bill::find($request->bill_id);
+
+            if ($bill->payment_status !== 'Pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể thay đổi mã giảm giá cho hóa đơn đã thanh toán'
+                ]);
+            }
+
+            // Tính lại tổng tiền
+            $timeCost = $this->calculateTimeCharge($bill);
+            $productTotal = BillDetail::where('bill_id', $bill->id)
+                ->where('is_combo_component', false)
+                ->sum('total_price');
+            $totalAmount = $timeCost + $productTotal;
+
+            // Xóa thông tin khuyến mãi khỏi note
+            $newNote = $this->removePromotionInfoFromNote($bill->note);
+
+            // Reset discount về 0
+            $bill->update([
+                'discount_amount' => 0,
+                'final_amount' => $totalAmount,
+                'note' => $newNote ?: null
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã xóa mã giảm giá',
+                'discount_amount' => 0,
+                'final_amount' => $totalAmount,
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi xóa mã giảm giá: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Xóa thông tin khuyến mãi từ note
+     */
+    private function removePromotionInfoFromNote($note)
+    {
+        if (!$note) {
+            return null;
+        }
+
+        // Xóa phần thông tin khuyến mãi khỏi note
+        $cleanedNote = preg_replace('/Mã KM:\s*\w+\s*-\s*[^|]+(\s*\|\s*)?/', '', $note);
+        $cleanedNote = trim($cleanedNote, ' |');
+
+        return $cleanedNote ?: null;
+    }
+
+    /**
+     * Kiểm tra điều kiện áp dụng khuyến mãi
+     */
+    private function checkPromotionConditions($promotion, $bill, $totalAmount)
+    {
+        // Kiểm tra thời gian
+        $now = now();
+        if ($promotion->start_date && $now < $promotion->start_date) {
+            return false;
+        }
+        if ($promotion->end_date && $now > $promotion->end_date) {
+            return false;
+        }
+
+        // Kiểm tra điều kiện thời gian chơi tối thiểu
+        if ($promotion->min_play_minutes) {
+            $playMinutes = $this->calculatePlayMinutes($bill);
+            if ($playMinutes < $promotion->min_play_minutes) {
+                return false;
+            }
+        }
+
+        // Kiểm tra điều kiện tổng tiền tối thiểu
+        if ($promotion->min_order_amount && $totalAmount < $promotion->min_order_amount) {
+            return false;
+        }
+
+        // Kiểm tra áp dụng cho combo
+        if ($promotion->applies_to_combo) {
+            $hasCombo = BillDetail::where('bill_id', $bill->id)
+                ->whereNotNull('combo_id')
+                ->exists();
+            if (!$hasCombo) {
+                return false;
+            }
+        }
+
+        // Kiểm tra áp dụng cho time combo
+        if ($promotion->applies_to_time_combo) {
+            $hasTimeCombo = BillDetail::where('bill_id', $bill->id)
+                ->whereHas('combo', function ($query) {
+                    $query->where('is_time_combo', true);
+                })
+                ->exists();
+            if (!$hasTimeCombo) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Tính số phút chơi
+     */
+    private function calculatePlayMinutes($bill)
+    {
+        $timeUsage = BillTimeUsage::where('bill_id', $bill->id)->first();
+        if (!$timeUsage) {
+            return 0;
+        }
+
+        $startTime = Carbon::parse($timeUsage->start_time);
+        $endTime = $timeUsage->end_time ? Carbon::parse($timeUsage->end_time) : now();
+
+        $totalMinutes = $startTime->diffInMinutes($endTime);
+        $pausedMinutes = $timeUsage->paused_duration ?? 0;
+
+        return max(0, $totalMinutes - $pausedMinutes);
+    }
+
+    /**
+     * Tính tiền giờ chơi
+     */
+    private function calculateTimeCharge(Bill $bill)
+    {
+        $totalTimeCost = 0;
+
+        // 1. Tính tiền giờ thường đã kết thúc
+        $endedRegularTime = BillTimeUsage::where('bill_id', $bill->id)
+            ->whereNotNull('end_time')
+            ->get();
+
+        foreach ($endedRegularTime as $timeUsage) {
+            $totalTimeCost += $timeUsage->total_price ?? 0;
+        }
+
+        // 2. Tính tiền giờ thường đang chạy
+        $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
+            ->whereNull('end_time')
+            ->get();
+
+        foreach ($activeRegularTime as $timeUsage) {
+            $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
+            $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
+
+            $roundedMinutes = ceil($effectiveMinutes);
+            $timeCost = ($timeUsage->hourly_rate / 60) * max(0, $roundedMinutes);
+
+            $totalTimeCost += $timeCost;
+        }
+
+        return $totalTimeCost;
+    }
+
+    /**
+     * Tính số phút đã trôi qua
+     */
+    private function calculateElapsedMinutes(BillTimeUsage $timeUsage): int
+    {
+        if ($timeUsage->paused_at) {
+            return Carbon::parse($timeUsage->start_time)
+                ->diffInMinutes(Carbon::createFromTimestamp($timeUsage->paused_at));
+        } else {
+            return Carbon::parse($timeUsage->start_time)->diffInMinutes(now());
+        }
     }
 
     /**
@@ -47,10 +458,9 @@ class PaymentController extends Controller
     public function processPayment(Request $request, $billId)
     {
         $request->validate([
-            'payment_method' => 'required|string|in:cash,bank,card', // Sửa lại cho phù hợp với form
+            'payment_method' => 'required|string|in:cash,bank,card',
             'amount' => 'required|numeric|min:0',
-            'cash_received' => 'nullable|numeric|min:0',
-            'change_amount' => 'nullable|numeric|min:0',
+            'promotion_code' => 'nullable|string',
             'note' => 'nullable|string|max:500',
         ]);
 
@@ -58,32 +468,30 @@ class PaymentController extends Controller
             return DB::transaction(function () use ($request, $billId) {
                 $paymentMethod = $request->payment_method;
                 $note = $request->note;
-                $staffId = Auth::id(); // Lấy ID nhân viên hiện tại
+                $staffId = Auth::id();
 
-                // 1. Lấy bill - cho phép cả Open và quick status
-                $bill = Bill::with(['table.tableRate', 'billDetails.product', 'billDetails.combo'])
+                // 1. Lấy bill
+                $bill = Bill::with(['table.tableRate', 'billDetails.product', 'billDetails.combo', 'staff'])
                     ->whereIn('status', ['Open', 'quick'])
                     ->where('payment_status', 'Pending')
                     ->findOrFail($billId);
 
                 $isQuickBill = $bill->status === 'quick';
 
-                // 2. Xử lý thời gian chơi (chỉ cho bill Open, không xử lý cho quick)
+                // 2. Xử lý thời gian chơi
                 $timePrice = 0;
                 $totalMinutesPlayed = 0;
                 $endTime = now();
 
                 if (!$isQuickBill) {
-                    // TÌM BillTimeUsage
                     $timeUsage = BillTimeUsage::where('bill_id', $bill->id)
                         ->whereNull('end_time')
                         ->first();
 
                     if ($timeUsage) {
-                        // Có BillTimeUsage đang chạy -> tính tiền giờ
                         $startTime = Carbon::parse($timeUsage->start_time);
                         $totalMinutesPlayed = $startTime->diffInMinutes($endTime);
-// Trừ thời gian pause nếu có
+
                         if ($timeUsage->paused_duration) {
                             $totalMinutesPlayed -= $timeUsage->paused_duration;
                         }
@@ -91,40 +499,36 @@ class PaymentController extends Controller
                         $hourlyRate = $timeUsage->hourly_rate ?? ($bill->table->tableRate->hourly_rate ?? 0);
                         $timePrice = round(($totalMinutesPlayed / 60) * $hourlyRate, 2);
 
-                        // Cập nhật BillTimeUsage
                         $timeUsage->update([
                             'end_time' => $endTime,
                             'duration_minutes' => $totalMinutesPlayed,
                             'total_price' => $timePrice,
                         ]);
                     } else {
-                        // Không có BillTimeUsage đang chạy, kiểm tra xem có BillTimeUsage đã kết thúc không
                         $endedTimeUsage = BillTimeUsage::where('bill_id', $bill->id)
                             ->whereNotNull('end_time')
                             ->first();
 
                         if ($endedTimeUsage) {
-                            // Sử dụng giá trị từ BillTimeUsage đã kết thúc
                             $timePrice = $endedTimeUsage->total_price ?? 0;
                             $totalMinutesPlayed = $endedTimeUsage->duration_minutes ?? 0;
                         }
-                        // Nếu không có cả hai, timePrice vẫn = 0 (trường hợp bill chưa tính giờ)
                     }
                 }
 
-                // 3. Tính tiền sản phẩm (không tính thành phần combo)
+                // 3. Tính tiền sản phẩm
                 $productTotal = $bill->billDetails()
                     ->where('is_combo_component', 0)
                     ->sum('total_price');
 
-                // 4. Tổng tiền trước giảm giá
-                $totalAmount = $isQuickBill ? $productTotal : ($timePrice + $productTotal);
-
-                // 5. Lấy discount amount từ bill (nếu có)
+                // 4. Xử lý khuyến mãi - SỬ DỤNG DISCOUNT_AMOUNT CÓ SẴN
                 $discountAmount = $bill->discount_amount ?? 0;
+
+                // 5. Tổng tiền và final amount
+                $totalAmount = $isQuickBill ? $productTotal : ($timePrice + $productTotal);
                 $finalAmount = max(0, $totalAmount - $discountAmount);
 
-                // 6. Cập nhật bill - THÊM STAFF_ID
+                // 6. Cập nhật bill
                 $bill->update([
                     'end_time' => $isQuickBill ? $bill->end_time : $endTime,
                     'total_amount' => $totalAmount,
@@ -133,11 +537,10 @@ class PaymentController extends Controller
                     'payment_method' => $paymentMethod,
                     'payment_status' => 'Paid',
                     'status' => 'Closed',
-                    'staff_id' => $staffId, 
                     'note' => $note ?? $bill->note,
                 ]);
 
-                // 7. Lưu thanh toán vào bảng payments
+                // 7. Lưu thanh toán
                 Payment::create([
                     'bill_id' => $bill->id,
                     'amount' => $finalAmount,
@@ -148,7 +551,7 @@ class PaymentController extends Controller
                     'transaction_id' => 'BILL_' . $bill->bill_number . '_' . now()->format('YmdHis'),
                     'paid_at' => now(),
                     'completed_at' => now(),
-                    'processed_by' => $staffId, // Cũng lưu ở đây
+                    'processed_by' => $staffId,
                     'note' => $note,
                     'payment_data' => json_encode([
                         'bill_number' => $bill->bill_number,
@@ -158,7 +561,10 @@ class PaymentController extends Controller
                         'time_price' => $timePrice,
                         'product_total' => $productTotal,
                         'discount' => $discountAmount,
-                        'staff_id' => $staffId, // Lưu thêm trong payment_data
+                        'opened_by_staff_id' => $bill->staff_id,
+                        'closed_by_staff_id' => $staffId,
+                        'opened_by_staff_name' => $bill->staff->name ?? 'N/A',
+                        'closed_by_staff_name' => Auth::user()->name,
                     ]),
                 ]);
 
@@ -168,23 +574,13 @@ class PaymentController extends Controller
                 // 9. Cập nhật báo cáo hàng ngày
                 $this->updateDailyReport($bill);
 
-                // 10. Log hoạt động - THÊM THÔNG TIN NHÂN VIÊN
-                Log::info('Thanh toán hóa đơn thành công', [
-                    'bill_id' => $bill->id,
-                    'bill_number' => $bill->bill_number,
-                    'bill_type' => $isQuickBill ? 'quick' : 'regular',
-                    'final_amount' => $finalAmount,
-                    'payment_method' => $paymentMethod,
-                    'staff_id' => $staffId,
-                    'staff_name' => Auth::user()->name, // Log cả tên nhân viên
-                    'auto_print' => $request->boolean('auto_print', true)
-                ]);
-
                 DB::commit();
 
-                // Redirect về trang bills index
-                return redirect()->route('admin.bills.index')
-                    ->with('success', 'Thanh toán thành công! Nhân viên: ' . Auth::user()->name);
+                return redirect()->route('admin.bills.print', [
+                    'id' => $bill->id,
+                    'auto_print' => 'true',
+                    'success' => 'Thanh toán thành công! Nhân viên thanh toán: ' . Auth::user()->name
+                ]);
             });
         } catch (Exception $e) {
             DB::rollBack();
@@ -229,58 +625,115 @@ class PaymentController extends Controller
     }
 
     /**
-     * Tính tiền giờ chơi (phương thức hỗ trợ)
+     * In hóa đơn
      */
-    private function calculateTimeCharge(Bill $bill)
+    public function printBill($id)
     {
-        $totalTimeCost = 0;
+        try {
+            $bill = Bill::with([
+                'table',
+                'user',
+                'billDetails.product',
+                'billDetails.combo',
+                'billTimeUsages',
+                'comboTimeUsages.combo'
+            ])->findOrFail($id);
 
-        // 1. Tính tiền giờ thường đã kết thúc (bao gồm cả khi chuyển sang combo)
-        $endedRegularTime = BillTimeUsage::where('bill_id', $bill->id)
-            ->whereNotNull('end_time')
-            ->get();
+            // Tính toán chi phí với thông tin chi tiết
+            $timeDetails = $this->calculateTimeChargeDetailed($bill);
+            $timeCost = $timeDetails['totalCost'];
 
-        foreach ($endedRegularTime as $timeUsage) {
-            $totalTimeCost += $timeUsage->total_price ?? 0;
-        }
+            $productTotal = BillDetail::where('bill_id', $bill->id)
+                ->where('is_combo_component', false)
+                ->sum('total_price');
 
-        // 2. Tính tiền giờ thường đang chạy hoặc tạm dừng (nếu không có combo active)
-        $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
-            ->where('is_expired', false)
-            ->where('remaining_minutes', '>', 0)
-            ->first();
+            $totalAmount = $timeCost + $productTotal;
 
-        // Chỉ tính giờ thường nếu không có combo active
-        if (!$activeComboTime) {
-            $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
-                ->whereNull('end_time')
-                ->get();
+            // LẤY THÔNG TIN KHUYẾN MÃI TỪ BILL
+            $discountAmount = $bill->discount_amount ?? 0;
+            $finalAmount = $totalAmount - $discountAmount;
 
-            foreach ($activeRegularTime as $timeUsage) {
-                $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
-                $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
+            // Lấy thông tin khuyến mãi từ note (nếu có)
+            $promotionInfo = $this->extractPromotionInfo($bill->note);
 
-                // LÀM TRÒN PHÚT: làm tròn lên đến phút
-                $roundedMinutes = ceil($effectiveMinutes);
-                $timeCost = ($timeUsage->hourly_rate / 60) * max(0, $roundedMinutes);
+            // Dữ liệu cho bill
+            $billData = [
+                'bill' => $bill,
+                'timeCost' => $timeCost,
+                'timeDetails' => $timeDetails,
+                'productTotal' => $productTotal,
+                'totalAmount' => $totalAmount,
+                'finalAmount' => $finalAmount,
+                'discountAmount' => $discountAmount,
+                'promotionInfo' => $promotionInfo,
+                'printTime' => now()->format('H:i d/m/Y'),
+                'staff' => Auth::user()->name
+            ];
 
-                $totalTimeCost += $timeCost;
+            // Auto redirect logic
+            $autoRedirect = session()->has('redirect_after_print');
+            if ($autoRedirect) {
+                $redirectUrl = session('redirect_after_print');
+                session()->forget('redirect_after_print');
+
+                return view('admin.bills.print', array_merge($billData, [
+                    'autoRedirect' => true,
+                    'redirectUrl' => $redirectUrl
+                ]));
             }
-        }
 
-        return $totalTimeCost;
+            return view('admin.bills.print', array_merge($billData, [
+                'autoRedirect' => false,
+                'redirectUrl' => route('admin.bills.index')
+            ]));
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Lỗi khi in hóa đơn: ' . $e->getMessage());
+        }
     }
 
     /**
-     * Tính số phút đã trôi qua (phương thức hỗ trợ)
+     * Tính toán chi phí giờ chơi chi tiết
      */
-    private function calculateElapsedMinutes(BillTimeUsage $timeUsage): int
+    private function calculateTimeChargeDetailed(Bill $bill)
     {
-        if ($timeUsage->paused_at) {
-            return Carbon::parse($timeUsage->start_time)
-                ->diffInMinutes(Carbon::createFromTimestamp($timeUsage->paused_at));
-        } else {
-            return Carbon::parse($timeUsage->start_time)->diffInMinutes(now());
+        $totalCost = 0;
+        $totalMinutes = 0;
+        $hourlyRate = 0;
+        $sessions = [];
+
+        $timeUsages = BillTimeUsage::where('bill_id', $bill->id)->get();
+
+        foreach ($timeUsages as $timeUsage) {
+            if ($timeUsage->end_time) {
+                // Session đã kết thúc
+                $sessionMinutes = $timeUsage->duration_minutes ?? 0;
+                $sessionCost = $timeUsage->total_price ?? 0;
+            } else {
+                // Session đang chạy
+                $startTime = Carbon::parse($timeUsage->start_time);
+                $sessionMinutes = $startTime->diffInMinutes(now());
+                $sessionMinutes -= $timeUsage->paused_duration ?? 0;
+                $sessionCost = ($timeUsage->hourly_rate / 60) * max(0, $sessionMinutes);
+            }
+
+            $totalMinutes += $sessionMinutes;
+            $totalCost += $sessionCost;
+            $hourlyRate = $timeUsage->hourly_rate;
+
+            $sessions[] = [
+                'start_time' => $timeUsage->start_time,
+                'end_time' => $timeUsage->end_time,
+                'minutes' => $sessionMinutes,
+                'cost' => $sessionCost,
+                'hourly_rate' => $timeUsage->hourly_rate
+            ];
         }
+
+        return [
+            'totalCost' => $totalCost,
+            'total_minutes' => $totalMinutes,
+            'hourly_rate' => $hourlyRate,
+            'sessions' => $sessions
+        ];
     }
 }

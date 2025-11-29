@@ -81,6 +81,11 @@ class Bill extends BaseModel
             ->where('payment_status', 'Paid');
     }
 
+    public function promotion()
+    {
+        return $this->belongsTo(Promotion::class, 'promotion_id');
+    }
+
     public function billDetails()
     {
         return $this->hasMany(BillDetail::class);
