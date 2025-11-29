@@ -80,7 +80,7 @@ class EmployeeController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'role_id' => $role->id,
-                'password' => Hash::make('nhanvien'),
+                'password' => Hash::make('bia123'), // Default password requested by user
                 'status' => $request->status,
             ]);
 
@@ -111,7 +111,7 @@ class EmployeeController extends Controller
             Log::info('Created new employee: ' . json_encode($employee));
 
             return redirect()->route('admin.employees.index')
-                ->with('success', 'Nhân viên đã được thêm thành công.');
+                ->with('success', 'Thêm nhân viên thành công. Mật khẩu mặc định là: bia123');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating employee: ' . $e->getMessage());
@@ -241,6 +241,45 @@ class EmployeeController extends Controller
 
             return redirect()->back()
                 ->with('error', 'Có lỗi xảy ra khi xóa nhân viên.');
+        }
+    }
+    public function updateSalary(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'salary_type' => 'required|in:hourly,monthly',
+            'salary_rate' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $employee = Employee::findOrFail($id);
+            
+            $employee->update([
+                'salary_type' => $request->salary_type,
+                'salary_rate' => $request->salary_rate
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Cập nhật lương thành công',
+                'data' => [
+                    'salary_type' => $employee->salary_type,
+                    'salary_rate' => $employee->salary_rate
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error updating salary: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Có lỗi xảy ra khi cập nhật lương'
+            ], 500);
         }
     }
 }

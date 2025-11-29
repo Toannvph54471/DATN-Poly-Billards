@@ -64,9 +64,10 @@
             Đăng ký
         </button>
 
-        <p class="text-center text-sm text-gray-600 mt-4">
-            Đã có tài khoản?
-            <a href="{{ route('login') }}" class="text-amber-600 font-medium hover:underline">Đăng nhập</a>
-        </p>
     </form>
+
+    <p class="text-center text-sm text-gray-600 mt-4">
+        Đã có tài khoản?
+        <a href="{{ route('login') }}" class="text-amber-600 font-medium hover:underline">Đăng nhập</a>
+    </p>
 @endsection

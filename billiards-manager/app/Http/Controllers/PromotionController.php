@@ -6,7 +6,7 @@ use App\Models\Promotion;
 use Illuminate\Http\Request;
 
 class PromotionController extends Controller
-  {
+{
     // Hiển thị danh sách khuyến mãi
     public function index(Request $request)
     {
@@ -21,7 +21,6 @@ class PromotionController extends Controller
                 $q->where('promotion_code', 'like', "%{$search}%")
                     ->orWhere('name', 'like', "%{$search}%");
             });
-        
         }
 
         // Lọc theo loại giảm giá

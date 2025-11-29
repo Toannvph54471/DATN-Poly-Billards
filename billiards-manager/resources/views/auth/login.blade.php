@@ -55,9 +55,10 @@
             Đăng nhập
         </button>
 
-        <p class="text-center text-sm text-gray-600 mt-4">
-            Chưa có tài khoản?
-            <a href="{{ route('register') }}" class="text-amber-600 font-medium hover:underline">Đăng ký ngay</a>
-        </p>
     </form>
+
+    <p class="text-center text-sm text-gray-600 mt-4">
+        Chưa có tài khoản?
+        <a href="{{ route('register') }}" class="text-amber-600 font-medium hover:underline">Đăng ký ngay</a>
+    </p>
 @endsection
