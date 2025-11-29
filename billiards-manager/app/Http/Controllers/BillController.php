@@ -33,11 +33,19 @@ class BillController extends Controller
             ->latest()
             ->paginate(10);
 
+        // Đánh dấu hóa đơn mới (thanh toán trong vòng 5 phút)
+        $fiveMinutesAgo = now()->subMinutes(5);
+
+        foreach ($bills as $bill) {
+            $bill->is_new = $bill->payment_status === 'Paid' &&
+                $bill->updated_at > $fiveMinutesAgo;
+        }
+
         return view('admin.bills.index', compact('bills'));
     }
 
-    // ✅ Hàm hiển thị chi tiết hóa đơn
-   public function show($id)
+    // Hàm hiển thị chi tiết hóa đơn
+    public function show($id)
     {
         $bill = Bill::with([
             'table.tableRate',
@@ -46,24 +54,19 @@ class BillController extends Controller
             'billTimeUsages',
             'billDetails.product.category',
             'billDetails.combo.comboItems.product',
-            'payments'
+            'payments',
+            'promotion' // Thêm quan hệ promotion
         ])
             ->findOrFail($id);
 
         return view('admin.bills.show', compact('bill'));
     }
 
-    /**
-     * Tạo bill tính giờ thường
-     */
     public function createBill(Request $request)
     {
         $request->validate([
-            'table_id' => 'required|exists:tables,id',
             'user_phone' => 'nullable|string',
             'user_name' => 'nullable|string|max:255',
-            'guest_count' => 'required|integer|min:1',
-            'reservation_id' => 'nullable|exists:reservations,id'
         ]);
 
         try {
@@ -125,7 +128,7 @@ class BillController extends Controller
 
             // Khởi tạo tính giờ
             BillTimeUsage::create([
-'bill_id' => $bill->id,
+                'bill_id' => $bill->id,
                 'start_time' => now(),
                 'hourly_rate' => $hourlyRate
             ]);
@@ -228,7 +231,7 @@ class BillController extends Controller
             DB::commit();
 
             return redirect()->route('admin.tables.detail', $table->id)
-->with('success', 'Tạo hóa đơn bàn lẻ thành công');
+                ->with('success', 'Tạo hóa đơn bàn lẻ thành công');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Lỗi khi tạo hóa đơn: ' . $e->getMessage());
@@ -307,7 +310,7 @@ class BillController extends Controller
 
             // KHÔNG cho phép xóa nếu là combo
             if ($billDetail->combo_id) {
-return redirect()->back()->with('error', 'Không thể xóa combo bằng chức năng này. Vui lòng sử dụng chức năng xóa combo.');
+                return redirect()->back()->with('error', 'Không thể xóa combo bằng chức năng này. Vui lòng sử dụng chức năng xóa combo.');
             }
 
             // Chỉ xử lý với sản phẩm thông thường
@@ -382,7 +385,7 @@ return redirect()->back()->with('error', 'Không thể xóa combo bằng chức 
             // Xử lý các sản phẩm trong combo
             foreach ($combo->comboItems as $item) {
                 if ($item->product_id) {
-BillDetail::create([
+                    BillDetail::create([
                         'bill_id' => $bill->id,
                         'product_id' => $item->product_id,
                         'parent_bill_detail_id' => $comboDetail->id,
@@ -460,7 +463,7 @@ BillDetail::create([
             return redirect()->back()->with('success', 'Đã dừng combo thời gian. Bạn có thể bật giờ thường nếu cần.');
         } catch (\Exception $e) {
             DB::rollBack();
-Log::error('Error stopping combo time: ' . $e->getMessage());
+            Log::error('Error stopping combo time: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Lỗi khi dừng combo: ' . $e->getMessage());
         }
     }
@@ -542,7 +545,8 @@ Log::error('Error stopping combo time: ' . $e->getMessage());
             $stoppedComboTime = ComboTimeUsage::where('bill_id', $billId)
                 ->where('is_expired', true)
                 ->first();
-// TỰ ĐỘNG DỪNG COMBO KHI HẾT THỜI GIAN
+
+            // TỰ ĐỘNG DỪNG COMBO KHI HẾT THỜI GIAN
             if ($activeComboTime) {
                 $start = Carbon::parse($activeComboTime->start_time);
                 $elapsedMinutes = $start->diffInMinutes(now());
@@ -620,7 +624,8 @@ Log::error('Error stopping combo time: ' . $e->getMessage());
     {
         try {
             DB::beginTransaction();
-$bill = Bill::findOrFail($billId);
+
+            $bill = Bill::findOrFail($billId);
 
             // Chỉ cho phép nếu bill đang là quick
             if ($bill->status !== 'quick') {
@@ -707,7 +712,7 @@ $bill = Bill::findOrFail($billId);
     /**
      * Kích hoạt combo time
      */
-private function activateComboTime(Bill $bill, Combo $combo, BillDetail $comboDetail)
+    private function activateComboTime(Bill $bill, Combo $combo, BillDetail $comboDetail)
     {
         // Tính toán và lưu giá trị giờ thường đã sử dụng trước khi chuyển sang combo
         $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
@@ -788,7 +793,7 @@ private function activateComboTime(Bill $bill, Combo $combo, BillDetail $comboDe
 
         // Chỉ tính giờ thường nếu không có combo active
         if (!$activeComboTime) {
-$activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
+            $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
                 ->whereNull('end_time')
                 ->get();
 
@@ -877,7 +882,8 @@ $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
 
                 $sourceTable = $bill->table;
                 $targetTable = Table::findOrFail($request->target_table_id);
-// 2. Kiểm tra bàn đích có trống không
+
+                // 2. Kiểm tra bàn đích có trống không
                 if ($targetTable->status !== 'available') {
                     throw new \Exception('Bàn đích đang được sử dụng hoặc bảo trì');
                 }
@@ -941,7 +947,7 @@ $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
                     ]);
 
                     // Chuyển combo sang bàn mới và tiếp tục
-$activeComboTime->update([
+                    $activeComboTime->update([
                         'table_id' => $targetTable->id,
                         'start_time' => now(),
                         'end_time' => null
@@ -1015,7 +1021,7 @@ $activeComboTime->update([
             // Tính thời gian đã sử dụng ở bàn cũ
             $startTime = Carbon::parse($activeRegularTime->start_time);
             $elapsedMinutes = $startTime->diffInMinutes(now());
-$effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0);
+            $effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0);
 
             // Tính tiền giờ đã sử dụng ở bàn cũ
             $timeCost = ($sourceHourlyRate / 60) * max(0, $effectiveMinutes);
@@ -1096,21 +1102,31 @@ $effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0)
                 ->sum('total_price');
 
             $totalAmount = $timeCost + $productTotal;
-            $finalAmount = $totalAmount - $bill->discount_amount;
-// Dữ liệu cho bill
+
+            // SỬ DỤNG DISCOUNT_AMOUNT TỪ BILL (có thể là 0)
+            $discountAmount = $bill->discount_amount ?? 0;
+            $finalAmount = $totalAmount - $discountAmount;
+
+            // Lấy thông tin khuyến mãi từ note (nếu có)
+            $promotionInfo = $this->extractPromotionInfoFromNote($bill->note);
+
+            // Dữ liệu cho bill
             $billData = [
                 'bill' => $bill,
                 'timeCost' => $timeCost,
-                'timeDetails' => $timeDetails, // Thêm chi tiết giờ
+                'timeDetails' => $timeDetails,
                 'productTotal' => $productTotal,
                 'totalAmount' => $totalAmount,
                 'finalAmount' => $finalAmount,
+                'discountAmount' => $discountAmount,
+                'promotionInfo' => $promotionInfo,
                 'printTime' => now()->format('H:i d/m/Y'),
                 'staff' => Auth::user()->name
             ];
 
-            // Kiểm tra nếu có redirect từ processPayment
-            if (session('redirect_after_print')) {
+            // Auto redirect logic
+            $autoRedirect = session()->has('redirect_after_print');
+            if ($autoRedirect) {
                 $redirectUrl = session('redirect_after_print');
                 session()->forget('redirect_after_print');
 
@@ -1120,10 +1136,40 @@ $effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0)
                 ]));
             }
 
-            return view('admin.bills.print', $billData);
+            return view('admin.bills.print', array_merge($billData, [
+                'autoRedirect' => false,
+                'redirectUrl' => route('admin.bills.index')
+            ]));
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Lỗi khi in hóa đơn: ' . $e->getMessage());
         }
+    }
+
+    // Thêm phương thức trích xuất thông tin khuyến mãi từ note
+    private function extractPromotionInfoFromNote($note)
+    {
+        if (!$note) {
+            return null;
+        }
+
+        // Kiểm tra xem note có chứa thông tin khuyến mãi không
+        if (strpos($note, 'Mã KM:') !== false) {
+            $parts = explode(' - ', $note);
+            if (count($parts) >= 2) {
+                $codePart = $parts[0]; // "Mã KM: WELCOME10"
+                $namePart = $parts[1]; // "Giảm 10% cho KH mới"
+
+                // Lấy mã khuyến mãi
+                $code = str_replace('Mã KM: ', '', $codePart);
+
+                return [
+                    'code' => $code,
+                    'name' => $namePart
+                ];
+            }
+        }
+
+        return null;
     }
 
     public function calculateTimeChargeDetailed(Bill $bill)
@@ -1166,7 +1212,8 @@ $effectiveMinutes = $elapsedMinutes - ($activeRegularTime->paused_duration ?? 0)
 
             $timeDetails['totalCost'] += $sessionCost;
             $timeDetails['totalMinutes'] += $sessionMinutes;
-if ($timeUsage->hourly_rate > 0) {
+
+            if ($timeUsage->hourly_rate > 0) {
                 $timeDetails['hourlyRate'] = $timeUsage->hourly_rate;
             }
         }

@@ -86,10 +86,6 @@ class Bill extends BaseModel
         return $this->hasMany(BillDetail::class);
     }
 
-    public function payments(): HasMany
-    {
-        return $this->hasMany(Payment::class);
-    }
     
     public function billTimeUsages(): HasMany
     {
