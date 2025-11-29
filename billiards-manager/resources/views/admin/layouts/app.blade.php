@@ -82,22 +82,36 @@
 <div class="flex h-screen bg-gray-100 overflow-hidden">
     <!-- Sidebar -->
     <div id="sidebar" class="sidebar w-64 flex-shrink-0 text-white flex flex-col fixed md:relative h-full">
-        <!-- Logo -->
-        <div class="p-4 md:p-6 border-b border-blue-800 flex justify-between items-center md:block">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 md:w-10 md:h-10 bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-billiard-ball text-blue-600 text-lg md:text-xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-lg md:text-xl font-bold">Poly Billiards</h1>
-                    <p class="text-blue-200 text-xs">{{ Auth::user()->name }}</p>
+      <!-- Logo hoàn chỉnh với kích thước nhỏ hơn -->
+<div class="flex items-center space-x-2 p-4 border-b border-white/20">
+    <div class="relative">
+        <!-- Container hình vuông nhỏ hơn -->
+        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg flex items-center justify-center shadow-lg transform perspective-1000 rotate-6 hover:rotate-0 transition-transform duration-300 overflow-visible">
+            <!-- Viên bi đen với kích thước nhỏ hơn -->
+            <div class="w-8 h-8 bg-black rounded-full flex items-center justify-center relative border border-white shadow-inner">
+                <!-- Hiệu ứng phản chiếu trên viên bi -->
+                <div class="absolute top-0.5 left-1.5 w-2 h-1.5 bg-gray-400 rounded-full opacity-40 blur-sm"></div>
+                
+                <!-- Viên bi trắng nhỏ bên trong -->
+                <div class="absolute w-3 h-3 bg-white rounded-full opacity-90 flex items-center justify-center">
+                    <!-- Số 8 màu đen trên nền trắng -->
+                    <span class="text-black font-bold text-[10px]">8</span>
                 </div>
             </div>
-            <button onclick="closeMobileMenu()" class="md:hidden text-white p-1">
-                <i class="fas fa-times text-lg"></i>
-            </button>
         </div>
-
+        <!-- Hiệu ứng ánh sáng cam (nhỏ hơn) -->
+        <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-orange-300/50 rounded-full blur-sm"></div>
+        <!-- Hiệu ứng ánh sáng trắng (nhỏ hơn) -->
+        <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 bg-white rounded-full opacity-70"></div>
+    </div>
+    
+    <div>
+        <h1 class="text-xl font-black uppercase tracking-wider bg-gradient-to-r from-orange-600 via-amber-400 to-yellow-600 bg-clip-text text-transparent drop-shadow-md">
+            Poly Billiards
+        </h1>
+        <p class="text-amber-600 text-xs font-semibold tracking-wide">Đẳng cấp và đam mê</p>
+    </div>
+</div>
         <!-- Navigation -->
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
             @php
@@ -106,6 +120,15 @@
                 $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
             @endphp
 
+                        <!-- Menu cho Employee -->
+            @if($isStaff)
+                <a href="{{ route('admin.pos.dashboard') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-cash-register w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Bán hàng (POS)</span>
+                </a>
+            @endif
+            
             <!-- Menu cho Admin & Manager -->
             @if($isAdminOrManager)
                 <a href="{{ route('admin.dashboard') }}" onclick="closeMobileMenu()"
@@ -172,14 +195,7 @@
                 </a>
             @endif
 
-            <!-- Menu cho Employee -->
-            @if($isStaff)
-                <a href="{{ route('admin.pos.dashboard') }}" onclick="closeMobileMenu()"
-                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-cash-register w-5 md:w-6 mr-3"></i>
-                    <span class="font-medium text-sm md:text-base">Bán hàng (POS)</span>
-                </a>
-            @endif
+
 
             <!-- Đăng xuất -->
             <form method="POST" action="{{ route('logout') }}" class="mt-6 md:mt-10">
