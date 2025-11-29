@@ -115,6 +115,9 @@ Route::prefix('admin')
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/{id}/payment', [PaymentController::class, 'showPayment'])->name('payment-page');
             Route::post('/{id}/process', [PaymentController::class, 'processPayment'])->name('process-payment');
+            Route::post('/payments/check-promotion', [PaymentController::class, 'checkPromotion'])->name('check-promotion');
+            Route::post('/payments/apply-promotion', [PaymentController::class, 'applyPromotion'])->name('apply-promotion');
+            Route::post('/payments/remove-promotion', [PaymentController::class, 'removePromotion'])->name('remove-promotion');
         });
 
         // Products Management

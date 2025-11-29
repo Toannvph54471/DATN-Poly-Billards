@@ -1352,7 +1352,7 @@
                             <i class="fas fa-arrow-left"></i> <span class="desktop-only">Quay lại</span>
                         </a>
                     @elseif($userRole === 'employee')
-                        <a href="{{ route('admin.pos.dashboard') }}" class="back-btn">
+                        <a href="{{ route('admin.tables.simple-dashboard') }}" class="back-btn">
                             <i class="fas fa-arrow-left"></i> <span class="desktop-only">Quay lại</span>
                         </a>
                     @endif

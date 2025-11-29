@@ -44,7 +44,7 @@ class BillController extends Controller
         return view('admin.bills.index', compact('bills'));
     }
 
-    // ✅ Hàm hiển thị chi tiết hóa đơn
+    // Hàm hiển thị chi tiết hóa đơn
     public function show($id)
     {
         $bill = Bill::with([
@@ -54,7 +54,8 @@ class BillController extends Controller
             'billTimeUsages',
             'billDetails.product.category',
             'billDetails.combo.comboItems.product',
-            'payments'
+            'payments',
+            'promotion' // Thêm quan hệ promotion
         ])
             ->findOrFail($id);
 
@@ -1101,23 +1102,30 @@ class BillController extends Controller
                 ->sum('total_price');
 
             $totalAmount = $timeCost + $productTotal;
-            $finalAmount = $totalAmount - $bill->discount_amount;
+
+            // SỬ DỤNG DISCOUNT_AMOUNT TỪ BILL (có thể là 0)
+            $discountAmount = $bill->discount_amount ?? 0;
+            $finalAmount = $totalAmount - $discountAmount;
+
+            // Lấy thông tin khuyến mãi từ note (nếu có)
+            $promotionInfo = $this->extractPromotionInfoFromNote($bill->note);
 
             // Dữ liệu cho bill
             $billData = [
                 'bill' => $bill,
                 'timeCost' => $timeCost,
-                'timeDetails' => $timeDetails, // Thêm chi tiết giờ
+                'timeDetails' => $timeDetails,
                 'productTotal' => $productTotal,
                 'totalAmount' => $totalAmount,
                 'finalAmount' => $finalAmount,
+                'discountAmount' => $discountAmount,
+                'promotionInfo' => $promotionInfo,
                 'printTime' => now()->format('H:i d/m/Y'),
                 'staff' => Auth::user()->name
             ];
 
-            // CHỈ autoRedirect khi có redirect_after_print từ session (tức là từ processPayment)
+            // Auto redirect logic
             $autoRedirect = session()->has('redirect_after_print');
-
             if ($autoRedirect) {
                 $redirectUrl = session('redirect_after_print');
                 session()->forget('redirect_after_print');
@@ -1128,7 +1136,6 @@ class BillController extends Controller
                 ]));
             }
 
-            // KHÔNG autoRedirect khi in từ danh sách hóa đơn
             return view('admin.bills.print', array_merge($billData, [
                 'autoRedirect' => false,
                 'redirectUrl' => route('admin.bills.index')
@@ -1136,6 +1143,33 @@ class BillController extends Controller
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Lỗi khi in hóa đơn: ' . $e->getMessage());
         }
+    }
+
+    // Thêm phương thức trích xuất thông tin khuyến mãi từ note
+    private function extractPromotionInfoFromNote($note)
+    {
+        if (!$note) {
+            return null;
+        }
+
+        // Kiểm tra xem note có chứa thông tin khuyến mãi không
+        if (strpos($note, 'Mã KM:') !== false) {
+            $parts = explode(' - ', $note);
+            if (count($parts) >= 2) {
+                $codePart = $parts[0]; // "Mã KM: WELCOME10"
+                $namePart = $parts[1]; // "Giảm 10% cho KH mới"
+
+                // Lấy mã khuyến mãi
+                $code = str_replace('Mã KM: ', '', $codePart);
+
+                return [
+                    'code' => $code,
+                    'name' => $namePart
+                ];
+            }
+        }
+
+        return null;
     }
 
     public function calculateTimeChargeDetailed(Bill $bill)
