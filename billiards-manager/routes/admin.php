@@ -164,7 +164,7 @@ Route::prefix('admin')
     });
 
     // Attendance (Admin & Manager)
-    Route::get('/attendance/qr-code', [AttendanceController::class, 'showQrCode'])->name('attendance.qr_code');
+    // Route::get('/attendance/qr-code', [AttendanceController::class, 'showQrCode'])->name('attendance.qr_code');
     // Route::get('/attendance/scan', [AttendanceController::class, 'scanQrCode'])->name('attendance.scan'); // Moved below for Employee access
     Route::get('/attendance/monitor', [AttendanceController::class, 'monitor'])->name('attendance.monitor');
     Route::get('/attendance/report', [App\Http\Controllers\AttendanceController::class, 'report'])->name('attendance.report');
