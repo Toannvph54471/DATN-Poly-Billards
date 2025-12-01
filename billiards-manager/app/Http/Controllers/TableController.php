@@ -180,7 +180,6 @@ class TableController extends Controller
         return redirect()->route('admin.tables.trashed')->with('success', 'Khôi phục bàn thành công!');
     }
 
-    // Thêm vào controller
     public function showDetail($id)
     {
         $table = Table::with([
@@ -202,12 +201,30 @@ class TableController extends Controller
 
         $combos = Combo::where('status', 'active')->get();
         $products = Product::where('status', 'Active')->get();
-        // dd($products);
 
         // Tính toán thời gian hiện tại
         $timeInfo = [];
         if ($table->currentBill && in_array($table->currentBill->status, ['Open', 'quick'])) {
             $timeInfo = $this->calculateCurrentTimeInfo($table);
+
+            // KIỂM TRA VÀ XỬ LÝ COMBO ĐÃ HẾT THỜI GIAN
+            if ($table->currentBill->comboTimeUsages->count() > 0) {
+                $activeCombo = $table->currentBill->comboTimeUsages
+                    ->where('is_expired', false)
+                    ->where('remaining_minutes', '>', 0)
+                    ->first();
+
+                $expiredCombo = $table->currentBill->comboTimeUsages
+                    ->where('is_expired', true)
+                    ->first();
+
+                // Nếu có combo đã hết thời gian
+                if (!$activeCombo && $expiredCombo) {
+                    $timeInfo['mode'] = 'combo_ended';
+                    $timeInfo['needs_switch'] = true;
+                    $timeInfo['is_auto_stopped'] = is_null($expiredCombo->end_time) ? false : true;
+                }
+            }
 
             // Cập nhật tổng tiền real-time (chỉ cho bàn tính giờ)
             if ($table->currentBill->status === 'Open') {
