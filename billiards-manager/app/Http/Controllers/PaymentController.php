@@ -546,7 +546,7 @@ class PaymentController extends Controller
                     'amount' => $finalAmount,
                     'currency' => 'VND',
                     'payment_method' => $paymentMethod,
-'payment_type' => 'full',
+                    'payment_type' => 'full',
                     'status' => 'completed',
                     'transaction_id' => 'BILL_' . $bill->bill_number . '_' . now()->format('YmdHis'),
                     'paid_at' => now(),
