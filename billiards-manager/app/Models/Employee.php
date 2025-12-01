@@ -48,6 +48,11 @@ class Employee extends BaseModel
         return $this->hasMany(EmployeeShift::class, 'employee_id');
     }
 
+    public function shifts()
+    {
+        return $this->hasMany(EmployeeShift::class, 'employee_id');
+    }
+
     public function attendances()
     {
         return $this->hasMany(Attendance::class);

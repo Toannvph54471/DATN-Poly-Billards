@@ -65,7 +65,6 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
     'timezone' => env('APP_TIMEZONE', 'Asia/Ho_Chi_Minh'),
 
     /*

@@ -91,6 +91,7 @@ class Bill extends BaseModel
         return $this->hasMany(BillDetail::class);
     }
 
+    
     public function billTimeUsages(): HasMany
     {
         return $this->hasMany(BillTimeUsage::class);

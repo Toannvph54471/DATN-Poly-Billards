@@ -99,24 +99,17 @@ class BillController extends Controller
                 $this->updateCustomerType($user);
             }
 
-            // Xử lý reservation nếu có
-            $reservation = null;
-            if ($request->reservation_id) {
-                $reservation = Reservation::find($request->reservation_id);
-            }
-
             // Tạo bill number
             $billNumber = 'BILL' . date('Ymd') . str_pad(Bill::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
 
             // Lấy hourly rate
             $hourlyRate = $this->getTableHourlyRate($table);
-
+            
             // Tạo bill
             $bill = Bill::create([
                 'bill_number' => $billNumber,
                 'table_id' => $table->id,
                 'user_id' => $user?->id,
-                'reservation_id' => $reservation?->id,
                 'staff_id' => Auth::id(),
                 'start_time' => now(),
                 'status' => 'Open',
@@ -125,7 +118,7 @@ class BillController extends Controller
                 'discount_amount' => 0,
                 'final_amount' => 0
             ]);
-
+            
             // Khởi tạo tính giờ
             BillTimeUsage::create([
                 'bill_id' => $bill->id,
@@ -135,14 +128,6 @@ class BillController extends Controller
 
             // Cập nhật trạng thái bàn
             $table->update(['status' => 'occupied']);
-
-            // Cập nhật reservation nếu có
-            if ($reservation) {
-                $reservation->update([
-                    'status' => 'CheckedIn',
-                    'checked_in_at' => now()
-                ]);
-            }
 
             DB::commit();
 

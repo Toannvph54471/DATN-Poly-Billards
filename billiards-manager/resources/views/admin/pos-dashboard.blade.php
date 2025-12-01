@@ -378,19 +378,6 @@
                 </div>
                 <div class="absolute bottom-0 left-0 w-full h-1 bg-purple-400 progress-bar"></div>
             </div>
-
-            <!-- Reservations -->
-            <div class="stat-card bg-gradient-to-r from-pink-500 to-rose-600 text-white p-3 md:p-4 rounded-lg shadow-lg animate-float-in"
-                data-delay="300">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-pink-100 text-xs md:text-sm">Đặt bàn hôm nay</p>
-                        <h3 class="text-lg md:text-2xl font-bold mt-1">{{ $stats['pending_reservations'] ?? 0 }}</h3>
-                    </div>
-                    <i class="fas fa-calendar-check text-lg md:text-2xl opacity-80"></i>
-                </div>
-                <div class="absolute bottom-0 left-0 w-full h-1 bg-pink-400 progress-bar"></div>
-            </div>
         </div>
 
         <!-- Main Grid -->

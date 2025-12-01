@@ -17,18 +17,22 @@ class Payment extends Model
 
     const TYPE_DEPOSIT = 'deposit';
     const TYPE_FULL = 'full';
+    const TYPE_PARTIAL = 'partial';
+    const TYPE_REMAINING = 'remaining';
+    const TYPE_REFUND = 'refund';
 
     const METHOD_CASH = 'cash';
-    const METHOD_BANK = 'bank';
     const METHOD_CARD = 'card';
     const METHOD_VNPAY = 'vnpay';
     const METHOD_MOMO = 'momo';
+    const METHOD_ZALOPAY = 'zalopay';
+    const METHOD_BANK_TRANSFER = 'bank_transfer';
 
-    // === FILLABLE - CHỈ GIỮ CÁC TRƯỜNG CÓ TRONG DATABASE ===
-    // app/Models/Payment.php
-
+    // === FILLABLE ===
     protected $fillable = [
         'bill_id',
+        'payable_type',
+        'payable_id',
         'amount',
         'currency',
         'payment_method',
@@ -39,14 +43,11 @@ class Payment extends Model
         'payment_data',
         'paid_at',
         'completed_at',
-        'processed_by',
+        'failed_at',
+        'refunded_at',
         'note',
+        'processed_by',
     ];
-
-    public function bill()
-    {
-        return $this->belongsTo(\App\Models\Bill::class);
-    }
 
     // === CASTS ===
     protected $casts = [
@@ -59,10 +60,15 @@ class Payment extends Model
         'deleted_at' => 'datetime',
     ];
 
-    // === RELATIONSHIPS - CHỈ GIỮ QUAN HỆ VỚI RESERVATION ===
+    // === RELATIONSHIPS ===
+
     public function reservation()
     {
         return $this->belongsTo(Reservation::class);
+    }
+    public function payable()
+    {
+        return $this->morphTo();
     }
 
     public function processor()
@@ -86,10 +92,11 @@ class Payment extends Model
     {
         return match ($this->payment_method) {
             self::METHOD_CASH => 'Tiền mặt',
-            self::METHOD_BANK => 'Chuyển khoản',
-            self::METHOD_CARD => 'Thẻ',
+            self::METHOD_CARD => 'Thẻ tín dụng',
             self::METHOD_VNPAY => 'VNPay',
             self::METHOD_MOMO => 'Momo',
+            self::METHOD_ZALOPAY => 'ZaloPay',
+            self::METHOD_BANK_TRANSFER => 'Chuyển khoản',
             default => ucfirst($this->payment_method),
         };
     }
@@ -98,7 +105,10 @@ class Payment extends Model
     {
         return match ($this->payment_type) {
             self::TYPE_DEPOSIT => 'Đặt cọc',
-            self::TYPE_FULL => 'Thanh toán toàn bộ',
+            self::TYPE_FULL => 'Thanh toán đủ',
+            self::TYPE_PARTIAL => 'Thanh toán 1 phần',
+            self::TYPE_REMAINING => 'Thanh toán còn lại',
+            self::TYPE_REFUND => 'Hoàn tiền',
             default => ucfirst($this->payment_type),
         };
     }
@@ -119,7 +129,29 @@ class Payment extends Model
         return $this->update([
             'status' => self::STATUS_COMPLETED,
             'completed_at' => now(),
-            'paid_at' => $this->paid_at ?? now(),
+            'paid_at' => now(),
+        ]);
+    }
+
+    public function markAsFailed($reason = null): bool
+    {
+        return $this->update([
+            'status' => self::STATUS_FAILED,
+            'failed_at' => now(),
+            'note' => $reason ?? $this->note,
+        ]);
+    }
+
+    public function refund($reason = null): bool
+    {
+        if (!$this->isCompleted()) {
+            return false;
+        }
+
+        return $this->update([
+            'status' => self::STATUS_REFUNDED,
+            'refunded_at' => now(),
+            'note' => $reason ?? $this->note,
         ]);
     }
 
