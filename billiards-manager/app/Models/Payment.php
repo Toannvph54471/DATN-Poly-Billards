@@ -30,7 +30,7 @@ class Payment extends Model
 
     // === FILLABLE ===
     protected $fillable = [
-        'reservation_id',
+        'bill_id',
         'payable_type',
         'payable_id',
         'amount',
