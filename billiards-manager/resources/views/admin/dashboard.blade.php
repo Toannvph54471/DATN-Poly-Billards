@@ -354,36 +354,7 @@
                     </div>
                     @endif
                 </div>
-            </div>
-
-            <!-- Đặt bàn hôm nay -->
-            <div class="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Đặt bàn hôm nay</h3>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Tổng đặt bàn</span>
-                        <span class="text-sm font-semibold text-gray-900">{{ $reservationStats['total'] }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Đã xác nhận</span>
-                        <span class="text-sm font-semibold text-gray-900">{{ $reservationStats['confirmed'] }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Đã hoàn thành</span>
-                        <span class="text-sm font-semibold text-gray-900">{{ $reservationStats['completed'] }}</span>
-                    </div>
-                </div>
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                    <div class="flex justify-between text-sm mb-2">
-                        <span class="text-gray-600">Hoàn thành</span>
-                        <span class="font-semibold text-gray-900">{{ number_format($reservationStats['completion_rate'], 1) }}%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-green-600 h-2 rounded-full transition-all duration-500" 
-                             style="width: {{ $reservationStats['completion_rate'] }}%"></div>
-                    </div>
-                </div>
-            </div>
+            </div>            
         </div>
     </div>
 </div>
