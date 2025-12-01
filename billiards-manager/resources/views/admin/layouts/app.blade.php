@@ -106,6 +106,15 @@
                 $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
             @endphp
 
+             <!-- Menu cho Employee -->
+            @if($isStaff)
+                <a href="{{ route('admin.pos.dashboard') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-cash-register w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Bán hàng (POS)</span>
+                </a>
+            @endif
+
             <!-- Menu cho Admin & Manager -->
             @if($isAdminOrManager)
                 <a href="{{ route('admin.dashboard') }}" onclick="closeMobileMenu()"
@@ -172,14 +181,7 @@
                 </a>
             @endif
 
-            <!-- Menu cho Employee -->
-            @if($isStaff)
-                <a href="{{ route('admin.pos.dashboard') }}" onclick="closeMobileMenu()"
-                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
-                    <i class="fas fa-cash-register w-5 md:w-6 mr-3"></i>
-                    <span class="font-medium text-sm md:text-base">Bán hàng (POS)</span>
-                </a>
-            @endif
+           
 
             <!-- Đăng xuất -->
             <form method="POST" action="{{ route('logout') }}" class="mt-6 md:mt-10">

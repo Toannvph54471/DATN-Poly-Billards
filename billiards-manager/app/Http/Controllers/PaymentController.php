@@ -624,72 +624,7 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * In hóa đơn
-     */
-    public function printBill($id)
-    {
-        try {
-            $bill = Bill::with([
-                'table',
-                'user',
-                'billDetails.product',
-                'billDetails.combo',
-                'billTimeUsages',
-                'comboTimeUsages.combo'
-            ])->findOrFail($id);
-
-            // Tính toán chi phí với thông tin chi tiết
-            $timeDetails = $this->calculateTimeChargeDetailed($bill);
-            $timeCost = $timeDetails['totalCost'];
-
-            $productTotal = BillDetail::where('bill_id', $bill->id)
-                ->where('is_combo_component', false)
-                ->sum('total_price');
-
-            $totalAmount = $timeCost + $productTotal;
-
-            // LẤY THÔNG TIN KHUYẾN MÃI TỪ BILL
-            $discountAmount = $bill->discount_amount ?? 0;
-            $finalAmount = $totalAmount - $discountAmount;
-
-            // Lấy thông tin khuyến mãi từ note (nếu có)
-            $promotionInfo = $this->extractPromotionInfo($bill->note);
-
-            // Dữ liệu cho bill
-            $billData = [
-                'bill' => $bill,
-                'timeCost' => $timeCost,
-                'timeDetails' => $timeDetails,
-                'productTotal' => $productTotal,
-                'totalAmount' => $totalAmount,
-                'finalAmount' => $finalAmount,
-                'discountAmount' => $discountAmount,
-                'promotionInfo' => $promotionInfo,
-                'printTime' => now()->format('H:i d/m/Y'),
-                'staff' => Auth::user()->name
-            ];
-
-            // Auto redirect logic
-            $autoRedirect = session()->has('redirect_after_print');
-            if ($autoRedirect) {
-                $redirectUrl = session('redirect_after_print');
-                session()->forget('redirect_after_print');
-
-                return view('admin.bills.print', array_merge($billData, [
-                    'autoRedirect' => true,
-                    'redirectUrl' => $redirectUrl
-                ]));
-            }
-
-            return view('admin.bills.print', array_merge($billData, [
-                'autoRedirect' => false,
-                'redirectUrl' => route('admin.bills.index')
-            ]));
-        } catch (Exception $e) {
-            return redirect()->back()->with('error', 'Lỗi khi in hóa đơn: ' . $e->getMessage());
-        }
-    }
+    
 
     /**
      * Tính toán chi phí giờ chơi chi tiết
