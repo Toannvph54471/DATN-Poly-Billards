@@ -244,100 +244,137 @@ class AttendanceController extends Controller
     }
     // --- Dynamic QR Code Section ---
 
-    public function showQrCode()
+    // --- Individual Dynamic QR Code Section ---
+
+    public function myQr()
     {
-        return view('admin.attendance.qr_code');
+        return view('attendance.my_qr');
     }
 
-    public function scanQrCode()
+    public function publicScan()
     {
-        return view('admin.attendance.scan');
+        return view('attendance.public_scan');
     }
 
-    public function getQrToken()
+    public function simulator()
     {
-        // Generate a short unique ID
-        $uuid = (string) Str::uuid();
+        // Get all employees for the simulator dropdown
+        $employees = Employee::all();
+        return view('attendance.simulator', compact('employees'));
+    }
+
+    public function getTestToken($employeeId)
+    {
+        $employee = Employee::findOrFail($employeeId);
+        $token = $employee->generateQrToken();
         
-        // Data to store
-        $data = [
-            'timestamp' => now()->timestamp,
-            'valid_until' => now()->addSeconds(30)->timestamp,
-            'random' => Str::random(10)
-        ];
-
-        // Store in Cache for 40 seconds (slightly more than validity to avoid edge cases)
-        Cache::put('qr_checkin_' . $uuid, $data, 40);
-
         return response()->json([
-            'token' => $uuid, // Send the short UUID instead of long encrypted string
-            'expires_in' => 30
+            'status' => 'success',
+            'token' => $token,
+            'employee' => $employee->name
         ]);
     }
 
-    public function qrCheckIn(Request $request)
+    public function getMyQrToken()
+    {
+        try {
+            \Log::info('getMyQrToken called');
+            
+            $user = Auth::user();
+            \Log::info('User ID: ' . ($user ? $user->id : 'null'));
+            
+            if (!$user) {
+                \Log::error('No authenticated user');
+                return response()->json(['status' => 'error', 'message' => 'Chưa đăng nhập'], 401);
+            }
+            
+            if (!$user->employee) {
+                \Log::error('User has no employee record', ['user_id' => $user->id]);
+                return response()->json(['status' => 'error', 'message' => 'Không tìm thấy thông tin nhân viên'], 404);
+            }
+
+            $employee = $user->employee;
+            \Log::info('Employee found', ['employee_id' => $employee->id]);
+
+            // Check if current token is valid for at least 30 more seconds
+            if ($employee->qr_token && $employee->qr_token_expires_at && $employee->qr_token_expires_at->gt(now()->addSeconds(30))) {
+                \Log::info('Returning existing token');
+                return response()->json([
+                    'token' => $employee->qr_token,
+                    'expires_in' => $employee->qr_token_expires_at->timestamp - now()->timestamp
+                ]);
+            }
+
+            // Generate new token
+            \Log::info('Generating new token');
+            $token = $employee->generateQrToken();
+            \Log::info('Token generated successfully', ['token_length' => strlen($token)]);
+
+            return response()->json([
+                'token' => $token,
+                'expires_in' => 120 // 2 minutes
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Exception in getMyQrToken', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'status' => 'error', 
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
+    }
+
+    public function processScan(Request $request)
     {
         $request->validate([
-            'qr_token' => 'required',
-            'employee_code' => 'required|exists:employees,employee_code',
+            'qr_token' => 'required|string',
         ]);
 
-        // 1. Validate Token from Cache
-        $cacheKey = 'qr_checkin_' . $request->qr_token;
-        $data = Cache::get($cacheKey);
+        // 1. Find Employee by Token
+        $employee = Employee::where('qr_token', $request->qr_token)
+            ->where('qr_token_expires_at', '>', now())
+            ->first();
 
-        if (!$data) {
-             return response()->json([
+        if (!$employee) {
+            return response()->json([
                 'status' => 'error',
                 'message' => 'Mã QR không hợp lệ hoặc đã hết hạn.',
             ], 400);
         }
 
-        if (now()->timestamp > $data['valid_until']) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Mã QR đã hết hạn. Vui lòng quét lại mã mới.',
-            ], 400);
-        }
-
-        // Optional: Invalidate token immediately to prevent reuse (One-time use)
-        // Cache::forget($cacheKey); 
-        // But since it rotates every 30s, maybe we keep it valid for the window? 
-        // Better to allow multiple people to scan same code if they are quick?
-        // Let's keep it valid for the window for now to avoid "I scanned but it failed because someone else scanned".
-
-        // 2. Proceed with normal Check-in logic
-        $employee = null;
-
-        // If user is logged in, use their linked employee profile (Most Secure)
-        if (Auth::check() && Auth::user()->employee) {
-            $employee = Auth::user()->employee;
-        } 
-        // Fallback for shared device (if we ever allow it, but for now let's prioritize Auth)
-        elseif ($request->employee_code) {
-             $employee = Employee::where('employee_code', $request->employee_code)->firstOrFail();
-        } else {
-             return response()->json([
-                'status' => 'error',
-                'message' => 'Không xác định được danh tính nhân viên.',
-            ], 400);
-        }
-
-        // Check if already checked in
+        // 2. Check if already checked in (Active shift exists)
         $activeShift = EmployeeShift::where('employee_id', $employee->id)
             ->whereDate('shift_date', today())
             ->whereNotNull('actual_start_time')
             ->whereNull('actual_end_time')
             ->first();
 
+        // If already checked in -> Check OUT?
+        // For simplicity, let's assume this scanner is for Check-IN only or toggles.
+        // Let's implement Toggle: If checked in -> Check Out. If not -> Check In.
+        
         if ($activeShift) {
+            // Perform Check-out
+            $activeShift->checkOut();
+            
+            // Invalidate Token (One-time use)
+            $employee->invalidateQrToken();
+
             return response()->json([
-                'status' => 'error',
-                'message' => 'Nhân viên đã check-in trước đó.',
-            ], 400);
+                'status' => 'success',
+                'message' => 'Check-out thành công! Hẹn gặp lại ' . $employee->name,
+                'type' => 'checkout',
+                'employee' => $employee->name
+            ]);
         }
 
-        // Find scheduled shift
+        // 3. Find scheduled shift for Check-in
         $now = now();
         $candidates = EmployeeShift::with('shift')
             ->where('employee_id', $employee->id)
@@ -370,31 +407,29 @@ class AttendanceController extends Controller
             ], 400);
         }
 
-        // Check Late (QR Check-in might still need manager approval if late? 
-        // Usually QR implies presence, but late is late. 
-        // Let's enforce strictness: If late, still block or require override. 
-        // For simplicity in this "v1", if late, we warn or block. 
-        // Let's block and say "Late, please see manager".
-        
+        // Check Late
         $shiftStart = $scheduledShift->calculated_start;
         $lateThreshold = $shiftStart->copy()->addMinutes(15);
 
         if ($now->gt($lateThreshold)) {
              return response()->json([
                 'status' => 'error',
-                'message' => 'Bạn đã đi muộn quá 15 phút. Vui lòng gặp quản lý để check-in thủ công.',
+                'message' => 'Bạn đã đi muộn quá 15 phút. Vui lòng gặp quản lý.',
             ], 400);
         }
 
         // Perform Check-in
         unset($scheduledShift->calculated_start);
-        
         $scheduledShift->checkIn();
+
+        // Invalidate Token (One-time use)
+        $employee->invalidateQrToken();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Check-in bằng QR thành công!',
-            'data' => $scheduledShift
+            'message' => 'Check-in thành công! Xin chào ' . $employee->name,
+            'type' => 'checkin',
+            'employee' => $employee->name
         ]);
     }
 }

@@ -149,8 +149,8 @@
                                     @endif
 
                                     @if(Auth::user()->employee ?? false)
-                                        <a href="{{ route('attendance.scan') }}" class="block px-4 py-3 hover:bg-gray-100 transition text-blue-600 font-medium">
-                                            <i class="fas fa-qrcode mr-2"></i>Quét mã Check-in
+                                        <a href="{{ route('attendance.my-qr') }}" class="block px-4 py-3 hover:bg-gray-100 transition text-blue-600 font-medium">
+                                            <i class="fas fa-qrcode mr-2"></i>Mã QR Cá Nhân
                                         </a>
                                     @endif
 
@@ -228,8 +228,8 @@
                         @endif
 
                         @if(Auth::user()->employee ?? false)
-                            <a href="{{ route('attendance.scan') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200 text-yellow-400">
-                                <i class="fas fa-qrcode mr-3"></i>Quét mã Check-in
+                            <a href="{{ route('attendance.my-qr') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200 text-yellow-400">
+                                <i class="fas fa-qrcode mr-3"></i>Mã QR Cá Nhân
                             </a>
                         @endif
 

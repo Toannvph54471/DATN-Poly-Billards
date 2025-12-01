@@ -24,7 +24,14 @@ require __DIR__.'/auth.php';
 require __DIR__.'/admin.php';
 require __DIR__ . '/customer.php';
 
-// Employee Attendance Routes (Public/Shared area)
-Route::middleware(['auth', 'role:admin,manager,employee'])->group(function () {
-    Route::get('/attendance/scan', [App\Http\Controllers\AttendanceController::class, 'scanQrCode'])->name('attendance.scan');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/my-qr', [App\Http\Controllers\AttendanceController::class, 'myQr'])->name('attendance.my-qr');
+    Route::get('/attendance/my-token', [App\Http\Controllers\AttendanceController::class, 'getMyQrToken'])->name('attendance.get-token');
 });
+
+// Public Scanner Route (Kiosk Mode)
+Route::get('/attendance/scan', [App\Http\Controllers\AttendanceController::class, 'publicScan'])->name('attendance.scan');
+
+// Simulator Routes (Localhost Testing)
+Route::get('/attendance/simulator', [App\Http\Controllers\AttendanceController::class, 'simulator'])->name('attendance.simulator');
+Route::get('/attendance/test-token/{employeeId}', [App\Http\Controllers\AttendanceController::class, 'getTestToken'])->name('attendance.test-token');

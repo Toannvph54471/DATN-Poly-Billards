@@ -1043,7 +1043,7 @@
                         </h2>
                     </div>
 
-                    <form action="{{ route('admin.bills.process-payment', $bill->id) }}" method="POST" id="paymentForm">
+                    <form action="{{ route('admin.payments.process-payment', $bill->id) }}" method="POST" id="paymentForm">
                         @csrf
 
                         <!-- Payment Methods -->

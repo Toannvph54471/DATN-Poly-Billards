@@ -28,13 +28,16 @@ class Employee extends BaseModel
         'status',
         'created_by',
         'updated_by',
-        'deleted_by'
+        'deleted_by',
+        'qr_token',
+        'qr_token_expires_at'
     ];
 
     protected $casts = [
         'salary_rate' => 'decimal:2',
         'start_date' => 'date',
         'end_date' => 'date',
+        'qr_token_expires_at' => 'datetime',
     ];
 
     // Relationships
@@ -107,4 +110,24 @@ class Employee extends BaseModel
     }
 
    
+
+
+    // QR Code Methods
+    public function generateQrToken()
+    {
+        $this->update([
+            'qr_token' => \Illuminate\Support\Str::random(60),
+            'qr_token_expires_at' => now()->addMinutes(2)
+        ]);
+        
+        return $this->qr_token;
+    }
+
+    public function invalidateQrToken()
+    {
+        $this->update([
+            'qr_token' => null,
+            'qr_token_expires_at' => null
+        ]);
+    }
 }

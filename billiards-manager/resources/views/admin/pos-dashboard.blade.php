@@ -265,6 +265,15 @@
                                 <p class="mt-1 text-xs md:text-sm font-medium text-gray-700">Check-out</p>
                             </div>
                         </button>
+
+                        <!-- Mã QR Check-in (New) -->
+                        <a href="{{ route('attendance.my-qr') }}"
+                           class="quick-action-btn p-2 md:p-3 bg-pink-50 hover:bg-pink-100 transition-colors group border-2 border-pink-200 rounded-lg text-center">
+                            <div>
+                                <i class="fas fa-qrcode text-pink-600 text-base md:text-xl group-hover:scale-110 transition-transform"></i>
+                                <p class="mt-1 text-xs md:text-sm font-medium text-gray-700">Mã QR Check-in</p>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>

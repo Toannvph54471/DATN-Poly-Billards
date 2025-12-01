@@ -44,8 +44,6 @@ class Bill extends BaseModel
         'final_amount' => 'decimal:2',
         'is_paid' => 'boolean',
         'paused_duration' => 'integer',
-        'status' => \App\Enums\BillStatus::class,
-        'payment_status' => \App\Enums\PaymentStatus::class,
     ];
 
     public function table()

@@ -190,7 +190,7 @@
                             <!-- Ngày kết thúc -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Ngày kết thúc (Chỉ điền khi nghỉ việc)
+                                    Ngày kết thúc
                                 </label>
                                 <input type="date" name="end_date"
                                        value="{{ old('end_date', $employee->end_date ? $employee->end_date->format('Y-m-d') : '') }}"

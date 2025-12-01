@@ -174,7 +174,19 @@
                                 @enderror
                             </div>
 
-
+                            <!-- Ngày kết thúc -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">
+                                    Ngày kết thúc
+                                </label>
+                                <input type="date" name="end_date"
+                                       value="{{ old('end_date') }}"
+                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                              focus:ring-2 focus:ring-blue-500">
+                                @error('end_date')
+                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
 
                             <!-- Trạng thái -->
                             <div>

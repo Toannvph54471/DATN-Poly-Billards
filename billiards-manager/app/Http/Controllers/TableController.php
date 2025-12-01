@@ -7,23 +7,14 @@ use App\Models\BillTimeUsage;
 use App\Models\Combo;
 use App\Models\ComboTimeUsage;
 use App\Models\Product;
-use App\Models\Table;   
-use App\Enums\BillStatus;
+use App\Models\Table;
 use App\Models\TableRate;
-use App\Services\BillService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class TableController extends Controller
 {
-    protected $billService;
-
-    public function __construct(BillService $billService)
-    {
-        $this->billService = $billService;
-    }
-
     // Hiện thị
     public function index(Request $request)
     {
@@ -215,12 +206,12 @@ class TableController extends Controller
 
         // Tính toán thời gian hiện tại
         $timeInfo = [];
-        if ($table->currentBill && in_array($table->currentBill->status, [BillStatus::Open, BillStatus::Quick])) {
+        if ($table->currentBill && in_array($table->currentBill->status, ['Open', 'quick'])) {
             $timeInfo = $this->calculateCurrentTimeInfo($table);
 
             // Cập nhật tổng tiền real-time (chỉ cho bàn tính giờ)
-            if ($table->currentBill->status === BillStatus::Open) {
-                $this->billService->calculateBillTotal($table->currentBill);
+            if ($table->currentBill->status === 'Open') {
+                app(BillController::class)->calculateBillTotal($table->currentBill);
                 $table->currentBill->refresh();
             }
         }
