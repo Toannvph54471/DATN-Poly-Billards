@@ -85,8 +85,8 @@ class BillController extends Controller
                     ['phone' => $request->user_phone],
                     [
                         'name' => $request->user_name ?? 'Khách vãng lai',
-                        'email' => $request->user_phone . '@customer.com',
-                        'password' => bcrypt(Str::random(8)),
+                        'email' => null,
+                        'password' => null,
                         'role_id' => 4,
                         'status' => 'Active'
                     ]

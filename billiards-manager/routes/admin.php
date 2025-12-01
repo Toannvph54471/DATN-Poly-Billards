@@ -47,13 +47,6 @@ Route::prefix('admin')
 
             // Employees
             Route::resource('employees', EmployeeController::class)->names('employees');
-
-            // Payments (Admin only)
-            Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
-            Route::get('payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
-            Route::post('reservations/{reservation}/payment', [PaymentController::class, 'create'])->name('payments.create');
-            Route::post('payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
-            Route::post('payments/{payment}/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
         });
 
         /*
@@ -106,6 +99,7 @@ Route::prefix('admin')
             Route::get('/{id}/time-info', [BillController::class, 'getBillTimeInfo'])->name('time-info');
             Route::post('/{id}/convert-to-quick', [BillController::class, 'convertToQuick'])->name('convert-to-quick');
             Route::post('/{id}/stop-combo', [BillController::class, 'stopComboTime'])->name('stop-combo');
+            Route::get('/{id}/transfer', [BillController::class, 'showTransferForm'])->name('transfer-form');
 
             // Print bill
             Route::get('/{id}/print', [BillController::class, 'printBill'])->name('print');
