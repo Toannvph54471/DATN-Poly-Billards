@@ -69,6 +69,73 @@ class TableController extends Controller
         return view('admin.tables.index', compact('tables', 'tableRates', 'statuses'));
     }
 
+    /**
+     * Hiển thị dashboard đơn giản
+     */
+    public function simpleDashboard()
+    {
+        try {
+            // Lấy toàn bộ dữ liệu tables kèm bill hiện tại
+            $tables = Table::with([
+                'tableRate',
+                'currentBill' => function ($query) {
+                    $query->whereIn('status', ['Open', 'quick'])
+                        ->with(['billTimeUsages', 'comboTimeUsages']);
+                }
+            ])->get();
+
+            // Thống kê
+            $totalTables = $tables->count();
+            $availableTables = $tables->where('status', 'available')->count();
+            $occupiedTables = $tables->where('status', 'occupied')->count();
+            $quickTables = $tables->where('status', 'quick')->count();
+
+            $occupancyRate = $totalTables > 0
+                ? round((($occupiedTables + $quickTables) / $totalTables) * 100)
+                : 0;
+
+            $stats = [
+                'total' => $totalTables,
+                'available' => $availableTables,
+                'occupied' => $occupiedTables,
+                'quick' => $quickTables,
+                'occupancy_rate' => $occupancyRate
+            ];
+
+            // Format table data
+            $formattedTables = $tables->map(function ($table) {
+                $currentBillData = null;
+
+                if ($table->currentBill) {
+                    $currentBillData = [
+                        'elapsed_time' => $this->calculateSimpleElapsedTime($table->currentBill)
+                    ];
+                }
+
+                return [
+                    'id' => $table->id,
+                    'table_number' => $table->table_number,
+                    'table_name' => $table->table_name,
+                    'capacity' => $table->capacity,
+                    'status' => $table->status,
+                    'hourly_rate' => $table->getHourlyRate(),
+                    'current_bill' => $currentBillData
+                ];
+            });
+
+            return view('admin.tables.simple-dashboard', [
+                'stats' => $stats,
+                'tables' => $formattedTables
+            ]);
+        } catch (\Exception $e) {
+            return view('admin.tables.simple-dashboard', [
+                'stats' => null,
+                'tables' => [],
+                'error' => 'Lỗi khi tải dữ liệu!'
+            ]);
+        }
+    }
+    
     // hien thi form sua 
     public function edit($id)
     {
@@ -443,72 +510,7 @@ class TableController extends Controller
         ];
     }
 
-    /**
-     * Hiển thị dashboard đơn giản
-     */
-    public function simpleDashboard()
-    {
-        try {
-            // Lấy toàn bộ dữ liệu tables kèm bill hiện tại
-            $tables = Table::with([
-                'tableRate',
-                'currentBill' => function ($query) {
-                    $query->whereIn('status', ['Open', 'quick'])
-                        ->with(['billTimeUsages', 'comboTimeUsages']);
-                }
-            ])->get();
 
-            // Thống kê
-            $totalTables = $tables->count();
-            $availableTables = $tables->where('status', 'available')->count();
-            $occupiedTables = $tables->where('status', 'occupied')->count();
-            $quickTables = $tables->where('status', 'quick')->count();
-
-            $occupancyRate = $totalTables > 0
-                ? round((($occupiedTables + $quickTables) / $totalTables) * 100)
-                : 0;
-
-            $stats = [
-                'total' => $totalTables,
-                'available' => $availableTables,
-                'occupied' => $occupiedTables,
-                'quick' => $quickTables,
-                'occupancy_rate' => $occupancyRate
-            ];
-
-            // Format table data
-            $formattedTables = $tables->map(function ($table) {
-                $currentBillData = null;
-
-                if ($table->currentBill) {
-                    $currentBillData = [
-                        'elapsed_time' => $this->calculateSimpleElapsedTime($table->currentBill)
-                    ];
-                }
-
-                return [
-                    'id' => $table->id,
-                    'table_number' => $table->table_number,
-                    'table_name' => $table->table_name,
-                    'capacity' => $table->capacity,
-                    'status' => $table->status,
-                    'hourly_rate' => $table->getHourlyRate(),
-                    'current_bill' => $currentBillData
-                ];
-            });
-
-            return view('admin.tables.simple-dashboard', [
-                'stats' => $stats,
-                'tables' => $formattedTables
-            ]);
-        } catch (\Exception $e) {
-            return view('admin.tables.simple-dashboard', [
-                'stats' => null,
-                'tables' => [],
-                'error' => 'Lỗi khi tải dữ liệu!'
-            ]);
-        }
-    }
 
 
     /**
