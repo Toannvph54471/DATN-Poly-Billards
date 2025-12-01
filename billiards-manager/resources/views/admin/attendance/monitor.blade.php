@@ -5,9 +5,7 @@
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Giám sát Chấm công</h1>
         <div class="flex space-x-2 items-center">
-            <a href="{{ route('admin.attendance.qr_code') }}" target="_blank" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 flex items-center">
-                <i class="fas fa-qrcode mr-2"></i> Trạm QR
-            </a>
+
             <div class="border-l pl-2 flex space-x-2">
                 <div class="flex items-center">
                     <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>

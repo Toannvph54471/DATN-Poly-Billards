@@ -7,15 +7,8 @@
     <title>Thanh Toán - {{ $bill->bill_number }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root {
-            --primary: #3b82f6;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --purple: #8b5cf6;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -23,1221 +16,1009 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: #f8fafc;
-            height: 100vh;
-            overflow: hidden;
+            color: #374151;
+            line-height: 1.5;
         }
 
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
-        /* Header Styles */
         .header {
             background: white;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            flex-shrink: 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
         }
 
-        .table-info {
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .table-title {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .back-btn {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            color: #475569;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .back-btn:hover {
-            background: #e2e8f0;
-            transform: translateX(-2px);
-        }
-
-        .table-details h1 {
-            font-size: 1.5rem;
+        .bill-info h1 {
+            font-size: 24px;
             font-weight: 700;
-            color: #1e293b;
+            color: #111827;
+            margin-bottom: 4px;
         }
 
-        .table-meta {
+        .bill-meta {
             display: flex;
-            gap: 1rem;
-            margin-top: 0.25rem;
-            color: #64748b;
-            font-size: 0.875rem;
+            gap: 12px;
+            color: #6b7280;
+            font-size: 14px;
         }
 
-        /* Main Content Styles */
-        .main-content {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
+        .total-amount {
+            font-size: 28px;
+            font-weight: 700;
+            color: #059669;
         }
 
-        .left-panel {
-            width: 40%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            padding: 1.5rem;
-            gap: 1.5rem;
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 400px;
+            gap: 20px;
+            align-items: start;
         }
 
-        .center-panel {
-            width: 30%;
-            background: white;
-            border-left: 1px solid #e2e8f0;
-            border-right: 1px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .right-panel {
-            width: 30%;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* Card Styles */
-        .card {
+        .column {
             background: white;
             border-radius: 8px;
-            padding: 1.25rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
         }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .section-title {
-            font-size: 1.125rem;
-            font-weight: 700;
-            color: #1e293b;
+        .column-header {
+            background: #f8fafc;
+            color: #374151;
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 10px;
         }
 
-        /* Bill Items */
+        .column-header i {
+            font-size: 18px;
+            color: #6b7280;
+        }
+
+        .column-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .column-content {
+            padding: 16px;
+        }
+
+        /* Customer Info Styles */
+        .customer-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 6px;
+            border-left: 3px solid #6b7280;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #e5e7eb;
+            color: #374151;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .no-customer {
+            text-align: center;
+            padding: 30px 16px;
+            color: #6b7280;
+        }
+
+        .no-customer i {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* Bill Items Styles */
         .bill-items {
-            flex: 1;
-            overflow: auto;
+            space-y: 8px;
         }
 
         .bill-item {
             display: flex;
             justify-content: space-between;
-            padding: 0.75rem;
-            border-bottom: 1px solid #f1f5f9;
-            transition: all 0.2s;
+            align-items: flex-start;
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background-color 0.2s;
         }
 
         .bill-item:hover {
-            background: #f8fafc;
+            background-color: #f9fafb;
         }
 
-        .bill-item-content {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
+        .bill-item:last-child {
+            border-bottom: none;
         }
 
-        .bill-item-icon {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .bill-item-time {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .bill-item-combo {
-            background: #ede9fe;
-            color: #7c3aed;
-        }
-
-        .bill-item-product {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .bill-item-extra {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .bill-item-details {
+        .item-info {
             flex: 1;
         }
 
-        .bill-item-name {
-            font-weight: 600;
-            color: #1e293b;
+        .item-name {
+            font-weight: 500;
+            color: #111827;
+            margin-bottom: 2px;
+            font-size: 14px;
         }
 
-        .bill-item-meta {
-            font-size: 0.75rem;
-            color: #64748b;
+        .item-details {
+            font-size: 12px;
+            color: #6b7280;
         }
 
-        .bill-item-price {
+        .item-price {
             text-align: right;
         }
 
-        .bill-item-quantity {
-            font-size: 0.875rem;
-            color: #64748b;
+        .item-quantity {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 2px;
         }
 
-        .bill-item-total {
+        .item-total {
+            font-weight: 600;
+            color: #111827;
+            font-size: 14px;
+        }
+
+        .total-row {
+            background: #f9fafb;
+            margin: 0 -16px;
+            padding: 16px;
+            border-top: 2px solid #e5e7eb;
+            margin-top: 12px;
+        }
+
+        .total-row .item-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .total-row .item-total {
+            font-size: 18px;
+            color: #059669;
             font-weight: 700;
-            color: #1e293b;
         }
 
-        /* Payment Methods */
+        /* Payment Methods Styles */
         .payment-methods {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            gap: 10px;
+            margin-bottom: 16px;
         }
 
         .payment-method {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 14px;
             cursor: pointer;
             transition: all 0.2s;
+            background: white;
         }
 
         .payment-method:hover {
-            border-color: #cbd5e1;
+            border-color: #9ca3af;
         }
 
         .payment-method.selected {
-            border-color: var(--primary);
-            background: #eff6ff;
+            border-color: #374151;
+            background: #f8fafc;
         }
 
-        .payment-method-radio {
-            margin-right: 1rem;
+        .method-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .payment-method-icon {
-            width: 2.5rem;
-            height: 2.5rem;
+        .method-icon {
+            width: 36px;
+            height: 36px;
             border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 1rem;
+            font-size: 16px;
+            background: #e5e7eb;
+            color: #374151;
         }
 
-        .payment-method-cash {
-            background: #dcfce7;
-            color: #166534;
-        }
-
-        .payment-method-bank {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .payment-method-card {
-            background: #ede9fe;
-            color: #7c3aed;
-        }
-
-        .payment-method-info {
-            flex: 1;
-        }
-
-        .payment-method-name {
+        .method-name {
             font-weight: 600;
-            color: #1e293b;
+            color: #111827;
+            font-size: 14px;
         }
 
-        .payment-method-desc {
-            font-size: 0.875rem;
-            color: #64748b;
+        .method-desc {
+            font-size: 12px;
+            color: #6b7280;
         }
 
-        /* Payment Details */
         .payment-details {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 12px;
+            margin-bottom: 16px;
         }
 
-        .payment-input-group {
+        .input-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 4px;
         }
 
-        .payment-label {
-            font-weight: 600;
+        .input-label {
+            font-size: 13px;
+            font-weight: 500;
             color: #374151;
-            font-size: 0.875rem;
         }
 
-        .payment-input {
-            width: 100%;
-            padding: 0.75rem;
+        .input-field {
+            padding: 10px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
-            font-size: 1rem;
-            transition: border-color 0.2s;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
         }
 
-        .payment-input:focus {
+        .input-field:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #374151;
+            box-shadow: 0 0 0 2px rgba(55, 65, 81, 0.1);
         }
 
-        .payment-input.readonly {
+        .input-field.readonly {
             background: #f9fafb;
             color: #6b7280;
         }
 
-        .payment-input.success {
-            border-color: var(--success);
+        .input-field.success {
+            border-color: #059669;
             background: #f0fdf4;
-            color: var(--success);
+            color: #047857;
             font-weight: 600;
         }
 
-        .payment-input.warning {
-            border-color: var(--warning);
-            background: #fefce8;
-            color: var(--warning);
-        }
-
-        .payment-input.error {
-            border-color: var(--danger);
-            background: #fef2f2;
-            color: var(--danger);
-        }
-
-        /* Action Buttons */
         .action-buttons {
             display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
+            gap: 10px;
+            margin-top: 20px;
         }
 
-        .action-btn {
-            width: 100%;
-            padding: 0.75rem;
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
             border-radius: 6px;
+            font-size: 14px;
             font-weight: 600;
-            text-align: center;
             cursor: pointer;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            text-decoration: none;
-            transition: all 0.2s;
-            border: none;
+            gap: 6px;
         }
 
-        .action-btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .action-btn-primary {
-            background: var(--primary);
+        .btn-primary {
+            background: #374151;
             color: white;
         }
 
-        .action-btn-primary:hover {
-            background: #2563eb;
+        .btn-primary:hover {
+            background: #111827;
+            transform: translateY(-1px);
         }
 
-        .action-btn-secondary {
-            background: #f1f5f9;
-            color: #475569;
-            border: 1px solid #e2e8f0;
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
         }
 
-        .action-btn-secondary:hover {
-            background: #e2e8f0;
+        .btn-secondary:hover {
+            background: #e5e7eb;
         }
 
-        /* Customer Info */
-        .customer-info {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .customer-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .customer-label {
-            font-weight: 500;
-            color: #64748b;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .customer-value {
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        .customer-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background: #ede9fe;
-            color: #7c3aed;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        /* QR Code Section */
         .qr-section {
-            display: none;
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 6px;
             text-align: center;
-            padding: 1.5rem;
-            background: #f8fafc;
-            border-radius: 8px;
-            margin-top: 1rem;
+            margin-top: 16px;
+            display: none;
+            border: 1px solid #e5e7eb;
         }
 
         .qr-section.active {
             display: block;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        .qr-code-container {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1rem;
-            display: inline-block;
-        }
-
-        .qr-code {
-            width: 200px;
-            height: 200px;
-            background: #f3f4f6;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            color: #6b7280;
-            font-size: 0.875rem;
-        }
-
-        .qr-instructions {
-            text-align: center;
-            color: #64748b;
-            font-size: 0.875rem;
-            margin-top: 1rem;
-        }
-
-        .bank-info {
-            background: white;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-            text-align: left;
-        }
-
-        .bank-info-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .bank-info-label {
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .bank-info-value {
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        /* Toast Notification */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast {
-            padding: 12px 20px;
-            border-radius: 6px;
-            color: white;
-            font-weight: 500;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transform: translateX(100%);
-            opacity: 0;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            max-width: 350px;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .toast.hide {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-
-        .toast-success {
-            background-color: var(--success);
-        }
-
-        .toast-error {
-            background-color: var(--danger);
-        }
-
-        .toast-warning {
-            background-color: var(--warning);
-        }
-
-        .toast-info {
-            background-color: var(--primary);
-        }
-
-        /* Loading Overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .loading-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Fade In Animation */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+            animation: fadeIn 0.3s ease;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        /* Mobile Styles */
+        .qr-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #374151;
+        }
+
+        .qr-code {
+            background: white;
+            padding: 16px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .qr-placeholder {
+            width: 140px;
+            height: 140px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .bank-info {
+            background: white;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            text-align: left;
+            border: 1px solid #e5e7eb;
+        }
+
+        .bank-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 12px;
+        }
+
+        .bank-row:last-child {
+            border-bottom: none;
+        }
+
+        .bank-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .bank-value {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        /* Promotion Section */
+        .promotion-section {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .promotion-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .promotion-header i {
+            font-size: 16px;
+            color: #6b7280;
+        }
+
+        .promotion-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin: 0;
+        }
+
+        .promotion-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .promotion-select:focus {
+            outline: none;
+            border-color: #374151;
+        }
+
+        .applied-promotion {
+            background: #f0fdf4;
+            border: 1px solid #059669;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .applied-promotion.active {
+            display: block;
+        }
+
+        .promotion-success {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .promotion-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .promotion-icon {
+            width: 24px;
+            height: 24px;
+            background: #059669;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .promotion-details h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #065f46;
+            margin: 0 0 2px 0;
+        }
+
+        .promotion-details p {
+            font-size: 12px;
+            color: #047857;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .remove-promotion {
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .remove-promotion:hover {
+            background: #b91c1c;
+        }
+
+        .promotion-message {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .promotion-message.success {
+            background: #f0fdf4;
+            color: #065f46;
+            border: 1px solid #059669;
+            display: block;
+        }
+
+        .promotion-message.error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #dc2626;
+            display: block;
+        }
+
+        .promotion-message.loading {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #3b82f6;
+            display: block;
+        }
+
         @media (max-width: 1024px) {
-            .main-content {
-                flex-direction: column;
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
             }
 
-            .left-panel,
-            .center-panel,
-            .right-panel {
-                width: 100%;
-                height: auto;
-                border: none;
-            }
-
-            .panel {
-                display: none;
-            }
-
-            .panel.active {
-                display: flex;
-            }
-
-            .mobile-panel-tabs {
-                display: flex;
-            }
-
-            .header {
-                padding: 1rem;
-            }
-
-            .table-info {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .qr-code {
-                width: 150px;
-                height: 150px;
+            .container {
+                padding: 16px;
             }
         }
 
         @media (max-width: 768px) {
-            .table-title {
+            .header-content {
                 flex-direction: column;
+                gap: 12px;
                 align-items: flex-start;
-                gap: 0.5rem;
             }
 
-            .back-btn {
-                align-self: flex-start;
+            .bill-meta {
+                flex-direction: column;
+                gap: 6px;
             }
 
-            .table-details h1 {
-                font-size: 1.25rem;
+            .action-buttons {
+                flex-direction: column;
             }
 
-            .table-meta {
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-
-            .payment-method {
-                padding: 0.75rem;
-            }
-
-            .payment-method-icon {
-                width: 2rem;
-                height: 2rem;
-                margin-right: 0.75rem;
-            }
-
-            .qr-code {
-                width: 120px;
-                height: 120px;
+            .column-content {
+                padding: 12px;
             }
         }
 
-        /* Mobile Panel Tabs */
-        .mobile-panel-tabs {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            border-top: 1px solid #e2e8f0;
-            z-index: 1000;
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
         }
 
-        .mobile-tab {
-            flex: 1;
-            padding: 12px;
-            text-align: center;
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-size: 0.75rem;
-            color: #64748b;
-            transition: all 0.2s;
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
         }
 
-        .mobile-tab.active {
-            color: var(--primary);
-            background: #eff6ff;
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
-        .mobile-tab i {
-            display: block;
-            font-size: 1.25rem;
-            margin-bottom: 4px;
-        }
-
-        /* Utility classes */
-        .mobile-only {
-            display: none;
-        }
-
-        .desktop-only {
-            display: block;
-        }
-
-        @media (max-width: 1024px) {
-            .mobile-only {
-                display: block;
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
             }
 
-            .desktop-only {
-                display: none;
+            100% {
+                transform: rotate(360deg);
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="app-container">
-        <!-- Toast Container -->
-        <div class="toast-container" id="toastContainer"></div>
-        
-        <!-- Loading Overlay -->
-        <div class="loading-overlay" id="loadingOverlay">
-            <div class="loading-spinner"></div>
-        </div>
-
+    <div class="container">
         <!-- Header -->
         <div class="header">
-            <div class="table-info">
-                <div class="table-title">
-                    <a href="{{ route('admin.tables.detail', $bill->table_id) }}" class="back-btn">
-                        <i class="fas fa-arrow-left"></i>
-                        <span class="desktop-only">Quay lại bàn</span>
-                    </a>
-                    <div class="table-details">
-                        <h1>Thanh Toán - {{ $bill->bill_number }}</h1>
-                        <div class="table-meta">
-                            <span>Bàn: {{ $bill->table->table_name }}</span>
-                            <span class="desktop-only">•</span>
-                            <span>Tổng: {{ number_format(ceil($bill->final_amount / 1000) * 1000) }} ₫</span>
-                        </div>
+            <div class="header-content">
+                <div class="bill-info">
+                    <h1>Thanh Toán - {{ $bill->bill_number }}</h1>
+                    <div class="bill-meta">
+                        <span>Bàn: {{ $bill->table->table_name }}</span>
+                        <span>•</span>
+                        <span>Nhân viên: {{ $bill->staff->name ?? 'N/A' }}</span>
+                        <span>•</span>
+                        <span>Thời gian: {{ \Carbon\Carbon::parse($bill->start_time)->format('H:i d/m/Y') }}</span>
                     </div>
                 </div>
-                <div class="table-status">
-                    <div class="status-badge status-occupied">
-                        🔴 ĐANG THANH TOÁN
-                    </div>
+                <div class="total-amount" id="total_amount_display">
+                    {{ number_format($finalAmount) }} ₫
                 </div>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Left Panel - Bill Details -->
-            <div class="left-panel panel active" id="billPanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="section-title">
-                            <i class="fas fa-receipt text-blue-500"></i>
-                            CHI TIẾT HÓA ĐƠN
-                        </h2>
-                    </div>
+        <!-- Main Content - 3 Columns -->
+        <div class="main-grid">
+            <!-- Column 1: Thông tin khách hàng -->
+            <div class="column">
+                <div class="column-header">
+                    <i class="fas fa-user"></i>
+                    <h2>Thông tin khách hàng</h2>
+                </div>
+                <div class="column-content">
+                    @if ($bill->user)
+                        <div class="customer-info">
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-user-circle"></i>
+                                    Tên khách hàng
+                                </div>
+                                <div class="info-value">{{ $bill->user->name }}</div>
+                            </div>
 
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-phone"></i>
+                                    Điện thoại
+                                </div>
+                                <div class="info-value">{{ $bill->user->phone }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-tag"></i>
+                                    Loại khách
+                                </div>
+                                <div class="info-value">
+                                    <span class="badge">{{ $bill->user->customer_type ?? 'Khách mới' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-history"></i>
+                                    Số lần đến
+                                </div>
+                                <div class="info-value">{{ $bill->user->total_visits ?? 0 }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    Tổng chi tiêu
+                                </div>
+                                <div class="info-value">{{ number_format($bill->user->total_spent ?? 0) }} ₫</div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="no-customer">
+                            <i class="fas fa-user-slash"></i>
+                            <h3 style="margin-bottom: 8px; color: #374151; font-size: 14px;">Không có thông tin khách
+                                hàng</h3>
+                            <p style="color: #6b7280; font-size: 12px;">Hóa đơn này không có thông tin khách hàng</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Column 2: Chi tiết hóa đơn -->
+            <div class="column">
+                <div class="column-header">
+                    <i class="fas fa-receipt"></i>
+                    <h2>Chi tiết hóa đơn</h2>
+                </div>
+                <div class="column-content">
                     <div class="bill-items">
                         @php
-                            $finalAmount = ceil($bill->final_amount / 1000) * 1000;
-                            $roundedTimeCost = ceil($timeCost / 1000) * 1000;
+                            $totalMinutes = 0;
+                            $hourlyRate = 0;
+                            $timeCostValue = $timeCost;
+
+                            // Tính thời gian chơi thực tế
+                            if ($timeCost > 0) {
+                                $timeUsage = $bill->billTimeUsages->first();
+                                if ($timeUsage) {
+                                    $totalMinutes = $timeUsage->duration_minutes ?? 0;
+                                    $hourlyRate = $timeUsage->hourly_rate ?? 0;
+                                }
+                            }
                         @endphp
 
                         <!-- Time Usage -->
-                        @if ($roundedTimeCost > 0)
-                            <div class="bill-item fade-in">
-                                <div class="bill-item-content">
-                                    <div class="bill-item-icon bill-item-time">
-                                        <i class="fas fa-clock"></i>
-                                    </div>
-                                    <div class="bill-item-details">
-                                        <div class="bill-item-name">Giờ chơi</div>
-                                        <div class="bill-item-meta">
-                                            @php
-                                                $totalMinutes = $timeDetails['total_minutes'] ?? 0;
-                                                $hourlyRate = $timeDetails['hourly_rate'] ?? 0;
-                                            @endphp
-                                            {{ $totalMinutes }} phút @ {{ number_format(ceil($hourlyRate / 1000) * 1000) }}₫/giờ
-                                        </div>
+                        @if ($timeCost > 0)
+                            <div class="bill-item">
+                                <div class="item-info">
+                                    <div class="item-name">Giờ chơi</div>
+                                    <div class="item-details">
+                                        {{ number_format($hourlyRate) }}₫/h ×
+                                        {{ number_format($totalMinutes / 60, 1) }}h
                                     </div>
                                 </div>
-                                <div class="bill-item-price">
-                                    <div class="bill-item-total">{{ number_format($roundedTimeCost) }} ₫</div>
+                                <div class="item-price">
+                                    <div class="item-total">{{ number_format($timeCost) }} ₫</div>
                                 </div>
                             </div>
                         @endif
 
-                        <!-- Combos -->
-                        @foreach ($bill->billDetails->where('combo_id', '!=', null)->where('is_combo_component', false) as $comboDetail)
-                            @php
-                                $roundedComboPrice = ceil($comboDetail->unit_price / 1000) * 1000;
-                                $roundedComboTotal = ceil($comboDetail->total_price / 1000) * 1000;
-                            @endphp
-                            <div class="bill-item fade-in">
-                                <div class="bill-item-content">
-                                    <div class="bill-item-icon bill-item-combo">
-                                        <i class="fas fa-gift"></i>
-                                    </div>
-                                    <div class="bill-item-details">
-                                        <div class="bill-item-name">{{ $comboDetail->combo->name ?? 'Combo' }}</div>
-                                        <div class="bill-item-meta">
-                                            @if ($comboDetail->combo)
-                                                @php
-                                                    $components = $bill->billDetails->where(
-                                                        'parent_bill_detail_id',
-                                                        $comboDetail->id,
-                                                    );
-                                                @endphp
-                                                @if ($components->count() > 0)
-                                                    @foreach ($components as $component)
-                                                        {{ $component->quantity }}x {{ $component->product->name ?? 'Sản phẩm' }}
-                                                        @if (!$loop->last)
-                                                            ,
-                                                        @endif
-                                                    @endforeach
-                                                @else
-                                                    {{ $comboDetail->combo->description ?? 'Combo' }}
-                                                @endif
+                        <!-- Products and Combos -->
+                        @foreach ($bill->billDetails->where('is_combo_component', false) as $detail)
+                            @if ($detail->product || $detail->combo)
+                                <div class="bill-item">
+                                    <div class="item-info">
+                                        <div class="item-name">
+                                            @if ($detail->combo)
+                                                [COMBO] {{ $detail->combo->name ?? 'Combo' }}
                                             @else
-                                                Combo đã bị xóa
+                                                {{ $detail->product->name ?? 'Sản phẩm' }}
+                                            @endif
+                                        </div>
+                                        <div class="item-details">
+                                            @if ($detail->combo && $detail->combo->is_time_combo)
+                                                {{ $detail->combo->play_duration_minutes }} phút chơi
+                                            @else
+                                                Đơn giá: {{ number_format($detail->unit_price) }} ₫
                                             @endif
                                         </div>
                                     </div>
-                                </div>
-                                <div class="bill-item-price">
-                                    <div class="bill-item-quantity">{{ $comboDetail->quantity }} x {{ number_format($roundedComboPrice) }} ₫</div>
-                                    <div class="bill-item-total">{{ number_format($roundedComboTotal) }} ₫</div>
-                                </div>
-                            </div>
-                        @endforeach
-
-                        <!-- Individual Products -->
-                        @foreach ($bill->billDetails->whereNull('combo_id')->where('is_combo_component', false) as $item)
-                            @if ($item->product)
-                                @php
-                                    $roundedUnitPrice = ceil($item->unit_price / 1000) * 1000;
-                                    $roundedItemTotal = ceil($item->total_price / 1000) * 1000;
-                                @endphp
-                                <div class="bill-item fade-in">
-                                    <div class="bill-item-content">
-                                        <div class="bill-item-icon bill-item-product">
-                                            <i class="fas fa-utensils"></i>
-                                        </div>
-                                        <div class="bill-item-details">
-                                            <div class="bill-item-name">{{ $item->product->name }}</div>
-                                            <div class="bill-item-meta">Đơn giá: {{ number_format($roundedUnitPrice) }} ₫</div>
-                                        </div>
-                                    </div>
-                                    <div class="bill-item-price">
-                                        <div class="bill-item-quantity">{{ $item->quantity }} x {{ number_format($roundedUnitPrice) }} ₫</div>
-                                        <div class="bill-item-total">{{ number_format($roundedItemTotal) }} ₫</div>
+                                    <div class="item-price">
+                                        <div class="item-quantity">{{ $detail->quantity }} x
+                                            {{ number_format($detail->unit_price) }} ₫</div>
+                                        <div class="item-total">{{ number_format($detail->total_price) }} ₫</div>
                                     </div>
                                 </div>
                             @endif
                         @endforeach
 
-                        <!-- Extra Charges -->
-                        @foreach ($bill->billDetails->whereNull('product_id')->whereNull('combo_id')->where('is_combo_component', false) as $extra)
-                            @php
-                                $roundedExtraPrice = ceil($extra->unit_price / 1000) * 1000;
-                                $roundedExtraTotal = ceil($extra->total_price / 1000) * 1000;
-                            @endphp
-                            <div class="bill-item fade-in">
-                                <div class="bill-item-content">
-                                    <div class="bill-item-icon bill-item-extra">
-                                        <i class="fas fa-plus-circle"></i>
+                        <!-- Summary -->
+                        <div class="bill-item total-row">
+                            <div class="item-info">
+                                <div class="item-name">TỔNG CỘNG</div>
+                                @if ($discountAmount > 0)
+                                    <div class="item-details" style="color: #dc2626; font-weight: 500;">
+                                        Đã giảm: -{{ number_format($discountAmount) }} ₫
                                     </div>
-                                    <div class="bill-item-details">
-                                        <div class="bill-item-name">{{ $extra->note ?? 'Phí phát sinh' }}</div>
-                                        <div class="bill-item-meta">Phí phát sinh</div>
-                                    </div>
-                                </div>
-                                <div class="bill-item-price">
-                                    <div class="bill-item-quantity">{{ $extra->quantity }} x {{ number_format($roundedExtraPrice) }} ₫</div>
-                                    <div class="bill-item-total">{{ number_format($roundedExtraTotal) }} ₫</div>
-                                </div>
+                                @endif
                             </div>
-                        @endforeach
-
-                        <!-- Total Amount -->
-                        <div class="bill-item" style="border-top: 2px solid #e2e8f0; border-bottom: none; background: #f8fafc;">
-                            <div class="bill-item-content">
-                                <div class="bill-item-details">
-                                    <div class="bill-item-name" style="font-size: 1.125rem;">TỔNG CỘNG</div>
-                                </div>
-                            </div>
-                            <div class="bill-item-price">
-                                <div class="bill-item-total" style="font-size: 1.25rem; color: var(--success);">{{ number_format($finalAmount) }} ₫</div>
+                            <div class="item-price">
+                                <div class="item-total">{{ number_format($finalAmount) }} ₫</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Center Panel - Customer Info -->
-            <div class="center-panel panel" id="customerPanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="section-title">
-                            <i class="fas fa-user text-purple-500"></i>
-                            THÔNG TIN KHÁCH HÀNG
-                        </h2>
-                    </div>
-
-                    @if ($bill->user)
-                        <div class="customer-info">
-                            <div class="customer-row fade-in">
-                                <div class="customer-label">
-                                    <i class="fas fa-user-circle text-blue-500"></i>
-                                    Tên khách hàng
-                                </div>
-                                <div class="customer-value">{{ $bill->user->name }}</div>
-                            </div>
-
-                            <div class="customer-row fade-in">
-                                <div class="customer-label">
-                                    <i class="fas fa-phone text-green-500"></i>
-                                    Điện thoại
-                                </div>
-                                <div class="customer-value">{{ $bill->user->phone }}</div>
-                            </div>
-
-                            <div class="customer-row fade-in">
-                                <div class="customer-label">
-                                    <i class="fas fa-tag text-purple-500"></i>
-                                    Loại khách
-                                </div>
-                                <div class="customer-value">
-                                    <span class="customer-badge">{{ $bill->user->customer_type ?? 'Khách mới' }}</span>
-                                </div>
-                            </div>
-
-                            <div class="customer-row fade-in" style="border-bottom: none;">
-                                <div class="customer-label">
-                                    <i class="fas fa-history text-orange-500"></i>
-                                    Số lần đến
-                                </div>
-                                <div class="customer-value">{{ $bill->user->total_visits ?? 0 }}</div>
-                            </div>
-                        </div>
-                    @else
-                        <div class="empty-state" style="text-align: center; padding: 2rem; color: #64748b;">
-                            <i class="fas fa-user-slash" style="font-size: 3rem; margin-bottom: 1rem; color: #cbd5e1;"></i>
-                            <p class="text-lg font-medium mb-2">Không có thông tin khách hàng</p>
-                            <p class="text-sm">Hóa đơn này không có thông tin khách hàng</p>
-                        </div>
-                    @endif
+            <!-- Column 3: Phương thức thanh toán -->
+            <div class="column">
+                <div class="column-header">
+                    <i class="fas fa-credit-card"></i>
+                    <h2>Phương thức thanh toán</h2>
                 </div>
+                <div class="column-content">
+                    <!-- Promotion Section -->
+                    <div class="promotion-section">
+                        <div class="promotion-header">
+                            <i class="fas fa-tag"></i>
+                            <h3>Mã giảm giá</h3>
+                        </div>
 
-                <!-- QR Code Section (for bank transfer) -->
-                <div class="qr-section" id="qrSection">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center justify-center">
-                        <i class="fas fa-qrcode text-blue-500 mr-2"></i>
-                        QUÉT MÃ ĐỂ THANH TOÁN
-                    </h3>
-                    
-                    <div class="qr-code-container">
-                        <div class="qr-code" id="qrCodePlaceholder">
-                            <!-- Placeholder for QR code - bạn có thể thay thế bằng mã QR thực tế -->
-                            <div style="text-align: center;">
-                                <div style="margin-bottom: 0.5rem;">
-                                    <i class="fas fa-qrcode text-4xl text-gray-400"></i>
+                        @if ($appliedPromotion)
+                            <!-- Hiển thị khuyến mãi đã áp dụng -->
+                            <div class="applied-promotion active">
+                                <div class="promotion-success">
+                                    <div class="promotion-info">
+                                        <div class="promotion-icon">
+                                            <i class="fas fa-check"></i>
+                                        </div>
+                                        <div class="promotion-details">
+                                            <h4>{{ $appliedPromotion['name'] }}</h4>
+                                            <p>-{{ number_format($discountAmount) }} ₫</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="remove-promotion" id="remove_promotion">
+                                        <i class="fas fa-times"></i>
+                                        Xóa
+                                    </button>
                                 </div>
-                                <div>Mã QR sẽ được hiển thị ở đây</div>
                             </div>
-                        </div>
+                            <input type="hidden" name="promotion_code" value="{{ $appliedPromotion['code'] }}"
+                                id="current_promotion_code">
+                        @else
+                            <!-- Dropdown chọn mã giảm giá -->
+                            <select class="promotion-select" id="promotion_select">
+                                <option value="">-- Chọn mã giảm giá --</option>
+                                @foreach ($availablePromotions as $promotion)
+                                    <option value="{{ $promotion->promotion_code }}">
+                                        {{ $promotion->promotion_code }} - {{ $promotion->name }}
+                                        ({{ $promotion->discount_type == 'percent' ? $promotion->discount_value . '%' : number_format($promotion->discount_value) . '₫' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="promotion-message" id="promotion_message"></div>
+                            <div class="applied-promotion" id="applied_promotion">
+                                <!-- Dynamic content sẽ được thêm bằng JavaScript -->
+                            </div>
+                        @endif
                     </div>
 
-                    <div class="qr-instructions">
-                        <p>Quét mã QR bằng ứng dụng ngân hàng của bạn để thanh toán</p>
-                    </div>
-
-                    <div class="bank-info">
-                        <div class="bank-info-item">
-                            <span class="bank-info-label">Số tiền:</span>
-                            <span class="bank-info-value">{{ number_format($finalAmount) }} ₫</span>
-                        </div>
-                        <div class="bank-info-item">
-                            <span class="bank-info-label">Nội dung:</span>
-                            <span class="bank-info-value">{{ $bill->bill_number }}</span>
-                        </div>
-                        <div class="bank-info-item">
-                            <span class="bank-info-label">Ngân hàng:</span>
-                            <span class="bank-info-value">Vietcombank</span>
-                        </div>
-                        <div class="bank-info-item" style="border-bottom: none;">
-                            <span class="bank-info-label">Số tài khoản:</span>
-                            <span class="bank-info-value">0123456789</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel - Payment Methods -->
-            <div class="right-panel panel" id="paymentPanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="section-title">
-                            <i class="fas fa-credit-card text-green-500"></i>
-                            PHƯƠNG THỨC THANH TOÁN
-                        </h2>
-                    </div>
-
-                    <form action="{{ route('admin.payments.process-payment', $bill->id) }}" method="POST" id="paymentForm">
+                    <form action="{{ route('admin.payments.process-payment', $bill->id) }}" method="POST"
+                        id="paymentForm">
                         @csrf
+
+                        <!-- Hidden promotion code field -->
+                        <input type="hidden" name="promotion_code" id="promotion_code_field"
+                            value="{{ $appliedPromotion['code'] ?? '' }}">
 
                         <!-- Payment Methods -->
                         <div class="payment-methods">
                             <div class="payment-method selected" data-method="cash">
-                                <div class="payment-method-radio">
-                                    <input type="radio" name="payment_method" value="cash" id="cash" checked>
+                                <div class="method-header">
+                                    <div class="method-icon">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </div>
+                                    <div>
+                                        <div class="method-name">Tiền mặt</div>
+                                        <div class="method-desc">Thanh toán bằng tiền mặt</div>
+                                    </div>
                                 </div>
-                                <div class="payment-method-icon payment-method-cash">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                </div>
-                                <div class="payment-method-info">
-                                    <div class="payment-method-name">Tiền mặt</div>
-                                    <div class="payment-method-desc">Thanh toán bằng tiền mặt</div>
-                                </div>
+                                <input type="radio" name="payment_method" value="cash" checked hidden>
                             </div>
 
                             <div class="payment-method" data-method="bank">
-                                <div class="payment-method-radio">
-                                    <input type="radio" name="payment_method" value="bank" id="bank">
+                                <div class="method-header">
+                                    <div class="method-icon">
+                                        <i class="fas fa-university"></i>
+                                    </div>
+                                    <div>
+                                        <div class="method-name">Chuyển khoản</div>
+                                        <div class="method-desc">Chuyển khoản ngân hàng</div>
+                                    </div>
                                 </div>
-                                <div class="payment-method-icon payment-method-bank">
-                                    <i class="fas fa-university"></i>
-                                </div>
-                                <div class="payment-method-info">
-                                    <div class="payment-method-name">Chuyển khoản</div>
-                                    <div class="payment-method-desc">Chuyển khoản ngân hàng</div>
-                                </div>
+                                <input type="radio" name="payment_method" value="bank" hidden>
                             </div>
 
                             <div class="payment-method" data-method="card">
-                                <div class="payment-method-radio">
-                                    <input type="radio" name="payment_method" value="card" id="card">
+                                <div class="method-header">
+                                    <div class="method-icon">
+                                        <i class="fas fa-credit-card"></i>
+                                    </div>
+                                    <div>
+                                        <div class="method-name">Thẻ</div>
+                                        <div class="method-desc">Thẻ ATM/Visa/Mastercard</div>
+                                    </div>
                                 </div>
-                                <div class="payment-method-icon payment-method-card">
-                                    <i class="fas fa-credit-card"></i>
-                                </div>
-                                <div class="payment-method-info">
-                                    <div class="payment-method-name">Thẻ</div>
-                                    <div class="payment-method-desc">Thẻ ATM/Visa/Mastercard</div>
-                                </div>
+                                <input type="radio" name="payment_method" value="card" hidden>
                             </div>
                         </div>
 
                         <!-- Payment Details -->
                         <div class="payment-details">
-                            <!-- Amount -->
-                            <div class="payment-input-group">
-                                <label class="payment-label">Số tiền thanh toán</label>
-                                <input type="number" name="amount" value="{{ $finalAmount }}" 
-                                       class="payment-input readonly" readonly>
+                            <div class="input-group">
+                                <label class="input-label">Số tiền thanh toán</label>
+                                <input type="number" name="amount" value="{{ $finalAmount }}"
+                                    class="input-field readonly" readonly id="total_amount">
                             </div>
 
-                            <!-- Cash Received (only for cash) -->
-                            <div id="cashAmountSection" class="payment-input-group">
-                                <label class="payment-label">Khách đưa</label>
-                                <input type="number" id="cash_received" name="cash_received" 
-                                       value="{{ $finalAmount }}" min="{{ $finalAmount }}" step="1000"
-                                       class="payment-input" oninput="calculateChange()">
+                            <div class="input-group">
+                                <label class="input-label">Ghi chú</label>
+                                <textarea name="note" rows="3" class="input-field" placeholder="Nhập ghi chú cho hóa đơn...">{{ $bill->note ?? '' }}</textarea>
                             </div>
+                        </div>
 
-                            <!-- Change Amount (only for cash) -->
-                            <div id="changeAmountSection" class="payment-input-group">
-                                <label class="payment-label">Tiền thối lại</label>
-                                <input type="number" id="change_amount" name="change_amount" value="0" 
-                                       class="payment-input success" readonly>
+                        <!-- QR Section for Bank Transfer -->
+                        <div class="qr-section" id="qrSection">
+                            <div class="qr-title">Quét mã QR để thanh toán</div>
+                            <div class="qr-code">
+                                <div class="qr-placeholder">
+                                    <div style="text-align: center;">
+                                        <i class="fas fa-qrcode text-2xl mb-2"></i>
+                                        <div style="font-size: 11px;">Mã QR thanh toán</div>
+                                    </div>
+                                </div>
                             </div>
-
-                            <!-- Note -->
-                            <div class="payment-input-group">
-                                <label class="payment-label">Ghi chú</label>
-                                <textarea name="note" rows="3" 
-                                          class="payment-input" 
-                                          placeholder="Nhập ghi chú cho hóa đơn..."></textarea>
+                            <div class="bank-info">
+                                <div class="bank-row">
+                                    <span class="bank-label">Số tiền:</span>
+                                    <span class="bank-value">{{ number_format($finalAmount) }} ₫</span>
+                                </div>
+                                <div class="bank-row">
+                                    <span class="bank-label">Nội dung:</span>
+                                    <span class="bank-value">{{ $bill->bill_number }}</span>
+                                </div>
+                                <div class="bank-row">
+                                    <span class="bank-label">Ngân hàng:</span>
+                                    <span class="bank-value">Vietcombank</span>
+                                </div>
+                                <div class="bank-row">
+                                    <span class="bank-label">Số tài khoản:</span>
+                                    <span class="bank-value">0123456789</span>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Action Buttons -->
                         <div class="action-buttons">
-                            <button type="submit" class="action-btn action-btn-primary">
-                                <i class="fas fa-check-circle"></i>
-                                XÁC NHẬN THANH TOÁN
-                            </button>
-
-                            <a href="{{ route('admin.tables.detail', $bill->table_id) }}" class="action-btn action-btn-secondary">
+                            <button type="button" onclick="window.history.back()" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i>
-                                QUAY LẠI
-                            </a>
+                                Quay lại
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="submit_btn">
+                                <i class="fas fa-check-circle"></i>
+                                Xác nhận thanh toán
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-
-        <!-- Mobile Panel Tabs -->
-        <div class="mobile-panel-tabs">
-            <button class="mobile-tab active" data-panel="billPanel">
-                <i class="fas fa-receipt"></i>
-                <span>Hóa đơn</span>
-            </button>
-            <button class="mobile-tab" data-panel="customerPanel">
-                <i class="fas fa-user"></i>
-                <span>Khách hàng</span>
-            </button>
-            <button class="mobile-tab" data-panel="paymentPanel">
-                <i class="fas fa-credit-card"></i>
-                <span>Thanh toán</span>
-            </button>
-        </div>
     </div>
 
     <script>
-        const totalAmount = {{ $finalAmount }};
-
-        // Toast Notification System
-        function showToast(message, type = 'info', duration = 5000) {
-            const toastContainer = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            
-            // Set icon based on type
-            let icon = 'info-circle';
-            if (type === 'success') icon = 'check-circle';
-            if (type === 'error') icon = 'exclamation-circle';
-            if (type === 'warning') icon = 'exclamation-triangle';
-            
-            toast.innerHTML = `
-                <i class="fas fa-${icon}"></i>
-                <span>${message}</span>
-            `;
-            
-            toastContainer.appendChild(toast);
-            
-            // Show toast with animation
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
-            
-            // Auto hide after duration
-            setTimeout(() => {
-                hideToast(toast);
-            }, duration);
-            
-            // Click to dismiss
-            toast.addEventListener('click', () => {
-                hideToast(toast);
-            });
-        }
-        
-        function hideToast(toast) {
-            toast.classList.remove('show');
-            toast.classList.add('hide');
-            
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 300);
-        }
-
-        // Loading Overlay
-        function showLoading() {
-            document.getElementById('loadingOverlay').classList.add('active');
-        }
-        
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.remove('active');
-        }
-
-        // Mobile panel navigation
-        function setupMobilePanels() {
-            const mobileTabs = document.querySelectorAll('.mobile-tab');
-            const panels = document.querySelectorAll('.panel');
-
-            mobileTabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const panelId = this.getAttribute('data-panel');
-                    
-                    // Remove active class from all tabs and panels
-                    mobileTabs.forEach(t => t.classList.remove('active'));
-                    panels.forEach(p => p.classList.remove('active'));
-                    
-                    // Add active class to clicked tab and corresponding panel
-                    this.classList.add('active');
-                    document.getElementById(panelId).classList.add('active');
-                    
-                    // Add animation effect
-                    document.getElementById(panelId).classList.add('fade-in');
-                    setTimeout(() => {
-                        document.getElementById(panelId).classList.remove('fade-in');
-                    }, 500);
-                });
-            });
-        }
+        const totalAmount = {{ $totalAmount }};
+        const originalFinalAmount = {{ $finalAmount }};
+        let currentDiscount = {{ $discountAmount }};
+        let currentPromotion = @json($appliedPromotion);
 
         // Payment method selection
         document.querySelectorAll('.payment-method').forEach(method => {
@@ -1252,89 +1033,326 @@
                 this.classList.add('selected');
                 this.querySelector('input[type="radio"]').checked = true;
 
-                // Show/hide cash sections
+                // Show/hide relevant sections
                 const selectedMethod = this.dataset.method;
-                const cashSection = document.getElementById('cashAmountSection');
-                const changeSection = document.getElementById('changeAmountSection');
                 const qrSection = document.getElementById('qrSection');
 
-                if (selectedMethod === 'cash') {
-                    cashSection.style.display = 'flex';
-                    changeSection.style.display = 'flex';
-                    qrSection.classList.remove('active');
-                    calculateChange();
-                } else if (selectedMethod === 'bank') {
-                    cashSection.style.display = 'none';
-                    changeSection.style.display = 'none';
+                if (selectedMethod === 'bank') {
                     qrSection.classList.add('active');
                 } else {
-                    cashSection.style.display = 'none';
-                    changeSection.style.display = 'none';
                     qrSection.classList.remove('active');
                 }
             });
         });
 
-        // Calculate change
-        function calculateChange() {
-            const cashReceived = parseFloat(document.getElementById('cash_received').value) || 0;
-            const changeAmount = Math.max(0, cashReceived - totalAmount);
-            const roundedChange = Math.ceil(changeAmount / 1000) * 1000;
+        // Promotion selection
+        document.getElementById('promotion_select')?.addEventListener('change', async function() {
+            const promotionCode = this.value;
+            const promotionMessage = document.getElementById('promotion_message');
 
-            const changeInput = document.getElementById('change_amount');
-            changeInput.value = roundedChange;
-
-            // Update styling based on change amount
-            if (cashReceived < totalAmount) {
-                changeInput.classList.remove('success');
-                changeInput.classList.add('error');
-            } else {
-                changeInput.classList.remove('error');
-                changeInput.classList.add('success');
+            if (!promotionCode) {
+                removePromotion();
+                return;
             }
+
+            try {
+                // Hiển thị loading
+                showPromotionMessage('<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra mã...', 'loading');
+
+                // Gọi API kiểm tra mã giảm giá
+                const response = await fetch('{{ route('admin.payments.check-promotion') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        promotion_code: promotionCode,
+                        bill_id: {{ $bill->id }}
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.valid) {
+                    // Áp dụng mã giảm giá
+                    const applyResponse = await fetch('{{ route('admin.payments.apply-promotion') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            promotion_code: promotionCode,
+                            bill_id: {{ $bill->id }}
+                        })
+                    });
+
+                    const applyResult = await applyResponse.json();
+
+                    if (applyResult.success) {
+                        currentDiscount = applyResult.discount_amount;
+                        currentPromotion = applyResult.promotion;
+
+                        updatePromotionUI(applyResult.promotion.name, currentDiscount, promotionCode);
+                        showPromotionMessage(`✅ ${applyResult.message}`, 'success');
+                        celebratePromotion();
+
+                        // Cập nhật hidden field
+                        document.getElementById('promotion_code_field').value = promotionCode;
+                    } else {
+                        throw new Error(applyResult.message);
+                    }
+                } else {
+                    throw new Error(result.message);
+                }
+
+            } catch (error) {
+                showPromotionMessage(`❌ ${error.message}`, 'error');
+                // Reset select
+                this.value = '';
+            }
+        });
+
+        // Remove promotion với API call
+        document.getElementById('remove_promotion')?.addEventListener('click', async function() {
+            try {
+                const response = await fetch('{{ route('admin.payments.remove-promotion') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        bill_id: {{ $bill->id }}
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    removePromotion();
+                    showPromotionMessage(`✅ ${result.message}`, 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                showPromotionMessage(`❌ ${error.message}`, 'error');
+            }
+        });
+
+        function removePromotion() {
+            currentDiscount = 0;
+            currentPromotion = null;
+
+            // Hide applied promotion
+            document.getElementById('applied_promotion')?.classList.remove('active');
+
+            // Reset select
+            document.getElementById('promotion_select').value = '';
+
+            // Update total amount
+            updateTotalAmount();
+
+            // Clear hidden field
+            document.getElementById('promotion_code_field').value = '';
+        }
+
+        // Update promotion UI
+        function updatePromotionUI(promotionName, discountAmount, promotionCode) {
+            const appliedPromotion = document.getElementById('applied_promotion');
+            const promotionNameElem = document.getElementById('promotion_name');
+            const promotionDiscountElem = document.getElementById('promotion_discount');
+
+            // Create or update elements
+            if (!promotionNameElem) {
+                appliedPromotion.innerHTML = `
+                    <div class="promotion-success">
+                        <div class="promotion-info">
+                            <div class="promotion-icon">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="promotion-details">
+                                <h4 id="promotion_name">${promotionName}</h4>
+                                <p id="promotion_discount">-${formatCurrency(discountAmount)}</p>
+                            </div>
+                        </div>
+                        <button type="button" class="remove-promotion" id="remove_promotion">
+                            <i class="fas fa-times"></i>
+                            Xóa
+                        </button>
+                    </div>
+                `;
+
+                // Re-attach event listener
+                document.getElementById('remove_promotion').addEventListener('click', async function() {
+                    try {
+                        const response = await fetch('{{ route('admin.payments.remove-promotion') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                bill_id: {{ $bill->id }}
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            removePromotion();
+                            showPromotionMessage(`✅ ${result.message}`, 'success');
+                        } else {
+                            throw new Error(result.message);
+                        }
+                    } catch (error) {
+                        showPromotionMessage(`❌ ${error.message}`, 'error');
+                    }
+                });
+            } else {
+                promotionNameElem.textContent = promotionName;
+                promotionDiscountElem.textContent = `-${formatCurrency(discountAmount)}`;
+            }
+
+            appliedPromotion.classList.add('active');
+
+            // Update total amount
+            updateTotalAmount();
+        }
+
+        // Update total amount display
+        function updateTotalAmount() {
+            const finalAmount = totalAmount - currentDiscount;
+            const totalAmountInput = document.getElementById('total_amount');
+            const totalAmountDisplay = document.getElementById('total_amount_display');
+
+            totalAmountInput.value = finalAmount;
+            totalAmountDisplay.textContent = formatCurrency(finalAmount);
+        }
+
+        // Show promotion message
+        function showPromotionMessage(message, type) {
+            const promotionMessage = document.getElementById('promotion_message');
+            promotionMessage.innerHTML = message;
+            promotionMessage.className = `promotion-message ${type}`;
+        }
+
+        // Simple celebration effect
+        function celebratePromotion() {
+            const appliedPromotion = document.getElementById('applied_promotion');
+            appliedPromotion.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                appliedPromotion.style.transform = 'scale(1)';
+            }, 300);
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Show confirmation dialog
+        function showConfirmation() {
+            const finalAmount = totalAmount - currentDiscount;
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+            let paymentMethodText = '';
+            switch (paymentMethod) {
+                case 'cash':
+                    paymentMethodText = 'Tiền mặt';
+                    break;
+                case 'bank':
+                    paymentMethodText = 'Chuyển khoản';
+                    break;
+                case 'card':
+                    paymentMethodText = 'Thẻ';
+                    break;
+            }
+
+            return Swal.fire({
+                title: 'Xác nhận thanh toán',
+                html: `
+                    <div style="text-align: center;">
+                        <div style="font-size: 32px; color: #059669; margin-bottom: 12px;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <p style="margin-bottom: 8px; font-size: 16px; color: #374151;">Bạn có chắc muốn thanh toán?</p>
+                        <p style="font-size: 20px; font-weight: 700; color: #059669; margin-bottom: 12px;">
+                            ${formatCurrency(finalAmount)}
+                        </p>
+                        <p style="color: #6b7280; margin-bottom: 12px;">
+                            Phương thức: <strong>${paymentMethodText}</strong>
+                        </p>
+                        ${currentDiscount > 0 ? `
+                                <div style="background: #f0fdf4; padding: 8px; border-radius: 6px; margin: 12px 0; border: 1px solid #059669;">
+                                    <p style="margin: 0; color: #065f46; font-weight: 600; font-size: 14px;">
+                                        <i class="fas fa-tag"></i> Đã áp dụng mã giảm giá: -${formatCurrency(currentDiscount)}
+                                    </p>
+                                </div>
+                            ` : ''}
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Xác nhận thanh toán',
+                cancelButtonText: 'Hủy',
+                reverseButtons: true,
+                customClass: {
+                    confirmButton: 'swal2-confirm',
+                    cancelButton: 'swal2-deny'
+                }
+            });
+        }
+
+        // Show loading state
+        function showLoading() {
+            const submitBtn = document.getElementById('submit_btn');
+            submitBtn.classList.add('btn-loading');
+            submitBtn.disabled = true;
+        }
+
+        // Hide loading state
+        function hideLoading() {
+            const submitBtn = document.getElementById('submit_btn');
+            submitBtn.classList.remove('btn-loading');
+            submitBtn.disabled = false;
         }
 
         // Form submission
-        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-            const cashReceived = parseFloat(document.getElementById('cash_received').value) || 0;
+            const finalAmount = totalAmount - currentDiscount;
 
-            if (paymentMethod === 'cash' && cashReceived < totalAmount) {
-                e.preventDefault();
-                showToast('Số tiền khách đưa không đủ! Vui lòng nhập số tiền lớn hơn hoặc bằng ' + totalAmount.toLocaleString('vi-VN') + ' ₫', 'error', 5000);
+            // Show confirmation dialog
+            const result = await showConfirmation();
+
+            if (!result.isConfirmed) {
                 return false;
             }
 
-            if (!confirm('Xác nhận thanh toán hóa đơn ' + totalAmount.toLocaleString('vi-VN') + ' ₫?')) {
-                e.preventDefault();
-                return false;
-            }
+            showLoading();
 
-            // Show loading state
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...';
-            submitBtn.disabled = true;
-
-            // Re-enable button after 5 seconds if still on page (fallback)
+            // Submit form
             setTimeout(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }, 5000);
+                this.submit();
+            }, 500);
         });
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            setupMobilePanels();
             document.querySelector('.payment-method[data-method="cash"]').click();
-            document.getElementById('cash_received').value = totalAmount;
-            calculateChange();
 
-            // Add animation to page load
-            document.querySelectorAll('.card').forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-                card.classList.add('fade-in');
-            });
+            // Nếu đã có khuyến mãi áp dụng, cập nhật UI
+            if (currentPromotion) {
+                updatePromotionUI(currentPromotion.name, currentDiscount, currentPromotion.code);
+            }
         });
     </script>
 </body>

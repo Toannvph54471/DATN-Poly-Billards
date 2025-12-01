@@ -43,7 +43,7 @@
                     <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-1000 ease-linear" style="width: 100%"></div>
                 </div>
                 
-                <button onclick="fetchQrToken()" class="mt-4 text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center w-full">
+                <button onclick="fetchQrToken(true)" class="mt-4 text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center w-full">
                     <i class="fas fa-sync-alt mr-1"></i> Làm mới ngay
                 </button>
             </div>
@@ -67,13 +67,18 @@
     const timerDisplay = document.getElementById('timer');
     const progressBar = document.getElementById('progress-bar');
 
-    function fetchQrToken() {
+    function fetchQrToken(force = false) {
         // Show loading if it's a manual refresh or initial load
-        if (qrImage.style.display === 'none') {
+        if (qrImage.style.display === 'none' || force) {
             qrLoading.style.display = 'flex';
         }
 
-        fetch('/attendance/my-token')
+        let url = '/attendance/my-token';
+        if (force) {
+            url += '?refresh=1';
+        }
+
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 if (data.token) {

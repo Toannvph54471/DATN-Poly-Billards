@@ -297,13 +297,14 @@ class AttendanceController extends Controller
             \Log::info('Employee found', ['employee_id' => $employee->id]);
 
             // Check if current token is valid for at least 30 more seconds
-            if ($employee->qr_token && $employee->qr_token_expires_at && $employee->qr_token_expires_at->gt(now()->addSeconds(30))) {
-                \Log::info('Returning existing token');
-                return response()->json([
-                    'token' => $employee->qr_token,
-                    'expires_in' => $employee->qr_token_expires_at->timestamp - now()->timestamp
-                ]);
-            }
+        // But if 'refresh' param is present, force generate new one
+        if (!$request->has('refresh') && $employee->qr_token && $employee->qr_token_expires_at && $employee->qr_token_expires_at->gt(now()->addSeconds(30))) {
+            \Log::info('Returning existing token');
+            return response()->json([
+                'token' => $employee->qr_token,
+                'expires_in' => $employee->qr_token_expires_at->timestamp - now()->timestamp
+            ]);
+        }
 
             // Generate new token
             \Log::info('Generating new token');

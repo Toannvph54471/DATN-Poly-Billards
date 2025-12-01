@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* CSS styles giữ nguyên từ code cũ */
         :root {
             --primary: #3b82f6;
             --success: #10b981;
@@ -129,7 +130,7 @@
             color: #475569;
         }
 
-        /* Main Content Styles - UPDATED LAYOUT */
+        /* Main Content Styles */
         .main-content {
             display: flex;
             flex: 1;
@@ -185,23 +186,6 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-        }
-
-        /* Real-time Banner */
-        .real-time-banner {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .time-counter {
-            font-size: 1.5rem;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
         }
 
         /* Time Tracking */
@@ -366,7 +350,7 @@
             overflow: auto;
         }
 
-        /* Bill Details - NEW CENTER POSITION */
+        /* Bill Details */
         .bill-details {
             flex: 1;
             display: flex;
@@ -461,6 +445,7 @@
             gap: 0.5rem;
             text-decoration: none;
             transition: all 0.2s;
+            border: none;
         }
 
         .action-btn:hover {
@@ -470,7 +455,6 @@
         .action-btn-primary {
             background: #3b82f6;
             color: white;
-            border: none;
         }
 
         .action-btn-primary:hover {
@@ -480,7 +464,6 @@
         .action-btn-success {
             background: #10b981;
             color: white;
-            border: none;
         }
 
         .action-btn-success:hover {
@@ -490,11 +473,19 @@
         .action-btn-warning {
             background: #f59e0b;
             color: white;
-            border: none;
         }
 
         .action-btn-warning:hover {
             background: #d97706;
+        }
+
+        .action-btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .action-btn-danger:hover {
+            background: #dc2626;
         }
 
         .action-btn-secondary {
@@ -789,7 +780,85 @@
             background: #94a3b8;
         }
 
-        /* Animation for real-time banner */
+        /* Combo Status Banner */
+        .combo-status-banner {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .combo-status-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .combo-status-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .combo-status-text {
+            flex: 1;
+        }
+
+        .combo-status-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .combo-status-description {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* Warning Banner */
+        .warning-banner {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .warning-banner-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #92400e;
+        }
+
+        .warning-banner-content i {
+            font-size: 1.25rem;
+        }
+
+        .warning-banner-text {
+            flex: 1;
+        }
+
+        .warning-banner-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .warning-banner-description {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        /* Critical Warning Banner */
+        .critical-warning-banner {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            animation: pulse 2s infinite;
+        }
+
         @keyframes pulse {
             0% {
                 opacity: 1;
@@ -804,58 +873,42 @@
             }
         }
 
-        .pulse {
-            animation: pulse 2s infinite;
+        .critical-warning-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        /* Loading States */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
+        .critical-warning-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
-        .btn-loading {
-            position: relative;
-            color: transparent;
+        .critical-warning-text {
+            flex: 1;
         }
 
-        .btn-loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-right-color: transparent;
-            animation: spin 1s linear infinite;
+        .critical-warning-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 1.1rem;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .critical-warning-description {
+            font-size: 0.875rem;
+            opacity: 0.9;
         }
 
-        /* Responsive Design */
-        @media (max-width: 1400px) {
-            .left-panel {
-                width: 40%;
-            }
-            .center-panel {
-                width: 35%;
-            }
-            .right-panel {
-                width: 25%;
-            }
+        /* Combo Ended Info */
+        .combo-ended-info {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
         }
 
-<<<<<<< HEAD
-        @media (max-width: 1200px) {
-=======
         .combo-ended-content {
             display: flex;
             align-items: center;
@@ -947,44 +1000,330 @@
 
         /* Mobile Styles */
         @media (max-width: 1024px) {
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
             .main-content {
                 flex-direction: column;
             }
-            .left-panel, .center-panel, .right-panel {
+
+            .left-panel,
+            .center-panel,
+            .right-panel {
                 width: 100%;
+                height: auto;
                 border: none;
             }
-            .center-panel {
-                order: 1;
-                border-top: 1px solid #e2e8f0;
-                border-bottom: 1px solid #e2e8f0;
+
+            .panel {
+                display: none;
             }
-            .left-panel {
-                order: 2;
+
+            .panel.active {
+                display: flex;
             }
-            .right-panel {
-                order: 3;
+
+            .mobile-panel-tabs {
+                display: flex;
+            }
+
+            .header {
+                padding: 1rem;
+            }
+
+            .table-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .table-status {
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .time-tracking {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+            }
+
+            .time-box {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .time-value {
+                font-size: 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            .right-content {
+                padding: 1rem;
+            }
+
+            .products-tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                flex: 1;
+                min-width: 120px;
+                text-align: center;
+                padding: 0.75rem 0.5rem;
+            }
+
+            .action-buttons {
+                gap: 0.5rem;
+            }
+
+            .action-btn {
+                padding: 0.6rem;
+                font-size: 0.875rem;
             }
         }
 
-        /* Empty State */
-        .products-grid:empty::after {
-            content: "Không có sản phẩm nào";
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .table-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .back-btn {
+                align-self: flex-start;
+            }
+
+            .table-details h1 {
+                font-size: 1.25rem;
+            }
+
+            .table-meta {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .time-tracking {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .time-box {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+            }
+
+            .time-label {
+                margin-bottom: 0;
+                font-size: 0.8rem;
+            }
+
+            .time-value {
+                font-size: 1rem;
+            }
+
+            .combo-status-content {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .combo-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .combo-actions .action-btn {
+                flex: 1;
+                margin: 0 0.25rem;
+            }
+
+            .products-list table {
+                font-size: 0.875rem;
+            }
+
+            .bill-table {
+                font-size: 0.875rem;
+            }
+
+            .bill-table th,
+            .bill-table td {
+                padding: 0.5rem;
+            }
+
+            .total-amount {
+                font-size: 1.25rem;
+            }
+
+            .transfer-item {
+                padding: 0.75rem;
+            }
+
+            .transfer-item .grid {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .info-item {
+                padding: 0.5rem 0;
+                font-size: 0.875rem;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .mobile-tab {
+                padding: 10px 8px;
+                font-size: 0.7rem;
+            }
+
+            .mobile-tab i {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.75rem;
+            }
+
+            .table-details h1 {
+                font-size: 1.1rem;
+            }
+
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+
+            .hourly-rate {
+                font-size: 0.8rem;
+            }
+
+            .card {
+                padding: 0.75rem;
+                margin-bottom: 1rem;
+            }
+
+            .section-title {
+                font-size: 1rem;
+            }
+
+            .time-box {
+                padding: 0.6rem;
+            }
+
+            .time-label {
+                font-size: 0.75rem;
+            }
+
+            .time-value {
+                font-size: 0.9rem;
+            }
+
+            .products-tabs .tab {
+                padding: 0.6rem 0.4rem;
+                font-size: 0.8rem;
+            }
+
+            .search-box {
+                padding: 0.6rem;
+                font-size: 0.875rem;
+            }
+
+            .quantity-input {
+                width: 40px;
+                padding: 0.25rem;
+            }
+
+            .quantity-btn {
+                width: 28px;
+                height: 28px;
+            }
+
+            .add-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            .right-content {
+                padding: 0.75rem;
+            }
+
+            .action-btn {
+                padding: 0.5rem;
+                font-size: 0.8rem;
+            }
+
+            .mobile-tab {
+                padding: 8px 6px;
+                font-size: 0.65rem;
+            }
+
+            .mobile-tab i {
+                font-size: 1rem;
+                margin-bottom: 2px;
+            }
+
+            .empty-state {
+                padding: 1.5rem;
+            }
+
+            .empty-state i {
+                font-size: 2rem;
+            }
+        }
+
+        /* Utility classes for mobile */
+        .mobile-only {
+            display: none;
+        }
+
+        .desktop-only {
             display: block;
-            text-align: center;
-            padding: 3rem;
-            color: #64748b;
-            font-size: 1.1rem;
-            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 1024px) {
+            .mobile-only {
+                display: block;
+            }
+
+            .desktop-only {
+                display: none;
+            }
+        }
+
+        /* Table responsive */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table-responsive table {
+            min-width: 600px;
+        }
+
+        @media (max-width: 768px) {
+            .table-responsive table {
+                min-width: 500px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .table-responsive table {
+                min-width: 400px;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="app-container">
-<<<<<<< HEAD
-=======
         <!-- Toast Container -->
         <div class="toast-container" id="toastContainer"></div>
 
@@ -1004,33 +1343,25 @@
             $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
         @endphp
 
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         <!-- Header -->
         <div class="header">
             <div class="table-info">
                 <div class="table-title">
-<<<<<<< HEAD
-                    <a href="{{ route('admin.tables.index') }}" class="back-btn">
-                        <i class="fas fa-arrow-left"></i>
-                        Quay lại
-                    </a>
-=======
                     @if (in_array($userRole, ['admin', 'manager']))
                         <a href="{{ route('admin.tables.index') }}" class="back-btn">
                             <i class="fas fa-arrow-left"></i> <span class="desktop-only">Quay lại</span>
                         </a>
                     @elseif($userRole === 'employee')
-                        <a href="{{ route('admin.pos.dashboard') }}" class="back-btn">
+                        <a href="{{ route('admin.tables.simple-dashboard') }}" class="back-btn">
                             <i class="fas fa-arrow-left"></i> <span class="desktop-only">Quay lại</span>
                         </a>
                     @endif
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                     <div class="table-details">
                         <h1>{{ $table->table_name }}</h1>
                         <div class="table-meta">
                             <span>Số: {{ $table->table_number }}</span>
-                            <span>•</span>
-                            <span>{{ $table->category->name ?? 'Chưa phân loại' }}</span>
+                            <span class="desktop-only">•</span>
+                            <span>{{ $table->tableRate->name ?? 'Chưa phân loại' }}</span>
                         </div>
                     </div>
                 </div>
@@ -1065,30 +1396,7 @@
         <!-- Main Content -->
         <div class="main-content">
             <!-- Left Panel - Products & Combos -->
-            <div class="left-panel">
-                <!-- Real-time Counter Banner -->
-                @if (
-                    $table->currentBill &&
-                        in_array($table->currentBill->status, ['Open', 'quick']) &&
-                        isset($timeInfo['is_running']) &&
-                        $timeInfo['is_running']
-                )
-                    <div class="real-time-banner pulse">
-                        <div>
-                            <div class="text-sm font-semibold">THỜI GIAN ĐANG CHẠY</div>
-                            <div id="realTimeCounter" class="time-counter">
-                                {{ floor($timeInfo['elapsed_minutes'] / 60) }}:{{ str_pad($timeInfo['elapsed_minutes'] % 60, 2, '0', STR_PAD_LEFT) }}
-                            </div>
-                        </div>
-                        <div>
-                            <div class="text-sm font-semibold">CHI PHÍ HIỆN TẠI</div>
-                            <div id="realTimeCost" class="time-counter">
-                                {{ number_format(round($timeInfo['current_cost'] ?? 0)) }} ₫
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
+            <div class="left-panel panel active" id="productsPanel">
                 <!-- Time Tracking -->
                 <div class="card">
                     <div class="card-header">
@@ -1102,6 +1410,7 @@
                                     'regular' => '🕒 GIỜ THƯỜNG',
                                     'combo' => '🎁 COMBO TIME',
                                     'quick' => '⚡ BÀN LẺ',
+                                    'combo_ended' => '⏹️ COMBO ĐÃ HẾT',
                                     default => '⏸️ KHÔNG HOẠT ĐỘNG',
                                 };
                             @endphp
@@ -1113,7 +1422,16 @@
                         <div class="time-box">
                             <div class="time-label">ĐÃ SỬ DỤNG</div>
                             <div id="elapsedTimeDisplay" class="time-value time-elapsed">
-                                {{ isset($timeInfo['elapsed_minutes']) ? sprintf('%02d:%02d:%02d', floor($timeInfo['elapsed_minutes'] / 60), $timeInfo['elapsed_minutes'] % 60, 0) : '00:00:00' }}
+                                @if (isset($timeInfo['elapsed_minutes']))
+                                    @php
+                                        $elapsedMinutes = $timeInfo['elapsed_minutes'];
+                                        $hours = floor($elapsedMinutes / 60);
+                                        $minutes = $elapsedMinutes % 60;
+                                    @endphp
+                                    {{ sprintf('%02d:%02d', $hours, $minutes) }}
+                                @else
+                                    00:00
+                                @endif
                             </div>
                         </div>
 
@@ -1121,7 +1439,14 @@
                             <div class="time-label">THỜI GIAN CÒN LẠI</div>
                             <div id="remainingTimeDisplay" class="time-value time-remaining">
                                 @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo' && isset($timeInfo['remaining_minutes']))
-                                    {{ sprintf('%02d:%02d', floor($timeInfo['remaining_minutes'] / 60), $timeInfo['remaining_minutes'] % 60) }}
+                                    @php
+                                        $remainingMinutes = $timeInfo['remaining_minutes'];
+                                        $hours = floor($remainingMinutes / 60);
+                                        $minutes = $remainingMinutes % 60;
+                                    @endphp
+                                    {{ sprintf('%02d:%02d', $hours, $minutes) }}
+                                @elseif (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo_ended')
+                                    <span class="text-red-500">00:00</span>
                                 @else
                                     --:--
                                 @endif
@@ -1155,8 +1480,6 @@
                             </div>
                         </div>
                     @endif
-<<<<<<< HEAD
-=======
 
                     <!-- CẢNH BÁO COMBO SẮP HẾT (5-10 phút) -->
                     @if (isset($timeInfo['mode']) &&
@@ -1251,7 +1574,6 @@
                             </div>
                         </div>
                     @endif
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                 </div>
 
                 <!-- Products & Combos Section -->
@@ -1259,17 +1581,21 @@
                     <div class="products-tabs">
                         <div class="tab active" data-tab="products">
                             <i class="fas fa-utensils text-green-500"></i>
-                            SẢN PHẨM ({{ $products->count() }})
+                            <span class="desktop-only">SẢN PHẨM</span>
+                            <span class="mobile-only">SP</span>
+                            ({{ $products->count() }})
                         </div>
                         <div class="tab" data-tab="combos">
                             <i class="fas fa-gift text-purple-500"></i>
-                            COMBO ({{ $combos->count() }})
+                            <span class="desktop-only">COMBO</span>
+                            <span class="mobile-only">CB</span>
+                            ({{ $combos->count() }})
                         </div>
                     </div>
 
                     <input type="text" id="productSearch" placeholder="Tìm kiếm sản phẩm..." class="search-box">
 
-                    <div class="products-container">
+                    <div class="products-container table-responsive">
                         <!-- Products List -->
                         <div id="productsList" class="products-list">
                             <table class="w-full border-collapse">
@@ -1277,8 +1603,10 @@
                                     <tr class="bg-gray-50">
                                         <th class="p-3 text-left text-sm font-medium text-gray-600">Sản phẩm</th>
                                         <th class="p-3 text-right text-sm font-medium text-gray-600 w-24">Giá</th>
-                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-32">Số lượng</th>
-                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-20">Thao tác</th>
+                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-32">Số lượng
+                                        </th>
+                                        <th class="p-3 text-center text-sm font-medium text-gray-600 w-20">Thao tác
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1338,7 +1666,8 @@
                                                     data-product-id="{{ $product->id }}"
                                                     {{ $product->stock_quantity <= 0 ? 'disabled' : '' }}>
                                                     <i class="fas fa-plus mr-1"></i>
-                                                    Thêm
+                                                    <span class="desktop-only">Thêm</span>
+                                                    <span class="mobile-only">+</span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -1424,7 +1753,8 @@
                                                     data-combo-id="{{ $combo->id }}"
                                                     {{ $table->currentBill && $table->currentBill->status === 'quick' ? 'disabled' : '' }}>
                                                     <i class="fas fa-plus mr-1"></i>
-                                                    Thêm
+                                                    <span class="desktop-only">Thêm</span>
+                                                    <span class="mobile-only">+</span>
                                                 </button>
                                             </td>
                                         </tr>
@@ -1436,10 +1766,10 @@
                 </div>
             </div>
 
-            <!-- Center Panel - Bill Details (NEW POSITION) -->
-            <div class="center-panel">
+            <!-- Center Panel - Bill Details -->
+            <div class="center-panel panel" id="billPanel">
                 <div class="right-content">
-                    <!-- Bill Details - NOW IN CENTER -->
+                    <!-- Bill Details -->
                     <div class="card bill-details">
                         <div class="card-header">
                             <h2 class="section-title">
@@ -1454,7 +1784,7 @@
                             </div>
                         </div>
 
-                        <div class="bill-container">
+                        <div class="bill-container table-responsive">
                             @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
                                 <table class="bill-table">
                                     <thead>
@@ -1463,6 +1793,7 @@
                                             <th width="80">SL</th>
                                             <th width="120">Đơn giá</th>
                                             <th width="140">Thành tiền</th>
+                                            <th width="80">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1489,8 +1820,6 @@
                                                 </td>
                                                 <td class="text-right font-semibold">
                                                     {{ number_format(round($item->total_price)) }} ₫</td>
-<<<<<<< HEAD
-=======
                                                 <td class="text-center">
                                                     @if ($item->product_id && !$item->is_combo_component && !$item->combo_id)
                                                         <form
@@ -1509,7 +1838,6 @@
                                                         <span class="text-gray-400 text-xs">Không thể xóa</span>
                                                     @endif
                                                 </td>
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -1521,8 +1849,6 @@
                                     <p class="text-sm">Thêm sản phẩm hoặc combo để bắt đầu</p>
                                 </div>
                             @endif
-<<<<<<< HEAD
-=======
 
                             <!-- PHẦN HIỂN THỊ CHI TIẾT CHUYỂN BÀN -->
                             @if ($table->currentBill && $table->currentBill->billTimeUsages->count() > 1)
@@ -1667,7 +1993,6 @@
                                 </div>
                             @endif
                             <!-- KẾT THÚC PHẦN HIỂN THỊ CHUYỂN BÀN -->
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                         </div>
 
                         @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
@@ -1680,7 +2005,7 @@
             </div>
 
             <!-- Right Panel - Table Info & Actions -->
-            <div class="right-panel">
+            <div class="right-panel panel" id="infoPanel">
                 <div class="right-content">
                     <!-- Table Info -->
                     <div class="card info-section">
@@ -1746,31 +2071,23 @@
                             @if ($table->currentBill)
                                 <!-- Xử lý bàn lẻ -->
                                 @if ($table->currentBill->status === 'quick')
-                                    <form action="{{ route('bills.start-playing', $table->currentBill->id) }}"
+                                    <form action="{{ route('admin.bills.start-playing', $table->currentBill->id) }}"
                                         method="POST" class="w-full">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-primary">
                                             <i class="fas fa-play"></i>
-                                            BẮT ĐẦU TÍNH GIỜ
+                                            <span class="desktop-only">BẮT ĐẦU TÍNH GIỜ</span>
+                                            <span class="mobile-only">BẮT ĐẦU GIỜ</span>
                                         </button>
                                     </form>
 
-<<<<<<< HEAD
-                                    <!-- NÚT THANH TOÁN CHO BÀN LẺ -->
-                                    <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
-=======
                                     <a href="{{ route('admin.payments.payment-page', $table->currentBill->id) }}"
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                                         class="action-btn action-btn-success">
                                         <i class="fas fa-credit-card"></i>
-                                        THANH TOÁN BÀN LẺ
+                                        <span class="desktop-only">THANH TOÁN BÀN LẺ</span>
+                                        <span class="mobile-only">THANH TOÁN</span>
                                     </a>
                                 @else
-<<<<<<< HEAD
-                                    <!-- Pause/Resume Buttons -->
-                                    @if (isset($timeInfo['is_running']) && $timeInfo['is_running'] && !$timeInfo['is_paused'])
-                                        <form action="{{ route('bills.pause', $table->currentBill->id) }}"
-=======
                                     <!-- Thanh toán -->
                                     <a href="{{ route('admin.payments.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-primary">
@@ -1797,91 +2114,37 @@
                                             $timeInfo['mode'] === 'combo_ended')
                                         <form
                                             action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
-                                            method="POST" class="w-full">
-                                            @csrf
-                                            <button type="submit" class="action-btn action-btn-warning">
-                                                <i class="fas fa-pause"></i>
-                                                TẠM DỪNG
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    @if (isset($timeInfo['is_paused']) && $timeInfo['is_paused'])
-                                        <form action="{{ route('bills.resume', $table->currentBill->id) }}"
                                             method="POST" class="w-full">
                                             @csrf
                                             <button type="submit" class="action-btn action-btn-success">
-                                                <i class="fas fa-play"></i>
-                                                TIẾP TỤC
+                                                <i class="fas fa-play-circle"></i>
+                                                <span class="desktop-only">BẬT GIỜ THƯỜNG</span>
+                                                <span class="mobile-only">BẬT GIỜ</span>
                                             </button>
                                         </form>
                                     @endif
 
-                                    <!-- Thanh toán -->
-                                    <a href="{{ route('bills.payment-page', $table->currentBill->id) }}"
-                                        class="action-btn action-btn-primary">
-                                        <i class="fas fa-credit-card"></i>
-                                        THANH TOÁN
+                                    <!-- Chuyển bàn -->
+                                    <a href="{{ route('admin.bills.transfer-form', $table->currentBill->id) }}"
+                                        class="action-btn action-btn-secondary">
+                                        <i class="fas fa-exchange-alt"></i>
+                                        <span class="desktop-only">CHUYỂN BÀN</span>
+                                        <span class="mobile-only">CHUYỂN BÀN</span>
                                     </a>
-
-                                    <!-- Cập nhật tổng -->
-                                    <button onclick="updateBillTotal()" class="action-btn action-btn-secondary">
-                                        <i class="fas fa-sync-alt"></i>
-                                        CẬP NHẬT TỔNG
-                                    </button>
-
-                                    <!-- Gia hạn combo -->
-                                    @if (isset($timeInfo['mode']) &&
-                                            $timeInfo['mode'] === 'combo' &&
-                                            isset($timeInfo['is_near_end']) &&
-                                            $timeInfo['is_near_end']
-                                    )
-                                        <form action="{{ route('bills.extend-combo', $table->currentBill->id) }}"
-                                            method="POST" class="w-full">
-                                            @csrf
-                                            <input type="hidden" name="extra_minutes" value="30">
-                                            <button type="submit" class="action-btn action-btn-warning">
-                                                <i class="fas fa-clock"></i>
-                                                GIA HẠN 30 PHÚT
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    <!-- Chuyển sang giờ thường -->
-                                    @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
-                                        <form action="{{ route('bills.switch-regular', $table->currentBill->id) }}"
-                                            method="POST" onsubmit="return confirm('Chuyển sang tính giờ thường?')"
-                                            class="w-full">
-                                            @csrf
-                                            <button type="submit" class="action-btn action-btn-secondary">
-                                                <i class="fas fa-exchange-alt"></i>
-                                                CHUYỂN GIỜ THƯỜNG
-                                            </button>
-                                        </form>
-                                    @endif
                                 @endif
-
-                                <!-- Chuyển thành bàn lẻ -->
-                                <form action="{{ route('bills.convert-to-quick', $table->currentBill->id) }}"
-                                    method="POST" onsubmit="return confirm('Chuyển thành bàn lẻ?')" class="w-full">
-                                    @csrf
-                                    <button type="submit" class="action-btn action-btn-secondary">
-                                        <i class="fas fa-coins"></i>
-                                        CHUYỂN BÀN LẺ
-                                    </button>
-                                </form>
                             @else
                                 <!-- Tạo bill mới -->
                                 <button onclick="showCreateBillModal()" class="action-btn action-btn-primary">
                                     <i class="fas fa-plus"></i>
-                                    TẠO HÓA ĐƠN TÍNH GIỜ
+                                    <span class="desktop-only">TẠO HÓA ĐƠN TÍNH GIỜ</span>
+                                    <span class="mobile-only">TẠO HÓA ĐƠN</span>
                                 </button>
 
                                 <!-- Tạo bàn lẻ -->
                                 <button onclick="showQuickBillModal()" class="action-btn action-btn-warning">
                                     <i class="fas fa-bolt"></i>
-                                    TẠO BÀN LẺ
+                                    <span class="desktop-only">TẠO BÀN LẺ</span>
+                                    <span class="mobile-only">BÀN LẺ</span>
                                 </button>
                             @endif
                         </div>
@@ -1906,19 +2169,52 @@
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Loại khách</span>
-                                    <span
-                                        class="info-value">{{ $table->currentBill->user->customer_type ?? 'Khách mới' }}</span>
+                                    <span class="info-value">
+                                        @php
+                                            $customerType = $table->currentBill->user->customer_type ?? 'Mới';
+                                            $typeClass = match ($customerType) {
+                                                'VIP' => 'text-red-600 font-bold',
+                                                'Thân thiết' => 'text-purple-600 font-semibold',
+                                                'Quay lại' => 'text-blue-600',
+                                                default => 'text-gray-600',
+                                            };
+                                        @endphp
+                                        <span class="{{ $typeClass }}">{{ $customerType }}</span>
+                                    </span>
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Số lần đến</span>
-                                    <span class="info-value">{{ $table->currentBill->user->total_visits ?? 0 }}
-                                        lần</span>
+                                    <span class="info-value font-bold text-green-600">
+                                        {{ $table->currentBill->user->total_visits ?? 1 }} lần
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Tổng chi tiêu</span>
+                                    <span class="info-value font-bold text-orange-600">
+                                        {{ number_format($table->currentBill->user->total_spent ?? 0) }} ₫
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     @endif
                 </div>
             </div>
+        </div>
+
+        <!-- Mobile Panel Tabs -->
+        <div class="mobile-panel-tabs">
+            <button class="mobile-tab active" data-panel="productsPanel">
+                <i class="fas fa-clock"></i>
+                <span>Thời gian</span>
+            </button>
+            <button class="mobile-tab" data-panel="billPanel">
+                <i class="fas fa-receipt"></i>
+                <span>Hóa đơn</span>
+            </button>
+            <button class="mobile-tab" data-panel="infoPanel">
+                <i class="fas fa-info-circle"></i>
+                <span>Thông tin</span>
+            </button>
         </div>
     </div>
 
@@ -1929,7 +2225,7 @@
                 <h3 class="modal-title">Tạo Hóa Đơn Tính Giờ</h3>
                 <button class="close-btn" onclick="hideCreateBillModal()">&times;</button>
             </div>
-            <form id="createBillForm" action="{{ route('bills.create') }}" method="POST">
+            <form id="createBillForm" action="{{ route('admin.bills.create') }}" method="POST">
                 @csrf
                 <input type="hidden" name="table_id" value="{{ $table->id }}">
 
@@ -1950,10 +2246,11 @@
                 </div>
 
                 <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="hideCreateBillModal()" class="btn btn-secondary flex-1">
+                    <button type="button" onclick="hideCreateBillModal()"
+                        class="action-btn action-btn-secondary flex-1">
                         Hủy
                     </button>
-                    <button type="submit" class="btn btn-primary flex-1">
+                    <button type="submit" class="action-btn action-btn-primary flex-1">
                         <i class="fas fa-plus"></i> Tạo Hóa Đơn
                     </button>
                 </div>
@@ -1968,7 +2265,7 @@
                 <h3 class="modal-title">Tạo Bàn Lẻ</h3>
                 <button class="close-btn" onclick="hideQuickBillModal()">&times;</button>
             </div>
-            <form id="quickBillForm" action="{{ route('bills.quick-create') }}" method="POST">
+            <form id="quickBillForm" action="{{ route('admin.bills.quick-create') }}" method="POST">
                 @csrf
                 <input type="hidden" name="table_id" value="{{ $table->id }}">
 
@@ -1983,10 +2280,11 @@
                 </div>
 
                 <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="hideQuickBillModal()" class="btn btn-secondary flex-1">
+                    <button type="button" onclick="hideQuickBillModal()"
+                        class="action-btn action-btn-secondary flex-1">
                         Hủy
                     </button>
-                    <button type="submit" class="btn btn-warning flex-1">
+                    <button type="submit" class="action-btn action-btn-warning flex-1">
                         <i class="fas fa-bolt"></i> Tạo Bàn Lẻ
                     </button>
                 </div>
@@ -2025,16 +2323,10 @@
 
     <script>
         // Server data với giá trị mặc định
-        const isRunning = {{ isset($timeInfo['is_running']) && $timeInfo['is_running'] ? 'true' : 'false' }};
-        const isPaused = {{ isset($timeInfo['is_paused']) && $timeInfo['is_paused'] ? 'true' : 'false' }};
         const currentMode = '{{ $timeInfo['mode'] ?? 'none' }}';
-        const hourlyRate = Number({{ $timeInfo['hourly_rate'] ?? 0 }});
-        const totalComboMinutes = Number({{ $timeInfo['total_minutes'] ?? 0 }});
-        const elapsedMinutesFromServer = Number({{ $timeInfo['elapsed_minutes'] ?? 0 }});
         const currentBillId = {{ $table->currentBill->id ?? 'null' }};
+        const needsSwitch = {{ isset($timeInfo['needs_switch']) && $timeInfo['needs_switch'] ? 'true' : 'false' }};
 
-        // Không sử dụng thời gian thực từ client, chỉ sử dụng dữ liệu từ server
-        let serverElapsedSeconds = elapsedMinutesFromServer * 60;
         let refreshInterval = null;
         let currentDeleteForm = null;
 
@@ -2093,8 +2385,6 @@
             document.getElementById('loadingOverlay').classList.remove('active');
         }
 
-<<<<<<< HEAD
-=======
         // Mobile panel navigation
         function setupMobilePanels() {
             const mobileTabs = document.querySelectorAll('.mobile-tab');
@@ -2121,99 +2411,12 @@
             });
         }
 
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         // Format functions
         function pad(n) {
             return n.toString().padStart(2, '0');
         }
 
-<<<<<<< HEAD
-        function formatHMS(totalSeconds) {
-            const hrs = Math.floor(totalSeconds / 3600);
-            const mins = Math.floor((totalSeconds % 3600) / 60);
-            const secs = Math.floor(totalSeconds % 60);
-            return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
-        }
-
-        function formatHM(totalSeconds) {
-            const hrs = Math.floor(totalSeconds / 3600);
-            const mins = Math.floor((totalSeconds % 3600) / 60);
-            return `${pad(hrs)}:${pad(mins)}`;
-        }
-
-        function formatCurrency(amount) {
-            const rounded = Math.round(amount);
-            return new Intl.NumberFormat('vi-VN').format(rounded) + ' ₫';
-        }
-
-        function calculateCurrentCost(elapsedSeconds) {
-            if (currentMode === 'regular') {
-                return (hourlyRate / 3600) * elapsedSeconds;
-            } else if (currentMode === 'combo') {
-                const totalComboSeconds = totalComboMinutes * 60;
-                const extraSeconds = Math.max(0, elapsedSeconds - totalComboSeconds);
-                return (hourlyRate / 3600) * extraSeconds;
-            }
-            return 0;
-        }
-
-        // Update UI từ dữ liệu server
-        function renderFromServer() {
-            // Elapsed time từ server
-            document.getElementById('elapsedTimeDisplay').textContent = formatHMS(serverElapsedSeconds);
-
-            // Remaining time and progress
-            if (currentMode === 'combo') {
-                const totalComboSeconds = totalComboMinutes * 60;
-                const remainingSeconds = totalComboSeconds - serverElapsedSeconds;
-                document.getElementById('remainingTimeDisplay').textContent = formatHM(Math.max(0, remainingSeconds));
-
-                const percent = totalComboSeconds > 0 ? Math.min(100, (serverElapsedSeconds / totalComboSeconds) * 100) : 0;
-                document.getElementById('progressBar').style.width = percent + '%';
-                document.getElementById('progressText').textContent = Math.round(percent) + '% đã sử dụng';
-            }
-
-            // Current cost
-            const currentCost = calculateCurrentCost(serverElapsedSeconds);
-            document.getElementById('currentCostDisplay').textContent = formatCurrency(currentCost);
-
-            // Update real-time banner
-            updateRealTimeBanner(serverElapsedSeconds);
-        }
-
-        // Update real-time banner
-        function updateRealTimeBanner(elapsedSeconds) {
-            const counterElement = document.getElementById('realTimeCounter');
-            const costElement = document.getElementById('realTimeCost');
-
-            if (counterElement && costElement) {
-                const totalMinutes = elapsedSeconds / 60;
-                const hours = Math.floor(totalMinutes / 60);
-                const minutes = Math.floor(totalMinutes % 60);
-                const seconds = Math.floor(elapsedSeconds % 60);
-
-                counterElement.textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-
-                const currentCost = calculateCurrentCost(elapsedSeconds);
-                costElement.textContent = formatCurrency(currentCost);
-            }
-        }
-
-        // Real-time counter từ server data
-        function startServerBasedCounter() {
-            refreshInterval = setInterval(async () => {
-                if (isRunning && !isPaused) {
-                    // Tăng thời gian mỗi giây dựa trên dữ liệu server
-                    serverElapsedSeconds += 1;
-                    renderFromServer();
-                }
-            }, 1000);
-        }
-
-        // Modal functions
-=======
         // Modal functions with animations
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         function showCreateBillModal() {
             const modal = document.getElementById('createBillModal');
             modal.classList.add('active');
@@ -2238,37 +2441,6 @@
             document.body.style.overflow = 'auto';
         }
 
-<<<<<<< HEAD
-        // Update bill total
-        function updateBillTotal() {
-            @if ($table->currentBill)
-                const button = event.target;
-                const originalText = button.innerHTML;
-
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang cập nhật...';
-                button.disabled = true;
-
-                fetch('{{ route('bills.update-total', $table->currentBill->id) }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                }).then(r => r.json()).then(data => {
-                    if (data.success) {
-                        location.reload();
-                    }
-                }).catch(error => {
-                    console.error('Error:', error);
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                    alert('Có lỗi xảy ra khi cập nhật tổng tiền');
-                });
-            @endif
-        }
-
-        // Tab functionality
-=======
         // Delete Confirmation Modal
         function showDeleteConfirmModal(productName, form) {
             currentDeleteForm = form;
@@ -2329,7 +2501,6 @@
         }
 
         // Tab functionality with animations
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         function setupTabs() {
             const tabs = document.querySelectorAll('.tab');
             const productsList = document.getElementById('productsList');
@@ -2498,14 +2669,10 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
 
-<<<<<<< HEAD
-                fetch('{{ route('bills.add-product', $table->currentBill->id) }}', {
-=======
                 // Add pulse effect to button
                 button.classList.add('pulse');
 
                 fetch('{{ route('admin.bills.add-product', $table->currentBill->id) }}', {
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2550,14 +2717,10 @@
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
 
-<<<<<<< HEAD
-                fetch('{{ route('bills.add-combo', $table->currentBill->id) }}', {
-=======
                 // Add pulse effect to button
                 button.classList.add('pulse');
 
                 fetch('{{ route('admin.bills.add-combo', $table->currentBill->id) }}', {
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2591,8 +2754,6 @@
             @endif
         }
 
-<<<<<<< HEAD
-=======
         // Hàm kiểm tra và cập nhật trạng thái combo từ server
         async function checkComboStatus() {
             if ((currentMode === 'combo' || needsSwitch) && currentBillId) {
@@ -2717,9 +2878,11 @@
             }
         }
 
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
         // Event listeners for buttons
         document.addEventListener('DOMContentLoaded', function() {
+            // Setup mobile panels
+            setupMobilePanels();
+
             // Product buttons
             document.querySelectorAll('.add-product-btn').forEach(button => {
                 button.addEventListener('click', function() {
@@ -2736,14 +2899,6 @@
                 });
             });
 
-<<<<<<< HEAD
-            // Render từ dữ liệu server ban đầu
-            renderFromServer();
-
-            // Start server-based counter
-            if (isRunning && !isPaused) {
-                startServerBasedCounter();
-=======
             // Setup delete confirmations
             setupDeleteConfirmations();
 
@@ -2751,11 +2906,7 @@
             if (currentMode === 'combo' || needsSwitch) {
                 setInterval(checkComboStatus, 10000); // Kiểm tra mỗi 10 giây
                 checkComboStatus(); // Kiểm tra ngay khi load
->>>>>>> 483c1523df0e71d3502848d91fb821d4bedb6516
             }
-
-            // Auto update bill total every 30 seconds
-            setInterval(updateBillTotal, 30000);
 
             // Setup tabs and search functionality
             setupTabs();

@@ -1,147 +1,131 @@
 @extends('layouts.customer')
 
-@section('title', 'Poly Billiards - Trang chủ')
+@section('title', 'Giới thiệu - Poly Billiards')
 
 @section('content')
 <!-- Hero Section -->
-<section class="relative bg-gradient-to-br from-elegant-navy via-elegant-charcoal to-elegant-burgundy text-white py-24 overflow-hidden">
-    <div class="absolute inset-0 bg-black opacity-50"></div>
-    <div class="absolute top-10 right-10 w-64 h-64 bg-elegant-gold opacity-10 rounded-full blur-3xl"></div>
-    <div class="absolute bottom-10 left-10 w-80 h-80 bg-primary-600 opacity-10 rounded-full blur-3xl"></div>
-    
-    <div class="relative max-w-7xl mx-auto px-4">
-        <div class="flex flex-col lg:flex-row items-center">
-            <div class="lg:w-1/2 mb-12 lg:mb-0 text-center lg:text-left">
-                <h1 class="text-5xl lg:text-6xl font-display font-bold mb-6 leading-tight">
-                    Poly 
-                    <span class="text-elegant-gold">Billiards</span>
-                </h1>
-                <p class="text-xl mb-8 text-primary-200 leading-relaxed">
-                    Trải nghiệm bi-a đẳng cấp trong không gian sang trọng. 
-                    Nơi hội tụ của những tay cơ thực thụ.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                    <a href="#" 
-                       class="bg-elegant-gold hover:bg-yellow-500 text-elegant-navy font-semibold px-8 py-4 rounded-lg text-lg transition duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center">
-                        <i class="fas fa-calendar-plus mr-3 text-xl"></i>
-                        Đặt bàn ngay
-                    </a>
-                    <a href="#" 
-                       class="border-2 border-elegant-gold text-elegant-gold hover:bg-elegant-gold hover:text-elegant-navy font-semibold px-8 py-4 rounded-lg text-lg transition duration-200 transform hover:scale-105 flex items-center justify-center">
-                        <i class="fas fa-tag mr-3 text-xl"></i>
-                        Khuyến mãi
-                    </a>
-                </div>
-            </div>
-            <div class="lg:w-1/2 flex justify-center">
-                <div class="relative">
-                    <div class="w-80 h-80 bg-elegant-gold rounded-full opacity-20 animate-pulse"></div>
-                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                        <i class="fas fa-billiard-ball text-elegant-gold text-9xl mb-4"></i>
-                        <p class="text-elegant-gold font-semibold text-lg">Chuyên nghiệp - Sang trọng - Đẳng cấp</p>
-                    </div>
-                </div>
-            </div>
+<section class="relative bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20">
+    <div class="absolute inset-0 bg-black opacity-10"></div>
+    <div class="relative max-w-6xl mx-auto px-4 text-center">
+        <div class="flex justify-center items-center space-x-4 mb-8">
+            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
+                <div class="flex items-center space-x-3">
+    <div class="relative">
+        <!-- Quả bida với hiệu ứng gradient và bóng -->
+        <div class="w-12 h-12 bg-gradient-to-br from-blue-700 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+            <!-- Đường kẻ trắng trên quả bida -->
+            <div class="absolute w-8 h-8 border-2 border-white rounded-full opacity-30"></div>
+            <!-- Số 8 màu trắng (giống quả bida số 8) -->
+            <span class="text-white font-bold text-xs z-10">8</span>
         </div>
+        <!-- Hiệu ứng ánh sáng -->
+        <div class="absolute top-1 left-1 w-2 h-2 bg-white rounded-full opacity-60"></div>
     </div>
-</section>
-
-<!-- Features Section -->
-<section class="py-20 bg-white">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-display font-bold text-elegant-navy mb-4">Tại sao chọn Poly Billiards?</h2>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">Chúng tôi mang đến trải nghiệm bi-a hoàn hảo với những ưu điểm vượt trội</p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="text-center p-8 rounded-2xl bg-gradient-to-b from-elegant-cream to-white shadow-lg hover:shadow-xl transition duration-300">
-                <div class="w-20 h-20 bg-elegant-gold rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-trophy text-elegant-navy text-2xl"></i>
-                </div>
-                <h3 class="text-2xl font-semibold text-elegant-navy mb-4">Bàn Bi-a Chuyên Nghiệp</h3>
-                <p class="text-gray-600 leading-relaxed">Hệ thống bàn bi-a tournament tiêu chuẩn quốc tế, được bảo trì định kỳ</p>
+</div>
             </div>
-            
-            <div class="text-center p-8 rounded-2xl bg-gradient-to-b from-elegant-cream to-white shadow-lg hover:shadow-xl transition duration-300">
-                <div class="w-20 h-20 bg-elegant-burgundy rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-couch text-white text-2xl"></i>
-                </div>
-                <h3 class="text-2xl font-semibold text-elegant-navy mb-4">Không Gian Sang Trọng</h3>
-                <p class="text-gray-600 leading-relaxed">Thiết kế hiện đại, ánh sáng chuẩn, âm thanh cao cấp và view thành phố</p>
-            </div>
-            
-            <div class="text-center p-8 rounded-2xl bg-gradient-to-b from-elegant-cream to-white shadow-lg hover:shadow-xl transition duration-300">
-                <div class="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-concierge-bell text-white text-2xl"></i>
-                </div>
-                <h3 class="text-2xl font-semibold text-elegant-navy mb-4">Dịch Vụ 5 Sao</h3>
-                <p class="text-gray-600 leading-relaxed">Đồ uống cao cấp, ăn nhẹ đa dạng, phục vụ tận bàn 24/7</p>
-            </div>
+            <h1 class="text-4xl md:text-5xl font-bold">Poly Billiards Management</h1>
         </div>
-    </div>
-</section>
-
-<!-- Quick Navigation -->
-<section class="py-20 bg-gradient-to-br from-elegant-cream to-gray-100">
-    <div class="max-w-7xl mx-auto px-4">
-        <h2 class="text-4xl font-display font-bold text-center text-elegant-navy mb-16">Dịch Vụ Của Chúng Tôi</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <a href="{{route('reservation.create')}}" 
-               class="group bg-white rounded-2xl p-8 text-center hover:shadow-2xl transition duration-300 transform hover:-translate-y-2 border-2 border-transparent hover:border-elegant-gold">
-                <div class="w-20 h-20 bg-gradient-to-br from-elegant-gold to-yellow-500 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition duration-300">
-                    <i class="fas fa-calendar-check text-white text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold text-elegant-navy mb-3">Đặt Bàn</h3>
-                <p class="text-gray-600 text-sm leading-relaxed">Đặt trước bàn bi-a để đảm bảo chỗ chơi theo ý muốn</p>
-            </a>
-            
-            <a href="{{route('reservations.index')}}" 
-               class="group bg-white rounded-2xl p-8 text-center hover:shadow-2xl transition duration-300 transform hover:-translate-y-2 border-2 border-transparent hover:border-primary-500">
-                <div class="w-20 h-20 bg-gradient-to-br from-primary-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition duration-300">
-                    <i class="fas fa-search text-white text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold text-elegant-navy mb-3">Tra Cứu</h3>
-                <p class="text-gray-600 text-sm leading-relaxed">Kiểm tra trạng thái và thông tin đặt bàn của bạn</p>
-            </a>
-            
-            <a href="{{route('promotions.index')}}" 
-               class="group bg-white rounded-2xl p-8 text-center hover:shadow-2xl transition duration-300 transform hover:-translate-y-2 border-2 border-transparent hover:border-elegant-burgundy">
-                <div class="w-20 h-20 bg-gradient-to-br from-elegant-burgundy to-red-700 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition duration-300">
-                    <i class="fas fa-percentage text-white text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold text-elegant-navy mb-3">Khuyến Mãi</h3>
-                <p class="text-gray-600 text-sm leading-relaxed">Khám phá các ưu đãi đặc biệt dành riêng cho bạn</p>
-            </a>
-            
-            <a href="{{ route('contact') }}" 
-               class="group bg-white rounded-2xl p-8 text-center hover:shadow-2xl transition duration-300 transform hover:-translate-y-2 border-2 border-transparent hover:border-green-500">
-                <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition duration-300">
-                    <i class="fas fa-phone text-white text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold text-elegant-navy mb-3">Liên Hệ</h3>
-                <p class="text-gray-600 text-sm leading-relaxed">Đặt câu hỏi và nhận tư vấn từ đội ngũ chuyên nghiệp</p>
-            </a>
-        </div>
-    </div>
-</section>
-
-<!-- CTA Section -->
-<section class="py-20 bg-elegant-navy text-white">
-    <div class="max-w-4xl mx-auto text-center px-4">
-        <h2 class="text-4xl font-display font-bold mb-6">Sẵn sàng trải nghiệm?</h2>
-        <p class="text-xl text-primary-200 mb-8 max-w-2xl mx-auto">
-            Tham gia cộng đồng những người yêu thích bi-a tại Poly Billiards. Đẳng cấp, chuyên nghiệp và đầy cảm hứng.
+        <p class="text-xl mb-8 text-blue-100 leading-relaxed max-w-3xl mx-auto">
+            Hệ thống quản lý toàn diện dành cho quán bi-a Poly Billiards
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#" 
-               class="bg-elegant-gold hover:bg-yellow-500 text-elegant-navy font-semibold px-8 py-4 rounded-lg text-lg transition duration-200 transform hover:scale-105">
-                <i class="fas fa-play mr-2"></i>Bắt đầu ngay
+            <a href="" 
+               class="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold px-8 py-4 rounded-lg text-lg transition duration-200">
+                <i class="fas fa-question-circle mr-3"></i>
+                Hướng dẫn sử dụng
             </a>
-            <a href="{{ route('contact') }}" 
-               class="border-2 border-elegant-gold text-elegant-gold hover:bg-elegant-gold hover:text-elegant-navy font-semibold px-8 py-4 rounded-lg text-lg transition duration-200">
-                <i class="fas fa-info-circle mr-2"></i>Tìm hiểu thêm
+        </div>
+    </div>
+</section>
+
+<!-- Introduction Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-blue-800 mb-4">Giới thiệu hệ thống</h2>
+            <p class="text-lg text-gray-600">Hệ thống quản lý toàn diện được thiết kế riêng cho Poly Billiards</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-blue-50 rounded-2xl p-8">
+                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-cogs text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-blue-800 mb-3">Tính năng chính</h3>
+                <ul class="text-gray-600 space-y-2">
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        Hệ thống POS bán hàng 
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        Quản lý bàn bi-a và thời gian chơi
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        Quản lý hóa đơn và thanh toán
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-2"></i>
+                        Báo cáo và thống kê
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-blue-50 rounded-2xl p-8">
+                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-users text-white text-xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-blue-800 mb-3">Đối tượng sử dụng</h3>
+                <ul class="text-gray-600 space-y-2">
+                    <li class="flex items-center">
+                        <i class="fas fa-user-shield text-blue-500 mr-2"></i>
+                        Quản trị viên
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-user-tie text-blue-500 mr-2"></i>
+                        Quản lý
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-user text-blue-500 mr-2"></i>
+                        Nhân viên
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- System Info -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white text-center">
+            <h3 class="text-2xl font-bold mb-4">Thông tin hệ thống</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <div class="text-3xl font-bold mb-2">{{ date('Y') }}</div>
+                    <p class="text-blue-200">Năm triển khai</p>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold mb-2">24/7</div>
+                    <p class="text-blue-200">Hỗ trợ kỹ thuật</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Support -->
+<section class="py-16 bg-blue-50">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold text-blue-800 mb-6">Hỗ trợ kỹ thuật</h2>
+        <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            Nếu bạn gặp bất kỳ vấn đề nào với hệ thống, vui lòng liên hệ:
+        </p>
+        <div class="bg-white rounded-2xl p-8 shadow-lg max-w-md mx-auto">
+            <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-headset text-white text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-blue-800 mb-2">Bộ phận kỹ thuật</h3>
+            <p class="text-gray-600 mb-4">Hỗ trợ 24/7</p>
+            <a href="tel:0912345678" class="text-blue-600 font-semibold text-lg hover:text-blue-800 transition duration-200">
+                <i class="fas fa-phone mr-2"></i>0912 345 678
             </a>
         </div>
     </div>

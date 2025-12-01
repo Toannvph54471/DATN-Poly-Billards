@@ -52,8 +52,6 @@ class DashboardController extends Controller
             // Nhân viên tích cực
             $activeEmployees = $this->getActiveEmployees(3);
 
-            // Thống kê đặt bàn
-            $reservationStats = $this->getReservationStats($today);
 
             // [NEW] Thống kê tháng
             $monthlyStats = $this->getMonthlyStats($startOfMonth, $endOfMonth);
@@ -78,7 +76,6 @@ class DashboardController extends Controller
                 'topProducts',
                 'recentBills',
                 'activeEmployees',
-                'reservationStats',
                 'monthlyStats',
                 'lowStockProducts',
                 'shiftStats'
@@ -452,7 +449,7 @@ class DashboardController extends Controller
     {
         try {
             $user = FacadesAuth::user();
-
+            
             // Thống kê nhanh cho POS
             $stats = [
                 'open_bills' => Bill::where('status', 'Open')->count(),
@@ -494,13 +491,7 @@ class DashboardController extends Controller
                 }
             ])->where('status', 'occupied')->get();
 
-            // Reservations hôm nay
-            $todayReservations = Reservation::with(['table', 'user'])
-                ->whereDate('reservation_time', Carbon::today())
-                ->whereIn('status', ['confirmed', 'checked_in'])
-                ->orderBy('reservation_time')
-                ->limit(5)
-                ->get();
+                
 
             return view('admin.pos-dashboard', compact(
                 'stats',
@@ -509,6 +500,8 @@ class DashboardController extends Controller
                 'occupiedTables',
                 'todayReservations'
             ));
+
+            
         } catch (\Exception $e) {
             // Fallback data nếu có lỗi
             return $this->getFallbackData();
