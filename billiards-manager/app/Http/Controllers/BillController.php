@@ -525,8 +525,6 @@ class BillController extends Controller
         }
     }
 
-
-
     /**
      * Kiểm tra và cập nhật trạng thái combo time real-time
      */
@@ -707,7 +705,6 @@ class BillController extends Controller
             ]);
         }
     }
-
 
     /**
      * Kích hoạt combo time
