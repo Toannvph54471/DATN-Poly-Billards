@@ -47,6 +47,7 @@ Route::prefix('admin')
 
             // Employees
             Route::resource('employees', EmployeeController::class)->names('employees');
+            Route::get('my-profile', [EmployeeController::class, 'myProfile'])->name('my-profile');
         });
 
         /*

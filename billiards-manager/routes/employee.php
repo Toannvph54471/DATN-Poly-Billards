@@ -6,6 +6,7 @@ use App\Http\Controllers\TableController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,7 +24,9 @@ Route::prefix('admin')
 
         // Dashboard cho nhân viên
         Route::get('/pos-dashboard', [DashboardController::class, 'posDashboard'])->name('pos.dashboard');
-
+        Route::get('/my-profile', [EmployeeController::class, 'myProfile'])->name('my-profile');
+        Route::post('/{employee}/change-password', [EmployeeController::class, 'changePassword'])->name('change-password');
+        Route::get('/my-schedule', [EmployeeController::class, 'mySchedule'])->name('schedule');
         // ============================
         // TABLE ACTIONS FOR STAFF
         // ============================

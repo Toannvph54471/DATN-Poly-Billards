@@ -69,9 +69,6 @@ class TableController extends Controller
         return view('admin.tables.index', compact('tables', 'tableRates', 'statuses'));
     }
 
-    /**
-     * Hiển thị dashboard đơn giản
-     */
     public function simpleDashboard()
     {
         try {
@@ -105,10 +102,19 @@ class TableController extends Controller
             // Format table data
             $formattedTables = $tables->map(function ($table) {
                 $currentBillData = null;
+                $hasCombo = false;
+                $elapsedTime = null;
 
                 if ($table->currentBill) {
+                    // Kiểm tra xem có combo_time_usages không
+                    $hasCombo = $table->currentBill->comboTimeUsages()->exists();
+
+                    // Tính thời gian đã sử dụng
+                    $elapsedTime = $this->calculateSimpleElapsedTime($table->currentBill);
+
                     $currentBillData = [
-                        'elapsed_time' => $this->calculateSimpleElapsedTime($table->currentBill)
+                        'elapsed_time' => $elapsedTime,
+                        'has_combo' => $hasCombo
                     ];
                 }
 
@@ -119,7 +125,9 @@ class TableController extends Controller
                     'capacity' => $table->capacity,
                     'status' => $table->status,
                     'hourly_rate' => $table->getHourlyRate(),
-                    'current_bill' => $currentBillData
+                    'current_bill' => $currentBillData,
+                    'has_combo' => $hasCombo,
+                    'elapsed_time' => $elapsedTime
                 ];
             });
 
@@ -135,7 +143,8 @@ class TableController extends Controller
             ]);
         }
     }
-    
+
+
     // hien thi form sua 
     public function edit($id)
     {

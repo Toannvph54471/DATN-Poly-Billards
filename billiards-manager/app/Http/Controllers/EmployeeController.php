@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\EmployeeShift;
+use App\Models\Payroll;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Shift;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class EmployeeController extends Controller
 {
@@ -275,6 +281,172 @@ class EmployeeController extends Controller
                 'status' => 'error',
                 'message' => 'Có lỗi xảy ra khi cập nhật lương'
             ], 500);
+        }
+    }
+
+    public function myProfile()
+    {
+        try {
+            // Lấy user đang đăng nhập
+            $user = Auth::user();
+
+            if (!$user) {
+                return redirect()->route('login')->with('error', 'Vui lòng đăng nhập!');
+            }
+
+            // Lấy thông tin employee từ user
+            $employee = $user->employee;
+
+            if (!$employee) {
+                return redirect()->route('admin.pos.dashboard')
+                    ->with('error', 'Không tìm thấy thông tin nhân viên!');
+            }
+
+            return view('admin.employees.my-profile', compact(
+                'user',
+                'employee'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Lỗi myProfile: ' . $e->getMessage());
+
+            return redirect()->route('admin.pos.dashboard')
+                ->with('error', 'Có lỗi xảy ra khi tải thông tin!');
+        }
+    }
+
+    public function changePassword(Request $request, $id)
+    {
+        try {
+            // Kiểm tra employee có tồn tại
+            $employee = Employee::findOrFail($id);
+
+            // Kiểm tra quyền: chỉ employee đó mới được đổi mật khẩu của mình
+            $currentUser = Auth::user();
+            if ($currentUser->employee->id != $employee->id && !$currentUser->hasRole('admin')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn không có quyền thực hiện thao tác này!'
+                ], 403);
+            }
+
+            // Validate dữ liệu
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required',
+                'new_password' => 'required|min:6|confirmed',
+            ], [
+                'current_password.required' => 'Vui lòng nhập mật khẩu hiện tại',
+                'new_password.required' => 'Vui lòng nhập mật khẩu mới',
+                'new_password.min' => 'Mật khẩu mới phải có ít nhất 6 ký tự',
+                'new_password.confirmed' => 'Xác nhận mật khẩu không khớp',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first()
+                ]);
+            }
+
+            // Kiểm tra mật khẩu hiện tại
+            if (!Hash::check($request->current_password, $currentUser->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mật khẩu hiện tại không đúng!'
+                ]);
+            }
+
+            // Đổi mật khẩu
+            $currentUser->password = Hash::make($request->new_password);
+            $currentUser->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đổi mật khẩu thành công!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Lỗi changePassword: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function mySchedule()
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return redirect()->route('login');
+            }
+
+            $employee = $user->employee;
+
+            if (!$employee) {
+                return redirect()->route('admin.pos.dashboard')
+                    ->with('error', 'Không tìm thấy thông tin nhân viên!');
+            }
+
+            // Lấy tháng và năm từ request
+            $month = request()->input('month', now()->month);
+            $year = request()->input('year', now()->year);
+
+            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+            $endDate = Carbon::create($year, $month, 1)->endOfMonth();
+
+            // Lấy TẤT CẢ ca làm của nhân viên trong tháng
+            $shifts = EmployeeShift::where('employee_id', $employee->id)
+                ->whereBetween('shift_date', [$startDate, $endDate])
+                ->with(['shift'])
+                ->orderBy('shift_date', 'asc')
+                ->paginate(15); // Phân trang 15 ca/trang
+
+            // Phân loại ca làm - chỉ lấy 5 ca sắp tới
+            $todayShifts = EmployeeShift::where('employee_id', $employee->id)
+                ->whereDate('shift_date', today())
+                ->with(['shift'])
+                ->get();
+
+            $upcomingShifts = EmployeeShift::where('employee_id', $employee->id)
+                ->where('shift_date', '>', today()->format('Y-m-d'))
+                ->where('status', 'scheduled')
+                ->with(['shift'])
+                ->orderBy('shift_date', 'asc')
+                ->take(5) // Chỉ lấy 5 ca sắp tới
+                ->get();
+
+            $completedShifts = EmployeeShift::where('employee_id', $employee->id)
+                ->where('status', 'completed')
+                ->whereBetween('shift_date', [$startDate, $endDate])
+                ->count();
+
+            // Tổng hợp thống kê
+            $stats = [
+                'total' => $shifts->total(),
+                'completed' => $completedShifts,
+                'upcoming' => $upcomingShifts->count(),
+                'today' => $todayShifts->count(),
+            ];
+
+            return view('admin.employees.schedule', compact(
+                'user',
+                'employee',
+                'shifts', // Đã phân trang
+                'todayShifts',
+                'upcomingShifts',
+                'stats',
+                'month',
+                'year',
+                'startDate',
+                'endDate'
+            ));
+        } catch (\Exception $e) {
+            \Log::error('Lỗi mySchedule: ' . $e->getMessage());
+
+            return redirect()->route('admin.pos.dashboard')
+                ->with('error', 'Có lỗi xảy ra khi tải lịch làm việc!');
         }
     }
 }

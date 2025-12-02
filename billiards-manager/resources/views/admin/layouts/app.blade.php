@@ -146,6 +146,21 @@
                             <span class="font-medium text-sm md:text-base">Bán hàng (POS)</span>
                         </a>
                     @endif
+                    @if ($isStaff)
+                        <a href="{{ route('admin.my-profile') }}" onclick="closeMobileMenu()"
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('admin/my-profile*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-user w-5 md:w-6 mr-3"></i>
+                            <span class="font-medium text-sm md:text-base">Thông tin cá nhân</span>
+                        </a>
+                    @endif
+                    @if ($isStaff)
+                        <a href="{{ route('admin.schedule') }}" onclick="closeMobileMenu()"
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('admin/my-profile*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            <i class="fas fa-calendar-check w-5 md:w-6 mr-3"></i>
+                            <span class="font-medium text-sm md:text-base">Lịch làm</span>
+                        </a>
+                    @endif
+
 
                     <!-- Menu cho Admin & Manager -->
                     @if ($isAdminOrManager)
