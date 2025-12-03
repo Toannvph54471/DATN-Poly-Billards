@@ -95,67 +95,96 @@
             <!-- Sidebar -->
             <div id="sidebar" class="sidebar w-64 flex-shrink-0 text-white flex flex-col fixed md:relative h-full">
                 <!-- Logo hoàn chỉnh với kích thước nhỏ hơn -->
-                <div class="flex items-center space-x-2 p-4 border-b border-white/20">
-                    <div class="relative">
-                        <!-- Container hình vuông nhỏ hơn -->
-                        <div
-                            class="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg flex items-center justify-center shadow-lg transform perspective-1000 rotate-6 hover:rotate-0 transition-transform duration-300 overflow-visible">
-                            <!-- Viên bi đen với kích thước nhỏ hơn -->
+                <a href="{{ route('home') }}">
+                    <div class="flex items-center space-x-2 p-4 border-b border-white/20">
+                        <div class="relative">
+                            <!-- Container hình vuông nhỏ hơn -->
                             <div
-                                class="w-8 h-8 bg-black rounded-full flex items-center justify-center relative border border-white shadow-inner">
-                                <!-- Hiệu ứng phản chiếu trên viên bi -->
+                                class="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-lg flex items-center justify-center shadow-lg transform perspective-1000 rotate-6 hover:rotate-0 transition-transform duration-300 overflow-visible">
+                                <!-- Viên bi đen với kích thước nhỏ hơn -->
                                 <div
-                                    class="absolute top-0.5 left-1.5 w-2 h-1.5 bg-gray-400 rounded-full opacity-40 blur-sm">
-                                </div>
+                                    class="w-8 h-8 bg-black rounded-full flex items-center justify-center relative border border-white shadow-inner">
+                                    <!-- Hiệu ứng phản chiếu trên viên bi -->
+                                    <div
+                                        class="absolute top-0.5 left-1.5 w-2 h-1.5 bg-gray-400 rounded-full opacity-40 blur-sm">
+                                    </div>
 
-                                <!-- Viên bi trắng nhỏ bên trong -->
-                                <div
-                                    class="absolute w-3 h-3 bg-white rounded-full opacity-90 flex items-center justify-center">
-                                    <!-- Số 8 màu đen trên nền trắng -->
-                                    <span class="text-black font-bold text-[10px]">8</span>
+                                    <!-- Viên bi trắng nhỏ bên trong -->
+                                    <div
+                                        class="absolute w-3 h-3 bg-white rounded-full opacity-90 flex items-center justify-center">
+                                        <!-- Số 8 màu đen trên nền trắng -->
+                                        <span class="text-black font-bold text-[10px]">8</span>
+                                    </div>
                                 </div>
                             </div>
+                            <!-- Hiệu ứng ánh sáng cam (nhỏ hơn) -->
+                            <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-orange-300/50 rounded-full blur-sm">
+                            </div>
+                            <!-- Hiệu ứng ánh sáng trắng (nhỏ hơn) -->
+                            <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 bg-white rounded-full opacity-70"></div>
                         </div>
-                        <!-- Hiệu ứng ánh sáng cam (nhỏ hơn) -->
-                        <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-orange-300/50 rounded-full blur-sm"></div>
-                        <!-- Hiệu ứng ánh sáng trắng (nhỏ hơn) -->
-                        <div class="absolute top-0.5 left-0.5 w-1.5 h-1.5 bg-white rounded-full opacity-70"></div>
-                    </div>
 
-                    <div>
-                        <h1
-                            class="text-xl font-black uppercase tracking-wider bg-gradient-to-r from-orange-600 via-amber-400 to-yellow-600 bg-clip-text text-transparent drop-shadow-md">
-                            Poly Billiards
-                        </h1>
-                        <p class="text-amber-600 text-xs font-semibold tracking-wide">Đẳng cấp và đam mê</p>
+                        <div>
+                            <h1
+                                class="text-xl font-black uppercase tracking-wider bg-gradient-to-r from-orange-600 via-amber-400 to-yellow-600 bg-clip-text text-transparent drop-shadow-md">
+                                Poly Billiards
+                            </h1>
+                            <p class="text-amber-600 text-xs font-semibold tracking-wide">Đẳng cấp và đam mê</p>
+                        </div>
                     </div>
-                </div>
+                </a>
                 <!-- Navigation -->
                 <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
                     @php
                         $userRole = Auth::user()->role->slug ?? '';
                         $isAdminOrManager = in_array($userRole, ['admin', 'manager']);
                         $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
+
+                        // Lấy tên route hiện tại
+                        $currentRoute = request()->route()->getName();
+
+                        // Hàm kiểm tra route có active không
+                        function isRouteActive($routePattern, $currentRoute)
+                        {
+                            // Nếu là route chính xác
+                            if ($routePattern === $currentRoute) {
+                                return true;
+                            }
+
+                            // Nếu có wildcard * (cho các route con)
+                            if (strpos($routePattern, '*') !== false) {
+                                $pattern = str_replace('*', '.*', $routePattern);
+                                $pattern = '/^' . str_replace('.', '\.', $pattern) . '$/';
+                                return preg_match($pattern, $currentRoute);
+                            }
+
+                            // Kiểm tra route bắt đầu bằng
+                            if (strpos($currentRoute, $routePattern . '.') === 0) {
+                                return true;
+                            }
+
+                            return false;
+                        }
                     @endphp
 
                     <!-- Menu cho Employee -->
-                    @if ($isStaff)
+                    @if ($userRole === 'employee')
                         <a href="{{ route('admin.pos.dashboard') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('employee*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.pos.dashboard', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-cash-register w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Bán hàng (POS)</span>
                         </a>
                     @endif
-                    @if ($isStaff)
+                    @if ($userRole === 'employee')
                         <a href="{{ route('admin.my-profile') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('admin/my-profile*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.my-profile', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-user w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Thông tin cá nhân</span>
                         </a>
                     @endif
-                    @if ($isStaff)
+                    @if ($userRole === 'employee')
                         <a href="{{ route('admin.schedule') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->is('admin/my-profile*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.schedule', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-calendar-check w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Lịch làm</span>
                         </a>
@@ -165,43 +194,43 @@
                     <!-- Menu cho Admin & Manager -->
                     @if ($isAdminOrManager)
                         <a href="{{ route('admin.dashboard') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.dashboard') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.dashboard', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-chart-pie w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Tổng quan</span>
                         </a>
 
                         <a href="{{ route('admin.tables.index') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.tables.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.tables', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fa-solid fa-table w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Quản lý bàn</span>
                         </a>
 
                         <a href="{{ route('admin.bills.index') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.bills.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.bills', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fa-solid fa-receipt w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Hóa đơn</span>
                         </a>
 
                         <a href="{{ route('admin.table_rates.index') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.table_rates.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.table_rates', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fa-solid fa-clock w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Giá giờ bàn</span>
                         </a>
 
                         <a href="{{ route('admin.combos.index') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.combos.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.combos', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-th-large w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Quản lý Combo</span>
                         </a>
 
                         <a href="{{ route('admin.products.index') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.products.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.products', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-cubes w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Sản phẩm</span>
                         </a>
 
                         <a href="{{ route('admin.promotions.index') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.promotions.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.promotions', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-percent w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Khuyến mại</span>
                         </a>
@@ -210,19 +239,19 @@
                     <!-- Menu chỉ dành cho Admin -->
                     @if ($userRole === 'admin')
                         <a href="{{ route('admin.users.index') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.users.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.users', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-users-cog w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Người dùng hệ thống</span>
                         </a>
 
                         <a href="{{ route('admin.employees.index') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.employees.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.employees', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-user-tie w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Nhân viên</span>
                         </a>
 
                         <a href="{{ route('admin.roles.index') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.roles.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.roles', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fas fa-user-shield w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Phân quyền</span>
                         </a>

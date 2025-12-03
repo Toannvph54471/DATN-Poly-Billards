@@ -44,12 +44,15 @@ Route::prefix('admin')
         // ============================
         Route::prefix('bills')->name('bills.')->group(function () {
             Route::get('index', [BillController::class, 'index'])->name('index');
+            Route::post('filter', [BillController::class, 'filter'])->name('filter');
+            Route::post('reset', [BillController::class, 'resetFilter'])->name('reset');
             Route::get('/{id}/show', [BillController::class, 'show'])->name('show');
             Route::post('/create', [BillController::class, 'createBill'])->name('create');
             Route::post('/quick-create', [BillController::class, 'createQuickBill'])->name('quick-create');
             Route::post('/{id}/add-product', [BillController::class, 'addProductToBill'])->name('add-product');
             Route::post('/{id}/add-combo', [BillController::class, 'addComboToBill'])->name('add-combo');
             Route::post('/{id}/start-playing', [BillController::class, 'startPlaying'])->name('start-playing');
+            Route::post('/{id}/stop-combo', [BillController::class, 'stopComboTime'])->name('stop-combo');
             Route::post('/{id}/pause', [BillController::class, 'pauseTime'])->name('pause');
             Route::post('/{id}/resume', [BillController::class, 'resumeTime'])->name('resume');
             Route::delete('/{bill}/products/{billDetail}', [BillController::class, 'removeProductFromBill'])->name('remove-product');

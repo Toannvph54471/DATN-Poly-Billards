@@ -93,6 +93,9 @@ Route::prefix('admin')
         Route::prefix('bills')->name('bills.')->group(function () {
             // Advanced bill functions only for admin/manager
             Route::get('index', [BillController::class, 'index'])->name('index');
+            Route::post('filter', [BillController::class, 'filter'])->name('filter');
+            Route::post('reset', [BillController::class, 'resetFilter'])->name('reset');
+            Route::post('/bills/check-new', [BillController::class, 'checkNewBills'])->name('check-new');
             Route::get('/{id}/show', [BillController::class, 'show'])->name('show');
             Route::post('/{id}/switch-regular', [BillController::class, 'switchToRegularTime'])->name('switch-regular');
             Route::post('/{id}/extend-combo', [BillController::class, 'extendComboTime'])->name('extend-combo');
@@ -101,6 +104,8 @@ Route::prefix('admin')
             Route::post('/{id}/convert-to-quick', [BillController::class, 'convertToQuick'])->name('convert-to-quick');
             Route::post('/{id}/stop-combo', [BillController::class, 'stopComboTime'])->name('stop-combo');
             Route::get('/{id}/transfer', [BillController::class, 'showTransferForm'])->name('transfer-form');
+            // Thêm vào routes/web.php
+            Route::post('/bills/{bill}/payment-success', [BillController::class, 'processPaymentSuccess'])->name('payment-success');
 
             // Print bill
             Route::get('/{id}/print', [BillController::class, 'printBill'])->name('print');

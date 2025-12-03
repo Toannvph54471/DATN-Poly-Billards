@@ -11,7 +11,6 @@ use App\Models\ComboTimeUsage;
 use App\Models\BillTimeUsage;
 use App\Models\BillDetail;
 use App\Models\TableRate;
-use App\Models\Reservation;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -24,25 +23,209 @@ class BillController extends Controller
 {
     public function index()
     {
-        $bills = Bill::with([
+        // Lấy filters từ session (nếu có)
+        $filters = session('bill_filters', []);
+
+        // Lấy dữ liệu cho dropdown
+        $tables = Table::orderBy('table_name')->get();
+        $staff = User::where('role_id', 3)->orderBy('name')->get();
+
+        // Thực hiện query nếu có filters
+        $bills = $this->buildQuery($filters)->paginate(20);
+
+        // Thống kê nhanh
+        $stats = $this->getStats();
+
+        return view('admin.bills.index', compact(
+            'bills',
+            'filters',
+            'tables',
+            'staff',
+            'stats'
+        ));
+    }
+
+    /**
+     * Xử lý tìm kiếm với POST
+     */
+    public function filter(Request $request)
+    {
+        // Lưu filters vào session
+        session(['bill_filters' => $request->except(['_token'])]);
+
+        // Redirect về trang chính
+        return redirect()->route('admin.bills.index');
+    }
+
+    /**
+     * Reset bộ lọc
+     */
+    public function resetFilter(Request $request)
+    {
+        // Xóa filters khỏi session
+        $request->session()->forget('bill_filters');
+
+        // Redirect về trang chính
+        return redirect()->route('admin.bills.index');
+    }
+
+    public function checkNewBills(Request $request)
+    {
+        $lastCheck = $request->input('last_check', now()->subMinutes(10)->toISOString());
+
+        // Lấy hóa đơn mới (trong vòng 5 phút) đã thanh toán
+        $newBills = Bill::with(['table', 'staff', 'user'])
+            ->where('created_at', '>', $lastCheck)
+            ->where('payment_status', 'Paid')
+            ->where('created_at', '>', now()->subMinutes(5)) // Chỉ lấy trong 5 phút
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get()
+            ->map(function ($bill) {
+                return [
+                    'id' => $bill->id,
+                    'bill_number' => $bill->bill_number,
+                    'user_name' => $bill->user->name ?? null,
+                    'user_phone' => $bill->user->phone ?? null,
+                    'table_name' => $bill->table->table_name ?? null,
+                    'table_number' => $bill->table->table_number ?? null,
+                    'staff_name' => $bill->staff->name ?? null,
+                    'staff_code' => $bill->staff->code ?? null,
+                    'total_amount' => $bill->total_amount,
+                    'discount_amount' => $bill->discount_amount,
+                    'final_amount' => $bill->final_amount,
+                    'status' => $bill->status,
+                    'payment_status' => $bill->payment_status,
+                    'created_at' => $bill->created_at->toISOString(),
+                ];
+            });
+
+        return response()->json([
+            'new_bills_count' => $newBills->count(),
+            'new_bills' => $newBills,
+            'current_time' => now()->toISOString(),
+        ]);
+    }
+
+
+    /**
+     * Xây dựng query dựa trên filters
+     */
+    private function buildQuery($filters)
+    {
+        $query = Bill::with([
             'table',
             'staff',
             'billTimeUsages',
-            'billDetails.product'
-        ])
-            ->latest()
-            ->paginate(10);
+            'billDetails.product',
+            'user'
+        ]);
 
-        // Đánh dấu hóa đơn mới (thanh toán trong vòng 5 phút)
-        $fiveMinutesAgo = now()->subMinutes(5);
-
-        foreach ($bills as $bill) {
-            $bill->is_new = $bill->payment_status === 'Paid' &&
-                $bill->updated_at > $fiveMinutesAgo;
+        // Tìm kiếm theo từ khóa
+        if (!empty($filters['query'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('bill_number', 'LIKE', "%{$filters['query']}%")
+                    ->orWhereHas('user', function ($userQuery) use ($filters) {
+                        $userQuery->where('name', 'LIKE', "%{$filters['query']}%")
+                            ->orWhere('phone', 'LIKE', "%{$filters['query']}%")
+                            ->orWhere('email', 'LIKE', "%{$filters['query']}%");
+                    })
+                    ->orWhereHas('staff', function ($staffQuery) use ($filters) {
+                        $staffQuery->where('name', 'LIKE', "%{$filters['query']}%");
+                    })
+                    ->orWhereHas('table', function ($tableQuery) use ($filters) {
+                        $tableQuery->where('table_name', 'LIKE', "%{$filters['query']}%")
+                            ->orWhere('table_number', 'LIKE', "%{$filters['query']}%");
+                    })
+                    ->orWhere('note', 'LIKE', "%{$filters['query']}%");
+            });
         }
 
-        return view('admin.bills.index', compact('bills'));
+        // Lọc theo trạng thái hóa đơn
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+            $query->where('status', $filters['status']);
+        }
+
+        // Lọc theo trạng thái thanh toán
+        if (!empty($filters['payment_status']) && $filters['payment_status'] !== 'all') {
+            $query->where('payment_status', $filters['payment_status']);
+        }
+
+        // Lọc theo ngày bắt đầu
+        if (!empty($filters['start_date'])) {
+            $query->whereDate('created_at', '>=', Carbon::parse($filters['start_date'])->startOfDay());
+        }
+
+        // Lọc theo ngày kết thúc
+        if (!empty($filters['end_date'])) {
+            $query->whereDate('created_at', '<=', Carbon::parse($filters['end_date'])->endOfDay());
+        }
+
+        // Lọc theo khoảng tiền tối thiểu
+        if (!empty($filters['min_amount'])) {
+            $query->where('total_amount', '>=', $filters['min_amount']);
+        }
+
+        // Lọc theo khoảng tiền tối đa
+        if (!empty($filters['max_amount'])) {
+            $query->where('total_amount', '<=', $filters['max_amount']);
+        }
+
+        // Lọc theo bàn
+        if (!empty($filters['table_id'])) {
+            $query->where('table_id', $filters['table_id']);
+        }
+
+        // Lọc theo nhân viên
+        if (!empty($filters['staff_id'])) {
+            $query->where('staff_id', $filters['staff_id']);
+        }
+
+        // Sắp xếp
+        $sortBy = $filters['sort_by'] ?? 'created_at_desc';
+        switch ($sortBy) {
+            case 'created_at_asc':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'updated_at_desc':
+                $query->orderBy('updated_at', 'desc');
+                break;
+            case 'updated_at_asc':
+                $query->orderBy('updated_at', 'asc');
+                break;
+            case 'total_amount_desc':
+                $query->orderBy('total_amount', 'desc');
+                break;
+            case 'total_amount_asc':
+                $query->orderBy('total_amount', 'asc');
+                break;
+            case 'bill_number_desc':
+                $query->orderBy('bill_number', 'desc');
+                break;
+            case 'bill_number_asc':
+                $query->orderBy('bill_number', 'asc');
+                break;
+            default:
+                $query->latest();
+        }
+
+        return $query;
     }
+
+    /**
+     * Lấy thống kê
+     */
+    private function getStats()
+    {
+        return [
+            'total' => Bill::count(),
+            'open' => Bill::where('status', 'Open')->count(),
+            'paid' => Bill::where('payment_status', 'Paid')->count(),
+            'today' => Bill::whereDate('created_at', today())->count(),
+            'total_amount_today' => Bill::whereDate('created_at', today())->sum('total_amount'),
+        ];
+    }
+
 
     // Hàm hiển thị chi tiết hóa đơn
     public function show($id)
@@ -104,7 +287,7 @@ class BillController extends Controller
 
             // Lấy hourly rate
             $hourlyRate = $this->getTableHourlyRate($table);
-            
+
             // Tạo bill
             $bill = Bill::create([
                 'bill_number' => $billNumber,
@@ -118,7 +301,7 @@ class BillController extends Controller
                 'discount_amount' => 0,
                 'final_amount' => 0
             ]);
-            
+
             // Khởi tạo tính giờ
             BillTimeUsage::create([
                 'bill_id' => $bill->id,
@@ -1261,5 +1444,98 @@ class BillController extends Controller
         ];
 
         return $stats;
+    }
+
+    public function checkNewPayments(Request $request)
+    {
+        $lastCheck = $request->input('last_check', now()->subMinutes(5)->toISOString());
+
+        $newPayments = Bill::with(['table', 'staff', 'user'])
+            ->where('payment_status', 'Paid')
+            ->where('updated_at', '>', $lastCheck)
+            ->where('updated_at', '>', now()->subMinutes(10))
+            ->orderBy('updated_at', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function ($bill) {
+                return [
+                    'id' => $bill->id,
+                    'bill_number' => $bill->bill_number,
+                    'user_name' => $bill->user->name ?? null,
+                    'user_phone' => $bill->user->phone ?? null,
+                    'table_name' => $bill->table->table_name ?? null,
+                    'table_number' => $bill->table->table_number ?? null,
+                    'staff_name' => $bill->staff->name ?? null,
+                    'staff_code' => $bill->staff->code ?? null,
+                    'total_amount' => $bill->total_amount,
+                    'discount_amount' => $bill->discount_amount,
+                    'final_amount' => $bill->final_amount,
+                    'status' => $bill->status,
+                    'payment_status' => $bill->payment_status,
+                    'created_at' => $bill->created_at->toISOString(),
+                    'updated_at' => $bill->updated_at->toISOString(),
+                ];
+            });
+
+        return response()->json([
+            'new_payments' => $newPayments,
+            'current_time' => now()->toISOString(),
+        ]);
+    }
+
+    /**
+     * Lấy thông tin thanh toán của bill
+     */
+    public function getPaymentInfo($id)
+    {
+        try {
+            $bill = Bill::with(['table', 'staff', 'user'])
+                ->findOrFail($id);
+
+            return response()->json([
+                'id' => $bill->id,
+                'bill_number' => $bill->bill_number,
+                'user_name' => $bill->user->name ?? null,
+                'user_phone' => $bill->user->phone ?? null,
+                'table_name' => $bill->table->table_name ?? null,
+                'table_number' => $bill->table->table_number ?? null,
+                'staff_name' => $bill->staff->name ?? null,
+                'staff_code' => $bill->staff->code ?? null,
+                'total_amount' => $bill->total_amount,
+                'discount_amount' => $bill->discount_amount,
+                'final_amount' => $bill->final_amount,
+                'status' => $bill->status,
+                'payment_status' => $bill->payment_status,
+                'created_at' => $bill->created_at->toISOString(),
+                'updated_at' => $bill->updated_at->toISOString(),
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Không tìm thấy hóa đơn'], 404);
+        }
+    }
+
+    /**
+     * Xử lý khi thanh toán thành công (redirect từ print)
+     */
+    public function paymentSuccessRedirect($billId)
+    {
+        try {
+            $bill = Bill::findOrFail($billId);
+
+            // Lưu session để hiển thị thông báo
+            session()->flash('payment_success', [
+                'bill_id' => $bill->id,
+                'bill_number' => $bill->bill_number,
+                'final_amount' => $bill->final_amount,
+                'staff_name' => Auth::user()->name,
+                'timestamp' => now()->toISOString(),
+            ]);
+
+            return redirect()->route('admin.bills.index')
+                ->with('success', 'Thanh toán thành công!');
+        } catch (Exception $e) {
+            return redirect()->route('admin.bills.index')
+                ->with('error', 'Không tìm thấy hóa đơn');
+        }
     }
 }
