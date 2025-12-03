@@ -188,6 +188,18 @@
                     <span class="font-medium text-sm md:text-base">Nhân viên</span>
                 </a>
 
+                <a href="{{ route('admin.payroll.index') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.payroll.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-file-invoice-dollar w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Tính lương</span>
+                </a>
+
+                <a href="{{ route('admin.attendance.monitor') }}" onclick="closeMobileMenu()"
+                   class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.attendance.monitor') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
+                    <i class="fas fa-eye w-5 md:w-6 mr-3"></i>
+                    <span class="font-medium text-sm md:text-base">Giám sát nhân viên</span>
+                </a>
+
                 <a href="{{ route('admin.roles.index') }}" onclick="closeMobileMenu()"
                    class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ request()->routeIs('admin.roles.*') ? 'bg-white/20 border-l-4 border-amber-400' : '' }}">
                     <i class="fas fa-user-shield w-5 md:w-6 mr-3"></i>

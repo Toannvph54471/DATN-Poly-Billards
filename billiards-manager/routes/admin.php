@@ -147,4 +147,25 @@ Route::prefix('admin')
         Route::get('customers/trashed', [CustomerController::class, 'trash'])->name('customers.trashed');
         Route::post('customers/{id}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
         Route::delete('customers/{id}/force-delete', [CustomerController::class, 'forceDelete'])->name('customers.force-delete');
+    // Employees (Admin only)
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('employees', EmployeeController::class)->names('employees');
+        Route::get('/payroll', [App\Http\Controllers\PayrollController::class, 'adminIndex'])->name('payroll.index');
     });
+
+    // Attendance (Admin & Manager)
+    // Route::get('/attendance/qr-code', [AttendanceController::class, 'showQrCode'])->name('attendance.qr_code');
+    // Route::get('/attendance/scan', [AttendanceController::class, 'scanQrCode'])->name('attendance.scan'); // Moved below for Employee access
+    Route::get('/attendance/monitor', [App\Http\Controllers\AttendanceController::class, 'monitor'])->name('attendance.monitor');
+    Route::get('/attendance/report', [App\Http\Controllers\AttendanceController::class, 'report'])->name('attendance.report');
+    Route::get('/attendance/server-time', [App\Http\Controllers\AttendanceController::class, 'getServerTime'])->name('attendance.server-time');
+});
+
+    // Employee accessible routes (POS Dashboard)
+    Route::prefix('admin')
+        ->name('admin.')
+        ->middleware(['auth', 'role:admin,manager,employee'])
+        ->group(function () {
+            // POS Dashboard for employees
+            Route::get('/pos-dashboard', [DashboardController::class, 'posDashboard'])->name('pos.dashboard');
+        });

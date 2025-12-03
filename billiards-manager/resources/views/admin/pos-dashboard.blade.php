@@ -407,7 +407,17 @@
                     </div>
                     <div class="p-3 md:p-4">
                         <div class="grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-3">
-                            @foreach ([['route' => 'admin.bills.index', 'color' => 'blue', 'icon' => 'plus-circle', 'text' => 'Hóa đơn'], ['route' => 'admin.reservations.create', 'color' => 'green', 'icon' => 'calendar-plus', 'text' => 'Đặt bàn'], ['route' => 'admin.tables.simple-dashboard', 'color' => 'purple', 'icon' => 'table-cells', 'text' => 'Quản lý Bàn'], ['route' => 'admin.reservations.index', 'color' => 'orange', 'icon' => 'list', 'text' => 'DS Đặt Bàn'], ['function' => 'openPaymentPage', 'color' => 'red', 'icon' => 'credit-card', 'text' => 'Thanh Toán'], ['function' => 'openTransferTable', 'color' => 'indigo', 'icon' => 'exchange-alt', 'text' => 'Chuyển Bàn'], ['function' => 'openCheckinTable', 'color' => 'teal', 'icon' => 'sign-in-alt', 'text' => 'Check-in'], ['function' => 'openCheckoutTable', 'color' => 'amber', 'icon' => 'sign-out-alt', 'text' => 'Check-out']] as $index => $action)
+                            @foreach ([
+                                ['route' => 'admin.bills.index', 'color' => 'blue', 'icon' => 'plus-circle', 'text' => 'Hóa đơn'], 
+                                ['route' => 'admin.reservations.create', 'color' => 'green', 'icon' => 'calendar-plus', 'text' => 'Đặt bàn'], 
+                                ['route' => 'admin.tables.simple-dashboard', 'color' => 'purple', 'icon' => 'table-cells', 'text' => 'Quản lý Bàn'], 
+                                ['route' => 'admin.reservations.index', 'color' => 'orange', 'icon' => 'list', 'text' => 'DS Đặt Bàn'], 
+                                ['function' => 'openPaymentPage', 'color' => 'red', 'icon' => 'credit-card', 'text' => 'Thanh Toán'], 
+                                ['function' => 'openTransferTable', 'color' => 'indigo', 'icon' => 'exchange-alt', 'text' => 'Chuyển Bàn'], 
+                                ['function' => 'openCheckinTable', 'color' => 'teal', 'icon' => 'sign-in-alt', 'text' => 'Check-in'], 
+                                ['function' => 'openCheckoutTable', 'color' => 'amber', 'icon' => 'sign-out-alt', 'text' => 'Check-out'],
+                                ['route' => 'attendance.my-qr', 'color' => 'pink', 'icon' => 'qrcode', 'text' => 'Mã QR Check-in']
+                            ] as $index => $action)
                                 @php
                                     $delay = 500 + $index * 50;
                                 @endphp
