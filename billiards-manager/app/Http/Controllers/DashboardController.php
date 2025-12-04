@@ -14,127 +14,222 @@ use Illuminate\Support\Facades\Auth as FacadesAuth;
 
 class DashboardController extends Controller
 {
-    public function index()
+
+    public function index(Request $request)
     {
         try {
-            $today = Carbon::today();
-            $startOfWeek = Carbon::now()->startOfWeek();
-            $endOfWeek = Carbon::now()->endOfWeek();
-            $startOfMonth = Carbon::now()->startOfMonth();
-            $endOfMonth = Carbon::now()->endOfMonth();
+            // ================== LẤY BỘ LỌC TỪ REQUEST ==================
+            $filterType = $request->get('filter', 'today'); // today, yesterday, week, month, custom
+            $startDate  = $request->input('start_date');
+            $endDate    = $request->input('end_date');
 
-            // Doanh thu hôm nay từ bảng bills
-            $todayRevenue = $this->getTodayRevenue($today);
-            $yesterdayRevenue = $this->getYesterdayRevenue();
-            $revenueGrowth = $this->calculateRevenueGrowth($todayRevenue, $yesterdayRevenue);
+            // Xác định khoảng thời gian thực tế + nhãn hiển thị
+            [$start, $end, $filterLabel] = $this->resolveDateRange($filterType, $startDate, $endDate);
 
-            // Số bill hôm nay
-            $todayBills = $this->getTodayBills($today);
-            $yesterdayBills = $this->getYesterdayBills();
-            $billGrowth = $this->calculateBillGrowth($todayBills, $yesterdayBills);
+            // Cache key duy nhất theo filter
+            $cacheKey = 'dashboard_' . md5("filter_{$filterType}_{$startDate}_{$endDate}");
 
-            // Thống kê bàn
-            $tableStats = $this->getTableStats();
+            $data = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($start, $end) {
+                return [
+                    // Doanh thu & bill trong khoảng thời gian lọc
+                    'todayRevenue'       => $this->getRevenueInRange($start, $end),
+                    'todayBills'         => $this->getBillsInRange($start, $end),
+                    'newCustomersToday'  => $this->getNewCustomersInRange($start, $end),
 
-            // Khách hàng mới (từ bảng users với role customer)
-            $newCustomersToday = $this->getNewCustomersToday($today);
-            $newCustomersThisMonth = $this->getNewCustomersThisMonth($startOfMonth, $endOfMonth);
+                    // Doanh thu theo từng ngày trong khoảng (dùng cho biểu đồ)
+                    'weeklyRevenue'      => $this->getRevenueByDay($start, $end),
 
-            // Doanh thu theo tuần
-            $weeklyRevenue = $this->getWeeklyRevenue($startOfWeek, $endOfWeek);
+                    // Các thống kê khác (giữ nguyên)
+                    'topProducts'        => $this->getTopProducts(5),
+                    'recentBills'        => $this->getRecentBills(10),
+                    'activeEmployees'    => $this->getActiveEmployeesInRange($start, $end, 5),
+                    'lowStockProducts'   => $this->getLowStockProducts(5),
+                    'tableStats'         => $this->getTableStats(),
+                    'shiftStats'         => $this->getShiftStats(Carbon::today()),
+                    'monthlyStats'       => $this->getMonthlyStats($start->copy()->startOfMonth(), $start->copy()->endOfMonth()),
+                ];
+            });
 
-            // Sản phẩm bán chạy từ bill_details
-            $topProducts = $this->getTopProducts(5);
+            // Tính kỳ trước để so sánh tăng trưởng
+            $previous = $this->getPreviousPeriod($start, $end);
+            $yesterdayRevenue = $this->getRevenueInRange($previous['start'], $previous['end']);
+            $yesterdayBills   = $this->getBillsInRange($previous['start'], $previous['end']);
 
-            // Bill gần đây
-            $recentBills = $this->getRecentBills(5);
+            $revenueGrowth = $this->calculateRevenueGrowth($data['todayRevenue'], $yesterdayRevenue);
+            $billGrowth    = $this->calculateBillGrowth($data['todayBills'], $yesterdayBills);
 
-            // Nhân viên tích cực
-            $activeEmployees = $this->getActiveEmployees(3);
+            // Truyền thêm thông tin filter để hiển thị trên giao diện
+            return view('admin.dashboard', array_merge($data, [
+                'yesterdayRevenue'     => $yesterdayRevenue,
+                'yesterdayBills'       => $yesterdayBills,
+                'revenueGrowth'        => $revenueGrowth,
+                'billGrowth'           => $billGrowth,
+                'newCustomersThisMonth' => $this->getNewCustomersThisMonth($start->copy()->startOfMonth(), $start->copy()->endOfMonth()),
 
-
-            // [NEW] Thống kê tháng
-            $monthlyStats = $this->getMonthlyStats($startOfMonth, $endOfMonth);
-
-            // [NEW] Cảnh báo kho
-            $lowStockProducts = $this->getLowStockProducts(5);
-
-            // [NEW] Ca làm việc
-            $shiftStats = $this->getShiftStats($today);
-
-            return view('admin.dashboard', compact(
-                'todayRevenue',
-                'yesterdayRevenue',
-                'revenueGrowth',
-                'todayBills',
-                'yesterdayBills',
-                'billGrowth',
-                'tableStats',
-                'newCustomersToday',
-                'newCustomersThisMonth',
-                'weeklyRevenue',
-                'topProducts',
-                'recentBills',
-                'activeEmployees',
-                'monthlyStats',
-                'lowStockProducts',
-                'shiftStats'
-            ));
+                // Thông tin filter
+                'filterType'           => $filterType,
+                'filterLabel'          => $filterLabel,
+                'startDateFormatted'   => $start->format('d/m/Y'),
+                'endDateFormatted'     => $end->format('d/m/Y'),
+            ]));
         } catch (\Exception $e) {
-            // Fallback data nếu có lỗi
+            \Log::error('Dashboard Error: ' . $e->getMessage());
             return $this->getFallbackData();
         }
     }
 
-    /**
-     * Lấy doanh thu hôm nay từ bảng bills
-     */
-    private function getTodayRevenue($today)
+    // =============================================================================
+    // CÁC HÀM MỚI: LỌC THEO NGÀY, TĂNG TRƯỞNG, CACHE
+    // =============================================================================
+
+    private function resolveDateRange($filterType, $startDate = null, $endDate = null)
+    {
+        $now = Carbon::now();
+
+        return match ($filterType) {
+            'today'       => [Carbon::today(), Carbon::today(), 'Hôm nay'],
+            'yesterday'   => [Carbon::yesterday(), Carbon::yesterday(), 'Hôm qua'],
+            'week'        => [$now->copy()->startOfWeek(), $now->copy()->endOfWeek(), 'Tuần này'],
+            'last_week'   => [$now->copy()->subWeek()->startOfWeek(), $now->copy()->subWeek()->endOfWeek(), 'Tuần trước'],
+            'month'       => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth(), 'Tháng này'],
+            'last_month'  => [$now->copy()->subMonthNoOverflow()->startOfMonth(), $now->copy()->subMonthNoOverflow()->endOfMonth(), 'Tháng trước'],
+            'custom'      => [
+                $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::today(),
+                $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::today(),
+                $startDate && $endDate
+                    ? Carbon::parse($startDate)->format('d/m') . ' → ' . Carbon::parse($endDate)->format('d/m/Y')
+                    : 'Tùy chỉnh'
+            ],
+            default       => [Carbon::today(), Carbon::today(), 'Hôm nay'],
+        };
+    }
+
+    private function getPreviousPeriod($start, $end)
+    {
+        $days = $start->diffInDays($end) + 1;
+        return [
+            'start' => $start->copy()->subDays($days),
+            'end'   => $end->copy()->subDays($days),
+        ];
+    }
+
+    private function getRevenueInRange($start, $end)
     {
         return DB::table('bills')
-            ->whereDate('created_at', $today)
+            ->whereBetween('created_at', [$start, $end])
             ->where('payment_status', 'Paid')
             ->sum('final_amount') ?? 0;
     }
 
-    /**
-     * Lấy doanh thu hôm qua
-     */
+    private function getBillsInRange($start, $end)
+    {
+        return DB::table('bills')
+            ->whereBetween('created_at', [$start, $end])
+            ->count();
+    }
+
+    private function getNewCustomersInRange($start, $end)
+    {
+        return DB::table('users')
+            ->where('role_id', 4)
+            ->whereBetween('created_at', [$start, $end])
+            ->count();
+    }
+
+    private function getRevenueByDay($start, $end)
+    {
+        $raw = DB::table('bills')
+            ->selectRaw('DATE(created_at) as date, SUM(final_amount) as revenue')
+            ->whereBetween('created_at', [$start, $end])
+            ->where('payment_status', 'Paid')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('revenue', 'date');
+
+        $result = [];
+        $current = $start->copy();
+        $daysOfWeek = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+        while ($current->lte($end)) {
+            $dateKey = $current->toDateString();
+            $dayIndex = ($current->dayOfWeek + 6) % 7; // Thứ 2 = 0
+
+            $result[] = [
+                'day'       => $current->between($start->copy()->startOfWeek(), $start->copy()->endOfWeek())
+                    ? $daysOfWeek[$dayIndex]
+                    : $current->format('d/m'),
+                'revenue'   => $raw[$dateKey] ?? 0,
+                'full_date' => $current->format('d/m/Y')
+            ];
+            $current->addDay();
+        }
+
+        return $result;
+    }
+
+    private function getActiveEmployeesInRange($start, $end, $limit = 5)
+    {
+        return DB::table('bills')
+            ->join('employees', 'bills.staff_id', '=', 'employees.user_id')
+            ->select(
+                'employees.id',
+                'employees.name',
+                DB::raw('COUNT(bills.id) as bill_count'),
+                DB::raw('SUM(bills.final_amount) as total_revenue')
+            )
+            ->whereBetween('bills.created_at', [$start, $end])
+            ->groupBy('employees.id', 'employees.name')
+            ->orderByDesc('bill_count')
+            ->limit($limit)
+            ->get();
+    }
+
+    private function getTodayRevenue($today)
+    {
+        return $this->getRevenueInRange($today, $today);
+    }
+
     private function getYesterdayRevenue()
     {
         $yesterday = Carbon::yesterday();
-
-        return DB::table('bills')
-            ->whereDate('created_at', $yesterday)
-            ->where('payment_status', 'Paid')
-            ->sum('final_amount') ?? 0;
+        return $this->getRevenueInRange($yesterday, $yesterday);
     }
 
-    /**
-     * Lấy số bill hôm nay
-     */
     private function getTodayBills($today)
     {
-        return DB::table('bills')
-            ->whereDate('created_at', $today)
-            ->count();
+        return $this->getBillsInRange($today, $today);
     }
 
-    /**
-     * Lấy số bill hôm qua
-     */
     private function getYesterdayBills()
     {
         $yesterday = Carbon::yesterday();
-
-        return DB::table('bills')
-            ->whereDate('created_at', $yesterday)
-            ->count();
+        return $this->getBillsInRange($yesterday, $yesterday);
     }
 
-    /**
-     * Lấy thống kê tình trạng bàn
-     */
+    private function getFallbackData()
+    {
+        return view('admin.dashboard', [
+            'todayRevenue' => 0,
+            'todayBills' => 0,
+            'newCustomersToday' => 0,
+            'yesterdayRevenue' => 0,
+            'yesterdayBills' => 0,
+            'revenueGrowth' => 0,
+            'billGrowth' => 0,
+            'weeklyRevenue' => [],
+            'topProducts' => [],
+            'recentBills' => [],
+            'activeEmployees' => [],
+            'tableStats' => ['total' => 0, 'occupancy_rate' => 0],
+            'lowStockProducts' => [],
+            'shiftStats' => [],
+            'monthlyStats' => ['revenue' => 0, 'bills' => 0, 'customers' => 0],
+            'filterLabel' => 'Hôm nay'
+        ]);
+    }
+
+
+
     private function getTableStats()
     {
         return Cache::remember('dashboard.table_stats', 300, function () {
@@ -441,103 +536,5 @@ class DashboardController extends Controller
             'total_hours' => $totalHours,
             'working_employees' => $workingEmployees
         ];
-    }
-
-    // DashboardContronller cho Employees
-
-    public function posDashboard()
-    {
-        try {
-            $user = FacadesAuth::user();
-            
-            // Thống kê nhanh cho POS
-            $stats = [
-                'open_bills' => Bill::where('status', 'Open')->count(),
-                'today_revenue' => Bill::whereDate('created_at', Carbon::today())
-                    ->where('status', 'Closed')
-                    ->sum('final_amount'),
-                'occupied_tables' => Table::where('status', 'occupied')->count(),
-                'available_tables' => Table::where('status', 'available')->count(),
-                'pending_reservations' => Reservation::where('status', 'confirmed')
-                    ->whereDate('reservation_time', Carbon::today())
-                    ->count(),
-            ];
-
-            // Bills đang mở
-            $openBills = Bill::with(['table', 'user', 'staff'])
-                ->where('status', 'Open')
-                ->orderBy('created_at', 'desc')
-                ->limit(10)
-                ->get();
-
-            // Bàn trống
-            $availableTables = Table::where('status', 'available')->get();
-
-            // Bàn đang sử dụng với thông tin bill chi tiết
-            $occupiedTables = Table::with([
-                'tableRate',
-                'currentBill.user',
-                'currentBill.billDetails.product',
-                'currentBill.billDetails.combo',
-                'currentBill.billTimeUsages' => function ($query) {
-                    $query->whereNull('end_time')
-                        ->orWhere('end_time', '>', now()->subHours(24));
-                },
-                'currentBill.comboTimeUsages' => function ($query) {
-                    $query->where(function ($q) {
-                        $q->where('is_expired', false)
-                            ->orWhere('end_time', '>', now()->subHours(24));
-                    });
-                }
-            ])->where('status', 'occupied')->get();
-
-                
-
-            return view('admin.pos-dashboard', compact(
-                'stats',
-                'openBills',
-                'availableTables',
-                'occupiedTables',
-                'todayReservations'
-            ));
-
-            
-        } catch (\Exception $e) {
-            // Fallback data nếu có lỗi
-            return $this->getFallbackData();
-        }
-    }
-
-    public function getQuickStats()
-    {
-        $stats = [
-            'open_bills' => Bill::where('status', 'Open')->count(),
-            'today_sales' => Bill::whereDate('created_at', Carbon::today())
-                ->where('status', 'Closed')
-                ->sum('final_amount'),
-            'occupied_tables' => Table::where('status', 'occupied')->count(),
-            'pending_reservations' => Reservation::where('status', 'confirmed')
-                ->whereDate('reservation_time', Carbon::today())
-                ->count(),
-        ];
-
-        return response()->json($stats);
-    }
-
-    private function getFallbackData()
-    {
-        return view('admin.pos-dashboard', [
-            'stats' => [
-                'open_bills' => 0,
-                'today_revenue' => 0,
-                'occupied_tables' => 0,
-                'available_tables' => 0,
-                'pending_reservations' => 0,
-            ],
-            'openBills' => collect(),
-            'availableTables' => collect(),
-            'occupiedTables' => collect(),
-            'todayReservations' => collect(),
-        ]);
     }
 }
