@@ -278,7 +278,6 @@ class TableController extends Controller
 
         $combos = Combo::where('status', 'active')->get();
         $products = Product::where('status', 'Active')->get();
-        // dd($products);
 
         // Tính toán thời gian hiện tại
         $timeInfo = [];

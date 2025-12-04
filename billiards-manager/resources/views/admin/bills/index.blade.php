@@ -257,11 +257,6 @@
                     </div>
 
                     <div class="flex justify-end space-x-3 pt-4 border-t">
-                        <button type="button" onclick="resetSearch()"
-                            class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                            <i class="fa-solid fa-refresh mr-1"></i> Xóa tìm kiếm
-                        </button>
-
                         <button type="submit"
                             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                             <i class="fa-solid fa-search mr-1"></i> Tìm kiếm
@@ -341,115 +336,173 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="bills-table-body">
                         @forelse($bills as $bill)
-                            <tr class="hover:bg-gray-50 bill-row" data-id="{{ $bill->id }}"
-                                data-status="{{ $bill->status }}" data-payment-status="{{ $bill->payment_status }}"
-                                data-bill-number="{{ $bill->bill_number }}" data-amount="{{ $bill->final_amount }}">
+                            <tr class="bill-row group hover:bg-blue-50 transition-all duration-200 cursor-pointer border-l-4 hover:border-l-blue-500 border-l-transparent"
+                                data-id="{{ $bill->id }}" data-status="{{ $bill->status }}"
+                                data-payment-status="{{ $bill->payment_status }}"
+                                data-bill-number="{{ $bill->bill_number }}" data-amount="{{ $bill->final_amount }}"
+                                onclick="window.location.href='{{ route('admin.bills.show', $bill->id) }}'"
+                                title="Click để xem chi tiết hóa đơn">
+
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0">
                                             @if ($bill->payment_status === 'Paid')
-                                                <i class="fa-solid fa-check-circle text-green-400"></i>
+                                                <i
+                                                    class="fa-solid fa-check-circle text-green-500 text-lg group-hover:text-green-600 transition-colors"></i>
                                             @elseif($bill->status === 'Open')
-                                                <i class="fa-solid fa-clock text-blue-400"></i>
+                                                <i
+                                                    class="fa-solid fa-clock text-blue-500 text-lg group-hover:text-blue-600 transition-colors"></i>
                                             @else
-                                                <i class="fa-solid fa-receipt text-gray-400"></i>
+                                                <i
+                                                    class="fa-solid fa-receipt text-gray-500 text-lg group-hover:text-gray-600 transition-colors"></i>
                                             @endif
                                         </div>
                                         <div class="ml-3">
-                                            <div class="text-sm font-medium text-gray-900">
+                                            <div
+                                                class="text-sm font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
                                                 {{ $bill->bill_number }}
                                                 @if ($bill->payment_status === 'Paid' && \Carbon\Carbon::parse($bill->updated_at)->diffInMinutes() < 5)
                                                     <span
-                                                        class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 animate-pulse new-payment-badge">
+                                                        class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm animate-pulse">
                                                         <i class="fa-solid fa-credit-card mr-1"></i> VỪA TT
                                                     </span>
                                                 @endif
                                             </div>
-                                            <div class="text-xs text-gray-500">
+                                            <div class="text-xs text-gray-500 group-hover:text-gray-600 transition-colors">
                                                 ID: {{ $bill->id }}
                                             </div>
                                         </div>
                                     </div>
                                 </td>
+
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ $bill->user->name ?? 'Khách vãng lai' }}</div>
-                                    <div class="text-xs text-gray-500">
+                                    <div
+                                        class="text-sm font-medium text-gray-900 group-hover:text-gray-800 transition-colors">
+                                        {{ $bill->user->name ?? 'Khách vãng lai' }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 group-hover:text-gray-600 transition-colors">
+                                        <i class="fa-solid fa-phone text-xs mr-1"></i>
                                         {{ $bill->user->phone ?? 'Chưa có SĐT' }}
                                     </div>
                                 </td>
+
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">
+                                    <div
+                                        class="text-sm font-medium text-gray-900 group-hover:text-gray-800 transition-colors">
                                         {{ $bill->table->table_name ?? 'N/A' }}
                                     </div>
-                                    <div class="text-xs text-gray-500">
+                                    <div class="text-xs text-gray-500 group-hover:text-gray-600 transition-colors">
+                                        <i class="fa-solid fa-hashtag text-xs mr-1"></i>
                                         {{ $bill->table->table_number ?? '' }}
                                     </div>
                                 </td>
+
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">
+                                    <div
+                                        class="text-sm font-medium text-gray-900 group-hover:text-gray-800 transition-colors">
                                         {{ $bill->staff->name ?? 'Chưa xác định' }}
                                     </div>
-                                    <div class="text-xs text-gray-500">
+                                    <div class="text-xs text-gray-500 group-hover:text-gray-600 transition-colors">
+                                        <i class="fa-solid fa-id-card text-xs mr-1"></i>
                                         {{ $bill->staff->code ?? '' }}
                                     </div>
                                 </td>
+
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-semibold text-gray-900">
+                                    <div
+                                        class="text-sm font-bold text-gray-900 group-hover:text-gray-800 transition-colors">
                                         {{ number_format($bill->final_amount) }} ₫
                                     </div>
                                     @if ($bill->discount_amount > 0)
-                                        <div class="text-xs text-red-600">
+                                        <div class="text-xs text-red-600 group-hover:text-red-700 transition-colors">
+                                            <i class="fa-solid fa-tag mr-1"></i>
                                             -{{ number_format($bill->discount_amount) }} ₫
                                         </div>
                                     @endif
                                 </td>
+
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="space-y-1">
+                                    <div class="space-y-2">
                                         <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {{ $bill->status === 'Open'
-                                            ? 'bg-green-100 text-green-800'
-                                            : ($bill->status === 'Closed'
-                                                ? 'bg-gray-100 text-gray-800'
-                                                : 'bg-blue-100 text-blue-800') }}">
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+                        {{ $bill->status === 'Open'
+                            ? 'bg-green-100 text-green-800 group-hover:bg-green-200 group-hover:text-green-900'
+                            : ($bill->status === 'Closed'
+                                ? 'bg-gray-100 text-gray-800 group-hover:bg-gray-200 group-hover:text-gray-900'
+                                : 'bg-blue-100 text-blue-800 group-hover:bg-blue-200 group-hover:text-blue-900') }}">
+                                            <i
+                                                class="fa-solid 
+                            {{ $bill->status === 'Open' ? 'fa-clock' : ($bill->status === 'Closed' ? 'fa-check' : 'fa-bolt') }} 
+                            mr-1.5"></i>
                                             {{ $bill->status === 'Open' ? 'Đang mở' : ($bill->status === 'Closed' ? 'Đã đóng' : 'Nhanh') }}
                                         </span>
                                         <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {{ $bill->payment_status === 'Paid' ? 'bg-purple-100 text-purple-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                            {{ $bill->payment_status === 'Paid' ? 'Đã TT' : 'Chờ TT' }}
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
+                        {{ $bill->payment_status === 'Paid'
+                            ? 'bg-gradient-to-r from-purple-100 to-purple-50 text-purple-800 group-hover:from-purple-200 group-hover:to-purple-100'
+                            : 'bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-800 group-hover:from-yellow-200 group-hover:to-yellow-100' }}">
+                                            <i
+                                                class="fa-solid 
+                            {{ $bill->payment_status === 'Paid' ? 'fa-check-circle' : 'fa-hourglass-half' }} 
+                            mr-1.5"></i>
+                                            {{ $bill->payment_status === 'Paid' ? 'Đã thanh toán' : 'Chờ thanh toán' }}
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <div>{{ \Carbon\Carbon::parse($bill->created_at)->format('d/m/Y') }}</div>
-                                    <div>{{ \Carbon\Carbon::parse($bill->created_at)->format('H:i') }}</div>
+
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div
+                                        class="text-sm text-gray-900 font-medium group-hover:text-gray-800 transition-colors">
+                                        <i class="fa-solid fa-calendar-day mr-1.5"></i>
+                                        {{ \Carbon\Carbon::parse($bill->created_at)->format('d/m/Y') }}
+                                    </div>
+                                    <div class="text-sm text-gray-700 group-hover:text-gray-800 transition-colors">
+                                        <i class="fa-solid fa-clock mr-1.5"></i>
+                                        {{ \Carbon\Carbon::parse($bill->created_at)->format('H:i') }}
+                                    </div>
                                     @if ($bill->status === 'Closed' && $bill->end_time)
-                                        <div class="text-xs text-gray-400">
-                                            Kết thúc: {{ \Carbon\Carbon::parse($bill->end_time)->format('H:i') }}
+                                        <div
+                                            class="text-xs text-gray-500 group-hover:text-gray-600 transition-colors mt-1">
+                                            <i class="fa-solid fa-flag-checkered mr-1"></i>
+                                            {{ \Carbon\Carbon::parse($bill->end_time)->format('H:i') }}
                                         </div>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex space-x-2">
+
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"
+                                    onclick="event.stopPropagation()">
+                                    <div
+                                        class="flex space-x-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-0 -translate-x-2">
                                         <a href="{{ route('admin.bills.show', $bill->id) }}"
-                                            class="text-blue-600 hover:text-blue-900" title="Xem chi tiết">
+                                            class="action-btn bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-800"
+                                            title="Xem chi tiết">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                         <a href="{{ route('admin.bills.print', $bill->id) }}" target="_blank"
-                                            class="text-purple-600 hover:text-purple-900" title="In hóa đơn">
+                                            class="action-btn bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-800"
+                                            title="In hóa đơn">
                                             <i class="fa-solid fa-print"></i>
                                         </a>
                                         @if ($bill->status === 'Open' || $bill->status === 'quick')
                                             <a href="{{ route('admin.payments.payment-page', $bill->id) }}"
-                                                class="text-green-600 hover:text-green-900" title="Thanh toán">
+                                                class="action-btn bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-800"
+                                                title="Thanh toán">
                                                 <i class="fa-solid fa-credit-card"></i>
                                             </a>
                                         @endif
-                                        <button onclick="showBillActions({{ $bill->id }})"
-                                            class="text-gray-600 hover:text-gray-900" title="Thao tác khác">
+                                        <button onclick="showBillActions({{ $bill->id }}, event)"
+                                            class="action-btn bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-800"
+                                            title="Thao tác khác">
                                             <i class="fa-solid fa-ellipsis-v"></i>
                                         </button>
+                                    </div>
+
+                                    <!-- Hiển thị khi không hover -->
+                                    <div
+                                        class="opacity-100 group-hover:opacity-0 transition-all duration-300 flex space-x-2">
+                                        <span class="text-xs text-gray-400 font-normal">
+                                            Click để xem chi tiết
+                                        </span>
                                     </div>
                                 </td>
                             </tr>
@@ -630,6 +683,42 @@
 
         .animate-pulse {
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+
+    <style>
+        .bill-row {
+            transition: all 0.3s ease;
+        }
+
+        .bill-row:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+
+        .action-btn {
+            @apply w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s infinite;
         }
     </style>
 @endsection
@@ -1227,4 +1316,6 @@
             }
         });
     </script>
+
+
 @endsection
