@@ -47,13 +47,7 @@ Route::prefix('admin')
 
             // Employees
             Route::resource('employees', EmployeeController::class)->names('employees');
-
-            // Payments (Admin only)
-            Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
-            Route::get('payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
-            Route::post('reservations/{reservation}/payment', [PaymentController::class, 'create'])->name('payments.create');
-            Route::post('payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
-            Route::post('payments/{payment}/cancel', [PaymentController::class, 'cancel'])->name('payments.cancel');
+            Route::get('my-profile', [EmployeeController::class, 'myProfile'])->name('my-profile');
         });
 
         /*
@@ -99,6 +93,9 @@ Route::prefix('admin')
         Route::prefix('bills')->name('bills.')->group(function () {
             // Advanced bill functions only for admin/manager
             Route::get('index', [BillController::class, 'index'])->name('index');
+            Route::post('filter', [BillController::class, 'filter'])->name('filter');
+            Route::post('reset', [BillController::class, 'resetFilter'])->name('reset');
+            Route::post('/bills/check-new', [BillController::class, 'checkNewBills'])->name('check-new');
             Route::get('/{id}/show', [BillController::class, 'show'])->name('show');
             Route::post('/{id}/switch-regular', [BillController::class, 'switchToRegularTime'])->name('switch-regular');
             Route::post('/{id}/extend-combo', [BillController::class, 'extendComboTime'])->name('extend-combo');
@@ -106,6 +103,9 @@ Route::prefix('admin')
             Route::get('/{id}/time-info', [BillController::class, 'getBillTimeInfo'])->name('time-info');
             Route::post('/{id}/convert-to-quick', [BillController::class, 'convertToQuick'])->name('convert-to-quick');
             Route::post('/{id}/stop-combo', [BillController::class, 'stopComboTime'])->name('stop-combo');
+            Route::get('/{id}/transfer', [BillController::class, 'showTransferForm'])->name('transfer-form');
+            // Thêm vào routes/web.php
+            Route::post('/bills/{bill}/payment-success', [BillController::class, 'processPaymentSuccess'])->name('payment-success');
 
             // Print bill
             Route::get('/{id}/print', [BillController::class, 'printBill'])->name('print');
@@ -147,25 +147,4 @@ Route::prefix('admin')
         Route::get('customers/trashed', [CustomerController::class, 'trash'])->name('customers.trashed');
         Route::post('customers/{id}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
         Route::delete('customers/{id}/force-delete', [CustomerController::class, 'forceDelete'])->name('customers.force-delete');
-    // Employees (Admin only)
-    Route::middleware('role:admin')->group(function () {
-        Route::resource('employees', EmployeeController::class)->names('employees');
-        Route::get('/payroll', [App\Http\Controllers\PayrollController::class, 'adminIndex'])->name('payroll.index');
     });
-
-    // Attendance (Admin & Manager)
-    // Route::get('/attendance/qr-code', [AttendanceController::class, 'showQrCode'])->name('attendance.qr_code');
-    // Route::get('/attendance/scan', [AttendanceController::class, 'scanQrCode'])->name('attendance.scan'); // Moved below for Employee access
-    Route::get('/attendance/monitor', [App\Http\Controllers\AttendanceController::class, 'monitor'])->name('attendance.monitor');
-    Route::get('/attendance/report', [App\Http\Controllers\AttendanceController::class, 'report'])->name('attendance.report');
-    Route::get('/attendance/server-time', [App\Http\Controllers\AttendanceController::class, 'getServerTime'])->name('attendance.server-time');
-});
-
-    // Employee accessible routes (POS Dashboard)
-    Route::prefix('admin')
-        ->name('admin.')
-        ->middleware(['auth', 'role:admin,manager,employee'])
-        ->group(function () {
-            // POS Dashboard for employees
-            Route::get('/pos-dashboard', [DashboardController::class, 'posDashboard'])->name('pos.dashboard');
-        });

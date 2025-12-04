@@ -11,7 +11,7 @@
         </div>
 
         <a href="{{ route('admin.employees.index') }}"
-           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition flex items-center">
+            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition flex items-center">
             <i class="fas fa-arrow-left mr-2"></i>
             Quay lại danh sách
         </a>
@@ -38,8 +38,8 @@
                                     Mã nhân viên *
                                 </label>
                                 <input type="text" name="employee_code"
-                                       value="{{ old('employee_code', $employee->employee_code) }}" required
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                    value="{{ old('employee_code', $employee->employee_code) }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('employee_code')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -51,9 +51,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Họ và tên *
                                 </label>
-                                <input type="text" name="name"
-                                       value="{{ old('name', $employee->name) }}" required
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                <input type="text" name="name" value="{{ old('name', $employee->name) }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('name')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -65,9 +64,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Số điện thoại *
                                 </label>
-                                <input type="text" name="phone"
-                                       value="{{ old('phone', $employee->phone) }}" required
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                <input type="text" name="phone" value="{{ old('phone', $employee->phone) }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('phone')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -79,9 +77,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Email
                                 </label>
-                                <input type="email" name="email"
-                                       value="{{ old('email', $employee->email) }}"
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                <input type="email" name="email" value="{{ old('email', $employee->email) }}"
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('email')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -94,7 +91,7 @@
                                     Địa chỉ
                                 </label>
                                 <textarea name="address"
-                                          class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                                  focus:ring-2 focus:ring-blue-500">{{ old('address', $employee->address) }}</textarea>
                                 @error('address')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -117,27 +114,27 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Chức vụ *
                                 </label>
-                                <select name="position" required
-                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
-                                               focus:ring-2 focus:ring-blue-500">
+
+                                <select name="role_id" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500">
+
                                     <option value="">Chọn chức vụ</option>
-                                    <option value="manager" {{ old('position', $employee->position) == 'manager' ? 'selected' : '' }}>
-                                        Quản lý
-                                    </option>
-                                    <option value="staff" {{ old('position', $employee->position) == 'staff' ? 'selected' : '' }}>
-                                        Nhân viên
-                                    </option>
-                                    <option value="cashier" {{ old('position', $employee->position) == 'cashier' ? 'selected' : '' }}>
-                                        Thu ngân
-                                    </option>
-                                    <option value="waiter" {{ old('position', $employee->position) == 'waiter' ? 'selected' : '' }}>
-                                        Phục vụ
-                                    </option>
+
+                                    @foreach ($roles as $role)
+                                        <option value="{{ $role->id }}"
+                                            @if (old('role_id')) {{ old('role_id') == $role->id ? 'selected' : '' }}
+                @else
+                    {{ $employee->position == $role->id ? 'selected' : '' }} @endif>
+                                            {{ $role->name }}
+                                        </option>
+                                    @endforeach
                                 </select>
-                                @error('position')
+
+                                @error('role_id')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
+
 
                             <!-- Loại lương -->
                             <div>
@@ -145,12 +142,14 @@
                                     Loại lương *
                                 </label>
                                 <select name="salary_type" required
-                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                                focus:ring-2 focus:ring-blue-500">
-                                    <option value="hourly" {{ old('salary_type', $employee->salary_type) == 'hourly' ? 'selected' : '' }}>
+                                    <option value="hourly"
+                                        {{ old('salary_type', $employee->salary_type) == 'hourly' ? 'selected' : '' }}>
                                         Part-time (25.000 VND/giờ)
                                     </option>
-                                    <option value="monthly" {{ old('salary_type', $employee->salary_type) == 'monthly' ? 'selected' : '' }}>
+                                    <option value="monthly"
+                                        {{ old('salary_type', $employee->salary_type) == 'monthly' ? 'selected' : '' }}>
                                         Lương cứng (35.000 VND/giờ)
                                     </option>
                                 </select>
@@ -165,8 +164,8 @@
                                     Mức lương (VND/giờ) *
                                 </label>
                                 <input type="number" name="salary_rate" step="0.01"
-                                       value="{{ old('salary_rate', $employee->salary_rate) }}" required
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                    value="{{ old('salary_rate', $employee->salary_rate) }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('salary_rate')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -179,8 +178,9 @@
                                     Ngày bắt đầu *
                                 </label>
                                 <input type="date" name="start_date"
-                                       value="{{ old('start_date', $employee->start_date ? $employee->start_date->format('Y-m-d') : '') }}" required
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                    value="{{ old('start_date', $employee->start_date ? $employee->start_date->format('Y-m-d') : '') }}"
+                                    required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('start_date')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -193,8 +193,8 @@
                                     Ngày kết thúc
                                 </label>
                                 <input type="date" name="end_date"
-                                       value="{{ old('end_date', $employee->end_date ? $employee->end_date->format('Y-m-d') : '') }}"
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                    value="{{ old('end_date', $employee->end_date ? $employee->end_date->format('Y-m-d') : '') }}"
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('end_date')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -207,12 +207,14 @@
                                     Trạng thái *
                                 </label>
                                 <select name="status" required
-                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                                focus:ring-2 focus:ring-blue-500">
-                                    <option value="Active" {{ old('status', $employee->status) === 'Active' ? 'selected' : '' }}>
+                                    <option value="Active"
+                                        {{ old('status', $employee->status) === 'Active' ? 'selected' : '' }}>
                                         Đang hoạt động
                                     </option>
-                                    <option value="Inactive" {{ old('status', $employee->status) === 'Inactive' ? 'selected' : '' }}>
+                                    <option value="Inactive"
+                                        {{ old('status', $employee->status) === 'Inactive' ? 'selected' : '' }}>
                                         Ngừng hoạt động
                                     </option>
                                 </select>
@@ -228,7 +230,7 @@
             <!-- Buttons -->
             <div class="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
                 <button type="submit"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition font-medium flex items-center">
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition font-medium flex items-center">
                     <i class="fas fa-save mr-2"></i>
                     Cập nhật
                 </button>
