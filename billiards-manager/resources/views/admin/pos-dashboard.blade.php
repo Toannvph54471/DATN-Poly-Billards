@@ -73,7 +73,7 @@
                     </div>
                     <div class="p-3 md:p-4">
                         <div class="grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-3">
-                            @foreach ([['route' => 'admin.bills.index', 'color' => 'blue', 'icon' => 'plus-circle', 'text' => 'Hóa đơn'], ['route' => 'admin.reservations.create', 'color' => 'green', 'icon' => 'calendar-plus', 'text' => 'Đặt bàn'], ['route' => 'admin.tables.simple-dashboard', 'color' => 'purple', 'icon' => 'table-cells', 'text' => 'Quản lý Bàn'], ['route' => 'admin.reservations.index', 'color' => 'orange', 'icon' => 'list', 'text' => 'DS Đặt Bàn'], ['route' => 'admin.bills.index', 'color' => 'red', 'icon' => 'credit-card', 'text' => 'Thanh Toán'], ['route' => 'admin.tables.simple-dashboard', 'color' => 'indigo', 'icon' => 'exchange-alt', 'text' => 'Chuyển Bàn'], ['route' => 'admin.tables.simple-dashboard', 'color' => 'teal', 'icon' => 'sign-in-alt', 'text' => 'Check-in'], ['route' => 'admin.tables.simple-dashboard', 'color' => 'amber', 'icon' => 'sign-out-alt', 'text' => 'Check-out']] as $action)
+                            @foreach ([['route' => 'admin.bills.index', 'color' => 'blue', 'icon' => 'plus-circle', 'text' => 'Hóa đơn'], ['route' => 'admin.tables.simple-dashboard', 'color' => 'purple', 'icon' => 'table-cells', 'text' => 'Quản lý Bàn'], ['route' => 'admin.bills.index', 'color' => 'red', 'icon' => 'credit-card', 'text' => 'Thanh Toán'], ['route' => 'admin.tables.simple-dashboard', 'color' => 'indigo', 'icon' => 'exchange-alt', 'text' => 'Chuyển Bàn'], ['route' => 'admin.tables.simple-dashboard', 'color' => 'teal', 'icon' => 'sign-in-alt', 'text' => 'Check-in'], ['route' => 'admin.tables.simple-dashboard', 'color' => 'amber', 'icon' => 'sign-out-alt', 'text' => 'Check-out']] as $action)
                                 <a href="{{ route($action['route']) }}"
                                     class="quick-action-btn p-2 md:p-3 bg-{{ $action['color'] }}-50 hover:bg-{{ $action['color'] }}-100 transition-colors group border-2 border-{{ $action['color'] }}-200 rounded-lg text-center">
                                     <div>
@@ -203,12 +203,6 @@
 
                 <!-- Today's Reservations -->
                 <div class="bg-white rounded-lg shadow-lg border border-gray-200 animate-float-in" data-delay="1300">
-                    <div class="p-3 md:p-4 border-b border-gray-200">
-                        <h3 class="text-base md:text-lg font-semibold text-gray-800">
-                            <i class="fas fa-calendar-day text-purple-500 mr-2"></i>
-                            Đặt bàn hôm nay
-                        </h3>
-                    </div>
                     <div class="p-3 md:p-4">
                         <div class="space-y-2 md:space-y-3" id="reservations-container">
                             @forelse($todayReservations as $reservation)
