@@ -6,8 +6,8 @@
     <!-- Header Section -->
     <div class="flex items-center justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">Bảng lương nhân viên</h1>
-            <p class="text-sm text-gray-500 mt-1">Quản lý và tính toán lương cho đội ngũ</p>
+            <h1 class="text-2xl font-bold text-gray-800">Bảng lương nhân viên (Theo giờ)</h1>
+            <p class="text-sm text-gray-500 mt-1">Quản lý và tính toán lương dựa trên tổng giờ làm</p>
         </div>
         <a href="{{ route('admin.employees.index') }}"
             class="btn btn-primary">
@@ -42,7 +42,7 @@
         @php
             $totalEmployees = $employees->total();
             $calculatedCount = $employees->filter(fn($e) => $e->payrolls->isNotEmpty())->count();
-            $totalSalary = $employees->sum(fn($e) => $e->payrolls->first()?->total_amount ?? 0);
+            $totalSalary = $employees->sum(fn($e) => $e->payrolls->first()?->final_amount ?? 0);
             $totalBonus = $employees->sum(fn($e) => $e->payrolls->first()?->bonus ?? 0);
         @endphp
         
@@ -101,9 +101,9 @@
             <thead>
                 <tr class="table-header">
                     <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Nhân viên</th>
-                    <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Loại</th>
+                    <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Lương Giờ</th>
+                    <th class="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Tổng Giờ</th>
                     <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Lương CB</th>
-                    <th class="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Công/Giờ</th>
                     <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Thưởng</th>
                     <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Phạt</th>
                     <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Thực lĩnh</th>
@@ -115,10 +115,12 @@
                     @php
                         $payroll = $employee->payrolls->first();
                         $isCalculated = $payroll ? true : false;
-                        $calculatedSalary = $payroll ? $payroll->total_amount : 0;
+                        $calculatedSalary = $payroll ? $payroll->final_amount : 0;
+                        $baseAmount = $payroll ? $payroll->base_salary : 0; // or total_amount
                         $bonus = $payroll ? $payroll->bonus : 0;
-                        $deductions = $payroll ? $payroll->deductions : 0;
+                        $penalty = $payroll ? $payroll->penalty : 0;
                         $notes = $payroll ? $payroll->notes : '';
+                        $hourlyRate = $payroll ? $payroll->hourly_rate : $employee->hourly_rate;
                     @endphp
                     <tr class="table-row">
                         <td class="py-3 px-4">
@@ -132,35 +134,32 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="py-3 px-4">
-                            <span class="badge {{ $employee->salary_type === 'monthly' ? 'badge-monthly' : 'badge-hourly' }}">
-                                {{ $employee->salary_type === 'monthly' ? 'Tháng' : 'Giờ' }}
-                            </span>
-                        </td>
                         <td class="py-3 px-4 text-right">
-                            <p class="text-sm font-medium text-gray-800">{{ number_format($employee->salary_rate) }}</p>
-                            <p class="text-xs text-gray-500">{{ $employee->salary_type === 'monthly' ? 'đ/tháng' : 'đ/giờ' }}</p>
+                            <p class="text-sm font-medium text-gray-800">{{ number_format($hourlyRate) }}</p>
+                            <p class="text-xs text-gray-500">đ/giờ</p>
                         </td>
                         <td class="py-3 px-4 text-center">
                             @if($isCalculated)
                                 <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-sm font-medium text-gray-700">
                                     {{ $payroll->total_hours }}
-                                    <span class="text-xs text-gray-500">{{ $employee->salary_type === 'monthly' ? 'ngày' : 'giờ' }}</span>
+                                    <span class="text-xs text-gray-500">h</span>
                                 </span>
                             @else
                                 <span class="text-gray-400 text-sm">-</span>
                             @endif
                         </td>
                         <td class="py-3 px-4 text-right">
+                            <span class="text-sm text-gray-600">{{ number_format($baseAmount) }}</span>
+                        </td>
+                        <td class="py-3 px-4 text-right">
                             <span class="text-sm font-medium text-green-600">{{ number_format($bonus) }}</span>
                         </td>
                         <td class="py-3 px-4 text-right">
-                            <span class="text-sm font-medium text-red-600">{{ number_format($deductions) }}</span>
+                            <span class="text-sm font-medium text-red-600">{{ number_format($penalty) }}</span>
                         </td>
                         <td class="py-3 px-4 text-right">
                             @if($isCalculated)
                                 <p class="text-sm font-bold text-gray-900">{{ number_format($calculatedSalary) }}</p>
-                                <p class="text-xs text-gray-500">{{ number_format($calculatedSalary/1000000, 2) }}tr</p>
                             @else
                                 <span class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 text-yellow-700 rounded text-xs font-medium">
                                     <i class="fas fa-clock text-xs"></i>
@@ -170,11 +169,11 @@
                         </td>
                         <td class="py-3 px-4">
                             <div class="flex items-center justify-center gap-1">
-                                <button onclick="openSalaryModal({{ $employee->id }}, '{{ $employee->salary_type }}', {{ $employee->salary_rate }})"
-                                    class="btn-icon bg-blue-50 text-blue-600 hover:bg-blue-100" title="Sửa lương CB">
+                                <button onclick="openSalaryModal({{ $employee->id }}, {{ $employee->hourly_rate }})"
+                                    class="btn-icon bg-blue-50 text-blue-600 hover:bg-blue-100" title="Sửa lương giờ">
                                     <i class="fas fa-pen text-xs"></i>
                                 </button>
-                                <button onclick="openPayrollModal({{ $employee->id }}, {{ $bonus }}, {{ $deductions }}, '{{ $notes }}')"
+                                <button onclick="openPayrollModal({{ $employee->id }}, {{ $bonus }}, {{ $penalty }}, '{{ $notes }}')"
                                     class="btn-icon bg-purple-50 text-purple-600 hover:bg-purple-100" title="Thưởng/Phạt">
                                     <i class="fas fa-coins text-xs"></i>
                                 </button>
@@ -206,7 +205,7 @@
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-xl shadow-xl w-full max-w-md modal-content">
                 <div class="flex items-center justify-between p-5 border-b border-gray-200">
-                    <h3 class="text-lg font-bold text-gray-800">Cập nhật lương cơ bản</h3>
+                    <h3 class="text-lg font-bold text-gray-800">Cập nhật lương giờ</h3>
                     <button onclick="closeSalaryModal()" class="text-gray-400 hover:text-gray-600">
                         <i class="fas fa-times"></i>
                     </button>
@@ -214,15 +213,8 @@
                 <form id="salaryForm" class="p-5 space-y-4">
                     <input type="hidden" id="employeeId">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Loại lương</label>
-                        <select id="salaryType" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            <option value="hourly">Theo giờ</option>
-                            <option value="monthly">Theo tháng</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Mức lương (VNĐ)</label>
-                        <input type="number" id="salaryRate" 
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mức lương giờ (VNĐ)</label>
+                        <input type="number" id="hourlyRate" 
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                             placeholder="Nhập mức lương">
                     </div>
@@ -262,7 +254,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Phạt (VNĐ)</label>
-                        <input type="number" id="deductions" value="0"
+                        <input type="number" id="penalty" value="0"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                             placeholder="0">
                     </div>
@@ -292,10 +284,9 @@
 
 @section('scripts')
     <script>
-        function openSalaryModal(id, type, rate) {
+        function openSalaryModal(id, rate) {
             document.getElementById('employeeId').value = id;
-            document.getElementById('salaryType').value = type;
-            document.getElementById('salaryRate').value = rate;
+            document.getElementById('hourlyRate').value = rate;
             document.getElementById('salaryModal').classList.remove('hidden');
         }
 
@@ -303,10 +294,10 @@
             document.getElementById('salaryModal').classList.add('hidden');
         }
 
-        function openPayrollModal(id, bonus, deductions, notes) {
+        function openPayrollModal(id, bonus, penalty, notes) {
             document.getElementById('payrollEmployeeId').value = id;
             document.getElementById('bonus').value = bonus;
-            document.getElementById('deductions').value = deductions;
+            document.getElementById('penalty').value = penalty;
             document.getElementById('notes').value = notes;
             document.getElementById('payrollModal').classList.remove('hidden');
         }
@@ -317,8 +308,7 @@
 
         function submitSalaryUpdate() {
             const id = document.getElementById('employeeId').value;
-            const type = document.getElementById('salaryType').value;
-            const rate = document.getElementById('salaryRate').value;
+            const rate = document.getElementById('hourlyRate').value;
 
             if (!rate || rate <= 0) {
                 Swal.fire({
@@ -335,18 +325,16 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ salary_type: type, salary_rate: rate })
+                body: JSON.stringify({ hourly_rate: rate })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Thành công',
-                        text: 'Đã cập nhật lương cơ bản',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => location.reload());
+                    // Auto recalculate for current month to reflect new rate
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
+                    
+                    calculateSalary(id, month);
                 } else {
                     Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Có lỗi xảy ra' });
                 }
@@ -357,12 +345,12 @@
         function submitPayrollUpdate() {
             const id = document.getElementById('payrollEmployeeId').value;
             const bonus = document.getElementById('bonus').value;
-            const deductions = document.getElementById('deductions').value;
+            const penalty = document.getElementById('penalty').value;
             const notes = document.getElementById('notes').value;
             const urlParams = new URLSearchParams(window.location.search);
             const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
 
-            calculateSalary(id, month, { bonus, deductions, notes });
+            calculateSalary(id, month, { bonus, penalty, notes });
         }
 
         function calculateSalary(id, month, extraData = {}) {
@@ -397,46 +385,8 @@
         }
 
         function calculateAllSalaries() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
-
-            Swal.fire({
-                title: 'Xác nhận',
-                text: 'Tính lương cho tất cả nhân viên?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Đồng ý',
-                cancelButtonText: 'Hủy'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Đang xử lý',
-                        text: 'Đang tính lương...',
-                        allowOutsideClick: false,
-                        didOpen: () => Swal.showLoading()
-                    });
-
-                    fetch(`/api/payroll/generate-all`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ month })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Hoàn tất',
-                            text: 'Đã tính lương cho tất cả',
-                            timer: 2000,
-                            showConfirmButton: false
-                        }).then(() => location.reload());
-                    })
-                    .catch(() => Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Có lỗi xảy ra' }));
-                }
-            });
+            // Not implemented in controller yet, but UI is ready
+            alert('Chức năng này chưa được kích hoạt.');
         }
     </script>
 @endsection

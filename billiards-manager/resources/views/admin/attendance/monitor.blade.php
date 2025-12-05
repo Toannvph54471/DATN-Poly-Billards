@@ -4,120 +4,161 @@
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Giám sát Chấm công</h1>
-        <div class="flex space-x-2 items-center">
-
-            <div class="border-l pl-2 flex space-x-2">
-                <div class="flex items-center">
-                    <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
-                    <span class="text-sm text-gray-600">Đang làm việc</span>
-                </div>
-                <div class="flex items-center ml-4">
-                    <span class="w-3 h-3 bg-gray-300 rounded-full mr-2"></span>
-                    <span class="text-sm text-gray-600">Đã nghỉ / Chưa vào</span>
-                </div>
-            </div>
+        <div class="flex space-x-3">
+            <a href="{{ route('admin.employees.index') }}"
+                class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
+                <i class="fas fa-users mr-2"></i> Quản lý nhân viên
+            </a>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        @foreach($employees as $employee)
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden border-l-4 {{ $employee->is_online ? 'border-green-500' : 'border-gray-300' }}">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg {{ $employee->is_online ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500' }}">
-                            {{ substr($employee->name, 0, 1) }}
+    <!-- Pending Late Requests Section -->
+    @if($pendingLate->count() > 0)
+    <div class="mb-8">
+        <h2 class="text-xl font-semibold text-red-600 mb-4 flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i> Yêu cầu duyệt đi muộn ({{ $pendingLate->count() }})
+        </h2>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nhân viên</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thời gian</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số phút muộn</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lý do</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($pendingLate as $request)
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ $request->employee->name }}</div>
+                            <div class="text-sm text-gray-500">{{ $request->employee->employee_code }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ \Carbon\Carbon::parse($request->check_in)->format('d/m/Y H:i') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                {{ $request->late_minutes }} phút
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ $request->late_reason }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="approveLate({{ $request->id }})" class="text-green-600 hover:text-green-900 mr-3">Duyệt</button>
+                            <button onclick="rejectLate({{ $request->id }})" class="text-red-600 hover:text-red-900">Từ chối</button>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    <!-- Active Employees Section -->
+    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+        <i class="fas fa-user-clock mr-2"></i> Nhân viên đang làm việc
+    </h2>
+    
+    @if($activeEmployees->isEmpty())
+        <div class="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
+            Hiện không có nhân viên nào đang check-in.
+        </div>
+    @else
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            @foreach($activeEmployees as $attendance)
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border-l-4 border-green-500">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 text-green-600 font-bold text-lg">
+                                {{ substr($attendance->employee->name, 0, 1) }}
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-semibold text-gray-900">{{ $attendance->employee->name }}</h3>
+                                <p class="text-sm text-gray-500">{{ $attendance->employee->employee_code }}</p>
+                            </div>
                         </div>
-                        <div class="ml-4">
-                            <h3 class="text-lg font-semibold text-gray-900">{{ $employee->name }}</h3>
-                            <p class="text-sm text-gray-500">{{ $employee->employee_code }}</p>
-                        </div>
-                    </div>
-                    @if($employee->is_online)
                         <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full animate-pulse">
                             Online
                         </span>
-                    @else
-                        <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
-                            Offline
-                        </span>
-                    @endif
-                </div>
-
-                <div class="border-t border-gray-100 pt-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm text-gray-500">Chức vụ:</span>
-                        <span class="text-sm font-medium text-gray-900 capitalize">{{ $employee->position }}</span>
                     </div>
-                    
-                    @if($employee->is_online)
+
+                    <div class="border-t border-gray-100 pt-4">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm text-gray-500">Giờ vào ca:</span>
+                            <span class="text-sm text-gray-500">Giờ vào:</span>
                             <span class="text-sm font-medium text-gray-900">
-                                {{ $employee->check_in_time ? \Carbon\Carbon::parse($employee->check_in_time)->format('H:i:s') : '-' }}
+                                {{ \Carbon\Carbon::parse($attendance->check_in)->format('H:i') }}
                             </span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">Thời gian làm:</span>
-                            <span class="text-sm font-bold text-green-600">{{ $employee->work_duration }}</span>
+                            <span class="text-sm text-gray-500">Thời gian:</span>
+                            <span class="text-sm font-bold text-green-600">
+                                {{ \Carbon\Carbon::parse($attendance->check_in)->diffForHumans(null, true) }}
+                            </span>
                         </div>
-                    @else
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">Trạng thái:</span>
-                            <span class="text-sm text-gray-400 italic">Không có ca làm việc</span>
+                        @if($attendance->late_minutes > 0)
+                        <div class="mt-2 text-xs text-red-500 flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-1"></i> Đi muộn {{ $attendance->late_minutes }} phút
+                            @if($attendance->approval_status == 'pending')
+                                (Chờ duyệt)
+                            @elseif($attendance->approval_status == 'approved')
+                                (Đã duyệt)
+                            @endif
                         </div>
-                    @endif
+                        @endif
+                    </div>
                 </div>
             </div>
-            @if($employee->is_online)
-                <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
-                    <button onclick="adminCheckOut('{{ $employee->employee_code }}')" class="text-sm text-red-600 hover:text-red-800 font-medium transition">
-                        Check-out hộ <i class="fas fa-sign-out-alt ml-1"></i>
-                    </button>
-                </div>
-            @endif
+            @endforeach
         </div>
-        @endforeach
-    </div>
+    @endif
 </div>
 
 @section('scripts')
 <script>
-    function adminCheckOut(code) {
-        Swal.fire({
-            title: 'Xác nhận Check-out?',
-            text: "Bạn có chắc muốn check-out cho nhân viên này?",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Đồng ý',
-            cancelButtonText: 'Hủy'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch('/api/attendance/check-out', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ employee_code: code })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        Swal.fire('Thành công', 'Đã check-out thành công', 'success')
-                        .then(() => location.reload());
-                    } else {
-                        Swal.fire('Lỗi', data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire('Lỗi', 'Có lỗi xảy ra', 'error');
-                });
+    function approveLate(id) {
+        if(!confirm('Duyệt yêu cầu đi muộn này?')) return;
+        
+        fetch(`/admin/attendance/${id}/approve-late`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
             }
         })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+
+    function rejectLate(id) {
+        if(!confirm('Từ chối yêu cầu đi muộn này?')) return;
+
+        fetch(`/admin/attendance/${id}/reject-late`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
     }
 
     // Auto refresh every 60 seconds

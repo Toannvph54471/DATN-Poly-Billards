@@ -141,7 +141,7 @@
                                             </a>
                                         @endif
 
-                                        @if(Auth::user()->employee ?? false)
+                                        @if(Auth::user()->isEmployee())
                                             <a href="{{ route('attendance.my-qr') }}" 
                                                class="flex items-center px-5 py-3 text-blue-700 bg-blue-50/80 hover:bg-blue-100 transition-all duration-200 group border-l-3 border-blue-500">
                                                 <div class="w-10 h-10 rounded-xl bg-blue-200 flex items-center justify-center mr-3 group-hover:bg-blue-300 transition-colors shadow-sm">
@@ -193,6 +193,10 @@
                         @endauth
                     </div>
                 </div>
+            </div>
+
+    </div>
+</div>
 
                 <!-- Mobile menu button -->
                 <div class="md:hidden">

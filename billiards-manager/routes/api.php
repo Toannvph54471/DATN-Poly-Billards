@@ -28,6 +28,7 @@ Route::post('/payroll/generate', [App\Http\Controllers\PayrollController::class,
 
 Route::post('/attendance/scan', [AttendanceController::class, 'processScan']);
 Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
+Route::post('/attendance/submit-late-reason', [AttendanceController::class, 'submitLateReason']);
 Route::post('/attendance/check-out', [App\Http\Controllers\AttendanceController::class, 'checkOut'])->name('api.attendance.check-out');
 Route::get('/attendance/active', [App\Http\Controllers\AttendanceController::class, 'getActiveEmployees']);
 Route::get('/attendance/server-time', [App\Http\Controllers\AttendanceController::class, 'getServerTime']);

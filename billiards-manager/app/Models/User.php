@@ -42,11 +42,6 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class, 'user_id');
     }
 
-    public function reservations()
-    {
-        return $this->hasMany(Reservation::class, 'customer_id');
-    }
-
     public function shifts()
     {
         return $this->hasMany(EmployeeShift::class);
