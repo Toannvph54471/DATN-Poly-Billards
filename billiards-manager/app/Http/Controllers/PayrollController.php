@@ -26,6 +26,8 @@ class PayrollController extends Controller
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'month' => 'required|date_format:Y-m',
+            'bonus' => 'nullable|numeric|min:0',
+            'penalty' => 'nullable|numeric|min:0',
         ]);
 
         $payroll = $this->payrollService->createPayroll(
@@ -40,11 +42,34 @@ class PayrollController extends Controller
         ]);
     }
 
+    public function recalculate(Request $request, $id)
+    {
+        $payroll = Payroll::findOrFail($id);
+        
+        // Reuse generate logic
+        $updatedPayroll = $this->payrollService->createPayroll(
+            $payroll->employee_id,
+            $payroll->period,
+            [
+                'bonus' => $request->bonus ?? $payroll->bonus,
+                'penalty' => $request->penalty ?? $payroll->penalty, // Use existing or new
+                'notes' => $request->notes ?? $payroll->notes
+            ]
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Payroll recalculated successfully',
+            'data' => $updatedPayroll
+        ]);
+    }
+
     public function show($id)
     {
         $payroll = Payroll::with('employee')->findOrFail($id);
         return response()->json($payroll);
     }
+
     public function adminIndex(Request $request)
     {
         $month = $request->input('month', now()->format('Y-m'));

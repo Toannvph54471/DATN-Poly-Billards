@@ -10,14 +10,6 @@
             <p class="text-gray-600">Danh sách nhân viên và thông tin liên quan</p>
         </div>
         <div class="flex space-x-3">
-            <a href="{{ route('admin.shiftEmployee.index') }}"
-                class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
-                <i class="fas fa-calendar mr-2"></i> Phân công ca làm
-            </a>
-            <a href="{{ route('admin.shifts.index') }}"
-                class="bg-green-600 text-white rounded-lg px-4 py-2 hover:bg-green-700 transition flex items-center">
-                <i class="fas fa-clock mr-2"></i> Danh sách làm việc
-            </a>
             <a href="{{ route('admin.employees.create') }}"
                 class="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700 transition flex items-center">
                 <i class="fas fa-plus mr-2"></i> Thêm nhân viên

@@ -21,8 +21,7 @@ class Employee extends BaseModel
         'email',
         'address',
         'position',
-        'salary_type',
-        'salary_rate',
+        'hourly_rate',
         'start_date',
         'end_date',
         'status',
@@ -97,17 +96,8 @@ class Employee extends BaseModel
                     ->first();
     }
 
-    // Setter cho salary_rate dựa trên salary_type
-    public function setSalaryRateAttribute($value)
-    {
-        if ($this->salary_type === 'monthly' && !$value) {
-            $this->attributes['salary_rate'] = 35000.00;
-        } elseif ($this->salary_type === 'hourly' && !$value) {
-            $this->attributes['salary_rate'] = 25000.00;
-        } else {
-            $this->attributes['salary_rate'] = $value;
-        }
-    }
+    // Removed mapped attributes to use actual DB columns
+
 
    
 

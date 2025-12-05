@@ -141,16 +141,7 @@
                                             </a>
                                         @endif
 
-                        @if(Auth::user()->employee ?? false)
-                            <a href="" 
-                               class="flex items-center px-5 py-3 text-blue-700 bg-blue-50/80 hover:bg-blue-100 transition-all duration-200 group border-l-3 border-blue-500">
-                                <div class="w-10 h-10 rounded-xl bg-blue-200 flex items-center justify-center mr-3 group-hover:bg-blue-300 transition-colors shadow-sm">
-                                    <i class="fas fa-qrcode text-blue-700 text-sm"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-medium text-sm">Quét mã Check-in</p>
-                                    <p class="text-xs text-blue-600 mt-0.5">Điểm danh hôm nay</p>
-                                        @if(Auth::user()->employee ?? false)
+                                        @if(Auth::user()->isEmployee())
                                             <a href="{{ route('attendance.my-qr') }}" 
                                                class="flex items-center px-5 py-3 text-blue-700 bg-blue-50/80 hover:bg-blue-100 transition-all duration-200 group border-l-3 border-blue-500">
                                                 <div class="w-10 h-10 rounded-xl bg-blue-200 flex items-center justify-center mr-3 group-hover:bg-blue-300 transition-colors shadow-sm">
@@ -203,16 +194,7 @@
                     </div>
                 </div>
             </div>
-        @else
-            <!-- Authentication Links với thiết kế mới -->
-            <div class="flex items-center space-x-3">
-                <a href="{{ route('login') }}" 
-                   class="flex items-center text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 px-4 py-2 rounded-lg hover:bg-blue-50 group">
-                    <i class="fas fa-sign-in-alt mr-2 text-blue-500 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold">Đăng nhập</span>
-                </a>
-            </div>
-        @endauth
+
     </div>
 </div>
 
