@@ -46,6 +46,11 @@
                     class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition flex items-center gap-2">
                     <i class="fas fa-times"></i> Xóa bộ lọc
                 </a>
+
+                <a href="{{ route('attendance.simulator') }}"
+                    class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition flex items-center gap-2">
+                    <i class="fas fa-times"></i> Máy quét QR
+                </a>
             </form>
         </div>
 
