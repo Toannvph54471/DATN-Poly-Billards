@@ -10,6 +10,10 @@ class Shift extends BaseModel
         'end_time',
         'status',
         'salary_multiplier',
+        'wage',
+        'late_allow',
+        'late_penalty',
+        'early_penalty'
     ];
 
     protected $casts = [

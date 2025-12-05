@@ -259,4 +259,41 @@ class AttendanceController extends Controller
 
         return view('attendance.my-qr', compact('employee'));
     }
+
+    public function adminCheckout(Request $request, $id)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:255'
+        ]);
+
+        $attendance = Attendance::findOrFail($id);
+        
+        if ($attendance->check_out) {
+            return response()->json(['status' => 'error', 'message' => 'Nhân viên này đã check-out rồi.']);
+        }
+
+        $now = now();
+        $checkIn = \Carbon\Carbon::parse($attendance->check_in);
+        $minutes = $now->diffInMinutes($checkIn);
+
+        $attendance->update([
+            'check_out' => $now,
+            'total_minutes' => $minutes,
+            'status' => 'present',
+            'admin_checkout_by' => Auth::id(),
+            'admin_checkout_reason' => $request->reason
+        ]);
+
+        return response()->json(['status' => 'success', 'message' => 'Đã check-out hộ nhân viên thành công.']);
+    }
+
+    public function manualCheckoutHistory()
+    {
+        $history = Attendance::whereNotNull('admin_checkout_by')
+            ->with(['employee', 'adminCheckoutUser'])
+            ->latest('check_out')
+            ->paginate(20);
+
+        return view('admin.attendance.manual-checkout-history', compact('history'));
+    }
 }
