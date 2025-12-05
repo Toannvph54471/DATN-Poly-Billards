@@ -75,4 +75,15 @@ class User extends Authenticatable
 
         $this->notify(new ResetPasswordNotification($url));
     }
+
+    public function addedBillDetails()
+    {
+        return $this->hasMany(BillDetail::class, 'added_by');
+    }
+
+    // Quan hệ với các bill đã tạo (nếu có cột staff_id trong bills)
+    public function createdBills()
+    {
+        return $this->hasMany(Bill::class, 'staff_id');
+    }
 }

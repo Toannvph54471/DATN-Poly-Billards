@@ -148,6 +148,32 @@
             transform: translateY(0);
         }
 
+        /* Màu sắc cho làm tròn */
+        .rounded-info {
+            background: #fff9e6;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .rounding-diff {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        .time-comparison {
+            font-size: 9px;
+            color: #6b7280;
+        }
+
+        .rounding-badge {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 9px;
+            display: inline-block;
+            margin-left: 4px;
+        }
+
         @keyframes bounce {
 
             0%,
@@ -314,6 +340,10 @@
 
         .text-green-600 {
             color: #059669;
+        }
+
+        .text-yellow-600 {
+            color: #d97706;
         }
 
         .px-5 {
@@ -505,7 +535,28 @@
                 $productDetails = $bill->billDetails->where('is_combo_component', false);
                 $productTotal = $productDetails->sum('total_price');
                 $timeCost = $totalAmount - $productTotal;
+
+                // Lấy thông tin làm tròn từ controller
+                $timeDetails = isset($timeDetails) ? $timeDetails : [];
+                $roundingInfo = $timeDetails['roundingInfo'] ?? null;
+                $hasRounding = isset($roundingInfo) && $roundingInfo['total_rounding_diff'] > 0;
             @endphp
+
+            @if ($hasRounding)
+                <!-- Hiển thị thông tin làm tròn -->
+                <div class="rounded-info mb-2 p-2 text-xs-print receipt-item">
+                    <div class="flex justify-between">
+                        <span class="font-bold text-yellow-600">Làm tròn:</span>
+                        <span class="font-bold text-yellow-600">
+                            +{{ number_format($roundingInfo['total_rounding_diff'], 0, ',', '.') }}₫
+                        </span>
+                    </div>
+                    <div class="time-comparison mt-1">
+                        <span>Thời gian: {{ $roundingInfo['rounding_minutes'] ?? 15 }} phút</span>
+                        <span class="ml-2">Tiền: {{ $roundingInfo['rounding_amount'] ?? '1,000' }}₫</span>
+                    </div>
+                </div>
+            @endif
 
             @if ($productDetails->count() > 0)
                 <div class="space-y-1 text-xs-print">
@@ -539,11 +590,67 @@
                 <div class="receipt-line receipt-item"></div>
             @endif
 
-            <!-- Thời gian chơi -->
+            <!-- Thời gian chơi với thông tin làm tròn -->
             @if ($timeCost > 0)
+                @php
+                    $hourlyRate = $bill->table->tableRate->hourly_rate ?? 0;
+                    $actualMinutes = 0;
+                    $roundedMinutes = 0;
+
+                    // Tính thông tin thời gian nếu có
+                    if (isset($timeDetails['sessions'])) {
+                        foreach ($timeDetails['sessions'] as $session) {
+                            $actualMinutes += $session['actual_minutes'] ?? 0;
+                            $roundedMinutes += $session['rounded_minutes'] ?? 0;
+                        }
+                    }
+
+                    $hasTimeRounding = $actualMinutes > 0 && $roundedMinutes > $actualMinutes;
+                @endphp
+
+                @if ($hasTimeRounding)
+                    <!-- Hiển thị chi tiết thời gian với làm tròn -->
+                    <div class="space-y-1 text-xs-print receipt-item">
+                        <div class="flex justify-between">
+                            <span>Thời gian thực:</span>
+                            <span>{{ floor($actualMinutes / 60) }}h{{ $actualMinutes % 60 }}p</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Thời gian tính phí:<span class="rounding-badge">làm tròn</span></span>
+                            <span
+                                class="font-bold">{{ floor($roundedMinutes / 60) }}h{{ $roundedMinutes % 60 }}p</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Đơn giá:</span>
+                            <span>{{ number_format($hourlyRate, 0, ',', '.') }}₫/h</span>
+                        </div>
+                        <div class="receipt-line"></div>
+                    </div>
+                @endif
+
                 <div class="flex justify-between text-sm-print receipt-item">
-                    <span>Tiền giờ:</span>
-                    <span>{{ number_format($timeCost, 0, ',', '.') }}₫</span>
+                    <span>
+                        Tiền giờ
+                        @if ($hasTimeRounding)
+                            <span class="rounding-badge">+{{ number_format($roundedMinutes - $actualMinutes) }}p</span>
+                        @endif
+                        :
+                    </span>
+                    <span>
+                        {{ number_format($timeCost, 0, ',', '.') }}₫
+                        @if ($hasTimeRounding && isset($timeDetails['sessions'][0]['rounded_price']))
+                            @php
+                                $rawTimeCost = ($hourlyRate / 60) * $actualMinutes;
+                                $roundingDiff = $timeCost - $rawTimeCost;
+                            @endphp
+                            @if ($roundingDiff > 0)
+                                <br>
+                                <small class="text-yellow-600 time-comparison">
+                                    (+{{ number_format($roundingDiff, 0, ',', '.') }}₫ làm tròn)
+                                </small>
+                            @endif
+                        @endif
+                    </span>
                 </div>
             @endif
 
@@ -593,8 +700,26 @@
             <!-- Tổng cộng -->
             <div class="flex justify-between font-bold text-sm-print mt-2 receipt-item">
                 <span>TỔNG CỘNG:</span>
-                <span>{{ number_format($finalAmount, 0, ',', '.') }}₫</span>
+                <span>
+                    {{ number_format($finalAmount, 0, ',', '.') }}₫
+                    @if ($hasRounding && $roundingInfo['total_rounding_diff'] > 0)
+                        <br>
+                        <small class="text-yellow-600 time-comparison">
+                            (đã bao gồm {{ number_format($roundingInfo['total_rounding_diff'], 0, ',', '.') }}₫ làm
+                            tròn)
+                        </small>
+                    @endif
+                </span>
             </div>
+
+            <!-- Thông tin làm tròn cuối cùng -->
+            @if ($hasRounding)
+                <div class="text-xs-print receipt-item text-center text-gray-600 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Phí làm tròn: {{ $roundingInfo['rounding_minutes'] ?? 15 }} phút /
+                    {{ $roundingInfo['rounding_amount'] ?? '1,000' }}₫
+                </div>
+            @endif
         </div>
 
         <!-- Phương thức thanh toán -->

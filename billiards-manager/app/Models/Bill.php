@@ -91,7 +91,7 @@ class Bill extends BaseModel
         return $this->hasMany(BillDetail::class);
     }
 
-    
+
     public function billTimeUsages(): HasMany
     {
         return $this->hasMany(BillTimeUsage::class);
@@ -134,6 +134,20 @@ class Bill extends BaseModel
                 ->sum('amount');
         }
         return 0;
+    }
+
+    public function allBillDetails()
+    {
+        return $this->hasMany(BillDetail::class)
+            ->with(['product', 'combo', 'addedByUser.employee']);
+    }
+
+
+    public function billDetailsAddedBy($userId)
+    {
+        return $this->hasMany(BillDetail::class)
+            ->where('added_by', $userId)
+            ->mainItems();
     }
 
     public function getRemainingAmountAttribute(): float

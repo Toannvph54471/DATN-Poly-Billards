@@ -20,14 +20,17 @@ class BillDetail extends Model
         'unit_price',
         'original_price',
         'total_price',
-        'is_combo_component'
+        'is_combo_component',
+        'added_by',
+        'added_at'
     ];
 
     protected $casts = [
         'unit_price' => 'decimal:2',
         'original_price' => 'decimal:2',
         'total_price' => 'decimal:2',
-        'is_combo_component' => 'boolean'
+        'is_combo_component' => 'boolean',
+        'added_at' => 'datetime',
     ];
 
     // Relationships
@@ -59,5 +62,16 @@ class BillDetail extends Model
     public function children()
     {
         return $this->hasMany(BillDetail::class, 'parent_bill_detail_id');
+    }
+
+    public function addedByUser()
+    {
+        return $this->belongsTo(User::class, 'added_by');
+    }
+
+    public function addedByStaff()
+    {
+        return $this->belongsTo(User::class, 'added_by')
+            ->whereHas('employee'); // Đảm bảo có quan hệ employee
     }
 }
