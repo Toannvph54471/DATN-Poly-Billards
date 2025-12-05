@@ -63,6 +63,7 @@ class BillDetail extends Model
     {
         return $this->hasMany(BillDetail::class, 'parent_bill_detail_id');
     }
+    
 
     public function addedByUser()
     {

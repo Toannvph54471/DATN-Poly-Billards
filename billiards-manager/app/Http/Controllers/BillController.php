@@ -226,19 +226,19 @@ class BillController extends Controller
         ];
     }
 
-
     // Hàm hiển thị chi tiết hóa đơn
     public function show($id)
     {
         $bill = Bill::with([
             'table.tableRate',
             'user',
-            'staff',
+            'staff', // Nhân viên tạo hóa đơn
             'billTimeUsages',
             'billDetails.product.category',
             'billDetails.combo.comboItems.product',
+            'billDetails.addedByUser', // Load thông tin nhân viên đã thêm
             'payments',
-            'promotion' // Thêm quan hệ promotion
+            'promotion'
         ])
             ->findOrFail($id);
 
@@ -1304,12 +1304,29 @@ class BillController extends Controller
 
             $totalAmount = $timeCost + $productTotal;
 
-            // SỬ DỤNG DISCOUNT_AMOUNT TỪ BILL (có thể là 0)
+            // SỬ DỤNG DISCOUNT_AMOUNT TỪ BILL
             $discountAmount = $bill->discount_amount ?? 0;
             $finalAmount = $totalAmount - $discountAmount;
 
-            // Lấy thông tin khuyến mãi từ note (nếu có)
+            // Lấy thông tin khuyến mãi từ note
             $promotionInfo = $this->extractPromotionInfoFromNote($bill->note);
+
+            // TẠO QR CODE DỮ LIỆU (quan trọng: thêm số tiền vào dữ liệu QR)
+            $qrData = [
+                'bill_number' => $bill->bill_number,
+                'amount' => $finalAmount,
+                'currency' => 'VND',
+                'account' => '0368015218', // Số tài khoản của bạn
+                'bank' => 'MBBank',
+                'content' => "TT Bill {$bill->bill_number}"
+            ];
+
+            // Tạo URL QR code với thông tin tiền tệ
+            $qrUrl = "https://img.vietqr.io/image/MB-0368015218-qr_only.png"
+                . http_build_query([
+                    'amount' => $finalAmount,
+                    'addInfo' => "TT Bill {$bill->bill_number}"
+                ]);
 
             // Dữ liệu cho bill
             $billData = [
@@ -1322,7 +1339,9 @@ class BillController extends Controller
                 'discountAmount' => $discountAmount,
                 'promotionInfo' => $promotionInfo,
                 'printTime' => now()->format('H:i d/m/Y'),
-                'staff' => Auth::user()->name
+                'staff' => Auth::user()->name,
+                'qrUrl' => $qrUrl, // THÊM QR URL
+                'qrData' => $qrData // THÊM QR DATA
             ];
 
             // Auto redirect logic
