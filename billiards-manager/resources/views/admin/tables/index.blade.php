@@ -49,20 +49,38 @@
 
     {{-- PHÂN TÍCH VÀ CẢNH BÁO COMBO --}}
     @php
-        $expiredTables = collect(); // <= 0 phút + chưa xử lý
-        $criticalTables = collect(); // 1–5 phút
-        $warningTables = collect(); // 6–10 phút
+        $activeTables = collect();
+        $expiredTables = collect();
+        $criticalTables = collect();
+        $warningTables = collect();
+        $comboProductsOnly = collect();
 
         foreach ($tables as $table) {
             $info = $table->time_info ?? [];
-            if ($info['mode'] ?? '' === 'combo' && isset($info['remaining_minutes'])) {
-                $remain = $info['remaining_minutes'];
-                if ($remain <= 0 && in_array($table->status, ['occupied', 'paused'])) {
-                    $expiredTables->push(['table' => $table, 'over' => abs($remain)]);
-                } elseif ($remain <= 5 && $remain > 0) {
-                    $criticalTables->push(['table' => $table, 'min' => $remain]);
-                } elseif ($remain <= 10 && $remain > 5) {
-                    $warningTables->push(['table' => $table, 'min' => $remain]);
+            $isCombo = ($info['mode'] ?? '') === 'combo';
+            
+            // Chỉ xử lý cảnh báo nếu bàn đang sử dụng combo
+            if ($isCombo && in_array($table->status, ['occupied', 'paused'])) {
+                // Kiểm tra xem combo có bao gồm thời gian không (không phải chỉ sản phẩm)
+                $hasTime = isset($info['remaining_minutes']);
+                
+                if ($hasTime) {
+                    $remain = $info['remaining_minutes'];
+                    
+                    // Phân loại cảnh báo
+                    if ($remain <= 0) {
+                        // Combo đã hết thời gian nhưng chưa tắt
+                        $expiredTables->push(['table' => $table, 'over' => abs($remain)]);
+                    } elseif ($remain <= 5) {
+                        // Còn dưới 5 phút
+                        $criticalTables->push(['table' => $table, 'min' => $remain]);
+                    } elseif ($remain <= 10) {
+                        // Còn dưới 10 phút
+                        $warningTables->push(['table' => $table, 'min' => $remain]);
+                    }
+                } else {
+                    // Combo chỉ có sản phẩm, không có thời gian - không cảnh báo
+                    $comboProductsOnly->push($table);
                 }
             }
         }
@@ -173,22 +191,31 @@
                         @foreach ($tables as $table)
                             @php
                                 $info = $table->time_info ?? [];
-                                $remain = $info['remaining_minutes'] ?? null;
-                                $isExpired =
-                                    ($info['mode'] ?? '') === 'combo' &&
-                                    $remain !== null &&
-                                    $remain <= 0 &&
-                                    in_array($table->status, ['occupied', 'paused']);
-                                $isCritical =
-                                    ($info['mode'] ?? '') === 'combo' &&
-                                    $remain !== null &&
-                                    $remain <= 5 &&
-                                    $remain > 0;
-                                $isWarning =
-                                    ($info['mode'] ?? '') === 'combo' &&
-                                    $remain !== null &&
-                                    $remain <= 10 &&
-                                    $remain > 5;
+                                $isCombo = ($info['mode'] ?? '') === 'combo';
+                                $hasTime = isset($info['remaining_minutes']);
+                                $remain = $hasTime ? $info['remaining_minutes'] : null;
+                                
+                                // Chỉ hiển thị cảnh báo nếu:
+                                // 1. Đang ở chế độ combo
+                                // 2. Bàn đang occupied hoặc paused
+                                // 3. Combo có thời gian (có remaining_minutes)
+                                
+                                $isExpired = false;
+                                $isCritical = false;
+                                $isWarning = false;
+                                
+                                if ($isCombo && in_array($table->status, ['occupied', 'paused']) && $hasTime) {
+                                    if ($remain <= 0) {
+                                        $isExpired = true;
+                                    } elseif ($remain <= 5) {
+                                        $isCritical = true;
+                                    } elseif ($remain <= 10) {
+                                        $isWarning = true;
+                                    }
+                                }
+                                
+                                // Combo chỉ có sản phẩm (không có thời gian)
+                                $isProductsOnly = $isCombo && !$hasTime;
                             @endphp
                             <tr class="hover:bg-gray-50 transition-all duration-200 cursor-pointer
                     @if ($isExpired) bg-gradient-to-r from-red-50 to-red-100 border-l-4 border-red-600
@@ -285,7 +312,7 @@
                                         </span>
 
                                         {{-- THÔNG BÁO COMBO NHỎ --}}
-                                        @if (($info['mode'] ?? '') === 'combo')
+                                        @if ($isCombo && $hasTime)
                                             <div
                                                 class="inline-flex items-center bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 px-2 py-1 rounded text-xs font-bold border border-purple-200">
                                                 <i class="fas fa-bolt mr-1 text-xs"></i>
@@ -302,6 +329,12 @@
                                                         BÁO</span>
                                                 @endif
                                             </div>
+                                        @elseif($isProductsOnly)
+                                            <div
+                                                class="inline-flex items-center bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold border border-blue-200">
+                                                <i class="fas fa-shopping-basket mr-1 text-xs"></i>
+                                                COMBO SẢN PHẨM
+                                            </div>
                                         @endif
                                     </div>
                                 </td>
@@ -313,7 +346,7 @@
 
                                 {{-- CỘT COMBO RIÊNG - NHỎ GỌN --}}
                                 <td class="px-6 py-5 text-center">
-                                    @if (($info['mode'] ?? '') === 'combo' && $remain !== null)
+                                    @if ($isCombo && $hasTime && $remain !== null)
                                         <div class="flex flex-col items-center">
                                             @if ($isExpired)
                                                 <div class="relative group">
@@ -347,6 +380,13 @@
                                             @endif
                                             <div class="text-xs text-gray-500 mt-1">còn lại</div>
                                         </div>
+                                    @elseif($isProductsOnly)
+                                        <div class="flex flex-col items-center">
+                                            <div class="bg-gradient-to-r from-blue-400 to-blue-500 text-white px-3 py-1.5 rounded-full font-bold text-sm">
+                                                <i class="fas fa-box"></i>
+                                            </div>
+                                            <div class="text-xs text-blue-600 mt-1">Sản phẩm</div>
+                                        </div>
                                     @else
                                         <span class="text-gray-300">—</span>
                                     @endif
@@ -376,7 +416,7 @@
                                                 </button>
                                             </form>
                                         @endif
-                                        @if (($info['mode'] ?? '') === 'combo' && $isExpired)
+                                        @if ($isExpired)
                                             <button onclick="handleExpiredCombo({{ $table->id }})"
                                                 class="action-btn bg-red-600 text-white hover:bg-red-700"
                                                 title="Xử lý combo hết giờ">
@@ -530,9 +570,6 @@
             transform: translateY(-3px);
             transition: transform 0.2s;
         }
-
-        /* LOẠI BỎ CÁC ANIMATION VÔ HẠN GÂY RA CON LĂN */
-        /* Đã xóa: pulse-fast, ping, bounce animations */
     </style>
 @endpush
 

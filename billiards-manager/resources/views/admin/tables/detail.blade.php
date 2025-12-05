@@ -2188,12 +2188,12 @@
                                         {{ $table->currentBill->user->total_visits ?? 1 }} lần
                                     </span>
                                 </div>
-                                <div class="info-item">
+                                {{-- <div class="info-item">
                                     <span class="info-label">Tổng chi tiêu</span>
                                     <span class="info-value font-bold text-orange-600">
                                         {{ number_format($table->currentBill->user->total_spent ?? 0) }} ₫
                                     </span>
-                                </div>
+                                </div> --}}
                             </div>
                         </div>
                     @endif
