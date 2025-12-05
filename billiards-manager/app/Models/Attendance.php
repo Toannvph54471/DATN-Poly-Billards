@@ -22,7 +22,9 @@ class Attendance extends BaseModel
         'note',
         'latitude',
         'longitude',
-        'created_by'
+        'created_by',
+        'admin_checkout_by',
+        'admin_checkout_reason'
     ];
 
     protected $casts = [
@@ -47,6 +49,11 @@ class Attendance extends BaseModel
     public function confirmedByUser()
     {
         return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
+    public function adminCheckoutUser()
+    {
+        return $this->belongsTo(User::class, 'admin_checkout_by');
     }
 
     // Scopes

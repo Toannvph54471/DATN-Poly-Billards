@@ -100,12 +100,19 @@ class PayrollService
     {
         $calculation = $this->calculateMonthlySalary($employeeId, $month);
         
+        // Allow manual override
+        $totalHours = isset($data['total_hours']) ? (float)$data['total_hours'] : $calculation['total_hours'];
+        $hourlyRate = isset($data['hourly_rate']) ? (float)$data['hourly_rate'] : $calculation['hourly_rate'];
+        
+        // Recalculate base amount if overridden
+        $baseAmount = $totalHours * $hourlyRate;
+
         $bonus = $data['bonus'] ?? 0;
         $manualPenalty = $data['penalty'] ?? 0;
         $notes = $data['notes'] ?? null;
 
         $totalPenalty = $calculation['penalty'] + $manualPenalty;
-        $finalAmount = ($calculation['base_amount'] + $bonus) - $totalPenalty;
+        $finalAmount = ($baseAmount + $bonus) - $totalPenalty;
         
         // Ensure final amount is not negative
         $finalAmount = max(0, $finalAmount);
@@ -116,17 +123,11 @@ class PayrollService
                 'period' => $month
             ],
             [
-                'total_minutes' => $calculation['total_minutes'],
-                'total_hours' => $calculation['total_hours'],
-                'hourly_rate' => $calculation['hourly_rate'],
-                'base_salary' => $calculation['base_amount'], // This maps to 'total_amount' in DB or 'base_salary'? DB has both.
-                // Migration has 'base_salary' and 'total_amount'.
-                // Let's use 'base_salary' for hours*rate.
-                // And 'total_amount' for... wait, migration has 'total_amount' and 'final_amount'.
-                // Let's use 'total_amount' as the intermediate sum? Or just ignore it?
-                // User asked for: total_minutes, total_hours, hourly_rate, total_amount, bonus, penalty, final_amount.
-                // Let's assume total_amount = base_salary.
-                'total_amount' => $calculation['base_amount'],
+                'total_minutes' => $totalHours * 60, // Approximate if manual
+                'total_hours' => $totalHours,
+                'hourly_rate' => $hourlyRate,
+                'base_salary' => $baseAmount,
+                'total_amount' => $baseAmount,
                 'bonus' => $bonus,
                 'penalty' => $totalPenalty,
                 'final_amount' => $finalAmount,
