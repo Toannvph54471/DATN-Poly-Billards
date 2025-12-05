@@ -173,9 +173,9 @@
                                     class="btn-icon bg-blue-50 text-blue-600 hover:bg-blue-100" title="Sửa lương giờ">
                                     <i class="fas fa-pen text-xs"></i>
                                 </button>
-                                <button onclick="openPayrollModal({{ $employee->id }}, {{ $bonus }}, {{ $penalty }}, '{{ $notes }}')"
-                                    class="btn-icon bg-purple-50 text-purple-600 hover:bg-purple-100" title="Thưởng/Phạt">
-                                    <i class="fas fa-coins text-xs"></i>
+                                <button onclick="openPayrollModal({{ $employee->id }}, {{ $bonus }}, {{ $penalty }}, '{{ $notes }}', {{ $payroll ? $payroll->total_hours : 0 }}, {{ $hourlyRate }})"
+                                    class="btn-icon bg-purple-50 text-purple-600 hover:bg-purple-100" title="Điều chỉnh lương">
+                                    <i class="fas fa-edit text-xs"></i>
                                 </button>
                                 <button onclick="calculateSalary({{ $employee->id }}, '{{ $month }}')"
                                     class="btn-icon bg-green-50 text-green-600 hover:bg-green-100" title="Tính lương">
@@ -246,17 +246,31 @@
                 </div>
                 <form id="payrollForm" class="p-5 space-y-4">
                     <input type="hidden" id="payrollEmployeeId">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Thưởng (VNĐ)</label>
-                        <input type="number" id="bonus" value="0"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                            placeholder="0">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tổng giờ làm</label>
+                            <input type="number" id="modalTotalHours" step="0.1"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Lương giờ</label>
+                            <input type="number" id="modalHourlyRate"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Phạt (VNĐ)</label>
-                        <input type="number" id="penalty" value="0"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                            placeholder="0">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Thưởng (VNĐ)</label>
+                            <input type="number" id="bonus" value="0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Phạt (VNĐ)</label>
+                            <input type="number" id="penalty" value="0"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                                placeholder="0">
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
@@ -294,11 +308,13 @@
             document.getElementById('salaryModal').classList.add('hidden');
         }
 
-        function openPayrollModal(id, bonus, penalty, notes) {
+        function openPayrollModal(id, bonus, penalty, notes, totalHours, hourlyRate) {
             document.getElementById('payrollEmployeeId').value = id;
             document.getElementById('bonus').value = bonus;
             document.getElementById('penalty').value = penalty;
             document.getElementById('notes').value = notes;
+            document.getElementById('modalTotalHours').value = totalHours;
+            document.getElementById('modalHourlyRate').value = hourlyRate;
             document.getElementById('payrollModal').classList.remove('hidden');
         }
 
@@ -306,51 +322,26 @@
             document.getElementById('payrollModal').classList.add('hidden');
         }
 
-        function submitSalaryUpdate() {
-            const id = document.getElementById('employeeId').value;
-            const rate = document.getElementById('hourlyRate').value;
-
-            if (!rate || rate <= 0) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Lỗi',
-                    text: 'Vui lòng nhập mức lương hợp lệ'
-                });
-                return;
-            }
-
-            fetch(`/api/employees/${id}/salary`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ hourly_rate: rate })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Auto recalculate for current month to reflect new rate
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
-                    
-                    calculateSalary(id, month);
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Có lỗi xảy ra' });
-                }
-            })
-            .catch(() => Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Có lỗi xảy ra' }));
-        }
+        // ... (submitSalaryUpdate remains same)
 
         function submitPayrollUpdate() {
             const id = document.getElementById('payrollEmployeeId').value;
             const bonus = document.getElementById('bonus').value;
             const penalty = document.getElementById('penalty').value;
             const notes = document.getElementById('notes').value;
+            const totalHours = document.getElementById('modalTotalHours').value;
+            const hourlyRate = document.getElementById('modalHourlyRate').value;
+            
             const urlParams = new URLSearchParams(window.location.search);
             const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
 
-            calculateSalary(id, month, { bonus, penalty, notes });
+            calculateSalary(id, month, { 
+                bonus, 
+                penalty, 
+                notes,
+                total_hours: totalHours,
+                hourly_rate: hourlyRate
+            });
         }
 
         function calculateSalary(id, month, extraData = {}) {

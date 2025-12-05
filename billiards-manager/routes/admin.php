@@ -58,6 +58,8 @@ Route::prefix('admin')
             Route::get('/attendance/monitor', [AttendanceController::class, 'monitor'])->name('attendance.monitor');
             Route::post('/attendance/{id}/approve-late', [AttendanceController::class, 'approveLate'])->name('attendance.approve-late');
             Route::post('/attendance/{id}/reject-late', [AttendanceController::class, 'rejectLate'])->name('attendance.reject-late');
+            Route::post('/attendance/{id}/admin-checkout', [AttendanceController::class, 'adminCheckout'])->name('attendance.admin-checkout');
+            Route::get('/attendance/manual-history', [AttendanceController::class, 'manualCheckoutHistory'])->name('attendance.manual-history');
         });
 
         /*

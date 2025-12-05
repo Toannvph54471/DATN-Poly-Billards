@@ -5,6 +5,10 @@
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-800">Giám sát Chấm công</h1>
         <div class="flex space-x-3">
+            <a href="{{ route('admin.attendance.manual-history') }}"
+                class="bg-white border border-gray-300 text-gray-700 rounded-lg px-4 py-2 hover:bg-gray-50 transition flex items-center">
+                <i class="fas fa-history mr-2"></i> Lịch sử Check-out hộ
+            </a>
             <a href="{{ route('admin.employees.index') }}"
                 class="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition flex items-center">
                 <i class="fas fa-users mr-2"></i> Quản lý nhân viên
@@ -111,12 +115,34 @@
                             @endif
                         </div>
                         @endif
+
+                        
+                        <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                            <button onclick="openCheckoutModal({{ $attendance->id }})" 
+                                class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition flex items-center">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Check-out hộ
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
             @endforeach
         </div>
     @endif
+
+    <!-- Admin Checkout Modal -->
+    <div id="checkoutModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h3 class="text-lg font-bold mb-4">Check-out hộ nhân viên</h3>
+            <p class="text-sm text-gray-600 mb-4">Bạn đang thực hiện check-out cho nhân viên này. Vui lòng nhập lý do.</p>
+            <input type="hidden" id="checkoutEmployeeId">
+            <textarea id="checkoutReason" class="w-full border rounded p-2 mb-4" rows="3" placeholder="Nhập lý do (bắt buộc)..."></textarea>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeCheckoutModal()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
+                <button onclick="submitAdminCheckout()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Xác nhận</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section('scripts')
@@ -165,6 +191,50 @@
     setInterval(() => {
         location.reload();
     }, 60000);
+
+    function openCheckoutModal(id) {
+        document.getElementById('checkoutEmployeeId').value = id;
+        document.getElementById('checkoutReason').value = '';
+        document.getElementById('checkoutModal').classList.remove('hidden');
+    }
+
+    function closeCheckoutModal() {
+        document.getElementById('checkoutModal').classList.add('hidden');
+    }
+
+    function submitAdminCheckout() {
+        const id = document.getElementById('checkoutEmployeeId').value;
+        const reason = document.getElementById('checkoutReason').value;
+
+        if (!reason.trim()) {
+            alert('Vui lòng nhập lý do check-out.');
+            return;
+        }
+
+        if (!confirm('Xác nhận check-out cho nhân viên này?')) return;
+
+        fetch(`/admin/attendance/${id}/admin-checkout`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Có lỗi xảy ra.');
+        });
+    }
 </script>
 @endsection
 @endsection
