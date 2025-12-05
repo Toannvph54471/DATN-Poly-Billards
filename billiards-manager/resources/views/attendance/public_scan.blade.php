@@ -58,7 +58,7 @@
             const audio = new Audio('https://www.soundjay.com/button/beep-07.mp3');
             audio.play().catch(e => console.log('Audio play failed', e));
 
-            fetch('/api/attendance/scan', {
+            fetch('{{ url("/api/attendance/scan") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -121,7 +121,24 @@
         }
 
         // Start scanning
+        const cameraConfig = { facingMode: "environment" };
+        // Fallback for laptops or devices where environment camera might fail or not exist
+        // We catch the specific error below, or just remove facingMode to let browser decide if it fails.
+        // For now, let's just make it simpler or retry.
+        
+        // Let's try default config first (user facing for laptops usually, environment for phones)
+        // If we really want to force back camera but fallback, we need more logic.
+        // For this "fix", removing strict requirement is safest for "emulator" on laptop.
+        
         html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+        .catch(err => {
+            console.log("Environment camera failed, trying user camera...", err);
+            return html5QrCode.start({ facingMode: "user" }, config, onScanSuccess, onScanFailure);
+        })
+        .catch(err => {
+             console.log("User camera also failed, trying without constraint...", err);
+             return html5QrCode.start({ }, config, onScanSuccess, onScanFailure);
+        })
         .catch(err => {
             console.error("Error starting scanner", err);
             document.getElementById('status-msg').innerText = "Không thể khởi động camera. Vui lòng cấp quyền.";

@@ -150,7 +150,7 @@
     function approveLate(id) {
         if(!confirm('Duyệt yêu cầu đi muộn này?')) return;
         
-        fetch(`/admin/attendance/${id}/approve-late`, {
+        fetch(`{{ url('/admin/attendance') }}/${id}/approve-late`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -170,7 +170,7 @@
     function rejectLate(id) {
         if(!confirm('Từ chối yêu cầu đi muộn này?')) return;
 
-        fetch(`/admin/attendance/${id}/reject-late`, {
+        fetch(`{{ url('/admin/attendance') }}/${id}/reject-late`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -213,7 +213,7 @@
 
         if (!confirm('Xác nhận check-out cho nhân viên này?')) return;
 
-        fetch(`/admin/attendance/${id}/admin-checkout`, {
+        fetch(`{{ url('/admin/attendance') }}/${id}/admin-checkout`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
