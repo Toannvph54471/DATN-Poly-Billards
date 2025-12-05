@@ -70,122 +70,131 @@
 
                 <!-- User Authentication Links (Desktop) -->
                 <div class="lg:block">
-    <div class="ml-4 flex items-center space-x-4">
-        @auth
-            <div class="relative group">
-                <!-- User Button với thiết kế mới -->
-                <button class="flex items-center bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-medium px-4 py-2.5 rounded-xl hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mr-2">
-                        <i class="fas fa-user text-white text-sm"></i>
-                    </div>
-                    <span class="max-w-32 truncate">{{ Auth::user()->name }}</span>
-                    <i class="fas fa-chevron-down ml-2 text-sm transition-transform duration-300 group-hover:rotate-180"></i>
-                </button>
+                    <div class="ml-4 flex items-center space-x-4">
+                        @auth
+                            <div class="relative group">
+                                <!-- User Button với thiết kế mới -->
+                                <button class="flex items-center bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-medium px-4 py-2.5 rounded-xl hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mr-2">
+                                        <i class="fas fa-user text-white text-sm"></i>
+                                    </div>
+                                    <span class="max-w-32 truncate">{{ Auth::user()->name }}</span>
+                                    <i class="fas fa-chevron-down ml-2 text-sm transition-transform duration-300 group-hover:rotate-180"></i>
+                                </button>
 
-                <!-- Dropdown Menu với thiết kế cải tiến -->
-                <div class="absolute right-0 mt-3 w-64 bg-white text-gray-800 rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden backdrop-blur-sm bg-white/95">
-                    <!-- User Info Header -->
-                    <div class="px-5 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md">
-                                <i class="fas fa-user text-white text-sm"></i>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-semibold text-gray-900 truncate">{{ Auth::user()->name }}</p>
-                                <p class="text-xs text-gray-600 mt-1">
-                                    @if(Auth::user()->isAdmin())
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            <i class="fas fa-crown mr-1"></i>Quản trị viên
-                                        </span>
-                                    @elseif(Auth::user()->isManager())
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                            <i class="fas fa-star mr-1"></i>Quản lý
-                                        </span>
-                                    @elseif(Auth::user()->isEmployee())
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            <i class="fas fa-user-tie mr-1"></i>Nhân viên
-                                        </span>
-                                    @endif
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Menu Items -->
-                    <div class="py-2">
-                        @if(Auth::user()->isEmployee())
-                            <a href="{{ route('admin.pos.dashboard') }}" 
-                               class="flex items-center px-5 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
-                                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors shadow-sm">
-                                    <i class="fas fa-cash-register text-blue-600 text-sm"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-medium text-sm">POS Bán hàng</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Hệ thống thanh toán</p>
-                                </div>
-                                <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:text-blue-500 transition-colors"></i>
-                            </a>
-                        @endif
+                                <!-- Dropdown Menu với thiết kế cải tiến -->
+                                <div class="absolute right-0 mt-3 w-64 bg-white text-gray-800 rounded-2xl shadow-2xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 overflow-hidden backdrop-blur-sm bg-white/95">
+                                    <!-- User Info Header -->
+                                    <div class="px-5 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-md">
+                                                <i class="fas fa-user text-white text-sm"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-semibold text-gray-900 truncate">{{ Auth::user()->name }}</p>
+                                                <p class="text-xs text-gray-600 mt-1">
+                                                    @if(Auth::user()->isAdmin())
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                            <i class="fas fa-crown mr-1"></i>Quản trị viên
+                                                        </span>
+                                                    @elseif(Auth::user()->isManager())
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                                            <i class="fas fa-star mr-1"></i>Quản lý
+                                                        </span>
+                                                    @elseif(Auth::user()->isEmployee())
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            <i class="fas fa-user-tie mr-1"></i>Nhân viên
+                                                        </span>
+                                                    @endif
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Menu Items -->
+                                    <div class="py-2">
+                                        @if(Auth::user()->isEmployee())
+                                            <a href="{{ route('admin.pos.dashboard') }}" 
+                                               class="flex items-center px-5 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
+                                                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors shadow-sm">
+                                                    <i class="fas fa-cash-register text-blue-600 text-sm"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <p class="font-medium text-sm">POS Bán hàng</p>
+                                                    <p class="text-xs text-gray-500 mt-0.5">Hệ thống thanh toán</p>
+                                                </div>
+                                                <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:text-blue-500 transition-colors"></i>
+                                            </a>
+                                        @endif
 
-                        @if(Auth::user()->isAdmin() || Auth::user()->isManager())
-                            <a href="{{ route('admin.dashboard') }}" 
-                               class="flex items-center px-5 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
-                                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors shadow-sm">
-                                    <i class="fas fa-cog text-blue-600 text-sm"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="font-medium text-sm">Quản trị hệ thống</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">Bảng điều khiển</p>
-                                </div>
-                                <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:text-blue-500 transition-colors"></i>
-                            </a>
-                        @endif
+                                        @if(Auth::user()->isAdmin() || Auth::user()->isManager())
+                                            <a href="{{ route('admin.dashboard') }}" 
+                                               class="flex items-center px-5 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group">
+                                                <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors shadow-sm">
+                                                    <i class="fas fa-cog text-blue-600 text-sm"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <p class="font-medium text-sm">Quản trị hệ thống</p>
+                                                    <p class="text-xs text-gray-500 mt-0.5">Bảng điều khiển</p>
+                                                </div>
+                                                <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:text-blue-500 transition-colors"></i>
+                                            </a>
+                                        @endif
 
-                        @if(Auth::user()->employee ?? false)
-                            <a href="" 
-                               class="flex items-center px-5 py-3 text-blue-700 bg-blue-50/80 hover:bg-blue-100 transition-all duration-200 group border-l-3 border-blue-500">
-                                <div class="w-10 h-10 rounded-xl bg-blue-200 flex items-center justify-center mr-3 group-hover:bg-blue-300 transition-colors shadow-sm">
-                                    <i class="fas fa-qrcode text-blue-700 text-sm"></i>
+                                        @if(Auth::user()->isEmployee())
+                                            <a href="{{ route('attendance.my-qr') }}" 
+                                               class="flex items-center px-5 py-3 text-blue-700 bg-blue-50/80 hover:bg-blue-100 transition-all duration-200 group border-l-3 border-blue-500">
+                                                <div class="w-10 h-10 rounded-xl bg-blue-200 flex items-center justify-center mr-3 group-hover:bg-blue-300 transition-colors shadow-sm">
+                                                    <i class="fas fa-qrcode text-blue-700 text-sm"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <p class="font-medium text-sm">Mã QR Cá Nhân</p>
+                                                    <p class="text-xs text-blue-600 mt-0.5">Điểm danh hôm nay</p>
+                                                </div>
+                                                <i class="fas fa-external-link-alt text-blue-500 text-xs"></i>
+                                            </a>
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- Separator -->
+                                    <div class="border-t border-gray-100 mx-4 my-1"></div>
+                                    
+                                    <!-- Logout Button -->
+                                    <form method="POST" action="{{ route('logout') }}" class="block">
+                                        @csrf
+                                        <button type="submit" 
+                                                class="w-full flex items-center px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group">
+                                            <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center mr-3 group-hover:bg-red-200 transition-colors shadow-sm">
+                                                <i class="fas fa-sign-out-alt text-red-500 text-sm"></i>
+                                            </div>
+                                            <div class="flex-1 text-left">
+                                                <p class="font-medium text-sm">Đăng xuất</p>
+                                                <p class="text-xs text-gray-500 mt-0.5">Kết thúc phiên làm việc</p>
+                                            </div>
+                                            <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:text-red-500 transition-colors"></i>
+                                        </button>
+                                    </form>
                                 </div>
-                                <div class="flex-1">
-                                    <p class="font-medium text-sm">Quét mã Check-in</p>
-                                    <p class="text-xs text-blue-600 mt-0.5">Điểm danh hôm nay</p>
-                                </div>
-                                <i class="fas fa-external-link-alt text-blue-500 text-xs"></i>
-                            </a>
-                        @endif
+                            </div>
+                        @else
+                            <!-- Authentication Links với thiết kế mới -->
+                            <div class="flex items-center space-x-3">
+                                <a href="{{ route('login') }}" 
+                                   class="flex items-center text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 px-4 py-2 rounded-lg hover:bg-blue-50 group">
+                                    <i class="fas fa-sign-in-alt mr-2 text-blue-500 group-hover:scale-110 transition-transform"></i>
+                                    <span class="font-semibold">Đăng nhập</span>
+                                </a>
+                                <a href="{{ route('register') }}" 
+                                   class="flex items-center bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                                    <i class="fas fa-user-plus mr-2"></i>
+                                    <span>Đăng ký</span>
+                                </a>
+                            </div>
+                        @endauth
                     </div>
-                    
-                    <!-- Separator -->
-                    <div class="border-t border-gray-100 mx-4 my-1"></div>
-                    
-                    <!-- Logout Button -->
-                    <form method="POST" action="{{ route('logout') }}" class="block">
-                        @csrf
-                        <button type="submit" 
-                                class="w-full flex items-center px-5 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group">
-                            <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center mr-3 group-hover:bg-red-200 transition-colors shadow-sm">
-                                <i class="fas fa-sign-out-alt text-red-500 text-sm"></i>
-                            </div>
-                            <div class="flex-1 text-left">
-                                <p class="font-medium text-sm">Đăng xuất</p>
-                                <p class="text-xs text-gray-500 mt-0.5">Kết thúc phiên làm việc</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-400 text-xs group-hover:text-red-500 transition-colors"></i>
-                        </button>
-                    </form>
                 </div>
             </div>
-        @else
-            <!-- Authentication Links với thiết kế mới -->
-            <div class="flex items-center space-x-3">
-                <a href="{{ route('login') }}" 
-                   class="flex items-center text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 px-4 py-2 rounded-lg hover:bg-blue-50 group">
-                    <i class="fas fa-sign-in-alt mr-2 text-blue-500 group-hover:scale-110 transition-transform"></i>
-                    <span class="font-semibold">Đăng nhập</span>
-                </a>
-            </div>
-        @endauth
+
     </div>
 </div>
 
@@ -214,6 +223,51 @@
                     Câu hỏi thường gặp
                 </a>
 
+                @auth
+                    <div class="border-t border-primary-600 pt-4">
+                        <div class="flex items-center px-3 pb-3">
+                            <i class="fas fa-user-circle text-elegant-gold text-2xl mr-3"></i>
+                            <div>
+                                <div class="text-base font-medium text-white">{{ Auth::user()->name }}</div>
+                                <div class="text-sm font-medium text-primary-200">{{ Auth::user()->email }}</div>
+                            </div>
+                        </div>
+
+                        @if(Auth::user()->isAdmin() || Auth::user()->isManager())
+                            <a href="{{ route('admin.dashboard') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                                <i class="fas fa-cog mr-3"></i>Quản trị
+                            </a>
+                        @endif
+
+                        @if(Auth::user()->isEmployee())
+                            <a href="{{ route('admin.pos.dashboard') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                                <i class="fas fa-cash-register mr-3"></i>POS
+                            </a>
+                        @endif
+
+                        @if(Auth::user()->employee ?? false)
+                            <a href="{{ route('attendance.my-qr') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200 text-yellow-400">
+                                <i class="fas fa-qrcode mr-3"></i>Mã QR Cá Nhân
+                            </a>
+                        @endif
+
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="w-full text-left text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                                <i class="fas fa-sign-out-alt mr-3"></i>Đăng xuất
+                            </button>
+                        </form>
+                    </div>
+                @else
+                    <div class="border-t border-primary-600 pt-4">
+                        <a href="{{ route('login') }}" class="text-elegant-cream hover:bg-primary-700 block px-3 py-3 rounded-lg text-base font-medium transition duration-200">
+                            <i class="fas fa-sign-in-alt mr-3"></i>Đăng nhập
+                        </a>
+                        <a href="{{ route('register') }}" class="bg-elegant-gold text-elegant-navy font-semibold block px-3 py-3 rounded-lg text-base font-medium transition duration-200 mt-2">
+                            <i class="fas fa-user-plus mr-3"></i>Đăng ký
+                        </a>
+                    </div>
+                @endauth
             </div>
         </div>
     </header>

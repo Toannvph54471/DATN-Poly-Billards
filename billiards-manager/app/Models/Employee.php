@@ -21,20 +21,22 @@ class Employee extends BaseModel
         'email',
         'address',
         'position',
-        'salary_type',
-        'salary_rate',
+        'hourly_rate',
         'start_date',
         'end_date',
         'status',
         'created_by',
         'updated_by',
-        'deleted_by'
+        'deleted_by',
+        'qr_token',
+        'qr_token_expires_at'
     ];
 
     protected $casts = [
         'salary_rate' => 'decimal:2',
         'start_date' => 'date',
         'end_date' => 'date',
+        'qr_token_expires_at' => 'datetime',
     ];
 
     // Relationships
@@ -94,17 +96,28 @@ class Employee extends BaseModel
                     ->first();
     }
 
-    // Setter cho salary_rate dựa trên salary_type
-    public function setSalaryRateAttribute($value)
-    {
-        if ($this->salary_type === 'monthly' && !$value) {
-            $this->attributes['salary_rate'] = 35000.00;
-        } elseif ($this->salary_type === 'hourly' && !$value) {
-            $this->attributes['salary_rate'] = 25000.00;
-        } else {
-            $this->attributes['salary_rate'] = $value;
-        }
-    }
+    // Removed mapped attributes to use actual DB columns
+
 
    
+
+
+    // QR Code Methods
+    public function generateQrToken()
+    {
+        $this->update([
+            'qr_token' => \Illuminate\Support\Str::random(60),
+            'qr_token_expires_at' => now()->addMinutes(2)
+        ]);
+        
+        return $this->qr_token;
+    }
+
+    public function invalidateQrToken()
+    {
+        $this->update([
+            'qr_token' => null,
+            'qr_token_expires_at' => null
+        ]);
+    }
 }

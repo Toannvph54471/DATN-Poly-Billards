@@ -26,9 +26,9 @@ Route::get('/combos/calculate-table-price', [ComboController::class, 'calculateT
 Route::post('/employees/{id}/salary', [App\Http\Controllers\EmployeeController::class, 'updateSalary'])->name('api.employees.update-salary');
 Route::post('/payroll/generate', [App\Http\Controllers\PayrollController::class, 'generate']);
 
-Route::get('/attendance/qr-token', [AttendanceController::class, 'getQrToken']);
-Route::post('/attendance/qr-checkin', [AttendanceController::class, 'qrCheckIn']);
+Route::post('/attendance/scan', [AttendanceController::class, 'processScan']);
 Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
+Route::post('/attendance/submit-late-reason', [AttendanceController::class, 'submitLateReason']);
 Route::post('/attendance/check-out', [App\Http\Controllers\AttendanceController::class, 'checkOut'])->name('api.attendance.check-out');
 Route::get('/attendance/active', [App\Http\Controllers\AttendanceController::class, 'getActiveEmployees']);
 Route::get('/attendance/server-time', [App\Http\Controllers\AttendanceController::class, 'getServerTime']);

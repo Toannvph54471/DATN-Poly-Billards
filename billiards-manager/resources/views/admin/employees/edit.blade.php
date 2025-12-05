@@ -136,38 +136,16 @@
                             </div>
 
 
-                            <!-- Loại lương -->
+                            <!-- Mức lương theo giờ -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Loại lương *
+                                    Mức lương theo giờ (VND) *
                                 </label>
-                                <select name="salary_type" required
-                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
-                                               focus:ring-2 focus:ring-blue-500">
-                                    <option value="hourly"
-                                        {{ old('salary_type', $employee->salary_type) == 'hourly' ? 'selected' : '' }}>
-                                        Part-time (25.000 VND/giờ)
-                                    </option>
-                                    <option value="monthly"
-                                        {{ old('salary_type', $employee->salary_type) == 'monthly' ? 'selected' : '' }}>
-                                        Lương cứng (35.000 VND/giờ)
-                                    </option>
-                                </select>
-                                @error('salary_type')
-                                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <!-- Mức lương -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Mức lương (VND/giờ) *
-                                </label>
-                                <input type="number" name="salary_rate" step="0.01"
-                                    value="{{ old('salary_rate', $employee->salary_rate) }}" required
+                                <input type="number" name="hourly_rate" step="0.01"
+                                    value="{{ old('hourly_rate', $employee->hourly_rate) }}" required
                                     class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
-                                @error('salary_rate')
+                                @error('hourly_rate')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>

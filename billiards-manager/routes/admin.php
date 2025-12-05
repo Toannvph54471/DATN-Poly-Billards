@@ -14,6 +14,8 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\AttendanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,6 +56,14 @@ Route::prefix('admin')
             // Employees
             Route::resource('employees', EmployeeController::class)->names('employees');
             Route::get('my-profile', [EmployeeController::class, 'myProfile'])->name('my-profile');
+
+            // Payroll Management
+            Route::get('/payroll', [PayrollController::class, 'adminIndex'])->name('payroll.index');
+
+            // Attendance Monitoring
+            Route::get('/attendance/monitor', [AttendanceController::class, 'monitor'])->name('attendance.monitor');
+            Route::post('/attendance/{id}/approve-late', [AttendanceController::class, 'approveLate'])->name('attendance.approve-late');
+            Route::post('/attendance/{id}/reject-late', [AttendanceController::class, 'rejectLate'])->name('attendance.reject-late');
         });
 
         /*

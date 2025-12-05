@@ -62,9 +62,7 @@ class EmployeeController extends Controller
             'address' => 'nullable|string|max:500',
 
             'role_id' => 'required|exists:roles,id',
-
-            'salary_type' => 'required|in:hourly,monthly',
-            'salary_rate' => 'nullable|numeric|min:0',
+            'hourly_rate' => 'required|numeric|min:0',
 
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
@@ -88,12 +86,6 @@ class EmployeeController extends Controller
             'status'    => $request->status,
         ]);
 
-        // ✔ Logic salary rate
-        $salaryRate = $request->salary_rate;
-        if (!$salaryRate) {
-            $salaryRate = $request->salary_type === 'monthly' ? 35000.00 : 25000.00;
-        }
-
         // ✔ Tạo Employee
         Employee::create([
             'user_id'       => $user->id,
@@ -103,8 +95,7 @@ class EmployeeController extends Controller
             'email'         => $request->email,
             'address'       => $request->address,
             'position'      => $request->role_id,
-            'salary_type'   => $request->salary_type,
-            'salary_rate'   => $salaryRate,
+            'hourly_rate'   => $request->hourly_rate,
             'start_date'    => $request->start_date,
             'end_date'      => $request->end_date,
             'status'        => $request->status,
@@ -150,9 +141,7 @@ class EmployeeController extends Controller
             'address'   => 'nullable|string|max:500',
 
             'role_id'   => 'required|exists:roles,id',  // dùng role_id từ select
-
-            'salary_type' => 'required|in:hourly,monthly',
-            'salary_rate' => 'nullable|numeric|min:0',
+            'hourly_rate' => 'required|numeric|min:0',
 
             'start_date' => 'required|date',
             'end_date'   => 'nullable|date|after_or_equal:start_date',
@@ -201,10 +190,7 @@ class EmployeeController extends Controller
             'address'       => $request->address,
 
             'position'      => $request->role_id, // nếu muốn lưu role_id vào position
-
-            'salary_type'   => $request->salary_type,
-            'salary_rate'   => $request->salary_rate ?: ($request->salary_type === 'monthly' ? 35000 : 25000),
-
+            'hourly_rate'   => $request->hourly_rate,
             'start_date'    => $request->start_date,
             'end_date'      => $request->end_date,
             'status'        => $request->status,
@@ -248,8 +234,7 @@ class EmployeeController extends Controller
     public function updateSalary(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'salary_type' => 'required|in:hourly,monthly',
-            'salary_rate' => 'required|numeric|min:0',
+            'hourly_rate' => 'required|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -261,18 +246,25 @@ class EmployeeController extends Controller
 
         try {
             $employee = Employee::findOrFail($id);
+            
+            // Debugging as requested
+            // dd([
+            //     'request' => $request->all(),
+            //     'employee_attributes' => $employee->getAttributes(),
+            //     'fillable' => $employee->getFillable()
+            // ]);
 
-            $employee->update([
-                'salary_type' => $request->salary_type,
-                'salary_rate' => $request->salary_rate
-            ]);
+            // Explicitly set hourly_rate
+            $employee->hourly_rate = $request->hourly_rate;
+            $employee->save();
+
+            Log::info("Updated hourly_rate for employee {$id} to {$request->hourly_rate}");
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Cập nhật lương thành công',
                 'data' => [
-                    'salary_type' => $employee->salary_type,
-                    'salary_rate' => $employee->salary_rate
+                    'hourly_rate' => $employee->hourly_rate
                 ]
             ]);
         } catch (\Exception $e) {

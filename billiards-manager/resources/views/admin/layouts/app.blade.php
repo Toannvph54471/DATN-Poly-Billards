@@ -255,6 +255,30 @@
                             <i class="fas fa-user-shield w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Phân quyền</span>
                         </a>
+
+                        <a href="{{ route('admin.payroll.index') }}" onclick="closeMobileMenu()"
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.payroll', $currentRoute) ? 'active bg-white/20' : '' }}">
+                            <i class="fas fa-money-bill-wave w-5 md:w-6 mr-3"></i>
+                            <span class="font-medium text-sm md:text-base">Tính lương</span>
+                        </a>
+
+                        <a href="{{ route('admin.attendance.monitor') }}" onclick="closeMobileMenu()"
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.attendance.monitor', $currentRoute) ? 'active bg-white/20' : '' }}">
+                            <i class="fas fa-user-clock w-5 md:w-6 mr-3"></i>
+                            <span class="font-medium text-sm md:text-base">Giám sát nhân viên</span>
+                        </a>
+
+                        <a href="{{ route('admin.shifts.index') }}" onclick="closeMobileMenu()"
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.shifts', $currentRoute) ? 'active bg-white/20' : '' }}">
+                            <i class="fas fa-calendar-alt w-5 md:w-6 mr-3"></i>
+                            <span class="font-medium text-sm md:text-base">Ca làm việc</span>
+                        </a>
+
+                        <a href="{{ route('admin.shiftEmployee.index') }}" onclick="closeMobileMenu()"
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.shiftEmployee', $currentRoute) ? 'active bg-white/20' : '' }}">
+                            <i class="fas fa-user-clock w-5 md:w-6 mr-3"></i>
+                            <span class="font-medium text-sm md:text-base">Phân công ca làm</span>
+                        </a>
                     @endif
 
 
@@ -289,16 +313,37 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center space-x-3 md:space-x-4">
+                        <div class="flex items-center space-x-3 md:space-x-4 relative">
                             <div class="text-right hidden sm:block">
                                 <p class="font-medium text-sm md:text-base">{{ Auth::user()->name }}</p>
                                 <p class="text-xs text-gray-500 capitalize">
                                     {{ Str::replace('_', ' ', Auth::user()->role->name ?? 'user') }}
                                 </p>
                             </div>
-                            <div
-                                class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm md:text-base">
-                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                            <div class="relative">
+                                <button id="accountDropdownBtn" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm md:text-base hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                    {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                                </button>
+                                
+                                <!-- Dropdown Menu -->
+                                <div id="accountDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                                    <a href="{{ route('attendance.my-qr') }}" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition">
+                                        <i class="fas fa-qrcode w-5 mr-3 text-blue-600"></i>
+                                        <span>Mã QR cá nhân</span>
+                                    </a>
+                                    <a href="{{ route('admin.my-profile') }}" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition">
+                                        <i class="fas fa-user w-5 mr-3 text-green-600"></i>
+                                        <span>Thông tin cá nhân</span>
+                                    </a>
+                                    <div class="border-t border-gray-200 my-1"></div>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition text-left">
+                                            <i class="fas fa-sign-out-alt w-5 mr-3"></i>
+                                            <span>Đăng xuất</span>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -335,6 +380,24 @@
             document.body.style.overflow = '';
         }
 
+        // Account dropdown toggle
+        const accountDropdownBtn = document.getElementById('accountDropdownBtn');
+        const accountDropdown = document.getElementById('accountDropdown');
+
+        if (accountDropdownBtn && accountDropdown) {
+            accountDropdownBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                accountDropdown.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!accountDropdown.contains(e.target) && !accountDropdownBtn.contains(e.target)) {
+                    accountDropdown.classList.add('hidden');
+                }
+            });
+        }
+
         // Close menu when clicking on links (for mobile)
         document.addEventListener('DOMContentLoaded', function() {
             const navLinks = document.querySelectorAll('#sidebar a');
@@ -350,6 +413,10 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeMobileMenu();
+                    // Also close account dropdown
+                    if (accountDropdown) {
+                        accountDropdown.classList.add('hidden');
+                    }
                 }
             });
 
