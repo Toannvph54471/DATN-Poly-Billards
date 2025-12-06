@@ -41,6 +41,20 @@
                 opacity: 1 !important;
                 transform: none !important;
             }
+
+            /* Print styles cho QR */
+            .qr-container {
+                border: 1px solid #000;
+                page-break-inside: avoid;
+            }
+
+            .qr-overlay {
+                display: none;
+            }
+
+            .qr-info {
+                font-size: 9px;
+            }
         }
 
         @media screen {
@@ -148,6 +162,127 @@
             transform: translateY(0);
         }
 
+        /* Màu sắc cho làm tròn */
+        .rounded-info {
+            background: #fff9e6;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .rounding-diff {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        .time-comparison {
+            font-size: 9px;
+            color: #6b7280;
+        }
+
+        .rounding-badge {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 9px;
+            display: inline-block;
+            margin-left: 4px;
+        }
+
+        /* QR Code styles */
+        .qr-container {
+            position: relative;
+            margin: 0 auto;
+            width: 130px;
+            height: 130px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        .qr-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .qr-container:hover .qr-overlay {
+            opacity: 1;
+        }
+
+        .qr-amount {
+            font-size: 12px;
+            font-weight: bold;
+            color: #059669;
+            text-align: center;
+        }
+
+        /* Animation cho QR */
+        @keyframes qrPulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+
+        .qr-pulse {
+            animation: qrPulse 2s infinite;
+        }
+
+        /* Toast notification styles */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-success {
+            background: #10b981;
+        }
+
+        .toast-error {
+            background: #ef4444;
+        }
+
+        .toast-info {
+            background: #3b82f6;
+        }
+
+        /* MB Bank specific colors */
+        .bg-mbbank {
+            background-color: #9e1f63;
+        }
+
+        .hover\:bg-mbbank:hover {
+            background-color: #7a174d;
+        }
+
+        .text-mbbank {
+            color: #9e1f63;
+        }
+
         @keyframes bounce {
 
             0%,
@@ -195,6 +330,30 @@
 
             100% {
                 transform: scale(1);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
             }
         }
 
@@ -300,6 +459,14 @@
             background-color: #4b5563;
         }
 
+        .bg-pink-600 {
+            background-color: #db2777;
+        }
+
+        .bg-red-600 {
+            background-color: #e53e3e;
+        }
+
         .text-white {
             color: white;
         }
@@ -314,6 +481,14 @@
 
         .text-green-600 {
             color: #059669;
+        }
+
+        .text-yellow-600 {
+            color: #d97706;
+        }
+
+        .text-blue-600 {
+            color: #2563eb;
         }
 
         .px-5 {
@@ -340,6 +515,10 @@
             border-radius: 0.5rem;
         }
 
+        .rounded {
+            border-radius: 0.25rem;
+        }
+
         .shadow-lg {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
@@ -360,6 +539,14 @@
             background-color: #374151;
         }
 
+        .hover\:bg-pink-700:hover {
+            background-color: #be185d;
+        }
+
+        .hover\:bg-red-700:hover {
+            background-color: #c53030;
+        }
+
         .transition-all {
             transition: all 0.3s ease;
         }
@@ -374,6 +561,10 @@
 
         .hover\:scale-105:hover {
             transform: scale(1.05);
+        }
+
+        .mr-1 {
+            margin-right: 0.25rem;
         }
 
         .mr-2 {
@@ -406,6 +597,35 @@
 
         .ml-2 {
             margin-left: 0.5rem;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .border {
+            border-width: 1px;
+        }
+
+        .border-gray-300 {
+            border-color: #d1d5db;
+        }
+
+        .object-contain {
+            object-fit: contain;
+        }
+
+        .underline {
+            text-decoration: underline;
+        }
+
+        .space-x-1>*+* {
+            margin-left: 0.25rem;
+        }
+
+        .space-y-2>*+* {
+            margin-top: 0.5rem;
         }
     </style>
 </head>
@@ -505,7 +725,47 @@
                 $productDetails = $bill->billDetails->where('is_combo_component', false);
                 $productTotal = $productDetails->sum('total_price');
                 $timeCost = $totalAmount - $productTotal;
+
+                // Lấy thông tin làm tròn từ controller
+                $timeDetails = isset($timeDetails) ? $timeDetails : [];
+                $roundingInfo = $timeDetails['roundingInfo'] ?? null;
+                $hasRounding = isset($roundingInfo) && $roundingInfo['total_rounding_diff'] > 0;
+
+                // Tạo thông tin QR với số tiền động - CẬP NHẬT THÀNH MB BANK
+                $qrData = [
+                    'bill_number' => $bill->bill_number,
+                    'amount' => $finalAmount,
+                    'currency' => 'VND',
+                    'account' => '0368015218',
+                    'bank' => 'MB Bank',
+                    'content' => "TT Bill {$bill->bill_number}",
+                ];
+
+                // Tạo URL QR code - CẬP NHẬT LINK QR CODE MỚI
+                $qrUrl =
+                    $qrUrl ??
+                    'https://img.vietqr.io/image/MB-0368015218-qr_only.png?' .
+                        http_build_query([
+                            'amount' => $finalAmount,
+                            'addInfo' => "TT Bill {$bill->bill_number}",
+                        ]);
             @endphp
+
+            @if ($hasRounding)
+                <!-- Hiển thị thông tin làm tròn -->
+                <div class="rounded-info mb-2 p-2 text-xs-print receipt-item">
+                    <div class="flex justify-between">
+                        <span class="font-bold text-yellow-600">Làm tròn:</span>
+                        <span class="font-bold text-yellow-600">
+                            +{{ number_format($roundingInfo['total_rounding_diff'], 0, ',', '.') }}₫
+                        </span>
+                    </div>
+                    <div class="time-comparison mt-1">
+                        <span>Thời gian: {{ $roundingInfo['rounding_minutes'] ?? 15 }} phút</span>
+                        <span class="ml-2">Tiền: {{ $roundingInfo['rounding_amount'] ?? '1,000' }}₫</span>
+                    </div>
+                </div>
+            @endif
 
             @if ($productDetails->count() > 0)
                 <div class="space-y-1 text-xs-print">
@@ -539,11 +799,67 @@
                 <div class="receipt-line receipt-item"></div>
             @endif
 
-            <!-- Thời gian chơi -->
+            <!-- Thời gian chơi với thông tin làm tròn -->
             @if ($timeCost > 0)
+                @php
+                    $hourlyRate = $bill->table->tableRate->hourly_rate ?? 0;
+                    $actualMinutes = 0;
+                    $roundedMinutes = 0;
+
+                    // Tính thông tin thời gian nếu có
+                    if (isset($timeDetails['sessions'])) {
+                        foreach ($timeDetails['sessions'] as $session) {
+                            $actualMinutes += $session['actual_minutes'] ?? 0;
+                            $roundedMinutes += $session['rounded_minutes'] ?? 0;
+                        }
+                    }
+
+                    $hasTimeRounding = $actualMinutes > 0 && $roundedMinutes > $actualMinutes;
+                @endphp
+
+                @if ($hasTimeRounding)
+                    <!-- Hiển thị chi tiết thời gian với làm tròn -->
+                    <div class="space-y-1 text-xs-print receipt-item">
+                        <div class="flex justify-between">
+                            <span>Thời gian thực:</span>
+                            <span>{{ floor($actualMinutes / 60) }}h{{ $actualMinutes % 60 }}p</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Thời gian tính phí:<span class="rounding-badge">làm tròn</span></span>
+                            <span
+                                class="font-bold">{{ floor($roundedMinutes / 60) }}h{{ $roundedMinutes % 60 }}p</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Đơn giá:</span>
+                            <span>{{ number_format($hourlyRate, 0, ',', '.') }}₫/h</span>
+                        </div>
+                        <div class="receipt-line"></div>
+                    </div>
+                @endif
+
                 <div class="flex justify-between text-sm-print receipt-item">
-                    <span>Tiền giờ:</span>
-                    <span>{{ number_format($timeCost, 0, ',', '.') }}₫</span>
+                    <span>
+                        Tiền giờ
+                        @if ($hasTimeRounding)
+                            <span class="rounding-badge">+{{ number_format($roundedMinutes - $actualMinutes) }}p</span>
+                        @endif
+                        :
+                    </span>
+                    <span>
+                        {{ number_format($timeCost, 0, ',', '.') }}₫
+                        @if ($hasTimeRounding && isset($timeDetails['sessions'][0]['rounded_price']))
+                            @php
+                                $rawTimeCost = ($hourlyRate / 60) * $actualMinutes;
+                                $roundingDiff = $timeCost - $rawTimeCost;
+                            @endphp
+                            @if ($roundingDiff > 0)
+                                <br>
+                                <small class="text-yellow-600 time-comparison">
+                                    (+{{ number_format($roundingDiff, 0, ',', '.') }}₫ làm tròn)
+                                </small>
+                            @endif
+                        @endif
+                    </span>
                 </div>
             @endif
 
@@ -593,8 +909,26 @@
             <!-- Tổng cộng -->
             <div class="flex justify-between font-bold text-sm-print mt-2 receipt-item">
                 <span>TỔNG CỘNG:</span>
-                <span>{{ number_format($finalAmount, 0, ',', '.') }}₫</span>
+                <span>
+                    {{ number_format($finalAmount, 0, ',', '.') }}₫
+                    @if ($hasRounding && $roundingInfo['total_rounding_diff'] > 0)
+                        <br>
+                        <small class="text-yellow-600 time-comparison">
+                            (đã bao gồm {{ number_format($roundingInfo['total_rounding_diff'], 0, ',', '.') }}₫ làm
+                            tròn)
+                        </small>
+                    @endif
+                </span>
             </div>
+
+            <!-- Thông tin làm tròn cuối cùng -->
+            @if ($hasRounding)
+                <div class="text-xs-print receipt-item text-center text-gray-600 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Phí làm tròn: {{ $roundingInfo['rounding_minutes'] ?? 15 }} phút /
+                    {{ $roundingInfo['rounding_amount'] ?? '1,000' }}₫
+                </div>
+            @endif
         </div>
 
         <!-- Phương thức thanh toán -->
@@ -636,6 +970,82 @@
             </div>
         @endif
 
+        <!-- QR Code Thanh Toán - ĐÃ CẬP NHẬT MB BANK -->
+        <div class="mt-4 text-center receipt-item">
+            <div class="receipt-line mb-2"></div>
+
+            <!-- QR Code Image -->
+            <div class="flex justify-center mb-2">
+                <img src="{{ $qrUrl }}" alt="QR Code Thanh Toán MB Bank"
+                    class="w-32 h-32 object-contain mx-auto border border-gray-300 rounded qr-container" id="qrImage">
+            </div>
+
+            <!-- Thông tin thanh toán QR - ĐÃ CẬP NHẬT THÔNG TIN MB BANK -->
+            <div class="text-xs-print space-y-1 mb-2">
+                <div class="flex justify-between">
+                    <span>Số tài khoản:</span>
+                    <span class="font-bold text-mbbank">0368015218</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Ngân hàng:</span>
+                    <span class="font-bold text-mbbank">MB Bank</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Chủ tài khoản:</span>
+                    <span class="font-bold">BILLIARDS CLUB</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Số tiền:</span>
+                    <span class="font-bold text-green-600">{{ number_format($finalAmount, 0, ',', '.') }}₫</span>
+                </div>
+                <div class="text-left">
+                    <span>Nội dung:</span>
+                    <span class="font-bold">TT Bill {{ $bill->bill_number }}</span>
+                </div>
+            </div>
+
+            <p class="text-xs-print text-gray-600 mb-2">
+                <i class="fas fa-qrcode mr-1"></i>
+                Quét mã QR để thanh toán {{ number_format($finalAmount, 0, ',', '.') }}₫
+            </p>
+
+            <!-- Link thanh toán nhanh (tùy chọn) -->
+            <div class="text-xs-print text-blue-600 mt-1 no-print">
+                <i class="fas fa-link mr-1"></i>
+                Link thanh toán:
+                <a href="mbbank://payment?account=0368015218&amount={{ $finalAmount }}&content=Bill{{ $bill->bill_number }}"
+                    class="underline">
+                    mbbank://Bill{{ $bill->bill_number }}
+                </a>
+            </div>
+
+            <div class="receipt-line mt-2"></div>
+        </div>
+
+        <!-- Thông tin thêm về QR code -->
+        <div class="text-center text-xs-print text-gray-600 mt-1 receipt-item">
+            <i class="fas fa-info-circle mr-1"></i>
+            Mở ứng dụng MB Bank & quét QR để thanh toán nhanh
+        </div>
+
+        <!-- Tối ưu hóa cho mobile banking (tùy chọn nâng cao) -->
+        <div class="mt-2 text-center text-xs-print receipt-item no-print">
+            <div class="flex flex-col space-y-1">
+                <button onclick="openBankApp('momo')"
+                    class="bg-pink-600 text-white px-3 py-1 rounded text-xs hover:bg-pink-700 transition-all duration-300">
+                    <i class="fab fa-app-store-ios mr-1"></i> MoMo
+                </button>
+                <button onclick="openBankApp('vnpay')"
+                    class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-all duration-300">
+                    <i class="fas fa-mobile-alt mr-1"></i> VNPay
+                </button>
+                <button onclick="openBankApp('mbbank')"
+                    class="bg-mbbank text-white px-3 py-1 rounded text-xs hover:bg-mbbank transition-all duration-300">
+                    <i class="fas fa-university mr-1"></i> MB Bank
+                </button>
+            </div>
+        </div>
+
         <!-- Footer -->
         <div class="mt-6 text-center text-xs-print">
             <div class="receipt-line receipt-item"></div>
@@ -661,6 +1071,43 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Đảm bảo hóa đơn hiển thị ngay lập tức
             resetReceiptAnimation();
+
+            // QR Code interaction
+            const qrImage = document.getElementById('qrImage');
+
+            if (qrImage) {
+                // Add click to copy payment info
+                qrImage.addEventListener('click', function() {
+                    const paymentInfo = `Thanh toán bill {{ $bill->bill_number }}
+Số tiền: {{ number_format($finalAmount, 0, ',', '.') }}₫
+TK: 0368015218 - MB Bank
+Chủ TK: BILLIARDS CLUB
+Nội dung: TT Bill {{ $bill->bill_number }}`;
+
+                    navigator.clipboard.writeText(paymentInfo).then(function() {
+                        // Show toast notification
+                        showToast('Đã sao chép thông tin thanh toán!', 'success');
+                    }).catch(function(err) {
+                        // Fallback for older browsers
+                        const textArea = document.createElement('textarea');
+                        textArea.value = paymentInfo;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        showToast('Đã sao chép thông tin thanh toán!', 'success');
+                    });
+                });
+
+                // Add hover effect
+                qrImage.addEventListener('mouseenter', function() {
+                    this.classList.add('qr-pulse');
+                });
+
+                qrImage.addEventListener('mouseleave', function() {
+                    this.classList.remove('qr-pulse');
+                });
+            }
 
             // Tự động in sau 1 giây nếu là thanh toán mới
             if (isPaid && !hasPrinted) {
@@ -850,6 +1297,70 @@
 
         // Thêm sự kiện cho nút hiệu ứng
         document.getElementById('animateBtn')?.addEventListener('click', animateReceipt);
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            // Tạo toast element
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type} no-print`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>
+                <span>${message}</span>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Generate QR code on the fly (tùy chọn nâng cao)
+        function generateDynamicQR() {
+            const qrCodeElement = document.getElementById('dynamicQR');
+            if (qrCodeElement) {
+                const amount = {{ $finalAmount }};
+                const billNumber = '{{ $bill->bill_number }}';
+                const qrUrl =
+                    `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`mbbank://payment?account=0368015218&amount=${amount}&content=Bill${billNumber}`)}`;
+
+                qrCodeElement.src = qrUrl;
+            }
+        }
+
+        // Mobile banking app deep links - ĐÃ CẬP NHẬT CHO MB BANK
+        function openBankApp(app) {
+            const amount = {{ $finalAmount }};
+            const billNumber = '{{ $bill->bill_number }}';
+            let url = '';
+
+            switch (app) {
+                case 'momo':
+                    url = `momo://payment?phone=0912345678&amount=${amount}&content=Bill${billNumber}`;
+                    break;
+                case 'vnpay':
+                    url = `vnpay://payment?amount=${amount}&billId=${billNumber}`;
+                    break;
+                case 'mbbank':
+                    url = `mbbank://transfer?account=0368015218&amount=${amount}&content=Bill${billNumber}`;
+                    break;
+                default:
+                    url = `mbbank://payment?account=0368015218&amount=${amount}&content=Bill${billNumber}`;
+            }
+
+            // Try to open app, fallback to web
+            window.location.href = url;
+
+            // Fallback after 500ms
+            setTimeout(() => {
+                if (document.hasFocus()) {
+                    window.open('https://mbbank.com.vn', '_blank');
+                    showToast('Không thể mở ứng dụng ngân hàng. Vui lòng mở ứng dụng thủ công.', 'info');
+                }
+            }, 500);
+        }
     </script>
 </body>
 

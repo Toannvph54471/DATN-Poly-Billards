@@ -406,7 +406,7 @@ class PaymentController extends Controller
     }
 
     /**
-     * Tính tiền giờ chơi
+     * Tính tiền giờ chơi với làm tròn
      */
     private function calculateTimeCharge(Bill $bill)
     {
@@ -427,12 +427,7 @@ class PaymentController extends Controller
             ->get();
 
         foreach ($activeRegularTime as $timeUsage) {
-            $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
-            $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
-
-            $roundedMinutes = ceil($effectiveMinutes);
-            $timeCost = ($timeUsage->hourly_rate / 60) * max(0, $roundedMinutes);
-
+            $timeCost = $this->calculateRoundedTimeCost($timeUsage);
             $totalTimeCost += $timeCost;
         }
 
@@ -453,7 +448,33 @@ class PaymentController extends Controller
     }
 
     /**
-     * Xử lý thanh toán
+     * Tính tiền giờ với làm tròn
+     */
+    private function calculateRoundedTimeCost(BillTimeUsage $timeUsage)
+    {
+        // Lấy cấu hình làm tròn từ table_rate
+        $tableRate = $timeUsage->bill->table->tableRate;
+        $roundingMinutes = $tableRate->rounding_minutes ?? 15;
+        $minChargeMinutes = $tableRate->min_charge_minutes ?? 15;
+        $roundingAmount = $tableRate->rounding_amount ?? 1000;
+
+        // Tính số phút đã sử dụng
+        $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
+        $effectiveMinutes = max($minChargeMinutes, $elapsedMinutes - ($timeUsage->paused_duration ?? 0));
+
+        // Làm tròn số phút lên
+        $roundedMinutes = ceil($effectiveMinutes / $roundingMinutes) * $roundingMinutes;
+
+        // Tính tiền
+        $hourlyRate = $timeUsage->hourly_rate;
+        $rawPrice = ($hourlyRate / 60) * $roundedMinutes;
+        $finalPrice = ceil($rawPrice / $roundingAmount) * $roundingAmount;
+
+        return $finalPrice;
+    }
+
+    /**
+     * Xử lý thanh toán - Cập nhật phần tính giờ
      */
     public function processPayment(Request $request, $billId)
     {
@@ -478,7 +499,7 @@ class PaymentController extends Controller
 
                 $isQuickBill = $bill->status === 'quick';
 
-                // 2. Xử lý thời gian chơi
+                // 2. Xử lý thời gian chơi với làm tròn
                 $timePrice = 0;
                 $totalMinutesPlayed = 0;
                 $endTime = now();
@@ -489,6 +510,11 @@ class PaymentController extends Controller
                         ->first();
 
                     if ($timeUsage) {
+                        $tableRate = $bill->table->tableRate;
+                        $roundingMinutes = $tableRate->rounding_minutes ?? 15;
+                        $minChargeMinutes = $tableRate->min_charge_minutes ?? 15;
+                        $roundingAmount = $tableRate->rounding_amount ?? 1000;
+
                         $startTime = Carbon::parse($timeUsage->start_time);
                         $totalMinutesPlayed = $startTime->diffInMinutes($endTime);
 
@@ -496,12 +522,22 @@ class PaymentController extends Controller
                             $totalMinutesPlayed -= $timeUsage->paused_duration;
                         }
 
+                        // Đảm bảo tối thiểu
+                        $totalMinutesPlayed = max($minChargeMinutes, $totalMinutesPlayed);
+
+                        // Làm tròn phút lên
+                        $roundedMinutes = ceil($totalMinutesPlayed / $roundingMinutes) * $roundingMinutes;
+
+                        // Tính tiền
                         $hourlyRate = $timeUsage->hourly_rate ?? ($bill->table->tableRate->hourly_rate ?? 0);
-                        $timePrice = round(($totalMinutesPlayed / 60) * $hourlyRate, 2);
+                        $rawPrice = ($hourlyRate / 60) * $roundedMinutes;
+
+                        // Làm tròn tiền lên
+                        $timePrice = ceil($rawPrice / $roundingAmount) * $roundingAmount;
 
                         $timeUsage->update([
                             'end_time' => $endTime,
-                            'duration_minutes' => $totalMinutesPlayed,
+                            'duration_minutes' => $roundedMinutes,
                             'total_price' => $timePrice,
                         ]);
                     } else {
@@ -521,7 +557,7 @@ class PaymentController extends Controller
                     ->where('is_combo_component', 0)
                     ->sum('total_price');
 
-                // 4. Xử lý khuyến mãi - SỬ DỤNG DISCOUNT_AMOUNT CÓ SẴN
+                // 4. Xử lý khuyến mãi
                 $discountAmount = $bill->discount_amount ?? 0;
 
                 // 5. Tổng tiền và final amount
@@ -557,10 +593,13 @@ class PaymentController extends Controller
                         'bill_number' => $bill->bill_number,
                         'table' => $bill->table->table_number,
                         'bill_type' => $isQuickBill ? 'quick' : 'regular',
-                        'play_minutes' => $isQuickBill ? 0 : $totalMinutesPlayed,
+                        'actual_minutes' => $totalMinutesPlayed,
+                        'rounded_minutes' => $endedTimeUsage->duration_minutes ?? $totalMinutesPlayed,
+                        'hourly_rate' => $bill->table->tableRate->hourly_rate ?? 0,
                         'time_price' => $timePrice,
                         'product_total' => $productTotal,
                         'discount' => $discountAmount,
+                        'final_amount' => $finalAmount,
                         'opened_by_staff_id' => $bill->staff_id,
                         'closed_by_staff_id' => $staffId,
                         'opened_by_staff_name' => $bill->staff->name ?? 'N/A',

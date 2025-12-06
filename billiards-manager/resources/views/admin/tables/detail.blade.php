@@ -998,6 +998,73 @@
             margin-bottom: 4px;
         }
 
+        /* Thêm các styles mới */
+        .bill-item-staff {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .staff-badge {
+            background: #f0f9ff;
+            border: 1px solid #dbeafe;
+            color: #1e40af;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+        }
+
+        .price-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .price-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .price-card-title {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .price-card-amount {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .time-card {
+            color: #3b82f6;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .product-card {
+            color: #10b981;
+            border-left: 4px solid #10b981;
+        }
+
+        .total-card {
+            color: #ef4444;
+            grid-column: span 2;
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-left: 4px solid #ef4444;
+        }
+
         /* Mobile Styles */
         @media (max-width: 1024px) {
             .main-content {
@@ -1078,6 +1145,14 @@
             .action-btn {
                 padding: 0.6rem;
                 font-size: 0.875rem;
+            }
+
+            .price-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .total-card {
+                grid-column: span 1;
             }
         }
 
@@ -1341,6 +1416,50 @@
             $userRole = Auth::user()->role->slug ?? '';
             $isAdminOrManager = in_array($userRole, ['admin', 'manager']);
             $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
+
+            // TÍNH TOÁN CHI PHÍ CHI TIẾT
+            $timeCost = 0;
+            $productCost = 0;
+            $comboCost = 0;
+            $discountAmount = $table->currentBill->discount_amount ?? 0;
+
+            if ($table->currentBill) {
+                // Tính tiền giờ
+                foreach ($table->currentBill->billTimeUsages as $timeUsage) {
+                    $timeCost += $timeUsage->total_price ?? 0;
+                }
+
+                // Tính tiền sản phẩm và combo
+                foreach ($table->currentBill->billDetails as $item) {
+                    if (!$item->is_combo_component) {
+                        if ($item->product_id && !$item->combo_id) {
+                            $productCost += $item->total_price;
+                        } elseif ($item->combo_id) {
+                            $comboCost += $item->total_price;
+                        }
+                    }
+                }
+            }
+
+            $subtotal = $timeCost + $productCost + $comboCost;
+            $finalAmount = max(0, $subtotal - $discountAmount);
+
+            // Tính làm tròn
+            $roundingDiff = 0;
+            if ($table->currentBill && $table->currentBill->billTimeUsages->count() > 0) {
+                foreach ($table->currentBill->billTimeUsages as $timeUsage) {
+                    if ($timeUsage->duration_minutes > 0 && $timeUsage->hourly_rate > 0) {
+                        $rawMinutes = $timeUsage->duration_minutes;
+                        $hourlyRate = $timeUsage->hourly_rate;
+                        $rawPrice = ($hourlyRate / 60) * $rawMinutes;
+                        $roundedPrice = $timeUsage->total_price ?? $rawPrice;
+
+                        if ($roundedPrice > $rawPrice) {
+                            $roundingDiff += $roundedPrice - $rawPrice;
+                        }
+                    }
+                }
+            }
         @endphp
 
         <!-- Header -->
@@ -1454,12 +1573,19 @@
                         </div>
 
                         <div class="time-box">
-                            <div class="time-label">CHI PHÍ HIỆN TẠI</div>
+                            <div class="time-label">CHI PHÍ GIỜ HIỆN TẠI</div>
                             <div id="currentCostDisplay" class="time-value time-cost">
-                                {{ number_format(round($timeInfo['current_cost'] ?? 0)) }} ₫
+                                {{ number_format(round($timeCost + $roundingDiff)) }} ₫
                             </div>
                         </div>
                     </div>
+
+                    @if ($roundingDiff > 0)
+                        <div class="text-xs text-amber-600 mt-2 text-center">
+                            <i class="fas fa-info-circle"></i>
+                            Đã bao gồm {{ number_format($roundingDiff) }}₫ làm tròn
+                        </div>
+                    @endif
 
                     @if (isset($timeInfo['mode']) && $timeInfo['mode'] === 'combo')
                         <div class="progress-container">
@@ -1776,14 +1902,9 @@
                                 <i class="fas fa-receipt text-gray-600"></i>
                                 CHI TIẾT HÓA ĐƠN
                             </h2>
-                            <div class="text-right">
-                                <div class="text-sm text-gray-600">TỔNG HÓA ĐƠN</div>
-                                <div id="finalAmountDisplay" class="text-xl font-bold text-green-600">
-                                    {{ number_format(round($table->currentBill->final_amount ?? 0)) }} ₫
-                                </div>
-                            </div>
                         </div>
 
+                        <!-- Price Summary -->
                         <div class="bill-container table-responsive">
                             @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
                                 <table class="bill-table">
@@ -1793,53 +1914,103 @@
                                             <th width="80">SL</th>
                                             <th width="120">Đơn giá</th>
                                             <th width="140">Thành tiền</th>
-                                            <th width="80">Thao tác</th>
+                                            <th width="80"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($table->currentBill->billDetails as $item)
-                                            <tr class="fade-in">
-                                                <td>
-                                                    @if ($item->product_id && $item->product)
-                                                        <i class="fas fa-utensils text-green-500 mr-2"></i>
-                                                        {{ $item->product->name }}
-                                                        @if ($item->is_combo_component)
-                                                            <span class="text-xs text-gray-500">(Thành phần
-                                                                combo)</span>
+                                            @if (!$item->is_combo_component)
+                                                <tr>
+                                                    <td>
+                                                        @if ($item->product_id && $item->product)
+                                                            <i class="fas fa-utensils text-green-500 mr-2"></i>
+                                                            {{ $item->product->name }}
+                                                        @elseif($item->combo_id && $item->combo)
+                                                            <i class="fas fa-gift text-purple-500 mr-2"></i>
+                                                            {{ $item->combo->name }}
+                                                            @if ($item->combo->is_time_combo)
+                                                                <span class="text-xs text-purple-500">
+                                                                    ({{ $item->combo->play_duration_minutes }} phút)
+                                                                </span>
+                                                            @endif
                                                         @endif
-                                                    @elseif($item->combo_id && $item->combo)
-                                                        <i class="fas fa-gift text-purple-500 mr-2"></i>
-                                                        {{ $item->combo->name }}
-                                                    @else
-                                                        <i class="fas fa-plus-circle text-blue-500 mr-2"></i>
-                                                        {{ $item->note ?? 'Dịch vụ khác' }}
-                                                    @endif
-                                                </td>
-                                                <td class="text-center">{{ $item->quantity }}</td>
-                                                <td class="text-right">{{ number_format(round($item->unit_price)) }} ₫
-                                                </td>
-                                                <td class="text-right font-semibold">
-                                                    {{ number_format(round($item->total_price)) }} ₫</td>
-                                                <td class="text-center">
-                                                    @if ($item->product_id && !$item->is_combo_component && !$item->combo_id)
-                                                        <form
-                                                            action="{{ route('admin.bills.remove-product', ['bill' => $table->currentBill->id, 'billDetail' => $item->id]) }}"
-                                                            method="POST" class="d-inline">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="button"
-                                                                class="delete-product-btn text-red-500 hover:text-red-700 transition-colors duration-200 p-2 rounded hover:bg-red-50"
-                                                                title="Xóa sản phẩm"
-                                                                data-product-name="{{ $item->product->name }}">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
-                                                        </form>
-                                                    @else
-                                                        <span class="text-gray-400 text-xs">Không thể xóa</span>
-                                                    @endif
-                                                </td>
-                                            </tr>
+
+                                                        <!-- HIỂN THỊ NHÂN VIÊN ĐÃ THÊM -->
+                                                        @if ($item->added_by)
+                                                            @php
+                                                                $addedByUser = App\Models\User::find($item->added_by);
+                                                                $staffName = $addedByUser->name ?? 'N/A';
+                                                                $staffCode =
+                                                                    $addedByUser->employee->employee_code ?? 'N/A';
+                                                                $addedTime = $item->added_at
+                                                                    ? \Carbon\Carbon::parse($item->added_at)->format(
+                                                                        'H:i',
+                                                                    )
+                                                                    : '';
+                                                            @endphp
+                                                            <div class="bill-item-staff">
+                                                                <i class="fas fa-user-circle text-gray-400"></i>
+                                                                <span>{{ $staffName }}</span>
+                                                                @if ($staffCode !== 'N/A')
+                                                                    <span
+                                                                        class="text-gray-500">({{ $staffCode }})</span>
+                                                                @endif
+                                                                @if ($addedTime)
+                                                                    <span class="text-gray-400">•
+                                                                        {{ $addedTime }}</span>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-center">{{ $item->quantity }}</td>
+                                                    <td class="text-right">{{ number_format($item->unit_price) }} ₫
+                                                    </td>
+                                                    <td class="text-right font-semibold">
+                                                        {{ number_format($item->total_price) }} ₫
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if ($item->product_id && !$item->combo_id)
+                                                            <form
+                                                                action="{{ route('admin.bills.remove-product', ['bill' => $table->currentBill->id, 'billDetail' => $item->id]) }}"
+                                                                method="POST">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="button"
+                                                                    class="delete-product-btn text-red-500 hover:text-red-700 p-2"
+                                                                    title="Xóa sản phẩm"
+                                                                    data-product-name="{{ $item->product->name }}">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endif
                                         @endforeach
+                                        
+                                        <!-- HIỂN THỊ GIẢM GIÁ -->
+                                        @if ($discountAmount > 0)
+                                            <tr class="bg-red-50">
+                                                <td colspan="3" class="text-right font-semibold text-red-700">
+                                                    <i class="fas fa-tag mr-2"></i>Giảm giá
+                                                </td>
+                                                <td class="text-right font-bold text-red-700">
+                                                    -{{ number_format($discountAmount) }} ₫
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        @endif
+
+                                        <!-- HIỂN THỊ TỔNG CỘNG -->
+                                        <tr class="bg-green-50 border-t-2 border-green-200">
+                                            <td colspan="3" class="text-right font-bold text-lg text-green-700">
+                                                <i class="fas fa-calculator mr-2"></i>TỔNG CỘNG
+                                            </td>
+                                            <td class="text-right font-bold text-lg text-green-700">
+                                                {{ number_format($finalAmount) }} ₫
+                                            </td>
+                                            <td></td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             @else
@@ -1994,12 +2165,6 @@
                             @endif
                             <!-- KẾT THÚC PHẦN HIỂN THỊ CHUYỂN BÀN -->
                         </div>
-
-                        @if ($table->currentBill && $table->currentBill->billDetails->count() > 0)
-                            <div class="total-amount">
-                                Tổng cộng: {{ number_format(round($table->currentBill->final_amount)) }} ₫
-                            </div>
-                        @endif
                     </div>
                 </div>
             </div>
@@ -2042,17 +2207,55 @@
                                     </div>
                                     <div class="info-item">
                                         <span class="info-label">Thời gian mở:</span>
-                                        <span class="info-value text-sm">
-                                            {{ $table->currentBill->start_time ? $table->currentBill->start_time->format('H:i d/m/Y') : 'N/A' }}
+                                        <span class="info-value">
+                                            {{ $table->currentBill->start_time->format('H:i d/m/Y') }}
                                         </span>
                                     </div>
                                 </div>
 
+                                <!-- CHI TIẾT TÀI CHÍNH -->
                                 <div class="border-t border-gray-200 pt-3 mt-2">
                                     <div class="info-item">
-                                        <span class="info-label">Tổng hiện tại:</span>
-                                        <span class="info-value text-green-600 font-bold">
-                                            {{ number_format(round($table->currentBill->final_amount)) }} ₫
+                                        <span class="info-label flex items-center">
+                                            <i class="fas fa-clock text-blue-500 mr-2 text-sm"></i>
+                                            Tiền giờ:
+                                        </span>
+                                        <span class="info-value text-blue-600 font-semibold">
+                                            {{ number_format($timeCost) }} ₫
+                                            @if ($roundingDiff > 0)
+                                                <div class="text-xs text-amber-600">
+                                                    (+{{ number_format($roundingDiff) }}₫ làm tròn)
+                                                </div>
+                                            @endif
+                                        </span>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <span class="info-label flex items-center">
+                                            <i class="fas fa-utensils text-green-500 mr-2 text-sm"></i>
+                                            Tiền sản phẩm:
+                                        </span>
+                                        <span class="info-value text-green-600 font-semibold">
+                                            {{ number_format($productCost + $comboCost) }} ₫
+                                        </span>
+                                    </div>
+
+                                    @if ($discountAmount > 0)
+                                        <div class="info-item">
+                                            <span class="info-label flex items-center">
+                                                <i class="fas fa-tag text-red-500 mr-2 text-sm"></i>
+                                                Giảm giá:
+                                            </span>
+                                            <span class="info-value text-red-600 font-semibold">
+                                                -{{ number_format($discountAmount) }} ₫
+                                            </span>
+                                        </div>
+                                    @endif
+
+                                    <div class="info-item border-t border-gray-200 pt-2 mt-2">
+                                        <span class="info-label font-bold">Tổng cộng:</span>
+                                        <span class="info-value text-green-600 font-bold text-lg">
+                                            {{ number_format($finalAmount) }} ₫
                                         </span>
                                     </div>
                                 </div>
@@ -2069,10 +2272,9 @@
 
                         <div class="action-buttons">
                             @if ($table->currentBill)
-                                <!-- Xử lý bàn lẻ -->
                                 @if ($table->currentBill->status === 'quick')
                                     <form action="{{ route('admin.bills.start-playing', $table->currentBill->id) }}"
-                                        method="POST" class="w-full">
+                                        method="POST">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-primary">
                                             <i class="fas fa-play"></i>
@@ -2088,7 +2290,6 @@
                                         <span class="mobile-only">THANH TOÁN</span>
                                     </a>
                                 @else
-                                    <!-- Thanh toán -->
                                     <a href="{{ route('admin.payments.payment-page', $table->currentBill->id) }}"
                                         class="action-btn action-btn-primary">
                                         <i class="fas fa-credit-card"></i>
@@ -2096,9 +2297,8 @@
                                         <span class="mobile-only">THANH TOÁN</span>
                                     </a>
 
-                                    <!-- Cập nhật tổng -->
                                     <form action="{{ route('admin.bills.update-total', $table->currentBill->id) }}"
-                                        method="POST" class="w-full">
+                                        method="POST">
                                         @csrf
                                         <button type="submit" class="action-btn action-btn-secondary">
                                             <i class="fas fa-sync-alt"></i>
@@ -2107,24 +2307,6 @@
                                         </button>
                                     </form>
 
-                                    <!-- NÚT BẬT GIỜ THƯỜNG KHI COMBO HẾT -->
-                                    @if (isset($timeInfo['needs_switch']) &&
-                                            $timeInfo['needs_switch'] &&
-                                            isset($timeInfo['mode']) &&
-                                            $timeInfo['mode'] === 'combo_ended')
-                                        <form
-                                            action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
-                                            method="POST" class="w-full">
-                                            @csrf
-                                            <button type="submit" class="action-btn action-btn-success">
-                                                <i class="fas fa-play-circle"></i>
-                                                <span class="desktop-only">BẬT GIỜ THƯỜNG</span>
-                                                <span class="mobile-only">BẬT GIỜ</span>
-                                            </button>
-                                        </form>
-                                    @endif
-
-                                    <!-- Chuyển bàn -->
                                     <a href="{{ route('admin.bills.transfer-form', $table->currentBill->id) }}"
                                         class="action-btn action-btn-secondary">
                                         <i class="fas fa-exchange-alt"></i>
@@ -2133,14 +2315,12 @@
                                     </a>
                                 @endif
                             @else
-                                <!-- Tạo bill mới -->
                                 <button onclick="showCreateBillModal()" class="action-btn action-btn-primary">
                                     <i class="fas fa-plus"></i>
                                     <span class="desktop-only">TẠO HÓA ĐƠN TÍNH GIỜ</span>
                                     <span class="mobile-only">TẠO HÓA ĐƠN</span>
                                 </button>
 
-                                <!-- Tạo bàn lẻ -->
                                 <button onclick="showQuickBillModal()" class="action-btn action-btn-warning">
                                     <i class="fas fa-bolt"></i>
                                     <span class="desktop-only">TẠO BÀN LẺ</span>
@@ -2169,30 +2349,16 @@
                                 </div>
                                 <div class="info-item">
                                     <span class="info-label">Loại khách</span>
-                                    <span class="info-value">
-                                        @php
-                                            $customerType = $table->currentBill->user->customer_type ?? 'Mới';
-                                            $typeClass = match ($customerType) {
-                                                'VIP' => 'text-red-600 font-bold',
-                                                'Thân thiết' => 'text-purple-600 font-semibold',
-                                                'Quay lại' => 'text-blue-600',
-                                                default => 'text-gray-600',
-                                            };
-                                        @endphp
-                                        <span class="{{ $typeClass }}">{{ $customerType }}</span>
-                                    </span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Số lần đến</span>
-                                    <span class="info-value font-bold text-green-600">
-                                        {{ $table->currentBill->user->total_visits ?? 1 }} lần
-                                    </span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Tổng chi tiêu</span>
-                                    <span class="info-value font-bold text-orange-600">
-                                        {{ number_format($table->currentBill->user->total_spent ?? 0) }} ₫
-                                    </span>
+                                    @php
+                                        $customerType = $table->currentBill->user->customer_type ?? 'Mới';
+                                        $typeClass = match ($customerType) {
+                                            'VIP' => 'text-red-600 font-bold',
+                                            'Thân thiết' => 'text-purple-600 font-semibold',
+                                            'Quay lại' => 'text-blue-600',
+                                            default => 'text-gray-600',
+                                        };
+                                    @endphp
+                                    <span class="info-value {{ $typeClass }}">{{ $customerType }}</span>
                                 </div>
                             </div>
                         </div>
@@ -2754,130 +2920,6 @@
             @endif
         }
 
-        // Hàm kiểm tra và cập nhật trạng thái combo từ server
-        async function checkComboStatus() {
-            if ((currentMode === 'combo' || needsSwitch) && currentBillId) {
-                try {
-                    const response = await fetch(`/admin/bills/${currentBillId}/check-combo-status`);
-                    const data = await response.json();
-
-                    // Cập nhật thời gian còn lại
-                    if (data.has_active_combo && data.remaining_minutes !== undefined) {
-                        const remainingMinutes = data.remaining_minutes;
-                        const hours = Math.floor(remainingMinutes / 60);
-                        const minutes = remainingMinutes % 60;
-
-                        document.getElementById('remainingTimeDisplay').textContent =
-                            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-
-                        // Cập nhật progress bar
-                        if (data.total_minutes && data.total_minutes > 0) {
-                            const progressPercent = Math.min(100, ((data.total_minutes - remainingMinutes) / data
-                                .total_minutes) * 100);
-                            document.getElementById('progressBar').style.width = `${progressPercent}%`;
-                            document.getElementById('progressText').textContent = `${Math.round(progressPercent)}%`;
-                        }
-
-                        // Hiển thị cảnh báo nếu sắp hết thời gian
-                        updateWarningBanners(remainingMinutes);
-                    }
-
-                    // Nếu combo đã hết, reload trang để hiển thị nút bật giờ thường
-                    if (data.needs_switch && !data.has_active_combo) {
-                        showToast('Combo đã kết thúc, vui lòng bật giờ thường', 'info', 5000);
-                        setTimeout(() => {
-                            location.reload();
-                        }, 2000);
-                    }
-                } catch (error) {
-                    console.error('Error checking combo status:', error);
-                }
-            }
-        }
-
-        // Cập nhật cảnh báo combo sắp hết
-        function updateWarningBanners(remainingMinutes) {
-            // Xóa các banner cũ
-            removeExistingBanners();
-
-            // Hiển thị cảnh báo phù hợp
-            if (remainingMinutes <= 5 && remainingMinutes > 0) {
-                showCriticalWarningBanner(remainingMinutes);
-            } else if (remainingMinutes <= 10 && remainingMinutes > 5) {
-                showWarningBanner(remainingMinutes);
-            }
-        }
-
-        // Xóa các banner cảnh báo cũ
-        function removeExistingBanners() {
-            const warningBanner = document.querySelector('.warning-banner');
-            const criticalBanner = document.querySelector('.critical-warning-banner');
-
-            if (warningBanner) warningBanner.remove();
-            if (criticalBanner) criticalBanner.remove();
-        }
-
-        // Hiển thị cảnh báo thường (5-10 phút)
-        function showWarningBanner(remainingMinutes) {
-            const timeTrackingCard = document.querySelector('.card');
-            const warningBanner = document.createElement('div');
-            warningBanner.className = 'warning-banner fade-in';
-            warningBanner.innerHTML = `
-                <div class="warning-banner-content">
-                    <i class="fas fa-exclamation-triangle text-amber-500"></i>
-                    <div class="warning-banner-text">
-                        <div class="warning-banner-title">COMBO SẮP HẾT THỜI GIAN!</div>
-                        <div class="warning-banner-description">
-                            Chỉ còn <strong>${remainingMinutes} phút</strong> trong combo. 
-                            Chuẩn bị chuyển sang giờ thường.
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            insertBanner(warningBanner);
-        }
-
-        // Hiển thị cảnh báo khẩn cấp (0-5 phút)
-        function showCriticalWarningBanner(remainingMinutes) {
-            const timeTrackingCard = document.querySelector('.card');
-            const criticalBanner = document.createElement('div');
-            criticalBanner.className = 'critical-warning-banner fade-in';
-            criticalBanner.innerHTML = `
-                <div class="critical-warning-content">
-                    <div class="critical-warning-info">
-                        <i class="fas fa-exclamation-circle text-white text-xl"></i>
-                        <div class="critical-warning-text">
-                            <div class="critical-warning-title">CẢNH BÁO: COMBO SẮP HẾT!</div>
-                            <div class="critical-warning-description">
-                                Chỉ còn <strong>${remainingMinutes} phút</strong>. 
-                                Bạn hãy thao tác để chuyển tiếp trạng thái 
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            insertBanner(criticalBanner);
-        }
-
-        // Chèn banner vào đúng vị trí
-        function insertBanner(banner) {
-            const timeTrackingCard = document.querySelector('.card');
-            const progressContainer = document.querySelector('.progress-container');
-
-            if (progressContainer) {
-                progressContainer.parentNode.insertBefore(banner, progressContainer.nextSibling);
-            } else {
-                const timeTracking = document.querySelector('.time-tracking');
-                if (timeTracking) {
-                    timeTracking.parentNode.insertBefore(banner, timeTracking.nextSibling);
-                } else {
-                    timeTrackingCard.appendChild(banner);
-                }
-            }
-        }
-
         // Event listeners for buttons
         document.addEventListener('DOMContentLoaded', function() {
             // Setup mobile panels
@@ -2901,12 +2943,6 @@
 
             // Setup delete confirmations
             setupDeleteConfirmations();
-
-            // Kiểm tra trạng thái combo định kỳ (mỗi 10 giây)
-            if (currentMode === 'combo' || needsSwitch) {
-                setInterval(checkComboStatus, 10000); // Kiểm tra mỗi 10 giây
-                checkComboStatus(); // Kiểm tra ngay khi load
-            }
 
             // Setup tabs and search functionality
             setupTabs();

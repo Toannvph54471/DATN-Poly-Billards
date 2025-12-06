@@ -226,19 +226,19 @@ class BillController extends Controller
         ];
     }
 
-
     // Hàm hiển thị chi tiết hóa đơn
     public function show($id)
     {
         $bill = Bill::with([
             'table.tableRate',
             'user',
-            'staff',
+            'staff', // Nhân viên tạo hóa đơn
             'billTimeUsages',
             'billDetails.product.category',
             'billDetails.combo.comboItems.product',
+            'billDetails.addedByUser', // Load thông tin nhân viên đã thêm
             'payments',
-            'promotion' // Thêm quan hệ promotion
+            'promotion'
         ])
             ->findOrFail($id);
 
@@ -435,6 +435,8 @@ class BillController extends Controller
                 'unit_price' => $product->price,
                 'original_price' => $product->price,
                 'total_price' => $product->price * $request->quantity,
+                'added_by' => Auth::id(), // Thêm dòng này
+                'added_at' => now(), // Đảm bảo có dòng này
                 'is_combo_component' => false
             ]);
 
@@ -547,7 +549,9 @@ class BillController extends Controller
                 'unit_price' => $combo->price,
                 'original_price' => $combo->actual_value,
                 'total_price' => $combo->price * $request->quantity,
-                'is_combo_component' => false
+                'is_combo_component' => false,
+                'added_by' => Auth::id(), // Thêm dòng này
+                'added_at' => now() // Thêm dòng này
             ]);
 
             // Xử lý các sản phẩm trong combo
@@ -561,7 +565,9 @@ class BillController extends Controller
                         'unit_price' => 0,
                         'original_price' => $item->product->price,
                         'total_price' => 0,
-                        'is_combo_component' => true
+                        'is_combo_component' => true,
+                        'added_by' => Auth::id(), // Thêm dòng này
+                        'added_at' => now() // Thêm dòng này
                     ]);
 
                     // Cập nhật tồn kho
@@ -963,18 +969,48 @@ class BillController extends Controller
                 ->get();
 
             foreach ($activeRegularTime as $timeUsage) {
-                $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
-                $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
-
-                // LÀM TRÒN PHÚT: làm tròn lên đến phút
-                $roundedMinutes = ceil($effectiveMinutes);
-                $timeCost = ($timeUsage->hourly_rate / 60) * max(0, $roundedMinutes);
-
+                $timeCost = $this->calculateRoundedTimeCost($timeUsage);
                 $totalTimeCost += $timeCost;
             }
         }
 
         return $totalTimeCost;
+    }
+
+    /**
+     * Tính tiền giờ với làm tròn phút và tiền
+     */
+    private function calculateRoundedTimeCost(BillTimeUsage $timeUsage)
+    {
+        $tableRate = $timeUsage->bill->table->tableRate;
+
+        // Lấy cấu hình làm tròn từ table_rate
+        $roundingMinutes = $tableRate->rounding_minutes ?? 15;
+        $minChargeMinutes = $tableRate->min_charge_minutes ?? 15;
+        $roundingAmount = $tableRate->rounding_amount ?? 1000;
+
+        // Tính số phút đã sử dụng
+        $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
+        $effectiveMinutes = max($minChargeMinutes, $elapsedMinutes - ($timeUsage->paused_duration ?? 0));
+
+        // Làm tròn số phút lên
+        $roundedMinutes = ceil($effectiveMinutes / $roundingMinutes) * $roundingMinutes;
+
+        // Tính tiền gốc
+        $hourlyRate = $timeUsage->hourly_rate;
+        $rawPrice = ($hourlyRate / 60) * $roundedMinutes;
+
+        // Làm tròn tiền lên theo rounding_amount
+        $finalPrice = ceil($rawPrice / $roundingAmount) * $roundingAmount;
+
+        // Cập nhật nếu cần (cho session đang chạy)
+        if (is_null($timeUsage->end_time)) {
+            $timeUsage->duration_minutes = $roundedMinutes;
+            $timeUsage->total_price = $finalPrice;
+            $timeUsage->save();
+        }
+
+        return $finalPrice;
     }
 
     /**
@@ -1268,12 +1304,29 @@ class BillController extends Controller
 
             $totalAmount = $timeCost + $productTotal;
 
-            // SỬ DỤNG DISCOUNT_AMOUNT TỪ BILL (có thể là 0)
+            // SỬ DỤNG DISCOUNT_AMOUNT TỪ BILL
             $discountAmount = $bill->discount_amount ?? 0;
             $finalAmount = $totalAmount - $discountAmount;
 
-            // Lấy thông tin khuyến mãi từ note (nếu có)
+            // Lấy thông tin khuyến mãi từ note
             $promotionInfo = $this->extractPromotionInfoFromNote($bill->note);
+
+            // TẠO QR CODE DỮ LIỆU (quan trọng: thêm số tiền vào dữ liệu QR)
+            $qrData = [
+                'bill_number' => $bill->bill_number,
+                'amount' => $finalAmount,
+                'currency' => 'VND',
+                'account' => '0368015218', // Số tài khoản của bạn
+                'bank' => 'MBBank',
+                'content' => "TT Bill {$bill->bill_number}"
+            ];
+
+            // Tạo URL QR code với thông tin tiền tệ
+            $qrUrl = "https://img.vietqr.io/image/MB-0368015218-qr_only.png"
+                . http_build_query([
+                    'amount' => $finalAmount,
+                    'addInfo' => "TT Bill {$bill->bill_number}"
+                ]);
 
             // Dữ liệu cho bill
             $billData = [
@@ -1286,7 +1339,9 @@ class BillController extends Controller
                 'discountAmount' => $discountAmount,
                 'promotionInfo' => $promotionInfo,
                 'printTime' => now()->format('H:i d/m/Y'),
-                'staff' => Auth::user()->name
+                'staff' => Auth::user()->name,
+                'qrUrl' => $qrUrl, // THÊM QR URL
+                'qrData' => $qrData // THÊM QR DATA
             ];
 
             // Auto redirect logic
@@ -1337,14 +1392,18 @@ class BillController extends Controller
         return null;
     }
 
+    /**
+     * Tính toán chi tiết thời gian với làm tròn
+     */
     public function calculateTimeChargeDetailed(Bill $bill)
     {
         $timeDetails = [
             'totalCost' => 0,
             'totalMinutes' => 0,
+            'roundedMinutes' => 0,
             'sessions' => [],
             'hourlyRate' => 0,
-            'tableTransfers' => [] // Thêm thông tin chuyển bàn
+            'roundingInfo' => []
         ];
 
         // Lấy tất cả session giờ thường
@@ -1352,55 +1411,114 @@ class BillController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        foreach ($allRegularTime as $timeUsage) {
-            $sessionCost = $timeUsage->total_price ?? 0;
-            $sessionMinutes = $timeUsage->duration_minutes ?? 0;
+        $tableRate = $bill->table->tableRate;
+        $roundingMinutes = $tableRate->rounding_minutes ?? 15;
+        $roundingAmount = $tableRate->rounding_amount ?? 1000;
 
-            // Nếu là session đang chạy, tính toán thời gian thực
-            if (is_null($timeUsage->end_time)) {
-                $elapsedMinutes = $this->calculateElapsedMinutes($timeUsage);
-                $effectiveMinutes = $elapsedMinutes - ($timeUsage->paused_duration ?? 0);
-                $sessionCost = ($timeUsage->hourly_rate / 60) * max(0, $effectiveMinutes);
-                $sessionMinutes = $effectiveMinutes;
-            }
+        foreach ($allRegularTime as $timeUsage) {
+            $sessionDetails = $this->calculateSessionDetails($timeUsage);
 
             $timeDetails['sessions'][] = [
                 'type' => is_null($timeUsage->end_time) ? 'regular_active' : 'regular_ended',
-                'minutes' => $sessionMinutes,
-                'hours' => round($sessionMinutes / 60, 2),
+                'actual_minutes' => $sessionDetails['actual_minutes'],
+                'rounded_minutes' => $sessionDetails['rounded_minutes'],
+                'hours' => round($sessionDetails['rounded_minutes'] / 60, 2),
                 'hourly_rate' => $timeUsage->hourly_rate,
-                'cost' => $sessionCost,
-                'description' => "Giờ thường: " . $this->formatDuration($sessionMinutes),
-                'calculation' => $this->formatTimeCalculation($timeUsage->hourly_rate, $sessionMinutes, $sessionCost),
-                'table_note' => $timeUsage->note // Hiển thị ghi chú chuyển bàn nếu có
+                'raw_price' => $sessionDetails['raw_price'],
+                'rounded_price' => $sessionDetails['rounded_price'],
+                'cost' => $sessionDetails['rounded_price'],
+                'description' => "Giờ thường: " . $this->formatDuration($sessionDetails['actual_minutes']),
+                'rounded_description' => "Tính phí: " . $this->formatDuration($sessionDetails['rounded_minutes']),
+                'calculation' => $this->formatRoundedTimeCalculation(
+                    $timeUsage->hourly_rate,
+                    $sessionDetails['actual_minutes'],
+                    $sessionDetails['rounded_minutes'],
+                    $sessionDetails['raw_price'],
+                    $sessionDetails['rounded_price']
+                ),
+                'table_note' => $timeUsage->note
             ];
 
-            $timeDetails['totalCost'] += $sessionCost;
-            $timeDetails['totalMinutes'] += $sessionMinutes;
+            $timeDetails['totalCost'] += $sessionDetails['rounded_price'];
+            $timeDetails['totalMinutes'] += $sessionDetails['actual_minutes'];
+            $timeDetails['roundedMinutes'] += $sessionDetails['rounded_minutes'];
 
             if ($timeUsage->hourly_rate > 0) {
                 $timeDetails['hourlyRate'] = $timeUsage->hourly_rate;
             }
         }
 
-        // Xử lý combo time (giữ nguyên như cũ)
-        $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
-            ->where('is_expired', false)
-            ->where('remaining_minutes', '>', 0)
-            ->first();
-
-        if (!$activeComboTime) {
-            $activeRegularTime = BillTimeUsage::where('bill_id', $bill->id)
-                ->whereNull('end_time')
-                ->get();
-
-            foreach ($activeRegularTime as $timeUsage) {
-                // Đã xử lý ở trên
-            }
-        }
+        $timeDetails['roundingInfo'] = [
+            'rounding_minutes' => $roundingMinutes,
+            'rounding_amount' => number_format($roundingAmount, 0, ',', '.'),
+            'total_rounding_diff' => $timeDetails['totalCost'] -
+                (($timeDetails['hourlyRate'] / 60) * $timeDetails['totalMinutes'])
+        ];
 
         return $timeDetails;
     }
+
+    /**
+     * Tính chi tiết từng session
+     */
+    private function calculateSessionDetails(BillTimeUsage $timeUsage)
+    {
+        $tableRate = $timeUsage->bill->table->tableRate;
+        $roundingMinutes = $tableRate->rounding_minutes ?? 15;
+        $minChargeMinutes = $tableRate->min_charge_minutes ?? 15;
+        $roundingAmount = $tableRate->rounding_amount ?? 1000;
+
+        // Tính số phút thực tế
+        if (is_null($timeUsage->end_time)) {
+            $actualMinutes = $this->calculateElapsedMinutes($timeUsage);
+        } else {
+            $actualMinutes = $timeUsage->duration_minutes ?? 0;
+        }
+
+        $effectiveMinutes = max($minChargeMinutes, $actualMinutes - ($timeUsage->paused_duration ?? 0));
+
+        // Làm tròn phút lên
+        $roundedMinutes = ceil($effectiveMinutes / $roundingMinutes) * $roundingMinutes;
+
+        // Tính tiền
+        $hourlyRate = $timeUsage->hourly_rate;
+        $rawPrice = ($hourlyRate / 60) * $roundedMinutes;
+        $roundedPrice = ceil($rawPrice / $roundingAmount) * $roundingAmount;
+
+        return [
+            'actual_minutes' => $actualMinutes,
+            'effective_minutes' => $effectiveMinutes,
+            'rounded_minutes' => $roundedMinutes,
+            'raw_price' => $rawPrice,
+            'rounded_price' => $roundedPrice,
+            'rounding_diff' => $roundedPrice - $rawPrice
+        ];
+    }
+
+    /**
+     * Format công thức tính tiền với làm tròn
+     */
+    private function formatRoundedTimeCalculation($hourlyRate, $actualMinutes, $roundedMinutes, $rawPrice, $roundedPrice)
+    {
+        $hourlyRateFormatted = number_format($hourlyRate, 0, ',', '.');
+        $actualHours = round($actualMinutes / 60, 2);
+        $roundedHours = round($roundedMinutes / 60, 2);
+        $rawPriceFormatted = number_format($rawPrice, 0, ',', '.');
+        $roundedPriceFormatted = number_format($roundedPrice, 0, ',', '.');
+
+        $calculation = "{$hourlyRateFormatted}₫/h × {$actualHours}h (thực) ";
+        $calculation .= "= {$rawPriceFormatted}₫ (làm tròn {$roundedHours}h) ";
+        $calculation .= "→ {$roundedPriceFormatted}₫";
+
+        if ($roundedPrice > $rawPrice) {
+            $diff = $roundedPrice - $rawPrice;
+            $diffFormatted = number_format($diff, 0, ',', '.');
+            $calculation .= " (+{$diffFormatted}₫ làm tròn)";
+        }
+
+        return $calculation;
+    }
+
 
     /**
      * Format thời gian từ phút sang "XhYp"

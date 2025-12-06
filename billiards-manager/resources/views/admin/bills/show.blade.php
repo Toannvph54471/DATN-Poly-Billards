@@ -197,6 +197,8 @@
                                 <th class="px-4 py-2 text-left">Sản phẩm/Combo</th>
                                 <th class="px-4 py-2 text-left">Số lượng</th>
                                 <th class="px-4 py-2 text-left">Đơn giá</th>
+                                <th class="px-4 py-2 text-left">Nhân viên đặt</th>
+                                <th class="px-4 py-2 text-left">Thời gian thêm</th>
                                 <th class="px-4 py-2 text-left">Thành tiền</th>
                             </tr>
                         </thead>
@@ -224,12 +226,82 @@
                                     </td>
                                     <td class="px-4 py-2">{{ $detail->quantity }}</td>
                                     <td class="px-4 py-2">{{ number_format($detail->unit_price) }} ₫</td>
+                                    <td class="px-4 py-2">
+                                        @if ($detail->addedByUser)
+                                            <div class="flex items-center">
+                                                <div
+                                                    class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                                    @if ($detail->addedByUser->avatar)
+                                                        <img src="{{ asset('storage/' . $detail->addedByUser->avatar) }}"
+                                                            alt="{{ $detail->addedByUser->name }}"
+                                                            class="w-full h-full rounded-full object-cover">
+                                                    @else
+                                                        <i class="fas fa-user text-blue-600"></i>
+                                                    @endif
+                                                </div>
+                                                <div>
+                                                    <div class="font-medium">{{ $detail->addedByUser->name }}</div>
+                                                    <div class="text-xs text-gray-500">
+                                                        {{ $detail->addedByUser->employee->position ?? 'Nhân viên' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <span class="text-gray-400">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-2 text-sm text-gray-600">
+                                        @if ($detail->added_at)
+                                            {{ \Carbon\Carbon::parse($detail->added_at)->format('H:i d/m/Y') }}
+                                        @else
+                                            <span class="text-gray-400">-</span>
+                                        @endif
+                                    </td>
                                     <td class="px-4 py-2 font-medium">{{ number_format($detail->total_price) }} ₫</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
+
+                {{-- Tổng kết số nhân viên tham gia đặt hàng --}}
+                @php
+                    // Lấy danh sách nhân viên đã đặt hàng (không trùng)
+                    $addedByUsers = $bill->billDetails
+                        ->where('is_combo_component', false)
+                        ->whereNotNull('added_by')
+                        ->pluck('addedByUser')
+                        ->filter()
+                        ->unique('id');
+                @endphp
+
+                @if ($addedByUsers->count() > 0)
+                    <div class="mt-4 pt-3 border-t border-gray-200">
+                        <div class="flex items-center">
+                            <i class="fas fa-users text-gray-500 mr-2"></i>
+                            <div>
+                                <span class="font-medium text-gray-700">Nhân viên phục vụ: </span>
+                                @foreach ($addedByUsers as $user)
+                                    <span
+                                        class="inline-flex items-center bg-blue-50 px-3 py-1 rounded-full text-sm text-blue-700 mr-2 mb-1">
+                                        @if ($user->avatar)
+                                            <img src="{{ asset('storage/' . $user->avatar) }}" alt="{{ $user->name }}"
+                                                class="w-4 h-4 rounded-full mr-1">
+                                        @else
+                                            <i class="fas fa-user mr-1 text-xs"></i>
+                                        @endif
+                                        {{ $user->name }}
+                                        @if ($user->employee)
+                                            <span class="ml-1 text-xs text-blue-500">
+                                                ({{ $user->employee->position ?? '' }})
+                                            </span>
+                                        @endif
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         @endif
 

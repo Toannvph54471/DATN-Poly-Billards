@@ -32,7 +32,13 @@ Route::prefix('admin')
 
         // Dashboard
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('chart-data', [DashboardController::class, 'getChartData'])->name('chart-data');
 
+        Route::get('/quick-stats', [DashboardController::class, 'getQuickStats'])->name('quick-stats');
+        Route::get('/top-products', [DashboardController::class, 'getTopProductsData'])->name('top-products');
+        Route::get('/table-stats', [DashboardController::class, 'getTableStatsData'])->name('table-stats');
+        Route::get('/report-data', [DashboardController::class, 'getReportData'])->name('report-data');
+        Route::get('/quick-stats', [DashboardController::class, 'getQuickStats'])->name('quick-stats');
         /*
         |--------------------------------------------------------------------------
         | ADMIN ONLY
