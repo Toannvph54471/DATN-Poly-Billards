@@ -518,9 +518,6 @@ class TableController extends Controller
         ];
     }
 
-
-
-
     /**
      * Tính thời gian đã sử dụng (đơn giản)
      */
@@ -560,5 +557,24 @@ class TableController extends Controller
         }
 
         return '--:--';
+    }
+
+    // TableController.php
+    public function updatePositions(Request $request)
+    {
+        try {
+            $positions = $request->input('positions', []);
+
+            foreach ($positions as $position) {
+                Table::where('id', $position['id'])->update([
+                    'position_x' => $position['position_x'],
+                    'position_y' => $position['position_y']
+                ]);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Đã cập nhật vị trí bàn']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()], 500);
+        }
     }
 }

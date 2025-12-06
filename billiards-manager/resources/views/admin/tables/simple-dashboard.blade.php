@@ -1,699 +1,1516 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Simple Dashboard')
+@section('title', 'POS Dashboard - Billiard Tables')
 
 @section('styles')
-<style>
-    .table-card {
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-        height: 140px;
-        display: flex;
-        align-items: center;
-        transform-style: preserve-3d;
-        perspective: 1000px;
-    }
-    
-    .table-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-    }
-    
-    .table-card:before {
-        content: '';
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        border: 2px solid;
-        z-index: 2;
-    }
-    
-    .status-available:before {
-        background-color: #10b981;
-        border-color: #059669;
-        animation: pulse-green 2s infinite;
-    }
-    
-    .status-occupied:before {
-        background-color: #ef4444;
-        border-color: #dc2626;
-        animation: pulse-red 2s infinite;
-    }
-    
-    .status-quick:before {
-        background-color: #f59e0b;
-        border-color: #d97706;
-        animation: pulse-yellow 2s infinite;
-    }
-    
-    .combo-badge {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: bold;
-        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
-        z-index: 10;
-        transform: translateZ(20px);
-        animation: float 3s ease-in-out infinite;
-    }
-    
-    .timer-display {
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-        font-size: 18px;
-        letter-spacing: 1px;
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        padding: 6px 12px;
-        border-radius: 8px;
-        margin-top: 6px;
-        display: inline-block;
-        border: 1px solid #e2e8f0;
-        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
-    }
-    
-    .grid-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-        padding: 20px;
-    }
-    
-    @media (max-width: 1400px) {
-        .grid-container {
-            grid-template-columns: repeat(4, 1fr);
+    <style>
+        /* Full screen layout */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-    }
-    
-    @media (max-width: 1200px) {
-        .grid-container {
-            grid-template-columns: repeat(3, 1fr);
+
+        .dashboard-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #fff;
+            overflow: hidden;
         }
-    }
-    
-    @media (max-width: 900px) {
-        .grid-container {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            padding: 16px;
+
+        /* Header */
+        .dashboard-header {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 12px 25px;
+            border-bottom: 1px solid #2a2a2a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 100;
+            backdrop-filter: blur(10px);
         }
-    }
-    
-    @media (max-width: 600px) {
-        .grid-container {
-            grid-template-columns: 1fr;
+
+        .header-left h1 {
+            font-size: 22px;
+            margin: 0;
+            color: #fff;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-    }
-    
-    .stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-        color: white;
-        transition: all 0.3s ease;
-    }
-    
-    .stats-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    .refresh-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 10px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(102, 126, 234, 0.4);
-    }
-    
-    .refresh-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 8px rgba(102, 126, 234, 0.5);
-    }
-    
-    .refresh-btn:active {
-        transform: translateY(0);
-    }
-    
-    .table-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        padding: 0 24px;
-    }
-    
-    .table-left {
-        text-align: left;
-        flex: 1;
-    }
-    
-    .table-right {
-        text-align: right;
-        margin-left: 16px;
-    }
-    
-    .status-badge {
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Hiệu ứng cho bàn đang sử dụng (đen chữ trắng) */
-    .table-occupied {
-        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-        color: white !important;
-        border: 2px solid #4b5563;
-    }
-    
-    .table-occupied .timer-display {
-        background: rgba(255, 255, 255, 0.1);
-        color: #60a5fa;
-        border-color: #4b5563;
-    }
-    
-    .table-occupied .text-gray-600,
-    .table-occupied .text-gray-800,
-    .table-occupied .text-gray-500 {
-        color: #e5e7eb !important;
-    }
-    
-    .table-available {
-        background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
-        border: 2px solid #d1d5db;
-    }
-    
-    .table-quick {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        border: 2px solid #fbbf24;
-    }
-    
-    /* Hiệu ứng glow */
-    .glow {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        background: radial-gradient(circle at center, transparent 0%, transparent 60%, rgba(255,255,255,0.1) 100%);
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .table-card:hover .glow {
-        opacity: 1;
-    }
-    
-    /* Animations */
-    @keyframes pulse-green {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-    
-    @keyframes pulse-red {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-    
-    @keyframes pulse-yellow {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0) translateZ(20px); }
-        50% { transform: translateY(-5px) translateZ(20px); }
-    }
-    
-    @keyframes slideIn {
-        from {
+
+        .header-left .last-update {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        /* Real time clock */
+        .real-time-clock {
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .real-time-clock i {
+            color: #00ff88;
+            font-size: 14px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #333;
+            color: #fff;
+            padding: 7px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .control-btn.save-btn {
+            background: linear-gradient(135deg, #00a86b 0%, #007a4d 100%);
+            border-color: #00a86b;
+        }
+
+        .control-btn.cancel-btn {
+            background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+            border-color: #ff4757;
+        }
+
+        .control-btn.edit-btn {
+            background: linear-gradient(135deg, #3742fa 0%, #5352ed 100%);
+            border-color: #3742fa;
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Main layout */
+        .main-layout {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+
+        /* Left panel - Statistics */
+        .left-panel {
+            width: 320px;
+            background: rgba(0, 0, 0, 0.85);
+            border-right: 1px solid #2a2a2a;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+        }
+
+        .section-title i {
+            color: #00ff88;
+        }
+
+        /* Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .stat-card.highlight {
+            background: rgba(0, 168, 107, 0.15);
+            border-color: #00a86b;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Status Breakdown */
+        .status-list {
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border-left: 3px solid;
+        }
+
+        .status-item.available {
+            border-color: #00a86b;
+        }
+
+        .status-item.occupied {
+            border-color: #ff4757;
+        }
+
+        .status-item.reserved {
+            border-color: #3742fa;
+        }
+
+        .status-item.maintenance {
+            border-color: #aaa;
+        }
+
+        .status-count {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .status-text {
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.available {
+            background: #00a86b;
+        }
+
+        .status-dot.occupied {
+            background: #ff4757;
+        }
+
+        .status-dot.reserved {
+            background: #3742fa;
+        }
+
+        .status-dot.maintenance {
+            background: #aaa;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .action-btn-small {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #333;
+            color: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+
+        .action-btn-small:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .action-btn-small i {
+            font-size: 14px;
+            color: #00ff88;
+        }
+
+        /* Recent Activity */
+        .activity-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Main Content Area - Tables Layout */
+        .content-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0c0c0c 0%, #181818 100%);
+        }
+
+        /* Grid Background */
+        .grid-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+        }
+
+        /* Pool Table Styles */
+        .pool-table-container {
+            position: absolute;
+            width: 180px;
+            height: 90px;
+            cursor: move;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            z-index: 2;
+        }
+
+        .pool-table-container.dragging {
+            opacity: 0.8;
+            z-index: 1000;
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 15px rgba(0, 168, 107, 0.5));
+        }
+
+        /* Pool table design */
+        .pool-table {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+            transform-origin: center;
+        }
+
+        /* Table surface - Billiard green in dark mode */
+        .table-surface {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            background: linear-gradient(135deg, #0d3b0d 0%, #1a5c1a 100%);
+            border-radius: 2px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Table cushions (rails) */
+        .table-cushion {
+            position: absolute;
+            background: linear-gradient(135deg, #222 0%, #333 100%);
+            border: 1px solid #444;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .cushion-top {
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .cushion-bottom {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .cushion-left {
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 5px;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .cushion-right {
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 5px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Pool table pockets (6 pockets) */
+        .pocket {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle at center, #000 30%, #222 100%);
+            border-radius: 50%;
+            border: 2px solid #444;
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.8);
+            z-index: 3;
+        }
+
+        /* Corner pockets */
+        .pocket-tl {
+            top: -3px;
+            left: -3px;
+        }
+
+        .pocket-tr {
+            top: -3px;
+            right: -3px;
+        }
+
+        .pocket-bl {
+            bottom: -3px;
+            left: -3px;
+        }
+
+        .pocket-br {
+            bottom: -3px;
+            right: -3px;
+        }
+
+        /* Middle pockets */
+        .pocket-mt {
+            top: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .pocket-mb {
+            bottom: -3px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Table info overlay */
+        .table-info {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+            pointer-events: none;
+            padding: 5px;
+        }
+
+        .table-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+            margin-bottom: 2px;
+        }
+
+        .table-name {
+            font-size: 11px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-bottom: 4px;
+            max-width: 90%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .table-timer {
+            font-size: 10px;
+            font-family: 'Courier New', monospace;
+            color: #ff6b6b;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-top: 3px;
+            font-weight: 600;
+        }
+
+        .table-status {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            margin-top: 4px;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Status colors */
+        .status-available {
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .status-occupied {
+            color: #ff4757;
+            border: 1px solid #ff4757;
+        }
+
+        .status-reserved {
+            color: #3742fa;
+            border: 1px solid #3742fa;
+        }
+
+        .status-maintenance {
+            color: #aaa;
+            border: 1px solid #aaa;
+        }
+
+        /* Combo badge */
+        .combo-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: linear-gradient(135deg, #ff9f43 0%, #ff7f00 100%);
+            color: #000;
+            font-size: 8px;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 3px;
+            z-index: 5;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Right Panel - Active Bills */
+        .right-panel {
+            width: 350px;
+            background: rgba(0, 0, 0, 0.85);
+            border-left: 1px solid #2a2a2a;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Bill List */
+        .bill-list {
+            margin-top: 15px;
+        }
+
+        .bill-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            transition: all 0.2s ease;
+        }
+
+        .bill-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #00a86b;
+        }
+
+        .bill-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .bill-table {
+            font-size: 14px;
+            font-weight: 600;
+            color: #00ff88;
+        }
+
+        .bill-amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .bill-time {
+            font-size: 11px;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .bill-customer {
+            font-size: 12px;
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .view-bill-btn {
+            background: rgba(0, 168, 107, 0.2);
+            border: 1px solid #00a86b;
+            color: #00ff88;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .view-bill-btn:hover {
+            background: rgba(0, 168, 107, 0.4);
+        }
+
+        /* Edit Mode Indicator */
+        .edit-mode-indicator {
+            position: fixed;
+            top: 70px;
+            right: 370px;
+            background: linear-gradient(135deg, #3742fa 0%, #5352ed 100%);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 6px;
             opacity: 0;
-            transform: translateY(20px) scale(0.95);
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(55, 66, 250, 0.3);
         }
-        to {
+
+        .edit-mode-indicator.show {
             opacity: 1;
-            transform: translateY(0) scale(1);
+            transform: translateY(0);
         }
-    }
-    
-    /* Wave effect for empty tables */
-    .wave-effect {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 40px;
-        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-        animation: wave 3s linear infinite;
-        opacity: 0.5;
-    }
-    
-    @keyframes wave {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-    }
-    
-    /* Shine effect */
-    .shine {
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(
-            to right,
-            rgba(255, 255, 255, 0) 0%,
-            rgba(255, 255, 255, 0.1) 50%,
-            rgba(255, 255, 255, 0) 100%
-        );
-        transform: rotate(30deg);
-        transition: all 0.6s ease;
-    }
-    
-    .table-card:hover .shine {
-        left: 100%;
-    }
-    
-    /* Loading skeleton */
-    .skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-    }
-    
-    @keyframes loading {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-    }
-</style>
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 18px;
+            color: #fff;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid #00a86b;
+        }
+
+        .notification.error {
+            border-left: 4px solid #ff4757;
+        }
+
+        .notification.info {
+            border-left: 4px solid #3742fa;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: #00ff88;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .empty-state i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #444;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .left-panel {
+                width: 280px;
+            }
+
+            .right-panel {
+                width: 300px;
+            }
+
+            .pool-table-container {
+                width: 160px;
+                height: 80px;
+            }
+        }
+
+        @media (max-width: 992px) {
+
+            .left-panel,
+            .right-panel {
+                display: none;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
 @endsection
 
 @section('content')
-<div class="container mx-auto p-4">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">Simple Dashboard</h1>
-            <p class="text-gray-600">Click vào bàn để xem chi tiết và quản lý</p>
-        </div>
-        <div class="flex items-center gap-3">
-            @if($stats)
-            <div class="hidden md:flex items-center gap-4 text-sm text-gray-600 bg-white p-3 rounded-lg shadow-sm">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span>Trống: <span class="font-semibold">{{ $stats['available'] }}</span></span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span>Đang dùng: <span class="font-semibold">{{ $stats['occupied'] + $stats['quick'] }}</span></span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <span>Tỷ lệ: <span class="font-semibold">{{ $stats['occupancy_rate'] }}%</span></span>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="header-left">
+                <h1>
+                    <i class="fas fa-billiard"></i>
+                    POS Dashboard - Billiard Tables
+                </h1>
+                <div class="last-update" id="lastUpdateTime">
+                    Cập nhật lần cuối: <span id="currentTime"></span>
                 </div>
             </div>
-            @endif
-            <button onclick="refreshDashboard()" class="refresh-btn flex items-center gap-2">
-                <i class="fas fa-sync-alt"></i>
-                <span>Làm mới</span>
-            </button>
+
+            <div class="real-time-clock">
+                <i class="fas fa-clock"></i>
+                <span id="liveClock">--:--:--</span>
+            </div>
+
+            <div class="controls">
+                <button id="editModeBtn" class="control-btn edit-btn">
+                    <i class="fas fa-edit"></i> Sắp xếp bố cục
+                </button>
+                <button id="saveLayoutBtn" class="control-btn save-btn" style="display: none;">
+                    <i class="fas fa-save"></i> Lưu bố cục
+                </button>
+                <button id="cancelEditBtn" class="control-btn cancel-btn" style="display: none;">
+                    <i class="fas fa-times"></i> Hủy
+                </button>
+                <button onclick="refreshDashboard()" class="control-btn">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
         </div>
-    </div>
-    
-    <!-- Statistics Cards -->
-    @if($stats)
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div class="stats-card">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="text-sm font-medium opacity-90">Tổng số bàn</div>
-                    <div class="text-3xl font-bold mt-2">{{ $stats['total'] }}</div>
+
+        <!-- Edit Mode Indicator -->
+        <div class="edit-mode-indicator" id="editModeIndicator">
+            <i class="fas fa-mouse-pointer"></i>
+            Chế độ sắp xếp - Kéo thả để di chuyển bàn
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Panel - Statistics -->
+            <div class="left-panel">
+                <div class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Thống kê nhanh
                 </div>
-                <i class="fas fa-chair text-2xl opacity-80"></i>
-            </div>
-            <div class="mt-4 pt-3 border-t border-white/20 text-xs opacity-80">
-                <i class="fas fa-info-circle mr-1"></i> Tổng số bàn trong hệ thống
-            </div>
-        </div>
-        
-        <div class="stats-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="text-sm font-medium opacity-90">Bàn trống</div>
-                    <div class="text-3xl font-bold mt-2">{{ $stats['available'] }}</div>
+
+                <div class="stats-grid">
+                    <div class="stat-card highlight">
+                        <div class="stat-value">{{ $stats['open_bills'] }}</div>
+                        <div class="stat-label">HÓA ĐƠN ĐANG MỞ</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ number_format($stats['today_revenue']) }}đ</div>
+                        <div class="stat-label">DOANH THU HÔM NAY</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ $stats['occupied_tables'] }}</div>
+                        <div class="stat-label">BÀN ĐANG DÙNG</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ $stats['available_tables'] }}</div>
+                        <div class="stat-label">BÀN TRỐNG</div>
+                    </div>
                 </div>
-                <i class="fas fa-check-circle text-2xl opacity-80"></i>
-            </div>
-            <div class="mt-4 pt-3 border-t border-white/20 text-xs opacity-80">
-                <i class="fas fa-info-circle mr-1"></i> Bàn sẵn sàng phục vụ
-            </div>
-        </div>
-        
-        <div class="stats-card" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="text-sm font-medium opacity-90">Bàn đang dùng</div>
-                    <div class="text-3xl font-bold mt-2">{{ $stats['occupied'] + $stats['quick'] }}</div>
+
+                <div class="section-title">
+                    <i class="fas fa-billiard"></i>
+                    Trạng thái bàn
                 </div>
-                <i class="fas fa-clock text-2xl opacity-80"></i>
-            </div>
-            <div class="mt-4 pt-3 border-t border-white/20 text-xs opacity-80">
-                <i class="fas fa-info-circle mr-1"></i> Bàn đang được sử dụng
-            </div>
-        </div>
-        
-        <div class="stats-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="text-sm font-medium opacity-90">Tỷ lệ sử dụng</div>
-                    <div class="text-3xl font-bold mt-2">{{ $stats['occupancy_rate'] }}%</div>
+
+                <div class="status-list">
+                    @php
+                        $allTables = $availableTables->count() + $occupiedTables->count();
+                        $availableCount = $stats['available_tables'];
+                        $occupiedCount = $stats['occupied_tables'];
+                        $reservedCount = $stats['pending_reservations'];
+                        $maintenanceCount = $allTables - ($availableCount + $occupiedCount + $reservedCount);
+                        $maintenanceCount = max(0, $maintenanceCount);
+                    @endphp
+
+                    <div class="status-item available">
+                        <div class="status-text">
+                            <span class="status-dot available"></span>
+                            Bàn trống
+                        </div>
+                        <div class="status-count">{{ $availableCount }}</div>
+                    </div>
+                    <div class="status-item occupied">
+                        <div class="status-text">
+                            <span class="status-dot occupied"></span>
+                            Đang sử dụng
+                        </div>
+                        <div class="status-count">{{ $occupiedCount }}</div>
+                    </div>
+                    <div class="status-item reserved">
+                        <div class="status-text">
+                            <span class="status-dot reserved"></span>
+                            Đặt trước
+                        </div>
+                        <div class="status-count">{{ $reservedCount }}</div>
+                    </div>
+                    <div class="status-item maintenance">
+                        <div class="status-text">
+                            <span class="status-dot maintenance"></span>
+                            Bảo trì
+                        </div>
+                        <div class="status-count">{{ $maintenanceCount }}</div>
+                    </div>
                 </div>
-                <i class="fas fa-chart-line text-2xl opacity-80"></i>
-            </div>
-            <div class="mt-4 pt-3 border-t border-white/20 text-xs opacity-80">
-                <i class="fas fa-info-circle mr-1"></i> Hiệu suất sử dụng bàn
-            </div>
-        </div>
-    </div>
-    @endif
-    
-    <!-- Error Message -->
-    @if(isset($error))
-    <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg">
-        <div class="flex items-center">
-            <i class="fas fa-exclamation-circle mr-3"></i>
-            <div>
-                <p class="font-medium">{{ $error }}</p>
-            </div>
-        </div>
-    </div>
-    @endif
-    
-    <!-- Tables Grid -->
-    <div class="bg-white rounded-xl shadow-lg p-4 mb-6">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-800">Danh sách bàn</h2>
-            <div class="flex items-center gap-2 text-sm text-gray-600">
-                <i class="fas fa-info-circle"></i>
-                <span>Tổng: {{ count($tables) }} bàn</span>
-            </div>
-        </div>
-        
-        <div class="grid-container" id="tablesGrid">
-            @forelse($tables as $table)
-                @php
-                    $hasCombo = $table['has_combo'] ?? false;
-                    $elapsedTime = $table['elapsed_time'] ?? null;
-                    
-                    // Xác định class dựa trên trạng thái
-                    $tableClasses = [
-                        'available' => 'table-available',
-                        'occupied' => 'table-occupied',
-                        'quick' => 'table-quick',
-                        'maintenance' => 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300',
-                        'reserved' => 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300'
-                    ];
-                    
-                    $cardClass = $tableClasses[$table['status']] ?? 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200';
-                @endphp
-                
-                <div class="table-card {{ $cardClass }} status-{{ $table['status'] }}"
-                     onclick="goToTableDetail('{{ $table['id'] }}')"
-                     data-status="{{ $table['status'] }}"
-                     data-table-id="{{ $table['id'] }}">
-                    
-                    <!-- Wave effect for empty tables -->
-                    @if($table['status'] === 'available')
-                        <div class="wave-effect"></div>
-                    @endif
-                    
-                    <!-- Shine effect -->
-                    <div class="shine"></div>
-                    
-                    <!-- Glow effect -->
-                    <div class="glow"></div>
-                    
-                    <!-- Combo Badge -->
-                    @if($hasCombo)
-                        <div class="combo-badge">
-                            <i class="fas fa-gift mr-1"></i> COMBO
+
+                <div class="section-title">
+                    <i class="fas fa-bolt"></i>
+                    Hành động nhanh
+                </div>
+
+                <div class="quick-actions">
+                    <button class="action-btn-small" onclick="quickNewBill()">
+                        <i class="fas fa-receipt"></i>
+                        Hóa đơn mới
+                    </button>
+                    <button class="action-btn-small" onclick="quickReservation()">
+                        <i class="fas fa-calendar-plus"></i>
+                        Đặt bàn
+                    </button>
+                    <button class="action-btn-small" onclick="quickCheckout()">
+                        <i class="fas fa-cash-register"></i>
+                        Thanh toán
+                    </button>
+                    <button class="action-btn-small" onclick="quickReport()">
+                        <i class="fas fa-file-invoice"></i>
+                        Báo cáo
+                    </button>
+                </div>
+
+                <div class="section-title">
+                    <i class="fas fa-history"></i>
+                    Hoạt động gần đây
+                </div>
+
+                <div class="activity-list">
+                    @if ($openBills->count() > 0)
+                        @foreach ($openBills->take(5) as $bill)
+                            <div class="activity-item">
+                                <strong>Bàn {{ $bill->table->table_number ?? 'N/A' }}</strong>
+                                mở hóa đơn lúc {{ $bill->created_at->format('H:i') }}
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="empty-state">
+                            <i class="fas fa-info-circle"></i>
+                            <p>Chưa có hoạt động nào</p>
                         </div>
                     @endif
-                    
-                    <div class="table-content">
-                        <div class="table-left">
-                            <!-- Table Number/Name -->
-                            <div class="mb-3">
-                                <div class="text-3xl font-bold text-gray-800 mb-1">
-                                    {{ $table['table_number'] }}
-                                </div>
-                                <div class="text-sm text-gray-600 font-medium">
-                                    {{ $table['table_name'] }}
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="content-area" id="contentArea">
+                <div class="grid-background"></div>
+
+                <!-- Pool Tables -->
+                @foreach ($occupiedTables as $table)
+                    @php
+                        // Tính vị trí dựa trên ID để layout đẹp
+                        $posX = ($table->id % 4) * 200 + 50;
+                        $posY = intval(($table->id - 1) / 4) * 110 + 50;
+
+                        // Tính thời gian đã sử dụng
+                        $elapsedTime = '';
+                        if ($table->currentBill && $table->currentBill->start_time) {
+                            $startTime = $table->currentBill->start_time;
+                            $elapsedSeconds = now()->diffInSeconds($startTime);
+                            $hours = floor($elapsedSeconds / 3600);
+                            $minutes = floor(($elapsedSeconds % 3600) / 60);
+                            $seconds = $elapsedSeconds % 60;
+                            $elapsedTime = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+                        }
+
+                        // Kiểm tra có combo không
+                        $hasCombo =
+                            $table->currentBill &&
+                            $table->currentBill->comboTimeUsages &&
+                            $table->currentBill->comboTimeUsages->where('is_expired', false)->count() > 0;
+                    @endphp
+
+                    <div class="pool-table-container" data-table-id="{{ $table->id }}"
+                        data-table-number="{{ $table->table_number }}"
+                        style="left: {{ $posX }}px; top: {{ $posY }}px;">
+
+                        <div class="pool-table">
+                            <!-- Cushions -->
+                            <div class="table-cushion cushion-top"></div>
+                            <div class="table-cushion cushion-bottom"></div>
+                            <div class="table-cushion cushion-left"></div>
+                            <div class="table-cushion cushion-right"></div>
+
+                            <!-- Table surface -->
+                            <div class="table-surface"></div>
+
+                            <!-- 6 pockets -->
+                            <div class="pocket pocket-tl"></div>
+                            <div class="pocket pocket-tr"></div>
+                            <div class="pocket pocket-bl"></div>
+                            <div class="pocket pocket-br"></div>
+                            <div class="pocket pocket-mt"></div>
+                            <div class="pocket pocket-mb"></div>
+
+                            <!-- Table info -->
+                            <div class="table-info">
+                                <div class="table-number">{{ $table->table_number }}</div>
+                                <div class="table-name">{{ $table->name ?? 'Bàn ' . $table->table_number }}</div>
+
+                                @if ($elapsedTime)
+                                    <div class="table-timer">{{ $elapsedTime }}</div>
+                                @endif
+
+                                <div class="table-status status-occupied">
+                                    ĐANG DÙNG
                                 </div>
                             </div>
-                            
-                            <!-- Capacity -->
-                            <div class="flex items-center text-sm">
-                                <i class="fas fa-users text-gray-400 mr-2"></i>
-                                <span class="text-gray-500">{{ $table['capacity'] }} người</span>
-                                @if($table['hourly_rate'])
-                                    <span class="mx-2 text-gray-300">•</span>
-                                    <span class="text-amber-600 font-semibold">{{ number_format($table['hourly_rate']) }}đ/giờ</span>
+
+                            @if ($hasCombo)
+                                <div class="combo-badge">COMBO</div>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+
+                @foreach ($availableTables as $table)
+                    @php
+                        // Tính vị trí cho bàn trống
+                        $posX = ($table->id % 4) * 200 + 50;
+                        $posY = intval(($table->id - 1) / 4) * 110 + 50;
+                        $posY += 250; // Đẩy xuống dưới các bàn đang dùng
+                    @endphp
+
+                    <div class="pool-table-container" data-table-id="{{ $table->id }}"
+                        data-table-number="{{ $table->table_number }}"
+                        style="left: {{ $posX }}px; top: {{ $posY }}px;">
+
+                        <div class="pool-table">
+                            <div class="table-cushion cushion-top"></div>
+                            <div class="table-cushion cushion-bottom"></div>
+                            <div class="table-cushion cushion-left"></div>
+                            <div class="table-cushion cushion-right"></div>
+
+                            <div class="table-surface"></div>
+
+                            <!-- 6 pockets -->
+                            <div class="pocket pocket-tl"></div>
+                            <div class="pocket pocket-tr"></div>
+                            <div class="pocket pocket-bl"></div>
+                            <div class="pocket pocket-br"></div>
+                            <div class="pocket pocket-mt"></div>
+                            <div class="pocket pocket-mb"></div>
+
+                            <div class="table-info">
+                                <div class="table-number">{{ $table->table_number }}</div>
+                                <div class="table-name">{{ $table->name ?? 'Bàn ' . $table->table_number }}</div>
+                                <div class="table-status status-available">
+                                    TRỐNG
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <!-- Right Panel - Active Bills -->
+            <div class="right-panel">
+                <div class="section-title">
+                    <i class="fas fa-receipt"></i>
+                    Hóa đơn đang mở
+                </div>
+
+                <div class="bill-list">
+                    @if ($openBills->count() > 0)
+                        @foreach ($openBills as $bill)
+                            <div class="bill-item">
+                                <div class="bill-header">
+                                    <div class="bill-table">
+                                        <i class="fas fa-billiard"></i>
+                                        Bàn {{ $bill->table->table_number ?? 'N/A' }}
+                                    </div>
+                                    <div class="bill-amount">
+                                        {{ number_format($bill->total_amount ?? 0) }}đ
+                                    </div>
+                                </div>
+                                <div class="bill-time">
+                                    <i class="far fa-clock"></i>
+                                    Mở: {{ $bill->created_at->format('H:i') }}
+                                </div>
+                                @if ($bill->customer_name)
+                                    <div class="bill-customer">
+                                        <i class="fas fa-user"></i>
+                                        {{ $bill->customer_name }}
+                                    </div>
+                                @endif
+                                <button class="view-bill-btn" onclick="viewBill({{ $bill->id }})">
+                                    <i class="fas fa-eye"></i>
+                                    Xem chi tiết
+                                </button>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="empty-state">
+                            <i class="fas fa-receipt"></i>
+                            <p>Không có hóa đơn nào đang mở</p>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="section-title" style="margin-top: 25px;">
+                    <i class="fas fa-calendar-check"></i>
+                    Đặt bàn hôm nay
+                </div>
+
+                <div class="bill-list">
+                    @if (isset($todayReservations) && $todayReservations->count() > 0)
+                        @foreach ($todayReservations as $reservation)
+                            <div class="bill-item">
+                                <div class="bill-header">
+                                    <div class="bill-table">
+                                        <i class="fas fa-billiard"></i>
+                                        Bàn {{ $reservation->table->table_number ?? 'N/A' }}
+                                    </div>
+                                    <div class="bill-amount">
+                                        {{ $reservation->reservation_time->format('H:i') }}
+                                    </div>
+                                </div>
+                                <div class="bill-time">
+                                    <i class="fas fa-user"></i>
+                                    {{ $reservation->customer_name ?? 'Khách vãng lai' }}
+                                </div>
+                                @if ($reservation->note)
+                                    <div class="bill-customer">
+                                        <i class="fas fa-sticky-note"></i>
+                                        {{ Str::limit($reservation->note, 30) }}
+                                    </div>
                                 @endif
                             </div>
+                        @endforeach
+                    @else
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <p>Không có đặt bàn nào hôm nay</p>
                         </div>
-                        
-                        <div class="table-right">
-                            <!-- Timer Display (if occupied) -->
-                            @if($table['status'] !== 'available' && $elapsedTime)
-                                <div class="mb-3">
-                                    <div class="text-xs text-gray-500 mb-1 flex items-center">
-                                        <i class="fas fa-clock mr-1"></i> Thời gian
-                                    </div>
-                                    <div class="timer-display text-gray-800">
-                                        {{ $elapsedTime }}
-                                    </div>
-                                </div>
-                            @endif
-                            
-                            <!-- Status Badge -->
-                            <div>
-                                @php
-                                    $statusText = [
-                                        'available' => 'TRỐNG',
-                                        'occupied' => 'ĐANG DÙNG',
-                                        'quick' => 'QUICK',
-                                        'maintenance' => 'BẢO TRÌ',
-                                        'reserved' => 'ĐÃ ĐẶT'
-                                    ];
-                                    
-                                    $badgeClasses = [
-                                        'available' => 'bg-green-100 text-green-800 border border-green-200',
-                                        'occupied' => 'bg-gray-800 text-white border border-gray-900',
-                                        'quick' => 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-                                        'maintenance' => 'bg-gray-200 text-gray-800 border border-gray-300',
-                                        'reserved' => 'bg-blue-100 text-blue-800 border border-blue-200'
-                                    ];
-                                @endphp
-                                
-                                <div class="status-badge {{ $badgeClasses[$table['status']] }}">
-                                    <i class="fas fa-circle text-xs mr-1 opacity-70"></i>
-                                    {{ $statusText[$table['status']] ?? $table['status'] }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="col-span-full text-center py-12">
-                    <div class="text-gray-400 text-xl mb-4">
-                        <i class="fas fa-table text-4xl mb-4"></i>
-                        <p>Không có dữ liệu bàn</p>
-                    </div>
-                </div>
-            @endforelse
-        </div>
-    </div>
-    
-    <!-- Legend -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-            <i class="fas fa-key mr-2"></i> Chú thích
-        </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                <div class="w-4 h-4 rounded-full bg-green-500 mr-3 animate-pulse"></div>
-                <div>
-                    <div class="font-medium text-gray-700">Bàn trống</div>
-                    <div class="text-sm text-gray-500">Sẵn sàng phục vụ</div>
-                </div>
-            </div>
-            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                <div class="w-4 h-4 rounded-full bg-red-500 mr-3 animate-pulse"></div>
-                <div>
-                    <div class="font-medium text-gray-700">Bàn đang sử dụng</div>
-                    <div class="text-sm text-gray-500">Đen chữ trắng</div>
-                </div>
-            </div>
-            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                <div class="w-4 h-4 rounded-full bg-yellow-500 mr-3 animate-pulse"></div>
-                <div>
-                    <div class="font-medium text-gray-700">Quick bill</div>
-                    <div class="text-sm text-gray-500">Thanh toán nhanh</div>
-                </div>
-            </div>
-            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                <div class="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs rounded-full mr-3">
-                    COMBO
-                </div>
-                <div>
-                    <div class="font-medium text-gray-700">Bàn có combo</div>
-                    <div class="text-sm text-gray-500">Đang dùng gói combo</div>
+                    @endif
                 </div>
             </div>
         </div>
+
+        <!-- Notification -->
+        <div class="notification" id="notification">
+            <i class="fas fa-check-circle"></i>
+            <span id="notificationMessage"></span>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+        </div>
     </div>
-</div>
 @endsection
 
 @section('scripts')
-<script>
-    function refreshDashboard() {
-        // Hiệu ứng loading
-        const refreshBtn = document.querySelector('.refresh-btn');
-        const originalHtml = refreshBtn.innerHTML;
-        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang tải...';
-        refreshBtn.disabled = true;
-        
-        // Reload trang sau 1 giây
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
-    }
-    
-    function goToTableDetail(tableId) {
-        // Hiệu ứng click
-        const card = document.querySelector(`[data-table-id="${tableId}"]`);
-        if (card) {
-            card.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                card.style.transform = '';
-            }, 150);
+    <script>
+        // Global variables
+        let isEditMode = false;
+        let originalPositions = new Map();
+        let draggedTable = null;
+        let dragOffset = {
+            x: 0,
+            y: 0
+        };
+
+        // DOM elements
+        const editModeBtn = document.getElementById('editModeBtn');
+        const saveLayoutBtn = document.getElementById('saveLayoutBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        const contentArea = document.getElementById('contentArea');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const editModeIndicator = document.getElementById('editModeIndicator');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        // Get pool tables
+        let poolTables = document.querySelectorAll('.pool-table-container');
+
+        // Function to update real-time clock
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('vi-VN');
+            const dateString = now.toLocaleDateString('vi-VN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            document.getElementById('liveClock').textContent = timeString;
+            document.getElementById('lastUpdateTime').innerHTML =
+                `Cập nhật lần cuối: <span id="currentTime">${timeString}</span>`;
         }
-        
-        // Chuyển đến trang detail
-        setTimeout(() => {
-            window.location.href = `/admin/tables/${tableId}/detail`;
-        }, 200);
-    }
-    
-    // Auto-refresh every 60 seconds
-    setTimeout(function() {
-        refreshDashboard();
-    }, 60000);
-    
-    // Animation on load
-    document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.table-card');
-        cards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px) scale(0.95)';
-            
-            setTimeout(() => {
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0) scale(1)';
-            }, index * 50);
-        });
-        
-        // Hiệu ứng hover 3D
-        cards.forEach(card => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                
-                const rotateY = (x - centerX) / 20;
-                const rotateX = (centerY - y) / 20;
-                
-                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px) scale(1.02)`;
+
+        // Initialize clock
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Initialize drag and drop
+        function initDragAndDrop() {
+            poolTables = document.querySelectorAll('.pool-table-container');
+
+            poolTables.forEach(table => {
+                table.addEventListener('mousedown', startDrag);
+                table.addEventListener('touchstart', startDragTouch, {
+                    passive: false
+                });
+
+                // Prevent text selection while dragging
+                table.addEventListener('selectstart', (e) => {
+                    if (isEditMode) e.preventDefault();
+                });
+
+                // Click to view table details when not in edit mode
+                table.addEventListener('click', (e) => {
+                    if (!isEditMode && !draggedTable) {
+                        const tableId = table.dataset.tableId;
+                        const tableNumber = table.dataset.tableNumber;
+                        viewTableDetails(tableId, tableNumber);
+                    }
+                });
             });
-            
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0) scale(1)';
+
+            // Add global event listeners for drag
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchmove', dragTouch, {
+                passive: false
             });
-        });
-        
-        // Hiệu ứng đếm số cho stats cards
-        const statsNumbers = document.querySelectorAll('.stats-card .text-3xl');
-        statsNumbers.forEach(stat => {
-            const target = parseInt(stat.textContent);
-            let current = 0;
-            const increment = target / 50;
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) {
-                    current = target;
-                    clearInterval(timer);
+            document.addEventListener('touchend', stopDragTouch);
+        }
+
+        // Mouse drag functions
+        function startDrag(e) {
+            if (!isEditMode) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            draggedTable = this;
+            const rect = this.getBoundingClientRect();
+
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+
+            this.classList.add('dragging');
+        }
+
+        function drag(e) {
+            if (!draggedTable || !isEditMode) return;
+
+            const areaRect = contentArea.getBoundingClientRect();
+            let x = e.clientX - areaRect.left - dragOffset.x;
+            let y = e.clientY - areaRect.top - dragOffset.y;
+
+            // Boundary checking
+            x = Math.max(20, Math.min(x, areaRect.width - draggedTable.offsetWidth - 20));
+            y = Math.max(20, Math.min(y, areaRect.height - draggedTable.offsetHeight - 20));
+
+            draggedTable.style.left = `${x}px`;
+            draggedTable.style.top = `${y}px`;
+        }
+
+        function stopDrag() {
+            if (draggedTable) {
+                draggedTable.classList.remove('dragging');
+                draggedTable = null;
+            }
+        }
+
+        // Touch drag functions
+        function startDragTouch(e) {
+            if (!isEditMode) return;
+
+            e.preventDefault();
+            if (e.touches.length !== 1) return;
+
+            draggedTable = this;
+            const touch = e.touches[0];
+            const rect = this.getBoundingClientRect();
+
+            dragOffset.x = touch.clientX - rect.left;
+            dragOffset.y = touch.clientY - rect.top;
+
+            this.classList.add('dragging');
+        }
+
+        function dragTouch(e) {
+            if (!draggedTable || !isEditMode || e.touches.length !== 1) return;
+
+            e.preventDefault();
+            const touch = e.touches[0];
+            const areaRect = contentArea.getBoundingClientRect();
+            let x = touch.clientX - areaRect.left - dragOffset.x;
+            let y = touch.clientY - areaRect.top - dragOffset.y;
+
+            // Boundary checking
+            x = Math.max(20, Math.min(x, areaRect.width - draggedTable.offsetWidth - 20));
+            y = Math.max(20, Math.min(y, areaRect.height - draggedTable.offsetHeight - 20));
+
+            draggedTable.style.left = `${x}px`;
+            draggedTable.style.top = `${y}px`;
+        }
+
+        function stopDragTouch() {
+            if (draggedTable) {
+                draggedTable.classList.remove('dragging');
+                draggedTable = null;
+            }
+        }
+
+        // Edit mode functions
+        function enterEditMode() {
+            isEditMode = true;
+
+            // Show edit mode indicator
+            editModeIndicator.classList.add('show');
+
+            // Show save/cancel buttons
+            saveLayoutBtn.style.display = 'flex';
+            cancelEditBtn.style.display = 'flex';
+            editModeBtn.style.display = 'none';
+
+            // Store original positions
+            originalPositions.clear();
+            poolTables.forEach(table => {
+                const style = window.getComputedStyle(table);
+                originalPositions.set(table.dataset.tableId, {
+                    x: style.left,
+                    y: style.top
+                });
+            });
+
+            showNotification('Đang ở chế độ sắp xếp. Kéo thả các bàn để di chuyển vị trí.', 'info');
+        }
+
+        function exitEditMode() {
+            isEditMode = false;
+
+            // Hide edit mode indicator
+            editModeIndicator.classList.remove('show');
+
+            // Hide save/cancel buttons
+            saveLayoutBtn.style.display = 'none';
+            cancelEditBtn.style.display = 'none';
+            editModeBtn.style.display = 'flex';
+
+            // Reset positions if canceling
+            poolTables.forEach(table => {
+                const originalPos = originalPositions.get(table.dataset.tableId);
+                if (originalPos) {
+                    table.style.left = originalPos.x;
+                    table.style.top = originalPos.y;
                 }
-                stat.textContent = Math.round(current);
-            }, 20);
-        });
-        
-        // Hiệu ứng real-time update cho timer
-        setInterval(() => {
-            const occupiedCards = document.querySelectorAll('.table-occupied .timer-display');
-            occupiedCards.forEach(timer => {
-                const timeParts = timer.textContent.split(':');
-                let hours = parseInt(timeParts[0]);
-                let minutes = parseInt(timeParts[1]);
-                
-                minutes++;
-                if (minutes >= 60) {
-                    minutes = 0;
-                    hours++;
-                }
-                
-                timer.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
             });
-        }, 60000); // Cập nhật mỗi phút
-    });
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // R - Refresh
-        if (e.key === 'r' || e.key === 'R') {
-            refreshDashboard();
+
+            showNotification('Đã thoát chế độ sắp xếp.', 'info');
         }
-        // ESC - Close modal (nếu có)
-        if (e.key === 'Escape') {
-            // Logic để đóng modal nếu cần
+
+        // Save layout
+        async function saveLayout() {
+            const positions = {};
+
+            poolTables.forEach(table => {
+                const style = window.getComputedStyle(table);
+                positions[table.dataset.tableId] = {
+                    x: style.left,
+                    y: style.top
+                };
+            });
+
+            // Show loading
+            showLoading(true);
+
+            try {
+                // Save to localStorage
+                localStorage.setItem('billiardTableLayout', JSON.stringify(positions));
+
+                // You can also save to server here
+                // await saveToServer(positions);
+
+                showNotification('Đã lưu bố cục thành công!', 'success');
+                exitEditMode();
+
+            } catch (error) {
+                console.error('Save error:', error);
+                showNotification('Có lỗi xảy ra khi lưu bố cục', 'error');
+            } finally {
+                showLoading(false);
+            }
         }
-    });
-</script>
+
+        // Load saved layout
+        function loadSavedLayout() {
+            try {
+                const saved = localStorage.getItem('billiardTableLayout');
+                if (saved) {
+                    const positions = JSON.parse(saved);
+                    poolTables.forEach(table => {
+                        const pos = positions[table.dataset.tableId];
+                        if (pos) {
+                            table.style.left = pos.x;
+                            table.style.top = pos.y;
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Error loading layout:', e);
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            notificationMessage.textContent = message;
+
+            // Remove all type classes
+            notification.classList.remove('success', 'error', 'info');
+            notification.classList.add(type);
+
+            // Show notification
+            notification.classList.add('show');
+
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Show/hide loading
+        function showLoading(show) {
+            if (show) {
+                loadingOverlay.classList.add('show');
+            } else {
+                loadingOverlay.classList.remove('show');
+            }
+        }
+
+        // Table actions
+        function viewTableDetails(tableId, tableNumber) {
+            // Redirect to table detail page
+            window.location.href = `/admin/tables/${tableId}`;
+        }
+
+        function viewBill(billId) {
+            // Redirect to bill detail page
+            window.location.href = `/admin/bills/${billId}`;
+        }
+
+        // Quick actions
+        function quickNewBill() {
+            window.location.href = '/admin/bills/create';
+        }
+
+        function quickReservation() {
+            window.location.href = '/admin/reservations/create';
+        }
+
+        function quickCheckout() {
+            window.location.href = '/admin/bills';
+        }
+
+        function quickReport() {
+            window.location.href = '/admin/reports';
+        }
+
+        // Refresh dashboard
+        function refreshDashboard() {
+            showLoading(true);
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize
+            initDragAndDrop();
+            loadSavedLayout();
+
+            // Edit mode button
+            editModeBtn.addEventListener('click', enterEditMode);
+
+            // Save layout button
+            saveLayoutBtn.addEventListener('click', saveLayout);
+
+            // Cancel edit button
+            cancelEditBtn.addEventListener('click', exitEditMode);
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && isEditMode) {
+                    exitEditMode();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 's' && isEditMode) {
+                    e.preventDefault();
+                    saveLayout();
+                }
+                if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    refreshDashboard();
+                }
+            });
+
+            // Auto-refresh every 2 minutes
+            setInterval(refreshDashboard, 120000);
+        });
+    </script>
 @endsection

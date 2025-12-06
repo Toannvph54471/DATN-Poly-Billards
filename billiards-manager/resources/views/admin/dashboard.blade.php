@@ -48,8 +48,14 @@
                 </a>
 
                 <a href="{{ route('attendance.simulator') }}"
-                    class="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition flex items-center gap-2">
-                    <i class="fas fa-times"></i> Máy quét QR
+                    class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                    <i class="fas fa-qrcode"></i>
+                    Máy quét QR
+                </a>
+                <a href="{{ route('admin.tables.simple-dashboard') }}"
+                    class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                    <i class="fas fa-qrcode"></i>
+                    Máy quét QR
                 </a>
             </form>
         </div>
