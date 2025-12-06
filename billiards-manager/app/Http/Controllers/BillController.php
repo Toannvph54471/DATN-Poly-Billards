@@ -713,79 +713,60 @@ class BillController extends Controller
                 ->whereNull('end_time')
                 ->first();
 
-            // Kiểm tra combo đã dừng (hết thời gian hoặc dừng thủ công)
-            $stoppedComboTime = ComboTimeUsage::where('bill_id', $billId)
-                ->where('is_expired', true)
-                ->first();
-
-            // TỰ ĐỘNG DỪNG COMBO KHI HẾT THỜI GIAN
             if ($activeComboTime) {
                 $start = Carbon::parse($activeComboTime->start_time);
                 $elapsedMinutes = $start->diffInMinutes(now());
                 $remainingMinutes = max(0, $activeComboTime->remaining_minutes - $elapsedMinutes);
 
-                // Nếu hết thời gian, tự động dừng combo
-                if ($remainingMinutes <= 0) {
-                    $activeComboTime->update([
-                        'end_time' => now(),
-                        'remaining_minutes' => 0,
-                        'is_expired' => true
-                    ]);
+                // Format thời gian ở server-side
+                $hours = floor($remainingMinutes / 60);
+                $minutes = $remainingMinutes % 60;
 
-                    return [
-                        'has_active_combo' => false,
-                        'has_expired_combo' => true,
-                        'is_near_end' => false,
-                        'is_expired' => true,
-                        'needs_switch' => true, // Cần chuyển sang giờ thường
-                        'remaining_minutes' => 0,
-                        'mode' => 'combo_ended'
-                    ];
+                $formattedTime = '';
+                if ($hours > 0) {
+                    $formattedTime .= $hours . 'h';
+                }
+                if ($minutes > 0) {
+                    $formattedTime .= ($hours > 0 ? ' ' : '') . $minutes . 'p';
+                }
+                if ($remainingMinutes === 0) {
+                    $formattedTime = '0p';
                 }
 
                 $isNearEnd = $remainingMinutes <= 10 && $remainingMinutes > 0;
 
-                return [
+                return response()->json([
                     'has_active_combo' => true,
-                    'has_expired_combo' => false,
+                    'remaining_minutes' => $remainingMinutes,
+                    'formatted_time' => $formattedTime, // Thêm formatted time
+                    'hours' => $hours,
+                    'minutes' => $minutes,
                     'is_near_end' => $isNearEnd,
                     'is_expired' => false,
                     'needs_switch' => false,
-                    'remaining_minutes' => $remainingMinutes,
                     'elapsed_minutes' => $elapsedMinutes,
                     'mode' => 'combo'
-                ];
+                ]);
             }
 
-            if (!$activeComboTime && $stoppedComboTime) {
-                return [
-                    'has_active_combo' => false,
-                    'has_expired_combo' => true,
-                    'is_near_end' => false,
-                    'is_expired' => true,
-                    'needs_switch' => true, // Cần chuyển sang giờ thường
-                    'remaining_minutes' => 0,
-                    'mode' => 'combo_ended'
-                ];
-            }
-
-            return [
+            return response()->json([
                 'has_active_combo' => false,
-                'has_expired_combo' => false,
-                'is_near_end' => false,
-                'is_expired' => false,
-                'needs_switch' => false,
-                'remaining_minutes' => 0
-            ];
-        } catch (\Exception $e) {
-            Log::error('Error checking combo time: ' . $e->getMessage());
-            return [
-                'has_active_combo' => false,
-                'has_expired_combo' => false,
+                'remaining_minutes' => 0,
+                'formatted_time' => '0p',
+                'hours' => 0,
+                'minutes' => 0,
                 'is_near_end' => false,
                 'is_expired' => false,
                 'needs_switch' => false
-            ];
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error checking combo time: ' . $e->getMessage());
+            return response()->json([
+                'has_active_combo' => false,
+                'remaining_minutes' => 0,
+                'formatted_time' => 'Lỗi',
+                'error' => $e->getMessage()
+            ]);
         }
     }
 
@@ -1045,14 +1026,35 @@ class BillController extends Controller
     public function showTransferForm($billId)
     {
         try {
-            $bill = Bill::with(['table', 'user'])
+            $bill = Bill::with(['table', 'user', 'comboTimeUsages'])
                 ->where('status', 'Open')
                 ->where('payment_status', 'Pending')
                 ->findOrFail($billId);
 
-            $availableTables = Table::where('status', 'available')
-                ->where('id', '!=', $bill->table_id)
-                ->get();
+            // Kiểm tra nếu có combo time đang chạy
+            $activeComboTime = ComboTimeUsage::where('bill_id', $billId)
+                ->where('is_expired', false)
+                ->whereNull('end_time')
+                ->first();
+
+            // Lấy các bàn có thể chuyển đến
+            // Nếu có combo đang chạy, chỉ hiển thị bàn cùng loại
+            if ($activeComboTime) {
+                $availableTables = Table::where('status', 'available')
+                    ->where('id', '!=', $bill->table_id)
+                    ->where('table_rate_id', $bill->table->table_rate_id) // CHỈ HIỂN THỊ BÀN CÙNG LOẠI
+                    ->get();
+
+                if ($availableTables->isEmpty()) {
+                    return redirect()
+                        ->route('admin.tables.index')
+                        ->with('warning', 'Hiện tại không có bàn trống cùng loại để chuyển. Vui lòng chờ hoặc dừng combo trước.');
+                }
+            } else {
+                $availableTables = Table::where('status', 'available')
+                    ->where('id', '!=', $bill->table_id)
+                    ->get();
+            }
 
             return view('admin.bills.transfer', compact('bill', 'availableTables'));
         } catch (\Exception $e) {
@@ -1074,9 +1076,8 @@ class BillController extends Controller
 
         try {
             return DB::transaction(function () use ($request) {
-
                 // 1. Kiểm tra bill và bàn
-                $bill = Bill::with(['table', 'billDetails', 'billTimeUsages'])
+                $bill = Bill::with(['table', 'billDetails', 'billTimeUsages', 'comboTimeUsages'])
                     ->where('status', 'Open')
                     ->where('payment_status', 'Pending')
                     ->findOrFail($request->bill_id);
@@ -1084,18 +1085,28 @@ class BillController extends Controller
                 $sourceTable = $bill->table;
                 $targetTable = Table::findOrFail($request->target_table_id);
 
-                // 2. Kiểm tra bàn đích có trống không
+                // 2. Kiểm tra combo time đang chạy
+                $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
+                    ->where('is_expired', false)
+                    ->whereNull('end_time')
+                    ->first();
+
+                // 3. NẾU CÓ COMBO ĐANG CHẠY, CHỈ CHO PHÉP CHUYỂN SANG BÀN CÙNG LOẠI
+                if ($activeComboTime && $sourceTable->table_rate_id !== $targetTable->table_rate_id) {
+                    throw new \Exception('Không thể chuyển sang bàn khác loại khi đang sử dụng combo thời gian. Vui lòng chọn bàn cùng loại hoặc dừng combo trước.');
+                }
+
+                // 4. Kiểm tra bàn đích có trống không
                 if ($targetTable->status !== 'available') {
                     throw new \Exception('Bàn đích đang được sử dụng hoặc bảo trì');
                 }
 
-                // 3. Kiểm tra không chuyển cùng bàn
+                // 5. Kiểm tra không chuyển cùng bàn
                 if ($sourceTable->id === $targetTable->id) {
                     throw new \Exception('Không thể chuyển cùng một bàn');
                 }
 
-                // 4. XỬ LÝ THỜI GIAN VÀ GIÁ CẢ TRƯỚC KHI CHUYỂN
-
+                // 6. XỬ LÝ THỜI GIAN VÀ GIÁ CẢ TRƯỚC KHI CHUYỂN
                 // Lấy giá giờ của bàn cũ và bàn mới
                 $sourceHourlyRate = $this->getTableHourlyRate($sourceTable);
                 $targetHourlyRate = $this->getTableHourlyRate($targetTable);
@@ -1130,11 +1141,6 @@ class BillController extends Controller
                 }
 
                 // Xử lý combo time đang chạy
-                $activeComboTime = ComboTimeUsage::where('bill_id', $bill->id)
-                    ->where('is_expired', false)
-                    ->whereNull('end_time')
-                    ->first();
-
                 if ($activeComboTime) {
                     // Tính thời gian đã sử dụng của combo
                     $startTime = Carbon::parse($activeComboTime->start_time);
@@ -1155,25 +1161,28 @@ class BillController extends Controller
                     ]);
                 }
 
-                // 5. Cập nhật bill sang bàn mới
+                // 7. Cập nhật bill sang bàn mới
                 $bill->update([
                     'table_id' => $targetTable->id,
                     'note' => $bill->note . " [Chuyển từ bàn {$sourceTable->table_number} lúc " . now()->format('H:i d/m/Y') . "]"
                 ]);
 
-                // 6. Cập nhật trạng thái bàn
+                // 8. Cập nhật trạng thái bàn
                 $sourceTable->update(['status' => 'available']);
                 $targetTable->update(['status' => 'occupied']);
 
-                // 7. Cập nhật tổng tiền bill
+                // 9. Cập nhật tổng tiền bill
                 $this->calculateBillTotal($bill);
 
-                // 8. Log hoạt động
+                // 10. Log hoạt động
                 Log::info('Chuyển bàn thành công', [
                     'bill_id' => $bill->id,
                     'bill_number' => $bill->bill_number,
                     'source_table' => $sourceTable->table_number,
                     'target_table' => $targetTable->table_number,
+                    'source_table_rate_id' => $sourceTable->table_rate_id,
+                    'target_table_rate_id' => $targetTable->table_rate_id,
+                    'has_active_combo' => (bool)$activeComboTime,
                     'source_hourly_rate' => $sourceHourlyRate,
                     'target_hourly_rate' => $targetHourlyRate,
                     'staff_id' => Auth::id()

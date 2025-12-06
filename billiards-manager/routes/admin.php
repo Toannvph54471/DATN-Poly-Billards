@@ -39,6 +39,8 @@ Route::prefix('admin')
         Route::get('/table-stats', [DashboardController::class, 'getTableStatsData'])->name('table-stats');
         Route::get('/report-data', [DashboardController::class, 'getReportData'])->name('report-data');
         Route::get('/quick-stats', [DashboardController::class, 'getQuickStats'])->name('quick-stats');
+
+        Route::get('{billId}/check-combo-time', [BillController::class, 'checkComboTimeStatus'])->name('tables.check-combo-time');
         /*
         |--------------------------------------------------------------------------
         | ADMIN ONLY
@@ -96,6 +98,8 @@ Route::prefix('admin')
 
         Route::get('tables/{id}/detail', [TableController::class, 'showDetail'])->name('tables.detail');
         Route::get('tables/simple-dashboard', [TableController::class, 'simpleDashboard'])->name('tables.simple-dashboard');
+        // routes/admin.php
+        Route::post('/update-positions', [TableController::class, 'updatePositions'])->name('update-positions');
 
         Route::get('tables/trashed', [TableController::class, 'trashed'])->name('tables.trashed');
         Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('tables.restore');
