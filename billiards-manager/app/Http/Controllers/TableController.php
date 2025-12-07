@@ -69,8 +69,6 @@ class TableController extends Controller
 
         return view('admin.tables.index', compact('tables', 'tableRates', 'statuses'));
     }
-
-
     public function simpleDashboard()
     {
         try {
@@ -135,23 +133,70 @@ class TableController extends Controller
                 'occupancy_rate' => $occupancyRate
             ];
 
+            // Mảng lưu các bàn cần cảnh báo
+            $unprocessedTables = []; // Bàn combo đã hết nhưng chưa xử lý
+
             // Format table data với tính toán elapsed time
-            $formattedTables = $tables->map(function ($table) {
-                $currentBillData = null;
-                $hasCombo = false;
+            $formattedTables = $tables->map(function ($table) use (&$unprocessedTables) {
                 $elapsedTime = null;
+                $hasCombo = false;
+                $comboRemaining = null;
+                $isUnprocessed = false;
 
+                // TÍNH TOÁN THỜI GIAN GIỜ THƯỜNG
                 if ($table->currentBill) {
-                    // Kiểm tra xem có combo_time_usages không
-                    $hasCombo = $table->currentBill->comboTimeUsages()->exists();
-
-                    // Tính thời gian đã sử dụng
+                    // Tính thời gian đã sử dụng (giờ thường)
                     $elapsedTime = $this->calculateElapsedTime($table->currentBill);
 
-                    $currentBillData = [
-                        'elapsed_time' => $elapsedTime,
-                        'has_combo' => $hasCombo
-                    ];
+                    // Kiểm tra combo
+                    $hasCombo = $table->currentBill->comboTimeUsages()->exists();
+
+                    if ($hasCombo) {
+                        // Lấy tất cả combo, bao gồm cả đã hết hạn
+                        $allCombos = $table->currentBill->comboTimeUsages()
+                            ->orderBy('remaining_minutes')
+                            ->get();
+
+                        if ($allCombos->isNotEmpty()) {
+                            // Tìm combo chưa hết hạn (is_expired = 0 và còn thời gian)
+                            $activeCombo = $allCombos->first(function ($combo) {
+                                return $combo->is_expired == 0 && $combo->remaining_minutes > 0;
+                            });
+
+                            if ($activeCombo) {
+                                // Có combo đang active và còn thời gian
+                                $comboRemaining = max(0, $activeCombo->remaining_minutes); // Đảm bảo không âm
+
+                                // KIỂM TRA THỜI GIAN CÒN LẠI THỰC TẾ
+                                if (is_null($activeCombo->end_time)) {
+                                    // Combo đang chạy, tính thời gian đã sử dụng
+                                    $startTime = Carbon::parse($activeCombo->start_time);
+                                    $elapsedComboMinutes = $startTime->diffInMinutes(now());
+                                    $comboRemaining = max(0, $activeCombo->total_minutes - $elapsedComboMinutes);
+                                } else {
+                                    // Combo đã tạm dừng, sử dụng remaining_minutes
+                                    $comboRemaining = max(0, $activeCombo->remaining_minutes);
+                                }
+                            } else {
+                                // Không có combo active, kiểm tra xem có combo đã hết nhưng chưa xử lý không
+                                $expiredCombo = $allCombos->first(function ($combo) {
+                                    // Combo đã hết thời gian (remaining_minutes <= 0) nhưng chưa đánh dấu expired
+                                    return $combo->is_expired == 0 && $combo->remaining_minutes <= 0;
+                                });
+
+                                if ($expiredCombo) {
+                                    // Combo đã hết thời gian nhưng chưa đánh dấu expired
+                                    $isUnprocessed = true;
+                                    $comboRemaining = 0;
+                                    $unprocessedTables[] = [
+                                        'id' => $table->id,
+                                        'table_number' => $table->table_number,
+                                        'table_name' => $table->table_name ?? "Bàn {$table->table_number}"
+                                    ];
+                                }
+                            }
+                        }
+                    }
                 }
 
                 return [
@@ -161,9 +206,10 @@ class TableController extends Controller
                     'capacity' => $table->capacity,
                     'status' => $table->status,
                     'hourly_rate' => $table->getHourlyRate(),
-                    'current_bill' => $currentBillData,
-                    'has_combo' => $hasCombo,
                     'elapsed_time' => $elapsedTime,
+                    'has_combo' => $hasCombo,
+                    'combo_remaining' => $comboRemaining, // Thêm comboRemaining - LUÔN >= 0
+                    'is_unprocessed' => $isUnprocessed, // Thêm is_unprocessed
                     'position_x' => $table->position_x,
                     'position_y' => $table->position_y,
                     'z_index' => $table->z_index
@@ -177,7 +223,8 @@ class TableController extends Controller
                 'availableTables' => $availableTables,
                 'occupiedTables' => $occupiedTables,
                 'quickTables' => $quickTables,
-                'maintenanceTables' => $maintenanceTables
+                'maintenanceTables' => $maintenanceTables,
+                'unprocessedTables' => $unprocessedTables, // Truyền thêm dữ liệu này
             ]);
         } catch (\Exception $e) {
             Log::error('Dashboard error: ' . $e->getMessage());
@@ -200,10 +247,56 @@ class TableController extends Controller
                 'occupiedTables' => collect(),
                 'quickTables' => collect(),
                 'maintenanceTables' => collect(),
+                'unprocessedTables' => [],
                 'error' => 'Lỗi khi tải dữ liệu: ' . $e->getMessage()
             ]);
         }
     }
+
+    /**
+     * Tính thời gian đã sử dụng của bill
+     */
+    private function calculateElapsedTime(Bill $bill)
+    {
+        $elapsedMinutes = 0;
+
+        if ($bill->status === 'quick') {
+            // Bàn lẻ không tính giờ
+            return null;
+        }
+
+        // Tính tổng thời gian từ tất cả các session giờ thường
+        foreach ($bill->billTimeUsages as $timeUsage) {
+            if (is_null($timeUsage->end_time)) {
+                // Session đang chạy
+                $start = Carbon::parse($timeUsage->start_time);
+                $elapsedMinutes += $start->diffInMinutes(now());
+            } else {
+                // Session đã kết thúc
+                $start = Carbon::parse($timeUsage->start_time);
+                $end = Carbon::parse($timeUsage->end_time);
+                $elapsedMinutes += $start->diffInMinutes($end);
+            }
+        }
+
+        if ($elapsedMinutes <= 0) {
+            return null;
+        }
+
+        // Format thời gian
+        $hours = floor($elapsedMinutes / 60);
+        $minutes = $elapsedMinutes % 60;
+
+        if ($hours > 0 && $minutes > 0) {
+            return "{$hours}h{$minutes}p";
+        } elseif ($hours > 0) {
+            return "{$hours}h";
+        } else {
+            return "{$minutes}p";
+        }
+    }
+
+
 
     public function saveLayout(Request $request)
     {
@@ -256,22 +349,6 @@ class TableController extends Controller
                 'message' => 'Có lỗi xảy ra khi reset bố cục'
             ], 500);
         }
-    }
-
-    protected function calculateElapsedTime($bill)
-    {
-        if (!$bill->start_time) {
-            return '00:00:00';
-        }
-
-        $startTime = Carbon::parse($bill->start_time);
-        $elapsedSeconds = now()->diffInSeconds($startTime);
-
-        $hours = floor($elapsedSeconds / 3600);
-        $minutes = floor(($elapsedSeconds % 3600) / 60);
-        $seconds = $elapsedSeconds % 60;
-
-        return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
     }
 
 

@@ -32,6 +32,7 @@
             height: 100vh;
             background: #0a0a0a;
             overflow: hidden;
+            position: relative;
         }
 
         /* ===== HEADER ===== */
@@ -41,11 +42,44 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 12px 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
             z-index: 100;
             position: relative;
             min-height: 70px;
+        }
+
+        /* Nút quay lại */
+        .header-back {
+            margin-right: 15px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateX(-2px);
+        }
+
+        .back-btn i {
+            font-size: 12px;
+        }
+
+        .header-left {
+            flex: 1;
         }
 
         .header-left h1 {
@@ -84,6 +118,7 @@
             gap: 6px;
             transition: all 0.3s ease;
             min-width: 110px;
+            margin: 0 15px;
         }
 
         .real-time-clock:hover {
@@ -226,18 +261,6 @@
             background: rgba(255, 255, 255, 0.05);
             border-color: rgba(255, 255, 255, 0.15);
             animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1);
-            }
-
-            50% {
-                box-shadow: 0 0 0 4px rgba(255, 255, 255, 0);
-            }
         }
 
         .stat-value {
@@ -425,16 +448,25 @@
             min-height: 500px;
         }
 
+        /* ===== TABLES GRID SYSTEM ===== */
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            justify-content: center;
+            align-items: start;
+        }
+
         /* ===== POOL TABLE STYLES ===== */
         .pool-table-container {
-            position: absolute;
-            width: 200px;
-            height: 100px;
+            width: 100%;
+            height: 120px;
             cursor: pointer;
             transition: all 0.15s ease;
             user-select: none;
             z-index: 10;
             touch-action: none;
+            position: relative;
         }
 
         .pool-table-container.edit-mode {
@@ -446,6 +478,25 @@
             filter: drop-shadow(0 15px 40px rgba(255, 255, 255, 0.2));
             transform: scale(1.08);
             transition: transform 0.1s ease;
+        }
+
+        /* Combo warning effects */
+        .pool-table-container.unprocessed {
+            animation: emergencyFlash 0.8s ease-in-out infinite;
+        }
+
+        @keyframes emergencyFlash {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7),
+                    inset 0 0 0 0 rgba(255, 107, 107, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 0 10px rgba(255, 107, 107, 0.7),
+                    inset 0 0 20px 5px rgba(255, 107, 107, 0.3);
+            }
         }
 
         .pool-table {
@@ -608,13 +659,33 @@
         .table-timer {
             font-size: 12px;
             font-family: 'Courier New', monospace;
-            color: #ff6b6b;
+            color: #fff;
             background: rgba(0, 0, 0, 0.85);
             padding: 3px 10px;
             border-radius: 4px;
             margin-top: 4px;
             font-weight: 600;
             letter-spacing: 1px;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .table-timer.unprocessed {
+            background: rgba(255, 107, 107, 0.9);
+            color: white;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
         }
 
         .table-status {
@@ -668,20 +739,27 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             box-shadow: 0 5px 15px rgba(255, 159, 67, 0.5);
-            animation: comboPulse 1.5s infinite;
         }
 
-        @keyframes comboPulse {
+        .combo-badge.unprocessed {
+            background: rgba(255, 107, 107, 0.95);
+            animation: badgeFlash 0.8s infinite;
+        }
+
+        @keyframes badgeFlash {
 
             0%,
             100% {
                 transform: scale(1);
-                box-shadow: 0 5px 15px rgba(255, 159, 67, 0.5);
+                background: rgba(255, 107, 107, 0.95);
+                box-shadow: 0 5px 15px rgba(255, 107, 107, 0.5);
             }
 
             50% {
-                transform: scale(1.05);
-                box-shadow: 0 8px 20px rgba(255, 159, 67, 0.7);
+                transform: scale(1.1);
+                background: rgba(255, 255, 255, 0.95);
+                color: #ff4757;
+                box-shadow: 0 8px 20px rgba(255, 107, 107, 0.7);
             }
         }
 
@@ -1056,16 +1134,55 @@
             }
 
             .pool-table-container {
-                width: 180px;
-                height: 90px;
+                height: 110px;
             }
 
             .edit-mode-indicator {
                 right: 280px;
             }
+
+            .tables-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
         }
 
         @media (max-width: 992px) {
+            .dashboard-header {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .header-back {
+                order: 1;
+                margin-right: 5px;
+            }
+
+            .mobile-menu-toggle.left-toggle {
+                order: 2;
+            }
+
+            .header-left {
+                order: 3;
+                width: 100%;
+                text-align: center;
+                margin: 5px 0;
+            }
+
+            .real-time-clock {
+                order: 4;
+                margin: 0 auto;
+            }
+
+            .mobile-menu-toggle.right-toggle {
+                order: 5;
+            }
+
+            .controls {
+                order: 6;
+                width: 100%;
+                justify-content: center;
+                margin-top: 5px;
+            }
 
             .left-panel,
             .right-panel {
@@ -1074,7 +1191,8 @@
                 bottom: 0;
                 transform: translateX(-100%);
                 z-index: 50;
-                width: 280px;
+                width: 85%;
+                max-width: 300px;
                 box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
             }
 
@@ -1083,15 +1201,15 @@
                 left: 0;
             }
 
-            .right-panel.active {
-                transform: translateX(0);
-                right: 0;
-            }
-
             .right-panel {
                 left: auto;
                 right: 0;
                 transform: translateX(100%);
+            }
+
+            .right-panel.active {
+                transform: translateX(0);
+                right: 0;
             }
 
             .mobile-menu-toggle {
@@ -1104,15 +1222,27 @@
 
             .edit-mode-indicator {
                 right: 20px;
-                top: 60px;
+                top: 140px;
+            }
+
+            .back-btn span {
+                display: none;
+            }
+
+            .tables-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 15px;
+            }
+
+            .pool-table-container {
+                height: 100px;
             }
         }
 
         @media (max-width: 768px) {
             .dashboard-header {
                 padding: 10px 15px;
-                flex-wrap: nowrap;
-                gap: 8px;
+                min-height: 80px;
             }
 
             .header-left h1 {
@@ -1134,9 +1264,13 @@
                 font-size: 11px;
             }
 
+            .tables-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 12px;
+            }
+
             .pool-table-container {
-                width: 160px;
-                height: 80px;
+                height: 90px;
             }
 
             .table-number {
@@ -1146,45 +1280,16 @@
             .tables-container {
                 padding: 15px;
             }
-
-            .left-panel,
-            .right-panel {
-                width: 85%;
-                max-width: 300px;
-            }
         }
 
         @media (max-width: 576px) {
-            .dashboard-header {
-                flex-wrap: wrap;
-                min-height: 80px;
-            }
-
-            .header-left {
-                order: 1;
-                width: 100%;
-                text-align: center;
-                margin-bottom: 5px;
-            }
-
-            .header-left h1 {
-                justify-content: center;
-            }
-
-            .real-time-clock {
-                order: 2;
-            }
-
-            .controls {
-                order: 3;
-                width: 100%;
-                justify-content: center;
-                margin-top: 5px;
+            .tables-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 10px;
             }
 
             .pool-table-container {
-                width: 140px;
-                height: 70px;
+                height: 80px;
             }
 
             .table-number {
@@ -1198,9 +1303,13 @@
         }
 
         @media (max-width: 480px) {
+            .tables-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
             .pool-table-container {
-                width: 120px;
-                height: 60px;
+                height: 70px;
             }
 
             .table-number {
@@ -1260,6 +1369,13 @@
     <div class="dashboard-container">
         <!-- Header -->
         <div class="dashboard-header">
+            <div class="header-back">
+                <button onclick="window.location.href='{{ route('admin.dashboard') }}'" class="back-btn">
+                    <i class="fas fa-chevron-left"></i>
+                    <span>Dashboard</span>
+                </button>
+            </div>
+
             <button class="mobile-menu-toggle left-toggle" id="leftPanelToggle">
                 <i class="fas fa-chart-bar"></i>
             </button>
@@ -1322,7 +1438,7 @@
                 <div>
                     <div class="section-title">
                         <i class="fas fa-chart-bar"></i>
-                        Thống kê
+                        Thống kê hôm nay
                     </div>
                     <div class="stats-grid">
                         <div class="stat-card highlight">
@@ -1330,7 +1446,7 @@
                             <div class="stat-label">HÓA ĐƠN MỞ</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-value">{{ number_format($stats['today_revenue'] ?? 0) }}đ</div>
+                            <div class="stat-value" id="todayRevenue">{{ number_format($todayRevenue ?? 0) }}đ</div>
                             <div class="stat-label">DOANH THU</div>
                         </div>
                         <div class="stat-card">
@@ -1443,75 +1559,132 @@
                             <p>{{ $error }}</p>
                         </div>
                     @elseif(isset($tables) && $tables->count() > 0)
-                        @php
-                            $counter = 0;
-                        @endphp
-
-                        @foreach ($tables as $table)
+                        <div class="tables-grid" id="tablesGrid">
                             @php
-                                // Sử dụng vị trí đã lưu hoặc tính toán tự động
-                                $posX = $table['position_x'] ?? ($counter % 4) * 220 + 40;
-                                $posY = $table['position_y'] ?? floor($counter / 4) * 120 + 40;
-                                $zIndex = $table['z_index'] ?? $counter;
-                                $counter++;
-
-                                $elapsedTime = $table['elapsed_time'] ?? '';
-                                $hasCombo = $table['has_combo'] ?? false;
-
-                                // Xác định class status
-                                $statusConfig = [
-                                    'available' => ['class' => 'status-available', 'text' => 'TRỐNG'],
-                                    'occupied' => ['class' => 'status-occupied', 'text' => 'ĐANG DÙNG'],
-                                    'quick' => ['class' => 'status-quick', 'text' => 'NHANH'],
-                                    'maintenance' => ['class' => 'status-maintenance', 'text' => 'BẢO TRÌ'],
-                                ];
-
-                                $status = $statusConfig[$table['status']] ?? $statusConfig['available'];
+                                $counter = 0;
+                                $todayRevenue = $todayRevenue ?? 0; // Lấy doanh thu hôm nay từ controller
                             @endphp
 
-                            <div class="pool-table-container" data-table-id="{{ $table['id'] }}"
-                                data-table-number="{{ $table['table_number'] }}"
-                                style="left: {{ $posX }}px; top: {{ $posY }}px; z-index: {{ $zIndex }};"
-                                id="table-{{ $table['id'] }}">
+                            @foreach ($tables as $table)
+                                @php
+                                    // XỬ LÝ HIỂN THỊ THỜI GIAN COMBO
+                                    $elapsedTime = $table['elapsed_time'] ?? '';
+                                    $hasCombo = $table['has_combo'] ?? false;
+                                    $comboRemaining = $table['combo_remaining'] ?? null;
+                                    $isUnprocessed = $table['is_unprocessed'] ?? false;
 
-                                <div class="pool-table">
-                                    <!-- Cushions -->
-                                    <div class="table-cushion cushion-top"></div>
-                                    <div class="table-cushion cushion-bottom"></div>
-                                    <div class="table-cushion cushion-left"></div>
-                                    <div class="table-cushion cushion-right"></div>
+                                    // ĐẢM BẢO THỜI GIAN KHÔNG BAO GIỜ ÂM
+                                    $safeRemaining = $comboRemaining !== null ? max(0, $comboRemaining) : 0;
 
-                                    <!-- Table surface -->
-                                    <div class="table-surface"></div>
+                                    // FORMAT THỜI GIAN COMBO: XhYp (nếu có giờ) hoặc Xp (nếu chỉ có phút)
+                                    $comboTimeDisplay = '';
+                                    if ($hasCombo && $safeRemaining > 0) {
+                                        $hours = floor($safeRemaining / 60);
+                                        $minutes = $safeRemaining % 60;
 
-                                    <!-- 6 pockets -->
-                                    <div class="pocket pocket-tl"></div>
-                                    <div class="pocket pocket-tr"></div>
-                                    <div class="pocket pocket-bl"></div>
-                                    <div class="pocket pocket-br"></div>
-                                    <div class="pocket pocket-mt"></div>
-                                    <div class="pocket pocket-mb"></div>
+                                        if ($hours > 0 && $minutes > 0) {
+                                            $comboTimeDisplay = $hours . 'h' . $minutes . 'p';
+                                        } elseif ($hours > 0) {
+                                            $comboTimeDisplay = $hours . 'h';
+                                        } else {
+                                            $comboTimeDisplay = $minutes . 'p';
+                                        }
+                                    }
 
-                                    <!-- Table info -->
-                                    <div class="table-info">
-                                        <div class="table-number">{{ $table['table_number'] }}</div>
-                                        <div class="table-name">{{ $table['table_name'] }}</div>
+                                    // XÁC ĐỊNH THỜI GIAN HIỂN THỊ
+                                    $displayTime = '';
+                                    $timerClass = '';
+                                    $badgeClass = '';
+                                    $containerClass = '';
 
-                                        @if ($elapsedTime)
-                                            <div class="table-timer">{{ $elapsedTime }}</div>
-                                        @endif
+                                    if ($hasCombo) {
+                                        if ($isUnprocessed) {
+                                            // Bàn combo đã hết nhưng chưa xử lý
+                                            $displayTime = 'HẾT COMBO!';
+                                            $timerClass = 'unprocessed';
+                                            $badgeClass = 'unprocessed';
+                                            $containerClass = 'unprocessed';
+                                        } elseif ($safeRemaining <= 0) {
+                                            // Combo đã hết thời gian và đã xử lý
+                                            $displayTime = 'COMBO ĐÃ HẾT';
+                                            $timerClass = '';
+                                            $badgeClass = '';
+                                        } else {
+                                            // Combo còn thời gian - hiển thị định dạng XhYp
+                                            $displayTime = $comboTimeDisplay;
+                                            $timerClass = '';
+                                            $badgeClass = '';
+                                        }
+                                    } else {
+                                        // Không có combo, hiển thị thời gian sử dụng giờ thường
+                                        $displayTime = $elapsedTime;
+                                    }
 
-                                        <div class="table-status {{ $status['class'] }}">
-                                            {{ $status['text'] }}
+                                    // Xác định class status bàn
+                                    $statusConfig = [
+                                        'available' => ['class' => 'status-available', 'text' => 'TRỐNG'],
+                                        'occupied' => ['class' => 'status-occupied', 'text' => 'ĐANG DÙNG'],
+                                        'quick' => ['class' => 'status-quick', 'text' => 'NHANH'],
+                                        'maintenance' => ['class' => 'status-maintenance', 'text' => 'BẢO TRÌ'],
+                                    ];
+
+                                    $status = $statusConfig[$table['status']] ?? $statusConfig['available'];
+                                @endphp
+
+                                <div class="pool-table-container {{ $containerClass }}"
+                                    data-table-id="{{ $table['id'] }}"
+                                    data-table-number="{{ $table['table_number'] }}"
+                                    data-combo-remaining="{{ $safeRemaining }}"
+                                    data-is-unprocessed="{{ $isUnprocessed ? 'true' : 'false' }}"
+                                    id="table-{{ $table['id'] }}">
+
+                                    <div class="pool-table">
+                                        <!-- Cushions -->
+                                        <div class="table-cushion cushion-top"></div>
+                                        <div class="table-cushion cushion-bottom"></div>
+                                        <div class="table-cushion cushion-left"></div>
+                                        <div class="table-cushion cushion-right"></div>
+
+                                        <!-- Table surface -->
+                                        <div class="table-surface"></div>
+
+                                        <!-- 6 pockets -->
+                                        <div class="pocket pocket-tl"></div>
+                                        <div class="pocket pocket-tr"></div>
+                                        <div class="pocket pocket-bl"></div>
+                                        <div class="pocket pocket-br"></div>
+                                        <div class="pocket pocket-mt"></div>
+                                        <div class="pocket pocket-mb"></div>
+
+                                        <!-- Table info -->
+                                        <div class="table-info">
+                                            <div class="table-number">{{ $table['table_number'] }}</div>
+                                            <div class="table-name">{{ $table['table_name'] }}</div>
+
+                                            @if ($displayTime)
+                                                <div class="table-timer {{ $timerClass }}">
+                                                    {{ $displayTime }}
+                                                </div>
+                                            @endif
+
+                                            <div class="table-status {{ $status['class'] }}">
+                                                {{ $status['text'] }}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    @if ($hasCombo)
-                                        <div class="combo-badge">COMBO</div>
-                                    @endif
+                                        @if ($hasCombo || $isUnprocessed)
+                                            <div class="combo-badge {{ $badgeClass }}">
+                                                @if ($isUnprocessed)
+                                                    <i class="fas fa-exclamation-triangle"></i> CHƯA XỬ LÝ
+                                                @else
+                                                    COMBO
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
-                            </div>
-                        @endforeach
+                            @endforeach
+                        </div>
                     @else
                         <div
                             style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: rgba(255, 255, 255, 0.5);">
@@ -1596,7 +1769,8 @@
                         </div>
                         <div class="summary-item">
                             <div class="summary-label">Doanh thu hôm nay:</div>
-                            <div class="summary-value">{{ number_format($stats['today_revenue'] ?? 0) }}đ</div>
+                            <div class="summary-value" id="todayRevenueSummary">
+                                {{ number_format($todayRevenue ?? 0) }}đ</div>
                         </div>
                         <div class="summary-item">
                             <div class="summary-label">Hóa đơn đang mở:</div>
@@ -1641,6 +1815,7 @@
             y: 0
         };
         let lastTime = 0;
+        let todayRevenue = {{ $todayRevenue ?? 0 }};
 
         // ===== DOM ELEMENTS =====
         const editModeBtn = document.getElementById('editModeBtn');
@@ -1648,6 +1823,7 @@
         const cancelEditBtn = document.getElementById('cancelEditBtn');
         const resetLayoutBtn = document.getElementById('resetLayoutBtn');
         const tablesContainer = document.getElementById('tablesContainer');
+        const tablesGrid = document.getElementById('tablesGrid');
         const notification = document.getElementById('notification');
         const notificationMessage = document.getElementById('notificationMessage');
         const editModeIndicator = document.getElementById('editModeIndicator');
@@ -1659,21 +1835,36 @@
         const rightPanelToggle = document.getElementById('rightPanelToggle');
         const panelOverlay = document.getElementById('panelOverlay');
         const snapGuide = document.getElementById('snapGuide');
-        let poolTables = document.querySelectorAll('.pool-table-container');
+        const todayRevenueElement = document.getElementById('todayRevenue');
+        const todayRevenueSummary = document.getElementById('todayRevenueSummary');
+
+        // ===== REVENUE FUNCTIONS =====
+        function updateRevenueDisplay() {
+            if (todayRevenueElement) {
+                todayRevenueElement.textContent = formatCurrency(todayRevenue);
+            }
+            if (todayRevenueSummary) {
+                todayRevenueSummary.textContent = formatCurrency(todayRevenue);
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
+        }
 
         // ===== REAL-TIME CLOCK =====
         function updateClock() {
             const now = new Date();
             const timeString = now.toLocaleTimeString('vi-VN');
 
-            document.getElementById('liveClock').textContent = timeString;
-            document.getElementById('lastUpdateTime').innerHTML =
-                `Cập nhật: <span id="currentTime">${timeString}</span>`;
+            if (document.getElementById('liveClock')) {
+                document.getElementById('liveClock').textContent = timeString;
+            }
+            if (document.getElementById('lastUpdateTime')) {
+                document.getElementById('lastUpdateTime').innerHTML =
+                    `Cập nhật: <span id="currentTime">${timeString}</span>`;
+            }
         }
-
-        // Initialize clock
-        updateClock();
-        setInterval(updateClock, 1000);
 
         // ===== MOBILE PANEL TOGGLE =====
         function initMobilePanels() {
@@ -1696,21 +1887,11 @@
                 rightPanel.classList.remove('active');
                 panelOverlay.classList.remove('active');
             });
-
-            // Close panels when clicking outside on mobile
-            document.addEventListener('click', (e) => {
-                if (isMobile && !leftPanel.contains(e.target) && !leftPanelToggle.contains(e.target)) {
-                    leftPanel.classList.remove('active');
-                }
-                if (isMobile && !rightPanel.contains(e.target) && !rightPanelToggle.contains(e.target)) {
-                    rightPanel.classList.remove('active');
-                }
-            });
         }
 
         // ===== DRAG AND DROP FUNCTIONS =====
         function initDragAndDrop() {
-            poolTables = document.querySelectorAll('.pool-table-container');
+            const poolTables = document.querySelectorAll('.pool-table-container');
 
             poolTables.forEach(table => {
                 table.addEventListener('mousedown', startDrag);
@@ -1994,18 +2175,15 @@
             editModeBtn.style.display = 'none';
 
             // Add edit-mode class to all tables
-            poolTables.forEach(table => {
+            document.querySelectorAll('.pool-table-container').forEach(table => {
                 table.classList.add('edit-mode');
             });
 
             // Store original positions
             originalPositions.clear();
-            poolTables.forEach(table => {
-                const style = window.getComputedStyle(table);
+            document.querySelectorAll('.pool-table-container').forEach(table => {
                 originalPositions.set(table.dataset.tableId, {
-                    x: style.left,
-                    y: style.top,
-                    zIndex: style.zIndex
+                    element: table
                 });
             });
 
@@ -2025,7 +2203,7 @@
             editModeBtn.style.display = 'flex';
 
             // Remove edit-mode class from all tables
-            poolTables.forEach(table => {
+            document.querySelectorAll('.pool-table-container').forEach(table => {
                 table.classList.remove('edit-mode');
             });
 
@@ -2036,12 +2214,15 @@
         async function saveLayout() {
             const positions = {};
 
-            poolTables.forEach(table => {
-                const style = window.getComputedStyle(table);
+            // Lấy vị trí hiện tại của các bàn trong grid
+            const tables = document.querySelectorAll('.pool-table-container');
+            let index = 0;
+
+            tables.forEach(table => {
+                // Trong grid layout, không cần lưu vị trí x,y
+                // Chỉ cần lưu thứ tự
                 positions[table.dataset.tableId] = {
-                    x: parseInt(style.left),
-                    y: parseInt(style.top),
-                    z: parseInt(style.zIndex)
+                    order: index++
                 };
             });
 
@@ -2111,20 +2292,14 @@
 
         function undoChanges() {
             if (isEditMode) {
-                poolTables.forEach(table => {
-                    const originalPos = originalPositions.get(table.dataset.tableId);
-                    if (originalPos) {
-                        table.style.left = originalPos.x;
-                        table.style.top = originalPos.y;
-                        table.style.zIndex = originalPos.zIndex;
-                    }
-                });
-                showNotification('Đã hoàn tác các thay đổi.', 'info');
+                showNotification('Trong chế độ grid, không thể hoàn tác thay đổi.', 'info');
             }
         }
 
         // ===== UI FUNCTIONS =====
         function showNotification(message, type = 'success') {
+            if (!notification || !notificationMessage) return;
+
             notificationMessage.textContent = message;
 
             // Remove all type classes
@@ -2141,6 +2316,8 @@
         }
 
         function showLoading(show, text = 'Đang xử lý...') {
+            if (!loadingOverlay || !loadingText) return;
+
             if (show) {
                 loadingText.textContent = text;
                 loadingOverlay.classList.add('show');
@@ -2186,6 +2363,12 @@
         // ===== EVENT LISTENERS =====
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Update revenue display
+            updateRevenueDisplay();
+
             initMobilePanels();
             initDragAndDrop();
 
@@ -2209,10 +2392,6 @@
                 if ((e.ctrlKey || e.metaKey) && e.key === 's' && isEditMode) {
                     e.preventDefault();
                     saveLayout();
-                }
-                if ((e.ctrlKey || e.metaKey) && e.key === 'z' && isEditMode) {
-                    e.preventDefault();
-                    undoChanges();
                 }
                 if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault();
