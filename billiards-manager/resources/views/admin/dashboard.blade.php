@@ -55,7 +55,7 @@
                 <a href="{{ route('admin.tables.simple-dashboard') }}"
                     class="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
                     <i class="fas fa-qrcode"></i>
-                    Máy quét QR
+                    Tổng quan bàn
                 </a>
             </form>
         </div>

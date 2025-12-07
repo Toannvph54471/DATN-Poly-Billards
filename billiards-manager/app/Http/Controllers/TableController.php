@@ -12,6 +12,7 @@ use App\Models\TableRate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TableController extends Controller
 {
@@ -69,6 +70,7 @@ class TableController extends Controller
         return view('admin.tables.index', compact('tables', 'tableRates', 'statuses'));
     }
 
+
     public function simpleDashboard()
     {
         try {
@@ -79,27 +81,61 @@ class TableController extends Controller
                     $query->whereIn('status', ['Open', 'quick'])
                         ->with(['billTimeUsages', 'comboTimeUsages']);
                 }
-            ])->get();
+            ])->orderByRaw('ISNULL(position_y), position_y ASC')
+                ->orderByRaw('ISNULL(position_x), position_x ASC')
+                ->orderBy('table_number')
+                ->get();
 
             // Thống kê
             $totalTables = $tables->count();
-            $availableTables = $tables->where('status', 'available')->count();
-            $occupiedTables = $tables->where('status', 'occupied')->count();
-            $quickTables = $tables->where('status', 'quick')->count();
 
+            // Phân loại bàn
+            $availableTables = $tables->where('status', 'available');
+            $occupiedTables = $tables->where('status', 'occupied');
+            $quickTables = $tables->where('status', 'quick');
+            $maintenanceTables = $tables->where('status', 'maintenance');
+
+            // Tổng hợp tất cả bàn đang dùng (bao gồm cả quick)
+            $allOccupiedTables = $tables->filter(function ($table) {
+                return in_array($table->status, ['occupied', 'quick']);
+            });
+
+            // Lấy hóa đơn đang mở
+            $openBills = Bill::whereIn('status', ['Open', 'quick'])
+                ->with(['table'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Tính doanh thu hôm nay
+            $todayRevenue = Bill::whereDate('created_at', today())
+                ->where('status', 'Closed')
+                ->sum('total_amount') ?? 0;
+
+            // Tính toán các số liệu thống kê
+            $availableCount = $availableTables->count();
+            $occupiedCount = $occupiedTables->count();
+            $quickCount = $quickTables->count();
+            $maintenanceCount = $maintenanceTables->count();
+            $totalOccupiedCount = $occupiedCount + $quickCount;
+
+            // Tính occupancy rate
             $occupancyRate = $totalTables > 0
-                ? round((($occupiedTables + $quickTables) / $totalTables) * 100)
+                ? round(($totalOccupiedCount / $totalTables) * 100)
                 : 0;
 
             $stats = [
                 'total' => $totalTables,
-                'available' => $availableTables,
-                'occupied' => $occupiedTables,
-                'quick' => $quickTables,
+                'available' => $availableCount,
+                'occupied' => $occupiedCount,
+                'quick' => $quickCount,
+                'maintenance' => $maintenanceCount,
+                'total_occupied' => $totalOccupiedCount,
+                'open_bills' => $openBills->count(),
+                'today_revenue' => $todayRevenue,
                 'occupancy_rate' => $occupancyRate
             ];
 
-            // Format table data
+            // Format table data với tính toán elapsed time
             $formattedTables = $tables->map(function ($table) {
                 $currentBillData = null;
                 $hasCombo = false;
@@ -110,7 +146,7 @@ class TableController extends Controller
                     $hasCombo = $table->currentBill->comboTimeUsages()->exists();
 
                     // Tính thời gian đã sử dụng
-                    $elapsedTime = $this->calculateSimpleElapsedTime($table->currentBill);
+                    $elapsedTime = $this->calculateElapsedTime($table->currentBill);
 
                     $currentBillData = [
                         'elapsed_time' => $elapsedTime,
@@ -121,27 +157,121 @@ class TableController extends Controller
                 return [
                     'id' => $table->id,
                     'table_number' => $table->table_number,
-                    'table_name' => $table->table_name,
+                    'table_name' => $table->table_name ?? "Bàn {$table->table_number}",
                     'capacity' => $table->capacity,
                     'status' => $table->status,
                     'hourly_rate' => $table->getHourlyRate(),
                     'current_bill' => $currentBillData,
                     'has_combo' => $hasCombo,
-                    'elapsed_time' => $elapsedTime
+                    'elapsed_time' => $elapsedTime,
+                    'position_x' => $table->position_x,
+                    'position_y' => $table->position_y,
+                    'z_index' => $table->z_index
                 ];
             });
 
             return view('admin.tables.simple-dashboard', [
                 'stats' => $stats,
-                'tables' => $formattedTables
+                'tables' => $formattedTables,
+                'openBills' => $openBills,
+                'availableTables' => $availableTables,
+                'occupiedTables' => $occupiedTables,
+                'quickTables' => $quickTables,
+                'maintenanceTables' => $maintenanceTables
             ]);
         } catch (\Exception $e) {
+            Log::error('Dashboard error: ' . $e->getMessage());
+
             return view('admin.tables.simple-dashboard', [
-                'stats' => null,
-                'tables' => [],
-                'error' => 'Lỗi khi tải dữ liệu!'
+                'stats' => [
+                    'total' => 0,
+                    'available' => 0,
+                    'occupied' => 0,
+                    'quick' => 0,
+                    'maintenance' => 0,
+                    'total_occupied' => 0,
+                    'open_bills' => 0,
+                    'today_revenue' => 0,
+                    'occupancy_rate' => 0
+                ],
+                'tables' => collect(),
+                'openBills' => collect(),
+                'availableTables' => collect(),
+                'occupiedTables' => collect(),
+                'quickTables' => collect(),
+                'maintenanceTables' => collect(),
+                'error' => 'Lỗi khi tải dữ liệu: ' . $e->getMessage()
             ]);
         }
+    }
+
+    public function saveLayout(Request $request)
+    {
+        try {
+            $positions = $request->input('positions', []);
+
+            foreach ($positions as $tableId => $position) {
+                Table::where('id', $tableId)->update([
+                    'position_x' => $position['x'],
+                    'position_y' => $position['y'],
+                    'z_index' => $position['z'] ?? 0,
+                    'updated_at' => now()
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã lưu bố cục thành công!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Save layout error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi lưu bố cục'
+            ], 500);
+        }
+    }
+
+    public function resetLayout()
+    {
+        try {
+            // Reset tất cả vị trí về null
+            Table::query()->update([
+                'position_x' => null,
+                'position_y' => null,
+                'z_index' => 0,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã reset bố cục về mặc định!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Reset layout error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi reset bố cục'
+            ], 500);
+        }
+    }
+
+    protected function calculateElapsedTime($bill)
+    {
+        if (!$bill->start_time) {
+            return '00:00:00';
+        }
+
+        $startTime = Carbon::parse($bill->start_time);
+        $elapsedSeconds = now()->diffInSeconds($startTime);
+
+        $hours = floor($elapsedSeconds / 3600);
+        $minutes = floor(($elapsedSeconds % 3600) / 60);
+        $seconds = $elapsedSeconds % 60;
+
+        return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
     }
 
 

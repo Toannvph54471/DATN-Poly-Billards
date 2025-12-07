@@ -101,6 +101,10 @@ Route::prefix('admin')
         // routes/admin.php
         Route::post('/update-positions', [TableController::class, 'updatePositions'])->name('update-positions');
 
+        Route::get('simple-dashboard', [TableController::class, 'simpleDashboard'])->name('tables.simple-dashboard');
+        Route::post('save-layout', [TableController::class, 'saveLayout'])->name('tables.save-layout');
+        Route::post('reset-layout', [TableController::class, 'resetLayout'])->name('tables.reset-layout');
+
         Route::get('tables/trashed', [TableController::class, 'trashed'])->name('tables.trashed');
         Route::post('tables/{id}/restore', [TableController::class, 'restore'])->name('tables.restore');
         Route::delete('tables/{id}/force-delete', [TableController::class, 'forceDelete'])->name('tables.forceDelete');
