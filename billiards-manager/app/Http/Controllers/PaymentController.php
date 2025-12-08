@@ -77,6 +77,77 @@ class PaymentController extends Controller
         ));
     }
 
+    public function showPaymentMultiple(Request $request)
+    {
+        $billIds = $request->ids;
+
+        if (!$billIds || !is_array($billIds) || count($billIds) == 0) {
+            abort(404, "Không có bill nào được chọn");
+        }
+
+        // Lấy toàn bộ bill
+        $bills = Bill::with([
+            'table',
+            'user',
+            'staff',
+            'billDetails.product',
+            'billDetails.combo'
+        ])->whereIn('id', $billIds)->get();
+
+        if ($bills->count() === 0) {
+            abort(404, "Không tìm thấy bill nào");
+        }
+
+        // Tạo mảng chi tiết cho từng bill
+        $billData = [];
+
+        foreach ($bills as $bill) {
+
+            // Tính giờ chơi
+            $timeCost = $this->calculateTimeCharge($bill);
+
+            // Tính tổng sản phẩm
+            $productTotal = BillDetail::where('bill_id', $bill->id)
+                ->where('is_combo_component', false)
+                ->sum('total_price');
+
+            // Lấy khuyến mãi
+            $discountAmount = $bill->discount_amount ?? 0;
+
+            $appliedPromotion = null;
+            if ($discountAmount > 0) {
+                $appliedPromotion = $this->extractPromotionInfo($bill->note);
+            }
+
+            $totalAmount = $timeCost + $productTotal;
+            $finalAmount = max(0, $totalAmount - $discountAmount);
+
+            // Gom tất cả lại
+            $billData[] = [
+                'bill' => $bill,
+                'timeCost' => $timeCost,
+                'productTotal' => $productTotal,
+                'discountAmount' => $discountAmount,
+                'appliedPromotion' => $appliedPromotion,
+                'totalAmount' => $totalAmount,
+                'finalAmount' => $finalAmount
+            ];
+        }
+
+        // Lấy danh sách khuyến mãi (áp dụng chung)
+        $availablePromotions = Promotion::where('status', 'active')
+            ->where(fn($q) => $q->whereNull('start_date')->orWhere('start_date', '<=', now()))
+            ->where(fn($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', now()))
+            ->get();
+
+        // dd($billData, $availablePromotions);
+        // dd($billData[0]['bill']->user);
+        return view('admin.payments.payment-multiple', compact(
+            'billData',
+            'availablePromotions'
+        ));
+    }
+
     /**
      * Trích xuất thông tin khuyến mãi từ note
      */

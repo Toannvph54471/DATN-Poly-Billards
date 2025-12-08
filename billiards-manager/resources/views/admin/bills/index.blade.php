@@ -41,6 +41,12 @@
                         <i class="fa-solid fa-plus mr-2"></i>
                         Tạo hóa đơn mới
                     </a>
+
+                    <button id="pay-selected-bills"
+                        class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        <i class="fa-solid fa-credit-card mr-2"></i>
+                        Thanh toán
+                    </button>
                 </div>
             </div>
 
@@ -343,13 +349,15 @@
                                 onclick="window.location.href='{{ route('admin.bills.show', $bill->id) }}'"
                                 title="Click để xem chi tiết hóa đơn">
 
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 whitespace-nowrap" data-user-name="{{ $bill->user->name ?? '' }}"
+                                    data-user-phone="{{ $bill->user->phone ?? '' }}">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0">
                                             @if ($bill->payment_status === 'Paid')
                                                 <i
-                                                    class="fa-solid fa-check-circle text-green-500 text-lg group-hover:text-green-600 transition-colors"></i>
+                                                    class="fa-solid fa-check-circle text-green-500 text-lg group-hover:text-green-600 transition-colors pl-4"></i>
                                             @elseif($bill->status === 'Open')
+                                                <input type="checkbox" class="bill-select">
                                                 <i
                                                     class="fa-solid fa-clock text-blue-500 text-lg group-hover:text-blue-600 transition-colors"></i>
                                             @else
@@ -1314,6 +1322,74 @@
             if (paymentCheckInterval) {
                 clearInterval(paymentCheckInterval);
             }
+        });
+
+        // THanh toán nhiều hóa đơn cùng Khách
+        document.addEventListener("DOMContentLoaded", function() {
+            const checkboxes = document.querySelectorAll(".bill-select");
+
+            checkboxes.forEach(cb => {
+                // 1. Ngăn click checkbox làm click row
+                cb.addEventListener("click", function(event) {
+                    event.stopPropagation();
+                });
+
+                // 2. Lần đầu tick → chọn theo nhóm + disable nhóm khác
+                cb.addEventListener("change", function() {
+                    if (!this.checked) {
+                        resetAllCheckboxes();
+                        return;
+                    }
+
+                    const row = this.closest("tr");
+                    const user = row.querySelector("[data-user-name]")?.dataset.userName;
+                    const phone = row.querySelector("[data-user-phone]")?.dataset.userPhone;
+
+                    applyGroupSelection(user, phone);
+                });
+            });
+
+            // Áp dụng chọn nhóm
+            function applyGroupSelection(user, phone) {
+                checkboxes.forEach(cb => {
+                    const row = cb.closest("tr");
+                    const u = row.querySelector("[data-user-name]")?.dataset.userName;
+                    const p = row.querySelector("[data-user-phone]")?.dataset.userPhone;
+
+                    if (u === user && p === phone) {
+                        cb.checked = true;
+                        cb.disabled = false;
+                    } else {
+                        cb.checked = false;
+                        cb.disabled = true;
+                    }
+                });
+            }
+
+            // Reset lại trạng thái ban đầu khi bỏ check
+            function resetAllCheckboxes() {
+                checkboxes.forEach(cb => {
+                    cb.disabled = false;
+                });
+            }
+        });
+
+        // Xử lý thanh toán nhiều hóa đơn
+        document.getElementById("pay-selected-bills").addEventListener("click", function() {
+            const selected = [...document.querySelectorAll(".bill-select:checked")];
+
+            if (selected.length === 0) {
+                alert("Vui lòng chọn ít nhất 1 hóa đơn!");
+                return;
+            }
+
+            // Lấy ID của từng bill
+            const ids = selected.map(cb => cb.closest("tr").dataset.id);
+
+            // Tạo URL
+            window.location.href =
+                "{{ route('admin.payments.payment-page-multiple') }}" +
+                "?ids[]=" + ids.join("&ids[]=");
         });
     </script>
 
