@@ -66,6 +66,10 @@
             align-items: center;
             gap: 6px;
             transition: all 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
         }
 
         .back-btn:hover {
@@ -152,6 +156,9 @@
             gap: 5px;
             transition: all 0.2s ease;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
         }
 
         .control-btn:hover {
@@ -446,27 +453,28 @@
             padding: 20px;
             overflow: auto;
             min-height: 500px;
+            width: 100%;
+            height: 100%;
         }
 
         /* ===== TABLES GRID SYSTEM ===== */
         .tables-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            justify-content: center;
-            align-items: start;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
         }
 
         /* ===== POOL TABLE STYLES ===== */
         .pool-table-container {
-            width: 100%;
+            position: absolute;
+            width: 200px;
             height: 120px;
             cursor: pointer;
             transition: all 0.15s ease;
             user-select: none;
             z-index: 10;
             touch-action: none;
-            position: relative;
         }
 
         .pool-table-container.edit-mode {
@@ -478,6 +486,7 @@
             filter: drop-shadow(0 15px 40px rgba(255, 255, 255, 0.2));
             transform: scale(1.08);
             transition: transform 0.1s ease;
+            pointer-events: none;
         }
 
         /* Combo warning effects */
@@ -1134,15 +1143,12 @@
             }
 
             .pool-table-container {
+                width: 180px;
                 height: 110px;
             }
 
             .edit-mode-indicator {
                 right: 280px;
-            }
-
-            .tables-grid {
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             }
         }
 
@@ -1229,12 +1235,8 @@
                 display: none;
             }
 
-            .tables-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 15px;
-            }
-
             .pool-table-container {
+                width: 160px;
                 height: 100px;
             }
         }
@@ -1258,18 +1260,15 @@
             .control-btn {
                 padding: 5px 8px;
                 font-size: 11px;
+                max-width: 100px;
             }
 
             .control-btn i {
                 font-size: 11px;
             }
 
-            .tables-grid {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-                gap: 12px;
-            }
-
             .pool-table-container {
+                width: 140px;
                 height: 90px;
             }
 
@@ -1283,12 +1282,8 @@
         }
 
         @media (max-width: 576px) {
-            .tables-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 10px;
-            }
-
             .pool-table-container {
+                width: 120px;
                 height: 80px;
             }
 
@@ -1303,12 +1298,8 @@
         }
 
         @media (max-width: 480px) {
-            .tables-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-
             .pool-table-container {
+                width: 100px;
                 height: 70px;
             }
 
@@ -1561,8 +1552,7 @@
                     @elseif(isset($tables) && $tables->count() > 0)
                         <div class="tables-grid" id="tablesGrid">
                             @php
-                                $counter = 0;
-                                $todayRevenue = $todayRevenue ?? 0; // Lấy doanh thu hôm nay từ controller
+                                $todayRevenue = $todayRevenue ?? 0;
                             @endphp
 
                             @foreach ($tables as $table)
@@ -1629,6 +1619,11 @@
                                     ];
 
                                     $status = $statusConfig[$table['status']] ?? $statusConfig['available'];
+
+                                    // Tính vị trí hiển thị
+                                    $posX = $table['position_x'] ?? ($loop->index % 5) * 220 + 50;
+                                    $posY = $table['position_y'] ?? floor($loop->index / 5) * 140 + 50;
+                                    $zIndex = $table['z_index'] ?? $loop->index + 1;
                                 @endphp
 
                                 <div class="pool-table-container {{ $containerClass }}"
@@ -1636,7 +1631,8 @@
                                     data-table-number="{{ $table['table_number'] }}"
                                     data-combo-remaining="{{ $safeRemaining }}"
                                     data-is-unprocessed="{{ $isUnprocessed ? 'true' : 'false' }}"
-                                    id="table-{{ $table['id'] }}">
+                                    id="table-{{ $table['id'] }}"
+                                    style="left: {{ $posX }}px; top: {{ $posY }}px; z-index: {{ $zIndex }};">
 
                                     <div class="pool-table">
                                         <!-- Cushions -->
@@ -2179,10 +2175,17 @@
                 table.classList.add('edit-mode');
             });
 
-            // Store original positions
+            // Store original positions (lưu cả vị trí hiện tại)
             originalPositions.clear();
             document.querySelectorAll('.pool-table-container').forEach(table => {
+                const currentX = parseInt(table.style.left) || 0;
+                const currentY = parseInt(table.style.top) || 0;
+                const currentZ = parseInt(table.style.zIndex) || 0;
+
                 originalPositions.set(table.dataset.tableId, {
+                    x: currentX,
+                    y: currentY,
+                    z: currentZ,
                     element: table
                 });
             });
@@ -2214,15 +2217,17 @@
         async function saveLayout() {
             const positions = {};
 
-            // Lấy vị trí hiện tại của các bàn trong grid
-            const tables = document.querySelectorAll('.pool-table-container');
-            let index = 0;
+            // Lấy vị trí hiện tại của các bàn
+            document.querySelectorAll('.pool-table-container').forEach(table => {
+                const tableId = table.dataset.tableId;
+                const x = parseInt(table.style.left) || 0;
+                const y = parseInt(table.style.top) || 0;
+                const z = parseInt(table.style.zIndex) || 0;
 
-            tables.forEach(table => {
-                // Trong grid layout, không cần lưu vị trí x,y
-                // Chỉ cần lưu thứ tự
-                positions[table.dataset.tableId] = {
-                    order: index++
+                positions[tableId] = {
+                    x: x,
+                    y: y,
+                    z: z
                 };
             });
 
@@ -2237,7 +2242,7 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
                     body: JSON.stringify({
-                        positions
+                        positions: positions
                     })
                 });
 
@@ -2291,8 +2296,83 @@
         }
 
         function undoChanges() {
-            if (isEditMode) {
-                showNotification('Trong chế độ grid, không thể hoàn tác thay đổi.', 'info');
+            if (!isEditMode) return;
+
+            // Khôi phục vị trí gốc
+            originalPositions.forEach((position, tableId) => {
+                const table = document.querySelector(`[data-table-id="${tableId}"]`);
+                if (table) {
+                    table.style.left = `${position.x}px`;
+                    table.style.top = `${position.y}px`;
+                    table.style.zIndex = `${position.z}`;
+                }
+            });
+
+            showNotification('Đã hoàn tác thay đổi.', 'info');
+        }
+
+        // ===== COMBO AUTO UPDATE =====
+        function initComboAutoUpdate() {
+            // Cập nhật thời gian combo mỗi phút
+            setInterval(() => {
+                document.querySelectorAll('.pool-table-container').forEach(table => {
+                    const remaining = parseInt(table.dataset.comboRemaining) || 0;
+                    const isUnprocessed = table.dataset.isUnprocessed === 'true';
+
+                    if (remaining > 0 && !isUnprocessed) {
+                        // Giảm thời gian còn lại
+                        const newRemaining = remaining - 1;
+                        table.dataset.comboRemaining = newRemaining;
+
+                        // Cập nhật hiển thị
+                        const timerElement = table.querySelector('.table-timer');
+                        if (timerElement) {
+                            if (newRemaining <= 0) {
+                                // Combo hết, đánh dấu chưa xử lý
+                                table.dataset.isUnprocessed = 'true';
+                                timerElement.textContent = 'HẾT COMBO!';
+                                timerElement.classList.add('unprocessed');
+                                table.classList.add('unprocessed');
+
+                                // Cập nhật badge
+                                const badge = table.querySelector('.combo-badge');
+                                if (badge) {
+                                    badge.innerHTML =
+                                        '<i class="fas fa-exclamation-triangle"></i> CHƯA XỬ LÝ';
+                                    badge.classList.add('unprocessed');
+                                }
+
+                                // Gửi thông báo đến server (nếu cần)
+                                markComboAsUnprocessed(table.dataset.tableId);
+                            } else {
+                                // Cập nhật thời gian còn lại
+                                const hours = Math.floor(newRemaining / 60);
+                                const minutes = newRemaining % 60;
+
+                                if (hours > 0 && minutes > 0) {
+                                    timerElement.textContent = `${hours}h${minutes}p`;
+                                } else if (hours > 0) {
+                                    timerElement.textContent = `${hours}h`;
+                                } else {
+                                    timerElement.textContent = `${minutes}p`;
+                                }
+                            }
+                        }
+                    }
+                });
+            }, 60000); // Cập nhật mỗi phút
+        }
+
+        async function markComboAsUnprocessed(tableId) {
+            try {
+                await fetch(`/admin/tables/${tableId}/mark-combo-unprocessed`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+            } catch (error) {
+                console.error('Error marking combo as unprocessed:', error);
             }
         }
 
@@ -2371,6 +2451,7 @@
 
             initMobilePanels();
             initDragAndDrop();
+            initComboAutoUpdate();
 
             // Edit mode button
             editModeBtn.addEventListener('click', enterEditMode);
@@ -2396,6 +2477,10 @@
                 if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault();
                     refreshDashboard();
+                }
+                if (e.key === 'z' && (e.ctrlKey || e.metaKey) && isEditMode) {
+                    e.preventDefault();
+                    undoChanges();
                 }
             });
 

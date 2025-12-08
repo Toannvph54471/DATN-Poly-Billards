@@ -40,7 +40,8 @@ Route::prefix('admin')
         Route::get('/report-data', [DashboardController::class, 'getReportData'])->name('report-data');
         Route::get('/quick-stats', [DashboardController::class, 'getQuickStats'])->name('quick-stats');
 
-        Route::get('{billId}/check-combo-time', [BillController::class, 'checkComboTimeStatus'])->name('tables.check-combo-time');
+
+        Route::get('/admin/dashboard/debug', [DashboardController::class, 'debugToday'])->name('dashboard.debug');
         /*
         |--------------------------------------------------------------------------
         | ADMIN ONLY
@@ -98,6 +99,7 @@ Route::prefix('admin')
 
         Route::get('tables/{id}/detail', [TableController::class, 'showDetail'])->name('tables.detail');
         Route::get('tables/simple-dashboard', [TableController::class, 'simpleDashboard'])->name('tables.simple-dashboard');
+        Route::get('{billId}/check-combo-time', [BillController::class, 'checkComboTimeStatus'])->name('tables.check-combo-time');
         // routes/admin.php
         Route::post('/update-positions', [TableController::class, 'updatePositions'])->name('update-positions');
 
