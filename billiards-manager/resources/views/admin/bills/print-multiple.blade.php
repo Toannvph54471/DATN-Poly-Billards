@@ -720,7 +720,66 @@
                 $finalAmount = $bill->final_amount;
                 $totalAmount = $bill->total_amount;
                 $discountAmount = $bill->discount_amount;
+                $finalAmount = $bill->final_amount;
+                $totalAmount = $bill->total_amount;
+                $discountAmount = $bill->discount_amount;
 
+                // Tính tiền giờ và sản phẩm từ bill details
+                $productDetails = $bill->billDetails->where('is_combo_component', false);
+                $productTotal = $productDetails->sum('total_price');
+                $timeCost = $totalAmount - $productTotal;
+
+                // Lấy thông tin làm tròn từ controller
+                $timeDetails = isset($timeDetails) ? $timeDetails : [];
+                $roundingInfo = $timeDetails['roundingInfo'] ?? null;
+                $hasRounding = isset($roundingInfo) && $roundingInfo['total_rounding_diff'] > 0;
+
+                // Tạo thông tin QR với số tiền động - CẬP NHẬT THÀNH MB BANK
+                $qrData = [
+                    'bill_number' => $bill->bill_number,
+                    'amount' => $finalAmount,
+                    'currency' => 'VND',
+                    'account' => '0368015218',
+                    'bank' => 'MB Bank',
+                    'content' => "TT Bill {$bill->bill_number}",
+                ];
+
+                // Tạo URL QR code - CẬP NHẬT LINK QR CODE MỚI
+                $qrUrl =
+                    $qrUrl ??
+                    'https://img.vietqr.io/image/MB-0368015218-qr_only.png?' .
+                        http_build_query([
+                            'amount' => $finalAmount,
+                            'addInfo' => "TT Bill {$bill->bill_number}",
+                        ]);
+                // Tính tiền giờ và sản phẩm từ bill details
+                $productDetails = $bill->billDetails->where('is_combo_component', false);
+                $productTotal = $productDetails->sum('total_price');
+                $timeCost = $totalAmount - $productTotal;
+
+                // Lấy thông tin làm tròn từ controller
+                $timeDetails = isset($timeDetails) ? $timeDetails : [];
+                $roundingInfo = $timeDetails['roundingInfo'] ?? null;
+                $hasRounding = isset($roundingInfo) && $roundingInfo['total_rounding_diff'] > 0;
+
+                // Tạo thông tin QR với số tiền động - CẬP NHẬT THÀNH MB BANK
+                $qrData = [
+                    'bill_number' => $bill->bill_number,
+                    'amount' => $finalAmount,
+                    'currency' => 'VND',
+                    'account' => '0368015218',
+                    'bank' => 'MB Bank',
+                    'content' => "TT Bill {$bill->bill_number}",
+                ];
+
+                // Tạo URL QR code - CẬP NHẬT LINK QR CODE MỚI
+                $qrUrl =
+                    $qrUrl ??
+                    'https://img.vietqr.io/image/MB-0368015218-qr_only.png?' .
+                        http_build_query([
+                            'amount' => $finalAmount,
+                            'addInfo' => "TT Bill {$bill->bill_number}",
+                        ]);
                 // Tính tiền giờ và sản phẩm từ bill details
                 $productDetails = $bill->billDetails->where('is_combo_component', false);
                 $productTotal = $productDetails->sum('total_price');
@@ -870,6 +929,41 @@
             </div>
 
             <!-- Giảm giá & Khuyến mãi -->
+            @if ($discountAmount > 0)
+                <div class="flex justify-between text-sm-print receipt-item">
+                    <span>Giảm giá:</span>
+                    <span class="text-red-600">-{{ number_format($discountAmount, 0, ',', '.') }}₫</span>
+                </div>
+
+                <!-- Hiển thị thông tin khuyến mãi -->
+                @if ($promotionInfo && isset($promotionInfo['name']))
+                    <div class="text-xs-print receipt-item text-center text-gray-600">
+                        <div>{{ $promotionInfo['name'] }}</div>
+                        @if (isset($promotionInfo['code']))
+                            <div>Mã: {{ $promotionInfo['code'] }}</div>
+                        @endif
+                    </div>
+                @else
+                    <!-- Fallback: Trích xuất từ note -->
+                    @php
+                        $promotionText = '';
+                        if ($bill->note) {
+                            // Sử dụng cùng logic với controller
+                            if (preg_match('/Mã KM:\s*(\w+)\s*-\s*(.+?)(?:\s*\||$)/', $bill->note, $matches)) {
+                                $promoCode = trim($matches[1]);
+                                $promoName = trim($matches[2]);
+                                $promotionText = "<div>$promoName</div><div>Mã: $promoCode</div>";
+                            }
+                        }
+                    @endphp
+                    @if ($promotionText)
+                        <div class="text-xs-print receipt-item text-center text-gray-600">
+                            {!! $promotionText !!}
+                        </div>
+                    @endif
+                @endif
+                <div class="receipt-line receipt-item"></div>
+            @endif
             @if ($discountAmount > 0)
                 <div class="flex justify-between text-sm-print receipt-item">
                     <span>Giảm giá:</span>
