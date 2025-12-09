@@ -751,7 +751,7 @@
                         ]);
             @endphp
 
-            @if ($hasRounding)
+            {{-- @if ($hasRounding)
                 <!-- Hiển thị thông tin làm tròn -->
                 <div class="rounded-info mb-2 p-2 text-xs-print receipt-item">
                     <div class="flex justify-between">
@@ -765,7 +765,7 @@
                         <span class="ml-2">Tiền: {{ $roundingInfo['rounding_amount'] ?? '1,000' }}₫</span>
                     </div>
                 </div>
-            @endif
+            @endif --}}
 
             @if ($productDetails->count() > 0)
                 <div class="space-y-1 text-xs-print">

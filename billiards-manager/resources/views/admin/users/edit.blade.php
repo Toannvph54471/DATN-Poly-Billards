@@ -142,8 +142,8 @@
                         <span class="text-gray-800 font-medium">{{ $user->total_visits ?? 0 }} lượt</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="text-gray-500 text-xs uppercase mb-1">ID thành viên</span>
-                        <span class="text-gray-800 font-medium">{{ $user->id }}</span>
+                        <span class="text-gray-500 text-xs uppercase mb-1">Rank </span>
+                        <span class="text-gray-800 font-medium">{{ $user->total_visits }}</span>
                     </div>
                 </div>
             </div>

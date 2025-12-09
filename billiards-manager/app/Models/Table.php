@@ -29,6 +29,9 @@ class Table extends BaseModel
         'status',
         'description',
         'table_rate_id',
+        'positon_x',
+        'positon_y',
+        'z_index',
         'created_by',
         'updated_by'
     ];

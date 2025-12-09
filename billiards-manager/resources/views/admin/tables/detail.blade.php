@@ -1467,7 +1467,7 @@
             <div class="table-info">
                 <div class="table-title">
                     @if (in_array($userRole, ['admin', 'manager']))
-                        <a href="{{ route('admin.tables.index') }}" class="back-btn">
+                        <a href="{{ route('admin.tables.simple-dashboard') }}" class="back-btn">
                             <i class="fas fa-arrow-left"></i> <span class="desktop-only">Quay lại</span>
                         </a>
                     @elseif($userRole === 'employee')
@@ -1987,7 +1987,7 @@
                                                 </tr>
                                             @endif
                                         @endforeach
-                                        
+
                                         <!-- HIỂN THỊ GIẢM GIÁ -->
                                         @if ($discountAmount > 0)
                                             <tr class="bg-red-50">
@@ -2306,6 +2306,22 @@
                                             <span class="mobile-only">CẬP NHẬT</span>
                                         </button>
                                     </form>
+                                    <!-- NÚT BẬT GIỜ THƯỜNG KHI COMBO HẾT -->
+                                    @if (isset($timeInfo['needs_switch']) &&
+                                            $timeInfo['needs_switch'] &&
+                                            isset($timeInfo['mode']) &&
+                                            $timeInfo['mode'] === 'combo_ended')
+                                        <form
+                                            action="{{ route('admin.bills.switch-regular', $table->currentBill->id) }}"
+                                            method="POST" class="w-full">
+                                            @csrf
+                                            <button type="submit" class="action-btn action-btn-success">
+                                                <i class="fas fa-play-circle"></i>
+                                                <span class="desktop-only">BẬT GIỜ THƯỜNG</span>
+                                                <span class="mobile-only">BẬT GIỜ</span>
+                                            </button>
+                                        </form>
+                                    @endif
 
                                     <a href="{{ route('admin.bills.transfer-form', $table->currentBill->id) }}"
                                         class="action-btn action-btn-secondary">
