@@ -138,8 +138,6 @@ class PaymentController extends Controller
             ->where(fn($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', now()))
             ->get();
 
-        // dd($billData, $availablePromotions);
-        // dd($billData[0]['bill']->user);
         return view('admin.payments.payment-multiple', compact(
             'billData',
             'availablePromotions'
@@ -848,12 +846,6 @@ class PaymentController extends Controller
                     $this->updateDailyReport($bill);
                 }
             });
-
-            // return redirect()->route('admin.bills.print-multiple', [
-            //     'ids' => implode(',', $billIds),
-            //     'auto_print' => 'true',
-            //     'success' => 'Thanh toán nhiều hóa đơn thành công! Nhân viên thanh toán: ' . Auth::user()->name
-            // ]);
 
             return redirect()
                 ->route('admin.bills.index')
