@@ -847,9 +847,15 @@ class PaymentController extends Controller
                 }
             });
 
-            return redirect()
-                ->route('admin.bills.index')
-                ->with('success', 'Thanh toán nhiều hóa đơn thành công!');
+            return redirect()->route('admin.bills.print-multiple', [
+                'ids' => $billIds,
+                'auto_print' => 'true',
+                'success' => 'Thanh toán nhiều hóa đơn thành công! Nhân viên thanh toán: ' . Auth::user()->name
+            ]);
+
+            // return redirect()
+            //     ->route('admin.bills.index')
+            //     ->with('success', 'Thanh toán nhiều hóa đơn thành công!');
         } catch (Exception $e) {
             Log::error('Lỗi thanh toán nhiều bill: ' . $e->getMessage(), [
                 'bill_ids' => $billIds,

@@ -1379,7 +1379,7 @@ class BillController extends Controller
      */
     public function printBillMultiple(Request $request)
     {
-        $ids = $request->ids; // Mảng ID từ query string ?ids[]=1&ids[]=2
+        $ids = $request->ids;
 
         if (!is_array($ids) || empty($ids)) {
             return back()->with('error', 'Không có hóa đơn nào được chọn.');
@@ -1405,15 +1405,12 @@ class BillController extends Controller
             $billsData = [];
 
             foreach ($bills as $bill) {
-
-                // Tính chi phí thời gian
+                // Tính chi phí thời gian (chi tiết)
                 $timeDetails = $this->calculateTimeChargeDetailed($bill);
-                $timeCost = $timeDetails['totalCost'];
+                $timeCost = $timeDetails['totalCost'] ?? 0;
 
-                // Tổng SP/Combo
-                $productTotal = BillDetail::where('bill_id', $bill->id)
-                    ->where('is_combo_component', false)
-                    ->sum('total_price');
+                // Tổng SP/Combo (không tính thành phần combo)
+                $productTotal = $bill->billDetails->where('is_combo_component', false)->sum('total_price');
 
                 $totalAmount = $timeCost + $productTotal;
 
@@ -1429,26 +1426,29 @@ class BillController extends Controller
                         'addInfo' => "TT Bill {$bill->bill_number}"
                     ]);
 
-                // Lưu lại từng bill
-                $billsData[] = [
-                    'bill' => $bill,
-                    'timeCost' => $timeCost,
-                    'timeDetails' => $timeDetails,
-                    'productTotal' => $productTotal,
-                    'totalAmount' => $totalAmount,
-                    'finalAmount' => $finalAmount,
-                    'discountAmount' => $discountAmount,
-                    'promotionInfo' => $promotionInfo,
-                    'printTime' => now()->format('H:i d/m/Y'),
-                    'staff' => Auth::user()->name,
-                    'qrUrl' => $qrUrl
-                ];
+                // Gán các thuộc tính tạm thời vào model để view dễ truy cập
+                $bill->timeCost = $timeCost;
+                $bill->timeDetails = $timeDetails;
+                $bill->productTotal = $productTotal;
+                $bill->totalAmount = $totalAmount;
+                // giữ nguyên attribute DB final_amount nhưng thêm alias rõ ràng
+                $bill->finalAmount = $finalAmount;
+                $bill->discountAmount = $discountAmount;
+                $bill->promotionInfo = $promotionInfo;
+                $bill->printTime = now()->format('H:i d/m/Y');
+                $bill->staff = Auth::user()->name;
+                $bill->qrUrl = $qrUrl;
+
+                // push model đã mở rộng vào mảng trả về
+                $billsData[] = $bill;
             }
 
+            // Truyền cả 'staff' top-level (dùng cho các chỗ view gọi $staff trực tiếp)
             return view('admin.bills.print-multiple', [
                 'billsData' => $billsData,
                 'autoRedirect' => $request->auto_print == 'true',
-                'redirectUrl' => route('admin.bills.index')
+                'redirectUrl' => route('admin.bills.index'),
+                'staff' => Auth::user()->name
             ]);
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Lỗi khi in nhiều hóa đơn: ' . $e->getMessage());
