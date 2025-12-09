@@ -16,6 +16,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DailyReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -175,4 +176,11 @@ Route::prefix('admin')
         Route::get('customers/trashed', [CustomerController::class, 'trash'])->name('customers.trashed');
         Route::post('customers/{id}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
         Route::delete('customers/{id}/force-delete', [CustomerController::class, 'forceDelete'])->name('customers.force-delete');
+
+        // Daily Reports Routes
+        Route::get('/', [DailyReportController::class, 'index'])->name('daily-reports.index');
+        Route::get('/dashboard', [DailyReportController::class, 'dashboard'])->name('daily-reports.dashboard');
+        Route::get('/{date}', [DailyReportController::class, 'show'])->name('daily-reports.show');
+        Route::post('/generate', [DailyReportController::class, 'generate'])->name('daily-reports.generate');
+        Route::get('/export', [DailyReportController::class, 'export'])->name('daily-reports.export');
     });
