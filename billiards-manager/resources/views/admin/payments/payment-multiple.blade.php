@@ -688,417 +688,401 @@
                             {{ $item['bill']->table->table_name }}{{ !$loop->last ? ',' : '' }}
                         @endforeach
                     </h1>
-                    {{-- <div class="bill-meta">
-                        <span>Bàn: {{ $bill->table->table_name }}</span>
-                        <span>•</span>
-                        <span>Nhân viên: {{ $bill->staff->name ?? 'N/A' }}</span>
-                        <span>•</span>
-                        <span>Thời gian: {{ \Carbon\Carbon::parse($bill->start_time)->format('H:i d/m/Y') }}</span>
-                    </div> --}}
-                </div>
-                <div class="total-amount" id="total_amount_display">
-                    {{ number_format(array_sum(array_column($billData, 'finalAmount'))) }} ₫
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content - 3 Columns -->
-        <div class="main-grid">
-            <!-- Column 1: Thông tin khách hàng -->
-            <div class="column">
-                <div class="column-header">
-                    <i class="fas fa-user"></i>
-                    <h2>Thông tin khách hàng</h2>
-                </div>
-                <div class="column-content">
-
-                    @if ($billData[0]['bill']->user)
-                        <div class="customer-info">
-                            <div class="info-item">
-                                <div class="info-label">
-                                    <i class="fas fa-user-circle"></i>
-                                    Tên khách hàng
-                                </div>
-                                <div class="info-value">{{ $billData[0]['bill']->user->name }}</div>
-                            </div>
-
-                            <div class="info-item">
-                                <div class="info-label">
-                                    <i class="fas fa-phone"></i>
-                                    Điện thoại
-                                </div>
-                                <div class="info-value">{{ $billData[0]['bill']->user->phone }}</div>
-                            </div>
-
-                            <div class="info-item">
-                                <div class="info-label">
-                                    <i class="fas fa-tag"></i>
-                                    Loại khách
-                                </div>
-                                <div class="info-value">
-                                    <span
-                                        class="badge">{{ $billData[0]['bill']->user->customer_type ?? 'Khách mới' }}</span>
-                                </div>
-                            </div>
-
-                            <div class="info-item">
-                                <div class="info-label">
-                                    <i class="fas fa-history"></i>
-                                    Số lần đến
-                                </div>
-                                <div class="info-value">{{ $billData[0]['bill']->user->total_visits ?? 0 }}</div>
-                            </div>
-
-                            <div class="info-item">
-                                <div class="info-label">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                    Tổng chi tiêu
-                                </div>
-                                <div class="info-value">
-                                    {{ number_format($billData[0]['bill']->user->total_spent ?? 0) }} ₫</div>
-                            </div>
-                        </div>
-                    @else
-                        <div class="no-customer">
-                            <i class="fas fa-user-slash"></i>
-                            <h3 style="margin-bottom: 8px; color: #374151; font-size: 14px;">Không có thông tin khách
-                                hàng</h3>
-                            <p style="color: #6b7280; font-size: 12px;">Hóa đơn này không có thông tin khách hàng</p>
-                        </div>
-                    @endif
+                    <div class="total-amount" id="total_amount_display">
+                        {{ number_format(array_sum(array_column($billData, 'finalAmount'))) }} ₫
+                    </div>
                 </div>
             </div>
 
-            <!-- Column 2: Chi tiết hóa đơn -->
-            <div class="column">
-                <div class="column-header">
-                    <i class="fas fa-receipt"></i>
-                    <h2>Chi tiết hóa đơn</h2>
+            <!-- Main Content - 3 Columns -->
+            <div class="main-grid">
+                <!-- Column 1: Thông tin khách hàng -->
+                <div class="column">
+                    <div class="column-header">
+                        <i class="fas fa-user"></i>
+                        <h2>Thông tin khách hàng</h2>
+                    </div>
+                    <div class="column-content">
+
+                        @if ($billData[0]['bill']->user)
+                            <div class="customer-info">
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-user-circle"></i>
+                                        Tên khách hàng
+                                    </div>
+                                    <div class="info-value">{{ $billData[0]['bill']->user->name }}</div>
+                                </div>
+
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-phone"></i>
+                                        Điện thoại
+                                    </div>
+                                    <div class="info-value">{{ $billData[0]['bill']->user->phone }}</div>
+                                </div>
+
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-tag"></i>
+                                        Loại khách
+                                    </div>
+                                    <div class="info-value">
+                                        <span
+                                            class="badge">{{ $billData[0]['bill']->user->customer_type ?? 'Khách mới' }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-history"></i>
+                                        Số lần đến
+                                    </div>
+                                    <div class="info-value">{{ $billData[0]['bill']->user->total_visits ?? 0 }}</div>
+                                </div>
+
+                                <div class="info-item">
+                                    <div class="info-label">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        Tổng chi tiêu
+                                    </div>
+                                    <div class="info-value">
+                                        {{ number_format($billData[0]['bill']->user->total_spent ?? 0) }} ₫</div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="no-customer">
+                                <i class="fas fa-user-slash"></i>
+                                <h3 style="margin-bottom: 8px; color: #374151; font-size: 14px;">Không có thông tin
+                                    khách
+                                    hàng</h3>
+                                <p style="color: #6b7280; font-size: 12px;">Hóa đơn này không có thông tin khách hàng
+                                </p>
+                            </div>
+                        @endif
+                    </div>
                 </div>
-                <div class="column-content">
-                    <div class="bill-items">
-                        @foreach ($billData as $data)
-                            @php
-                                $bill = $data['bill'];
-                                $timeCost = $data['timeCost'];
 
-                                // Lấy usage nếu có
-                                $totalMinutes = 0;
-                                $hourlyRate = 0;
+                <!-- Column 2: Chi tiết hóa đơn -->
+                <div class="column">
+                    <div class="column-header">
+                        <i class="fas fa-receipt"></i>
+                        <h2>Chi tiết hóa đơn</h2>
+                    </div>
+                    <div class="column-content">
+                        <div class="bill-items">
+                            @foreach ($billData as $data)
+                                @php
+                                    $bill = $data['bill'];
+                                    $timeCost = $data['timeCost'];
 
-                                if ($timeCost > 0) {
-                                    $timeUsage = $bill->billTimeUsages->first();
-                                    if ($timeUsage) {
-                                        $totalMinutes = $timeUsage->duration_minutes ?? 0;
-                                        $hourlyRate = $timeUsage->hourly_rate ?? 0;
+                                    // Lấy usage nếu có
+                                    $totalMinutes = 0;
+                                    $hourlyRate = 0;
+
+                                    if ($timeCost > 0) {
+                                        $timeUsage = $bill->billTimeUsages->first();
+                                        if ($timeUsage) {
+                                            $totalMinutes = $timeUsage->duration_minutes ?? 0;
+                                            $hourlyRate = $timeUsage->hourly_rate ?? 0;
+                                        }
                                     }
-                                }
-                            @endphp
+                                @endphp
 
-                            @if ($timeCost > 0)
-                                <div class="bill-item">
-                                    <div class="item-info">
-                                        <div>Bàn: <b>{{ $bill->table->table_name ?? 'Không rõ' }}</b></div>
-                                        <span>Thời gian:
-                                            {{ \Carbon\Carbon::parse($bill->start_time)->format('H:i d/m/Y') }}</span>
-                                        <div class="item-name">Giờ chơi</div>
+                                @if ($timeCost > 0)
+                                    <div class="bill-item">
+                                        <div class="item-info">
+                                            <div>Bàn: <b>{{ $bill->table->table_name ?? 'Không rõ' }}</b></div>
+                                            <span>Thời gian:
+                                                {{ \Carbon\Carbon::parse($bill->start_time)->format('H:i d/m/Y') }}</span>
+                                            <div class="item-name">Giờ chơi</div>
 
-                                        <div class="item-details">
-                                            {{ number_format($hourlyRate) }}₫/h ×
-                                            {{ number_format($totalMinutes / 60, 1) }}h
+                                            <div class="item-details">
+                                                {{ number_format($hourlyRate) }}₫/h ×
+                                                {{ number_format($totalMinutes / 60, 1) }}h
+                                            </div>
+                                        </div>
+
+                                        <div class="item-price">
+                                            <div class="item-total">{{ number_format($timeCost) }} ₫</div>
                                         </div>
                                     </div>
-
-                                    <div class="item-price">
-                                        <div class="item-total">{{ number_format($timeCost) }} ₫</div>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-
-                        <!-- Products and Combos -->
-                        {{-- @foreach ($bill->billDetails->where('is_combo_component', false) as $detail)
-                            @if ($detail->product || $detail->combo)
-                                <div class="bill-item">
-                                    <div class="item-info">
-                                        <div class="item-name">
-                                            @if ($detail->combo)
-                                                [COMBO] {{ $detail->combo->name ?? 'Combo' }}
-                                            @else
-                                                {{ $detail->product->name ?? 'Sản phẩm' }}
-                                            @endif
-                                        </div>
-                                        <div class="item-details">
-                                            @if ($detail->combo && $detail->combo->is_time_combo)
-                                                {{ $detail->combo->play_duration_minutes }} phút chơi
-                                            @else
-                                                Đơn giá: {{ number_format($detail->unit_price) }} ₫
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div class="item-price">
-                                        <div class="item-quantity">{{ $detail->quantity }} x
-                                            {{ number_format($detail->unit_price) }} ₫</div>
-                                        <div class="item-total">{{ number_format($detail->total_price) }} ₫</div>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach --}}
-
-                        <!-- Summary -->
-                        <div class="bill-item total-row">
-                            <div class="item-info">
-                                <div class="item-name">TỔNG CỘNG</div>
-                                @foreach ($billData as $data)
-                                    @if ($data['discountAmount'] > 0)
-                                        <div class="item-details" style="color: #dc2626; font-weight: 500;">
-                                            Đã giảm: -{{ number_format($data['discountAmount']) }} ₫
+                                @endif
+                                <!-- Products and Combos -->
+                                @foreach ($bill->billDetails->where('is_combo_component', false) as $detail)
+                                    @if ($detail->product || $detail->combo)
+                                        <div class="bill-item">
+                                            <div class="item-info">
+                                                <div class="item-name">
+                                                    @if ($detail->combo)
+                                                        [COMBO] {{ $detail->combo->name ?? 'Combo' }}
+                                                    @else
+                                                        {{ $detail->product->name ?? 'Sản phẩm' }}
+                                                    @endif
+                                                </div>
+                                                <div class="item-details">
+                                                    @if ($detail->combo && $detail->combo->is_time_combo)
+                                                        {{ $detail->combo->play_duration_minutes }} phút chơi
+                                                    @else
+                                                        Đơn giá: {{ number_format($detail->unit_price) }} ₫
+                                                    @endif
+                                                </div>
+                                            </div>
+                                            <div class="item-price">
+                                                <div class="item-quantity">{{ $detail->quantity }} x
+                                                    {{ number_format($detail->unit_price) }} ₫</div>
+                                                <div class="item-total">{{ number_format($detail->total_price) }} ₫
+                                                </div>
+                                            </div>
                                         </div>
                                     @endif
                                 @endforeach
-                            </div>
-                            <div class="item-price">
-                                <div class="item-total">
-                                    {{ number_format(array_sum(array_column($billData, 'finalAmount'))) }}
-                                    ₫</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Column 3: Phương thức thanh toán -->
-            <div class="column">
-                <div class="column-header">
-                    <i class="fas fa-credit-card"></i>
-                    <h2>Phương thức thanh toán</h2>
-                </div>
-                <div class="column-content">
-                    <!-- Promotion Section -->
-                    <div class="promotion-section">
-                        <div class="promotion-header">
-                            <i class="fas fa-tag"></i>
-                            <h3>Mã giảm giá</h3>
-                        </div>
-
-                        {{-- @if ($appliedPromotion)
-                            <!-- Hiển thị khuyến mãi đã áp dụng -->
-                            <div class="applied-promotion active">
-                                <div class="promotion-success">
-                                    <div class="promotion-info">
-                                        <div class="promotion-icon">
-                                            <i class="fas fa-check"></i>
-                                        </div>
-                                        <div class="promotion-details">
-                                            <h4>{{ $appliedPromotion['name'] }}</h4>
-                                            <p>-{{ number_format($discountAmount) }} ₫</p>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="remove-promotion" id="remove_promotion">
-                                        <i class="fas fa-times"></i>
-                                        Xóa
-                                    </button>
-                                </div>
-                            </div>
-                            <input type="hidden" name="promotion_code" value="{{ $appliedPromotion['code'] }}"
-                                id="current_promotion_code">
-                        @else --}}
-                        <!-- Dropdown chọn mã giảm giá -->
-                        <select class="promotion-select" id="promotion_select">
-                            <option value="">-- Chọn mã giảm giá --</option>
-                            @foreach ($availablePromotions as $promotion)
-                                <option value="{{ $promotion->promotion_code }}">
-                                    {{ $promotion->promotion_code }} - {{ $promotion->name }}
-                                    ({{ $promotion->discount_type == 'percent' ? $promotion->discount_value . '%' : number_format($promotion->discount_value) . '₫' }})
-                                </option>
                             @endforeach
-                        </select>
-                        <div class="promotion-message" id="promotion_message"></div>
-                        <div class="applied-promotion" id="applied_promotion">
-                            <!-- Dynamic content sẽ được thêm bằng JavaScript -->
+
+
+                            <!-- Summary -->
+                            <div class="bill-item total-row">
+                                <div class="item-info">
+                                    <div class="item-name">TỔNG CỘNG</div>
+                                    @foreach ($billData as $data)
+                                        @if ($data['discountAmount'] > 0)
+                                            <div class="item-details" style="color: #dc2626; font-weight: 500;">
+                                                Đã giảm: -{{ number_format($data['discountAmount']) }} ₫
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                <div class="item-price">
+                                    <div class="item-total">
+                                        {{ number_format(array_sum(array_column($billData, 'finalAmount'))) }}
+                                        ₫</div>
+                                </div>
+                            </div>
                         </div>
-                        {{-- @endif --}}
                     </div>
+                </div>
 
-                    {{-- <form action="{{ route('admin.payments.process-payment', $bill->id) }}" method="POST" --}}
-                    <form action="{{ route('admin.payments.process-payment', 15) }}" method="POST" id="paymentForm">
-                        @csrf
-
-                        <!-- Hidden promotion code field -->
-                        <input type="hidden" name="promotion_code" id="promotion_code_field"
-                            value="{{ $appliedPromotion['code'] ?? '' }}">
-
-                        <!-- Payment Methods -->
-                        <div class="payment-methods">
-                            <div class="payment-method selected" data-method="cash">
-                                <div class="method-header">
-                                    <div class="method-icon">
-                                        <i class="fas fa-money-bill-wave"></i>
-                                    </div>
-                                    <div>
-                                        <div class="method-name">Tiền mặt</div>
-                                        <div class="method-desc">Thanh toán bằng tiền mặt</div>
-                                    </div>
-                                </div>
-                                <input type="radio" name="payment_method" value="cash" checked hidden>
+                <!-- Column 3: Phương thức thanh toán -->
+                <div class="column">
+                    <div class="column-header">
+                        <i class="fas fa-credit-card"></i>
+                        <h2>Phương thức thanh toán</h2>
+                    </div>
+                    <div class="column-content">
+                        <!-- Promotion Section -->
+                        <div class="promotion-section">
+                            <div class="promotion-header">
+                                <i class="fas fa-tag"></i>
+                                <h3>Mã giảm giá</h3>
                             </div>
 
-                            <div class="payment-method" data-method="bank">
-                                <div class="method-header">
-                                    <div class="method-icon">
-                                        <i class="fas fa-university"></i>
+                            @if ($billData[0]['discountAmount'] > 0)
+                                <!-- Hiển thị khuyến mãi đã áp dụng -->
+                                @foreach ($billData as $item)
+                                    <div class="applied-promotion active">
+                                        <div class="promotion-success">
+                                            <div class="promotion-info">
+                                                <div class="promotion-icon">
+                                                    <i class="fas fa-check"></i>
+                                                </div>
+                                                <div class="promotion-details">
+                                                    <h4>{{ $item['name'] }}</h4>
+                                                    <p>-{{ number_format($item['discountAmount']) }} ₫</p>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="remove-promotion" id="remove_promotion">
+                                                <i class="fas fa-times"></i>
+                                                Xóa
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div class="method-name">Chuyển khoản</div>
-                                        <div class="method-desc">Chuyển khoản ngân hàng</div>
-                                    </div>
+                                    <input type="hidden" name="promotion_code" value="{{ $appliedPromotion['code'] }}"
+                                        id="current_promotion_code">
+                                @endforeach
+                            @else
+                                <!-- Dropdown chọn mã giảm giá -->
+                                <select class="promotion-select" id="promotion_select">
+                                    <option value="">-- Chọn mã giảm giá --</option>
+                                    @foreach ($availablePromotions as $promotion)
+                                        <option value="{{ $promotion->promotion_code }}">
+                                            {{ $promotion->promotion_code }} - {{ $promotion->name }}
+                                            ({{ $promotion->discount_type == 'percent' ? $promotion->discount_value . '%' : number_format($promotion->discount_value) . '₫' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="promotion-message" id="promotion_message"></div>
+                                <div class="applied-promotion" id="applied_promotion">
+                                    <!-- Dynamic content sẽ được thêm bằng JavaScript -->
                                 </div>
-                                <input type="radio" name="payment_method" value="bank" hidden>
-                            </div>
-
-                            <div class="payment-method" data-method="card">
-                                <div class="method-header">
-                                    <div class="method-icon">
-                                        <i class="fas fa-credit-card"></i>
-                                    </div>
-                                    <div>
-                                        <div class="method-name">Thẻ</div>
-                                        <div class="method-desc">Thẻ ATM/Visa/Mastercard</div>
-                                    </div>
-                                </div>
-                                <input type="radio" name="payment_method" value="card" hidden>
-                            </div>
+                            @endif
                         </div>
 
-                        <!-- Payment Details -->
-                        <div class="payment-details">
-                            <div class="input-group">
-                                <label class="input-label">Số tiền thanh toán</label>
-                                {{-- <input type="number" name="amount" value="{{ $finalAmount }}" --}}
-                                <input type="number" name="amount" value="" class="input-field readonly"
-                                    readonly id="total_amount">
+                        <form action="{{ route('admin.payments.process-payment-multiple') }}" method="POST"
+                            id="paymentForm">
+                            @csrf
+                            <!-- Hidden promotion code field -->
+                            <input type="hidden" name="promotion_code" id="promotion_code_field"
+                                value="{{ $appliedPromotion['code'] ?? '' }}">
+
+                            @foreach ($billData as $item)
+                                <input type="hidden" name="bill_ids[]" value="{{ $item['bill']->id }}">
+                            @endforeach
+
+                            <!-- Payment Methods -->
+                            <div class="payment-methods">
+                                <div class="payment-method selected" data-method="cash">
+                                    <div class="method-header">
+                                        <div class="method-icon">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </div>
+                                        <div>
+                                            <div class="method-name">Tiền mặt</div>
+                                            <div class="method-desc">Thanh toán bằng tiền mặt</div>
+                                        </div>
+                                    </div>
+                                    <input type="radio" name="payment_method" value="cash" checked hidden>
+                                </div>
+
+                                <div class="payment-method" data-method="bank">
+                                    <div class="method-header">
+                                        <div class="method-icon">
+                                            <i class="fas fa-university"></i>
+                                        </div>
+                                        <div>
+                                            <div class="method-name">Chuyển khoản</div>
+                                            <div class="method-desc">Chuyển khoản ngân hàng</div>
+                                        </div>
+                                    </div>
+                                    <input type="radio" name="payment_method" value="bank" hidden>
+                                </div>
+
+                                <div class="payment-method" data-method="card">
+                                    <div class="method-header">
+                                        <div class="method-icon">
+                                            <i class="fas fa-credit-card"></i>
+                                        </div>
+                                        <div>
+                                            <div class="method-name">Thẻ</div>
+                                            <div class="method-desc">Thẻ ATM/Visa/Mastercard</div>
+                                        </div>
+                                    </div>
+                                    <input type="radio" name="payment_method" value="card" hidden>
+                                </div>
                             </div>
 
-                            <div class="input-group">
-                                <label class="input-label">Ghi chú</label>
-                                {{-- <textarea name="note" rows="3" class="input-field" placeholder="Nhập ghi chú cho hóa đơn...">{{ $bill->note ?? '' }}</textarea> --}}
-                                <textarea name="note" rows="3" class="input-field" placeholder="Nhập ghi chú cho hóa đơn..."></textarea>
-                            </div>
-                        </div>
+                            <!-- Payment Details -->
+                            <div class="payment-details">
+                                <div class="input-group">
+                                    <label class="input-label">Số tiền thanh toán</label>
+                                    <input type="number" name="amount" class="input-field readonly"
+                                        value="{{ array_sum(array_column($billData, 'finalAmount')) }}" readonly
+                                        id="total_amount">
+                                </div>
 
-                        <!-- QR Section for Bank Transfer -->
-                        <div class="qr-section" id="qrSection">
-                            <div class="qr-title">Quét mã QR để thanh toán</div>
-                            <div class="qr-code">
-                                <div class="qr-placeholder">
-                                    <div style="text-align: center;">
-                                        <i class="fas fa-qrcode text-2xl mb-2"></i>
-                                        <div style="font-size: 11px;">Mã QR thanh toán</div>
+                                <div class="input-group">
+                                    <label class="input-label">Ghi chú</label>
+                                    <textarea name="note" rows="3" class="input-field" placeholder="Nhập ghi chú cho hóa đơn..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- QR Section for Bank Transfer -->
+                            <div class="qr-section" id="qrSection">
+                                <div class="qr-title">Quét mã QR để thanh toán</div>
+                                <div class="qr-code">
+                                    <div class="qr-placeholder">
+                                        <div style="text-align: center;">
+                                            <i class="fas fa-qrcode text-2xl mb-2"></i>
+                                            <div style="font-size: 11px;">Mã QR thanh toán</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bank-info">
+                                    <div class="bank-row">
+                                        <span class="bank-label">Số tiền:</span>
+                                        <span
+                                            class="bank-value">{{ number_format(array_sum(array_column($billData, 'finalAmount'))) }}
+                                            ₫</span>
+                                    </div>
+                                    <div class="bank-row">
+                                        <span class="bank-label">Nội dung:</span>
+                                        {{-- <span class="bank-value">{{ $bill->bill_number }}</span> --}}
+                                        <span class="bank-value">12345</span>
+                                    </div>
+                                    <div class="bank-row">
+                                        <span class="bank-label">Ngân hàng:</span>
+                                        <span class="bank-value">Vietcombank</span>
+                                    </div>
+                                    <div class="bank-row">
+                                        <span class="bank-label">Số tài khoản:</span>
+                                        <span class="bank-value">0123456789</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="bank-info">
-                                <div class="bank-row">
-                                    <span class="bank-label">Số tiền:</span>
-                                    {{-- <span class="bank-value">{{ number_format($finalAmount) }} ₫</span> --}}
-                                    <span class="bank-value">{{ number_format(566) }} ₫</span>
-                                </div>
-                                <div class="bank-row">
-                                    <span class="bank-label">Nội dung:</span>
-                                    {{-- <span class="bank-value">{{ $bill->bill_number }}</span> --}}
-                                    <span class="bank-value">12345</span>
-                                </div>
-                                <div class="bank-row">
-                                    <span class="bank-label">Ngân hàng:</span>
-                                    <span class="bank-value">Vietcombank</span>
-                                </div>
-                                <div class="bank-row">
-                                    <span class="bank-label">Số tài khoản:</span>
-                                    <span class="bank-value">0123456789</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Action Buttons -->
-                        <div class="action-buttons">
-                            <button type="button" onclick="window.history.back()" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i>
-                                Quay lại
-                            </button>
-                            <button type="submit" class="btn btn-primary" id="submit_btn">
-                                <i class="fas fa-check-circle"></i>
-                                Xác nhận thanh toán
-                            </button>
-                        </div>
-                    </form>
+                            <!-- Action Buttons -->
+                            <div class="action-buttons">
+                                <button type="button" onclick="window.history.back()" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Quay lại
+                                </button>
+                                <button type="submit" class="btn btn-primary" id="submit_btn">
+                                    <i class="fas fa-check-circle"></i>
+                                    Xác nhận thanh toán
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    {{-- <script>
-        const totalAmount = {{ $totalAmount }};
-        const originalFinalAmount = {{ $finalAmount }};
-        let currentDiscount = {{ $discountAmount }};
-        let currentPromotion = @json($appliedPromotion);
+        <script>
+            const totalAmount = {{ array_sum(array_column($billData, 'totalAmount')) }}
+            const originalFinalAmount = {{ array_sum(array_column($billData, 'finalAmount')) }}
+            const currentDiscount = {{ array_sum(array_column($billData, 'discountAmount')) }}
+            let currentPromotion = null
 
-        // Payment method selection
-        document.querySelectorAll('.payment-method').forEach(method => {
-            method.addEventListener('click', function() {
-                // Remove all selections
-                document.querySelectorAll('.payment-method').forEach(m => {
-                    m.classList.remove('selected');
-                    m.querySelector('input[type="radio"]').checked = false;
+            // Payment method selection
+            document.querySelectorAll('.payment-method').forEach(method => {
+                method.addEventListener('click', function() {
+                    // Remove all selections
+                    document.querySelectorAll('.payment-method').forEach(m => {
+                        m.classList.remove('selected');
+                        m.querySelector('input[type="radio"]').checked = false;
+                    });
+
+                    // Select this method
+                    this.classList.add('selected');
+                    this.querySelector('input[type="radio"]').checked = true;
+
+                    // Show/hide relevant sections
+                    const selectedMethod = this.dataset.method;
+                    const qrSection = document.getElementById('qrSection');
+
+                    if (selectedMethod === 'bank') {
+                        qrSection.classList.add('active');
+                    } else {
+                        qrSection.classList.remove('active');
+                    }
                 });
-
-                // Select this method
-                this.classList.add('selected');
-                this.querySelector('input[type="radio"]').checked = true;
-
-                // Show/hide relevant sections
-                const selectedMethod = this.dataset.method;
-                const qrSection = document.getElementById('qrSection');
-
-                if (selectedMethod === 'bank') {
-                    qrSection.classList.add('active');
-                } else {
-                    qrSection.classList.remove('active');
-                }
             });
-        });
 
-        // Promotion selection
-        document.getElementById('promotion_select')?.addEventListener('change', async function() {
-            const promotionCode = this.value;
-            const promotionMessage = document.getElementById('promotion_message');
+            // Promotion selection
+            document.getElementById('promotion_select')?.addEventListener('change', async function() {
+                const promotionCode = this.value;
+                const promotionMessage = document.getElementById('promotion_message');
 
-            if (!promotionCode) {
-                removePromotion();
-                return;
-            }
+                if (!promotionCode) {
+                    removePromotion();
+                    return;
+                }
 
-            try {
-                // Hiển thị loading
-                showPromotionMessage('<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra mã...', 'loading');
+                try {
+                    // Hiển thị loading
+                    showPromotionMessage('<i class="fas fa-spinner fa-spin"></i> Đang kiểm tra mã...', 'loading');
 
-                // Gọi API kiểm tra mã giảm giá
-                const response = await fetch('{{ route('admin.payments.check-promotion') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        promotion_code: promotionCode,
-                        bill_id: {{ $bill->id }}
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.valid) {
-                    // Áp dụng mã giảm giá
-                    const applyResponse = await fetch('{{ route('admin.payments.apply-promotion') }}', {
+                    // Gọi API kiểm tra mã giảm giá
+                    const response = await fetch('{{ route('admin.payments.check-promotion') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1110,85 +1094,101 @@
                         })
                     });
 
-                    const applyResult = await applyResponse.json();
+                    const result = await response.json();
 
-                    if (applyResult.success) {
-                        currentDiscount = applyResult.discount_amount;
-                        currentPromotion = applyResult.promotion;
+                    if (result.valid) {
+                        // Áp dụng mã giảm giá
+                        const applyResponse = await fetch('{{ route('admin.payments.apply-promotion') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                promotion_code: promotionCode,
+                                bill_id: {{ $bill->id }}
+                            })
+                        });
 
-                        updatePromotionUI(applyResult.promotion.name, currentDiscount, promotionCode);
-                        showPromotionMessage(`✅ ${applyResult.message}`, 'success');
-                        celebratePromotion();
+                        const applyResult = await applyResponse.json();
 
-                        // Cập nhật hidden field
-                        document.getElementById('promotion_code_field').value = promotionCode;
+                        if (applyResult.success) {
+                            currentDiscount = applyResult.discount_amount;
+                            currentPromotion = applyResult.promotion;
+
+                            updatePromotionUI(applyResult.promotion.name, currentDiscount, promotionCode);
+                            showPromotionMessage(`✅ ${applyResult.message}`, 'success');
+                            celebratePromotion();
+
+                            // Cập nhật hidden field
+                            document.getElementById('promotion_code_field').value = promotionCode;
+                        } else {
+                            throw new Error(applyResult.message);
+                        }
                     } else {
-                        throw new Error(applyResult.message);
+                        throw new Error(result.message);
                     }
-                } else {
-                    throw new Error(result.message);
-                }
 
-            } catch (error) {
-                showPromotionMessage(`❌ ${error.message}`, 'error');
+                } catch (error) {
+                    showPromotionMessage(`❌ ${error.message}`, 'error');
+                    // Reset select
+                    this.value = '';
+                }
+            });
+
+            // Remove promotion với API call
+            document.getElementById('remove_promotion')?.addEventListener('click', async function() {
+                try {
+                    const response = await fetch('{{ route('admin.payments.remove-promotion') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            bill_id: {{ $bill->id }}
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        removePromotion();
+                        showPromotionMessage(`✅ ${result.message}`, 'success');
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    showPromotionMessage(`❌ ${error.message}`, 'error');
+                }
+            });
+
+            function removePromotion() {
+                currentDiscount = 0;
+                currentPromotion = null;
+
+                // Hide applied promotion
+                document.getElementById('applied_promotion')?.classList.remove('active');
+
                 // Reset select
-                this.value = '';
+                document.getElementById('promotion_select').value = '';
+
+                // Update total amount
+                updateTotalAmount();
+
+                // Clear hidden field
+                document.getElementById('promotion_code_field').value = '';
             }
-        });
 
-        // Remove promotion với API call
-        document.getElementById('remove_promotion')?.addEventListener('click', async function() {
-            try {
-                const response = await fetch('{{ route('admin.payments.remove-promotion') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        bill_id: {{ $bill->id }}
-                    })
-                });
+            // Update promotion UI
+            function updatePromotionUI(promotionName, discountAmount, promotionCode) {
+                const appliedPromotion = document.getElementById('applied_promotion');
+                const promotionNameElem = document.getElementById('promotion_name');
+                const promotionDiscountElem = document.getElementById('promotion_discount');
 
-                const result = await response.json();
-
-                if (result.success) {
-                    removePromotion();
-                    showPromotionMessage(`✅ ${result.message}`, 'success');
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                showPromotionMessage(`❌ ${error.message}`, 'error');
-            }
-        });
-
-        function removePromotion() {
-            currentDiscount = 0;
-            currentPromotion = null;
-
-            // Hide applied promotion
-            document.getElementById('applied_promotion')?.classList.remove('active');
-
-            // Reset select
-            document.getElementById('promotion_select').value = '';
-
-            // Update total amount
-            updateTotalAmount();
-
-            // Clear hidden field
-            document.getElementById('promotion_code_field').value = '';
-        }
-
-        // Update promotion UI
-        function updatePromotionUI(promotionName, discountAmount, promotionCode) {
-            const appliedPromotion = document.getElementById('applied_promotion');
-            const promotionNameElem = document.getElementById('promotion_name');
-            const promotionDiscountElem = document.getElementById('promotion_discount');
-
-            // Create or update elements
-            if (!promotionNameElem) {
-                appliedPromotion.innerHTML = `
+                // Create or update elements
+                if (!promotionNameElem) {
+                    appliedPromotion.innerHTML = `
                     <div class="promotion-success">
                         <div class="promotion-info">
                             <div class="promotion-icon">
@@ -1206,99 +1206,99 @@
                     </div>
                 `;
 
-                // Re-attach event listener
-                document.getElementById('remove_promotion').addEventListener('click', async function() {
-                    try {
-                        const response = await fetch('{{ route('admin.payments.remove-promotion') }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                bill_id: {{ $bill->id }}
-                            })
-                        });
+                    // Re-attach event listener
+                    document.getElementById('remove_promotion').addEventListener('click', async function() {
+                        try {
+                            const response = await fetch('{{ route('admin.payments.remove-promotion') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    bill_id: {{ $bill->id }}
+                                })
+                            });
 
-                        const result = await response.json();
+                            const result = await response.json();
 
-                        if (result.success) {
-                            removePromotion();
-                            showPromotionMessage(`✅ ${result.message}`, 'success');
-                        } else {
-                            throw new Error(result.message);
+                            if (result.success) {
+                                removePromotion();
+                                showPromotionMessage(`✅ ${result.message}`, 'success');
+                            } else {
+                                throw new Error(result.message);
+                            }
+                        } catch (error) {
+                            showPromotionMessage(`❌ ${error.message}`, 'error');
                         }
-                    } catch (error) {
-                        showPromotionMessage(`❌ ${error.message}`, 'error');
-                    }
-                });
-            } else {
-                promotionNameElem.textContent = promotionName;
-                promotionDiscountElem.textContent = `-${formatCurrency(discountAmount)}`;
+                    });
+                } else {
+                    promotionNameElem.textContent = promotionName;
+                    promotionDiscountElem.textContent = `-${formatCurrency(discountAmount)}`;
+                }
+
+                appliedPromotion.classList.add('active');
+
+                // Update total amount
+                updateTotalAmount();
             }
 
-            appliedPromotion.classList.add('active');
+            // Update total amount display
+            function updateTotalAmount() {
+                const finalAmount = totalAmount - currentDiscount;
+                const totalAmountInput = document.getElementById('total_amount');
+                const totalAmountDisplay = document.getElementById('total_amount_display');
 
-            // Update total amount
-            updateTotalAmount();
-        }
-
-        // Update total amount display
-        function updateTotalAmount() {
-            const finalAmount = totalAmount - currentDiscount;
-            const totalAmountInput = document.getElementById('total_amount');
-            const totalAmountDisplay = document.getElementById('total_amount_display');
-
-            totalAmountInput.value = finalAmount;
-            totalAmountDisplay.textContent = formatCurrency(finalAmount);
-        }
-
-        // Show promotion message
-        function showPromotionMessage(message, type) {
-            const promotionMessage = document.getElementById('promotion_message');
-            promotionMessage.innerHTML = message;
-            promotionMessage.className = `promotion-message ${type}`;
-        }
-
-        // Simple celebration effect
-        function celebratePromotion() {
-            const appliedPromotion = document.getElementById('applied_promotion');
-            appliedPromotion.style.transform = 'scale(1.05)';
-            setTimeout(() => {
-                appliedPromotion.style.transform = 'scale(1)';
-            }, 300);
-        }
-
-        // Format currency
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND',
-                minimumFractionDigits: 0
-            }).format(amount);
-        }
-
-        // Show confirmation dialog
-        function showConfirmation() {
-            const finalAmount = totalAmount - currentDiscount;
-            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-
-            let paymentMethodText = '';
-            switch (paymentMethod) {
-                case 'cash':
-                    paymentMethodText = 'Tiền mặt';
-                    break;
-                case 'bank':
-                    paymentMethodText = 'Chuyển khoản';
-                    break;
-                case 'card':
-                    paymentMethodText = 'Thẻ';
-                    break;
+                totalAmountInput.value = finalAmount;
+                totalAmountDisplay.textContent = formatCurrency(finalAmount);
             }
 
-            return Swal.fire({
-                title: 'Xác nhận thanh toán',
-                html: `
+            // Show promotion message
+            function showPromotionMessage(message, type) {
+                const promotionMessage = document.getElementById('promotion_message');
+                promotionMessage.innerHTML = message;
+                promotionMessage.className = `promotion-message ${type}`;
+            }
+
+            // Simple celebration effect
+            function celebratePromotion() {
+                const appliedPromotion = document.getElementById('applied_promotion');
+                appliedPromotion.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    appliedPromotion.style.transform = 'scale(1)';
+                }, 300);
+            }
+
+            // Format currency
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND',
+                    minimumFractionDigits: 0
+                }).format(amount);
+            }
+
+            // Show confirmation dialog
+            function showConfirmation() {
+                const finalAmount = totalAmount - currentDiscount;
+                const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
+                let paymentMethodText = '';
+                switch (paymentMethod) {
+                    case 'cash':
+                        paymentMethodText = 'Tiền mặt';
+                        break;
+                    case 'bank':
+                        paymentMethodText = 'Chuyển khoản';
+                        break;
+                    case 'card':
+                        paymentMethodText = 'Thẻ';
+                        break;
+                }
+
+                return Swal.fire({
+                    title: 'Xác nhận thanh toán',
+                    html: `
                     <div style="text-align: center;">
                         <div style="font-size: 32px; color: #059669; margin-bottom: 12px;">
                             <i class="fas fa-check-circle"></i>
@@ -1311,72 +1311,72 @@
                             Phương thức: <strong>${paymentMethodText}</strong>
                         </p>
                         ${currentDiscount > 0 ? `
-                                    <div style="background: #f0fdf4; padding: 8px; border-radius: 6px; margin: 12px 0; border: 1px solid #059669;">
-                                        <p style="margin: 0; color: #065f46; font-weight: 600; font-size: 14px;">
-                                            <i class="fas fa-tag"></i> Đã áp dụng mã giảm giá: -${formatCurrency(currentDiscount)}
-                                        </p>
-                                    </div>
-                                ` : ''}
+                                                                                                                                            <div style="background: #f0fdf4; padding: 8px; border-radius: 6px; margin: 12px 0; border: 1px solid #059669;">
+                                                                                                                                                <p style="margin: 0; color: #065f46; font-weight: 600; font-size: 14px;">
+                                                                                                                                                    <i class="fas fa-tag"></i> Đã áp dụng mã giảm giá: -${formatCurrency(currentDiscount)}
+                                                                                                                                                </p>
+                                                                                                                                            </div>
+                                                                                                                                        ` : ''}
                     </div>
                 `,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Xác nhận thanh toán',
-                cancelButtonText: 'Hủy',
-                reverseButtons: true,
-                customClass: {
-                    confirmButton: 'swal2-confirm',
-                    cancelButton: 'swal2-deny'
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Xác nhận thanh toán',
+                    cancelButtonText: 'Hủy',
+                    reverseButtons: true,
+                    customClass: {
+                        confirmButton: 'swal2-confirm',
+                        cancelButton: 'swal2-deny'
+                    }
+                });
+            }
+
+            // Show loading state
+            function showLoading() {
+                const submitBtn = document.getElementById('submit_btn');
+                submitBtn.classList.add('btn-loading');
+                submitBtn.disabled = true;
+            }
+
+            // Hide loading state
+            function hideLoading() {
+                const submitBtn = document.getElementById('submit_btn');
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.disabled = false;
+            }
+
+            // Form submission
+            document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+                const finalAmount = totalAmount - currentDiscount;
+
+                // Show confirmation dialog
+                const result = await showConfirmation();
+
+                if (!result.isConfirmed) {
+                    return false;
+                }
+
+                showLoading();
+
+                // Submit form
+                setTimeout(() => {
+                    this.submit();
+                }, 500);
+            });
+
+            // Initialize
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelector('.payment-method[data-method="cash"]').click();
+
+                // Nếu đã có khuyến mãi áp dụng, cập nhật UI
+                if (currentPromotion) {
+                    updatePromotionUI(currentPromotion.name, currentDiscount, currentPromotion.code);
                 }
             });
-        }
-
-        // Show loading state
-        function showLoading() {
-            const submitBtn = document.getElementById('submit_btn');
-            submitBtn.classList.add('btn-loading');
-            submitBtn.disabled = true;
-        }
-
-        // Hide loading state
-        function hideLoading() {
-            const submitBtn = document.getElementById('submit_btn');
-            submitBtn.classList.remove('btn-loading');
-            submitBtn.disabled = false;
-        }
-
-        // Form submission
-        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-            const finalAmount = totalAmount - currentDiscount;
-
-            // Show confirmation dialog
-            const result = await showConfirmation();
-
-            if (!result.isConfirmed) {
-                return false;
-            }
-
-            showLoading();
-
-            // Submit form
-            setTimeout(() => {
-                this.submit();
-            }, 500);
-        });
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.payment-method[data-method="cash"]').click();
-
-            // Nếu đã có khuyến mãi áp dụng, cập nhật UI
-            if (currentPromotion) {
-                updatePromotionUI(currentPromotion.name, currentDiscount, currentPromotion.code);
-            }
-        });
-    </script> --}}
+        </script>
 </body>
 
 </html>
