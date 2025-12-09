@@ -179,7 +179,7 @@ Route::prefix('admin')
 
         // Daily Reports Routes
         Route::get('/', [DailyReportController::class, 'index'])->name('daily-reports.index');
-        Route::get('/dashboard', [DailyReportController::class, 'dashboard'])->name('daily-reports.dashboard');
+        Route::get('/daily-dashboard', [DailyReportController::class, 'dashboard'])->name('daily-reports.dashboard');
         Route::get('/{date}', [DailyReportController::class, 'show'])->name('daily-reports.show');
         Route::post('/generate', [DailyReportController::class, 'generate'])->name('daily-reports.generate');
         Route::get('/export', [DailyReportController::class, 'export'])->name('daily-reports.export');

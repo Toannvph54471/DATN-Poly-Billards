@@ -29,7 +29,7 @@ class DailyReportController extends Controller
         // Tính tổng
         $summary = $this->calculateSummary($reports->items());
 
-        return view('daily_reports.index', compact('reports', 'summary', 'startDate', 'endDate'));
+        return view('admin.daily_reports.index', compact('reports', 'summary', 'startDate', 'endDate'));
     }
 
     // Hiển thị chi tiết một ngày
@@ -59,7 +59,7 @@ class DailyReportController extends Controller
             ->orderBy('b.created_at', 'desc')
             ->get();
 
-        return view('daily_reports.show', compact('report', 'bills', 'date'));
+        return view('admin.daily_reports.show', compact('report', 'bills', 'date'));
     }
 
     // Tạo báo cáo thủ công
@@ -140,7 +140,7 @@ class DailyReportController extends Controller
             ->limit(5)
             ->get();
 
-        return view('daily_reports.dashboard', compact(
+        return view('admin.daily_reports.dashboard', compact(
             'todayRevenue',
             'yesterdayRevenue',
             'monthRevenue',
