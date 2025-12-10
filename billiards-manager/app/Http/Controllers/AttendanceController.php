@@ -14,6 +14,20 @@ class AttendanceController extends Controller
     const WORK_START_TIME = '08:00:00';
     const LATE_THRESHOLD_MINUTES = 15;
 
+    private function updateShiftStatus($employeeId, $status)
+    {
+        $shift = \App\Models\EmployeeShift::where('employee_id', $employeeId)
+            ->whereDate('shift_date', today())
+            ->first();
+
+        if ($shift) {
+            if ($status === 'active') {
+                $shift->checkIn();
+            } elseif ($status === 'completed') {
+                $shift->checkOut();
+            }
+        }
+    }
     public function checkIn(Request $request)
     {
         $request->validate([
@@ -86,6 +100,8 @@ class AttendanceController extends Controller
             'approval_status' => 'none' // No approval needed if on time or within threshold
         ]);
 
+        $this->updateShiftStatus($employee->id, 'active');
+
         $employee->invalidateQrToken();
 
         return response()->json([
@@ -131,6 +147,8 @@ class AttendanceController extends Controller
             'late_reason' => $request->reason,
             'approval_status' => 'pending'
         ]);
+
+        $this->updateShiftStatus($employee->id, 'active');
 
         $employee->invalidateQrToken();
 
@@ -178,6 +196,7 @@ class AttendanceController extends Controller
         }
 
         $attendance->save();
+        $this->updateShiftStatus($employee->id, 'completed');
         $employee->invalidateQrToken();
 
         return response()->json([
@@ -283,6 +302,8 @@ class AttendanceController extends Controller
             'admin_checkout_by' => Auth::id(),
             'admin_checkout_reason' => $request->reason
         ]);
+        
+        $this->updateShiftStatus($attendance->employee_id, 'completed');
 
         return response()->json(['status' => 'success', 'message' => 'Đã check-out hộ nhân viên thành công.']);
     }
@@ -295,5 +316,38 @@ class AttendanceController extends Controller
             ->paginate(20);
 
         return view('admin.attendance.manual-checkout-history', compact('history'));
+    }
+    public function processScan(Request $request)
+    {
+        $request->validate([
+            'qr_token' => 'required|string',
+        ]);
+
+        $employee = Employee::where('qr_token', $request->qr_token)
+            ->where('qr_token_expires_at', '>', now())
+            ->first();
+
+        if (!$employee) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Mã QR không hợp lệ hoặc đã hết hạn.',
+            ], 400);
+        }
+
+        // Check if employee has an active check-in (checked in today, but not checked out)
+        $activeAttendance = Attendance::where('employee_id', $employee->id)
+            ->whereDate('check_in', today())
+            ->whereNull('check_out')
+            ->first();
+
+        if ($activeAttendance) {
+            // Already checked in -> perform Check Out
+            return $this->checkOut($request);
+        } else {
+            // Not checked in (or checked out already) -> perform Check In
+            // Note: If checked out already, checkIn might return "already checked in" error if logic prevents multiple shifts.
+            // Let's rely on checkIn's internal logic.
+            return $this->checkIn($request);
+        }
     }
 }

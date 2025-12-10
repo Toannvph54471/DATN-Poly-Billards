@@ -1374,6 +1374,87 @@ class BillController extends Controller
         }
     }
 
+    /**
+     * In hóa đơn nhiều
+     */
+    public function printBillMultiple(Request $request)
+    {
+        $ids = $request->ids;
+
+        if (!is_array($ids) || empty($ids)) {
+            return back()->with('error', 'Không có hóa đơn nào được chọn.');
+        }
+
+        try {
+            // Lấy tất cả bills theo mảng ID
+            $bills = Bill::with([
+                'table',
+                'user',
+                'billDetails.product',
+                'billDetails.combo',
+                'billTimeUsages',
+                'comboTimeUsages.combo'
+            ])
+                ->whereIn('id', $ids)
+                ->get();
+
+            if ($bills->isEmpty()) {
+                return back()->with('error', 'Không tìm thấy hóa đơn.');
+            }
+
+            $billsData = [];
+
+            foreach ($bills as $bill) {
+                // Tính chi phí thời gian (chi tiết)
+                $timeDetails = $this->calculateTimeChargeDetailed($bill);
+                $timeCost = $timeDetails['totalCost'] ?? 0;
+
+                // Tổng SP/Combo (không tính thành phần combo)
+                $productTotal = $bill->billDetails->where('is_combo_component', false)->sum('total_price');
+
+                $totalAmount = $timeCost + $productTotal;
+
+                $discountAmount = $bill->discount_amount ?? 0;
+                $finalAmount = $totalAmount - $discountAmount;
+
+                $promotionInfo = $this->extractPromotionInfoFromNote($bill->note);
+
+                // QR URL
+                $qrUrl = "https://img.vietqr.io/image/MB-0368015218-qr_only.png?"
+                    . http_build_query([
+                        'amount' => $finalAmount,
+                        'addInfo' => "TT Bill {$bill->bill_number}"
+                    ]);
+
+                // Gán các thuộc tính tạm thời vào model để view dễ truy cập
+                $bill->timeCost = $timeCost;
+                $bill->timeDetails = $timeDetails;
+                $bill->productTotal = $productTotal;
+                $bill->totalAmount = $totalAmount;
+                // giữ nguyên attribute DB final_amount nhưng thêm alias rõ ràng
+                $bill->finalAmount = $finalAmount;
+                $bill->discountAmount = $discountAmount;
+                $bill->promotionInfo = $promotionInfo;
+                $bill->printTime = now()->format('H:i d/m/Y');
+                $bill->staff = Auth::user()->name;
+                $bill->qrUrl = $qrUrl;
+
+                // push model đã mở rộng vào mảng trả về
+                $billsData[] = $bill;
+            }
+
+            // Truyền cả 'staff' top-level (dùng cho các chỗ view gọi $staff trực tiếp)
+            return view('admin.bills.print-multiple', [
+                'billsData' => $billsData,
+                'autoRedirect' => $request->auto_print == 'true',
+                'redirectUrl' => route('admin.bills.index'),
+                'staff' => Auth::user()->name
+            ]);
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Lỗi khi in nhiều hóa đơn: ' . $e->getMessage());
+        }
+    }
+
     // Thêm phương thức trích xuất thông tin khuyến mãi từ note
     private function extractPromotionInfoFromNote($note)
     {
