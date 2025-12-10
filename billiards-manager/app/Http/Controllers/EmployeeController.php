@@ -22,7 +22,9 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Employee::query();
+        $query = Employee::with([
+            'user.role'
+        ]);
 
         if ($request->has('code') && $request->code != '') {
             $query->where('employee_code', 'like', '%' . $request->code . '%');
