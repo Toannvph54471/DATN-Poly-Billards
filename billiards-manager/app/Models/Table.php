@@ -202,4 +202,9 @@ class Table extends BaseModel
 
         return true;
     }
+    public function isPaused()
+    {
+        return $this->status === 'paused';
+    }
+
 }
