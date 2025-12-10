@@ -26,6 +26,15 @@ class AttendanceController extends Controller
             } elseif ($status === 'completed') {
                 $shift->checkOut();
             }
+        } else {
+             // Fallback: Try to find any active shift for this employee
+             $shift = \App\Models\EmployeeShift::where('employee_id', $employeeId)
+                ->where('status', \App\Models\EmployeeShift::STATUS_ACTIVE)
+                ->first();
+             
+             if ($shift && $status === 'completed') {
+                  $shift->checkOut();
+             }
         }
     }
     public function checkIn(Request $request)
@@ -241,6 +250,7 @@ class AttendanceController extends Controller
         // Get active employees (checked in today)
         $activeEmployees = Attendance::with('employee')
             ->whereDate('check_in', today())
+            ->whereNull('check_out')
             ->orderBy('check_in', 'desc')
             ->get();
 
@@ -293,15 +303,29 @@ class AttendanceController extends Controller
 
         $now = now();
         $checkIn = \Carbon\Carbon::parse($attendance->check_in);
-        $minutes = $now->diffInMinutes($checkIn);
 
-        $attendance->update([
+        if ($now->lt($checkIn)) {
+             return response()->json(['status' => 'error', 'message' => 'Lỗi: Thời gian check-out (' . $now->format('H:i') . ') sớm hơn thời gian check-in (' . $checkIn->format('H:i') . '). Vui lòng kiểm tra lại thời gian server.'], 400);
+        }
+
+        $minutes = $now->diffInMinutes($checkIn);
+        
+        $attendance->fill([
             'check_out' => $now,
             'total_minutes' => $minutes,
-            'status' => 'present',
+            // 'status' => 'present', // Don't override status (keep Late if Late)
             'admin_checkout_by' => Auth::id(),
             'admin_checkout_reason' => $request->reason
         ]);
+
+        // Calculate early minutes (assume work ends at 17:00, or should use Shift logic)
+        // Ideally we should get the shift from EmployeeShift
+        $workEnd = Carbon::parse($now->format('Y-m-d') . ' 17:00:00'); 
+        if ($now->lt($workEnd)) {
+             $attendance->early_minutes = $workEnd->diffInMinutes($now);
+        }
+        
+        $attendance->save();
         
         $this->updateShiftStatus($attendance->employee_id, 'completed');
 

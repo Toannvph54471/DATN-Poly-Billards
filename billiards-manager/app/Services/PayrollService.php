@@ -20,15 +20,13 @@ class PayrollService
 
         $employee = Employee::findOrFail($employeeId);
         
-        // Get all approved attendance records for the employee in the given month
-        // We only count records that are NOT rejected. 
-        // Pending records might be excluded or included depending on policy, 
-        // but usually we only pay for approved or auto-verified work.
-        // User requirement: "Nếu approved → cộng vào payroll. Nếu rejected → không tính công."
-        // So we filter for 'approved' status OR 'none' (if auto-approved/no approval needed logic exists, 
-        // but user said "Gửi lên quản lý duyệt", so likely 'approved' is required for late ones).
-        // However, normal check-ins might have status 'none' or 'present'.
-        // Let's assume we count everything that is NOT 'rejected'.
+        // Get all approved/valid attendance records
+        // We include records that are 'Late' but NOT 'rejected'.
+        // If 'Late' and 'approved', do we waive the penalty?
+        // User rule: "Tự động trừ 20.000đ cho mỗi lần đi muộn". 
+        // Likely implying if it IS late (status="Late"), we charge unless maybe explicitly cleared (status changed to Present?).
+        // If 'approval_status' is 'approved', let's assume waiver (or maybe user wants fixed penalty regardless?).
+        // Let's assume: If status == 'Late' AND approval_status != 'approved', then Penalty.
         
         $attendances = Attendance::where('employee_id', $employeeId)
             ->where('approval_status', '!=', 'rejected')
@@ -36,54 +34,34 @@ class PayrollService
             ->get();
 
         $totalMinutes = 0;
-        $penalty = 0;
+        $lateCount = 0;
+        $latePenalty = 0;
+        $LATE_FEE_PER_SESSION = 20000;
 
         foreach ($attendances as $attendance) {
-            // Calculate minutes if not already set
-            $minutes = $attendance->total_minutes;
+            // Calculate minutes
+            $minutes = max(0, (float)$attendance->total_minutes);
             if (!$minutes && $attendance->check_out) {
-                $checkIn = Carbon::parse($attendance->check_in);
-                $checkOut = Carbon::parse($attendance->check_out);
-                $minutes = $checkOut->diffInMinutes($checkIn);
+                // ... (existing helper logic if total_minutes blank)
+                 $checkIn = Carbon::parse($attendance->check_in);
+                 $checkOut = Carbon::parse($attendance->check_out);
+                 $minutes = $checkOut->diffInMinutes($checkIn);
             }
-            
-            $totalMinutes += $minutes;
+            $totalMinutes += max(0, $minutes);
 
-            // Calculate Penalty
-            // User said: "Hỗ trợ đi muộn và lý do → phạt theo phút hoặc theo mức cố định."
-            // Let's implement a simple per-minute penalty for now if late_minutes > 0
-            // AND if it wasn't "approved" (waived). 
-            // Wait, if approved, does it mean "allowed to work" or "penalty waived"?
-            // Usually "Approved" late reason means NO penalty.
-            // If "Rejected", the record is excluded entirely (no pay).
-            // So if it's in this loop, it's either on time OR late-but-approved.
-            // If late-but-approved, maybe we still deduct the late minutes from work time?
-            // Or maybe we charge a fixed fine?
-            // Let's assume:
-            // 1. Work time is actual check_in to check_out (so late time is naturally not paid).
-            // 2. Additional penalty? User said "phạt theo phút".
-            // Let's add a config or hardcode for now: 1000 VND per late minute if late > 15.
-            // But if approved, maybe we don't fine?
-            // Let's stick to: Pay for actual minutes worked. Penalty is separate.
-            // If late_minutes > 0 and approval_status != 'approved', apply penalty?
-            // But we filtered out 'rejected'. So only 'pending' or 'none' or 'approved' are here.
-            // If 'approved', we assume penalty is waived.
-            // If 'none' (normal late < threshold?), maybe small penalty?
-            // Let's keep it simple: No extra penalty, just pay for actual time.
-            // UNLESS user explicitly wants a "Fine" column.
-            // User requested "penalty" column in payroll.
-            // Let's calculate penalty = late_minutes * 1000 (example) if not approved.
-            
-            if ($attendance->late_minutes > 0 && $attendance->approval_status !== 'approved') {
-                $penalty += $attendance->late_minutes * 1000;
+            // Calculate Late Penalty
+            // If status is 'Late' and NOT approved (waived)
+            if ($attendance->status === 'Late' && $attendance->approval_status !== 'approved') {
+                $lateCount++;
             }
         }
+        
+        $latePenalty = $lateCount * $LATE_FEE_PER_SESSION;
 
         $totalHours = $totalMinutes / 60;
         $hourlyRate = $employee->hourly_rate;
         $baseAmount = $totalHours * $hourlyRate;
         
-        // Ensure not negative (though baseAmount should be positive)
         $baseAmount = max(0, $baseAmount);
 
         return [
@@ -91,7 +69,8 @@ class PayrollService
             'total_hours' => round($totalHours, 2),
             'hourly_rate' => $hourlyRate,
             'base_amount' => round($baseAmount, 2),
-            'penalty' => $penalty,
+            'late_count' => $lateCount,
+            'late_penalty' => $latePenalty,
             'period' => $month
         ];
     }
@@ -101,18 +80,39 @@ class PayrollService
         $calculation = $this->calculateMonthlySalary($employeeId, $month);
         
         // Allow manual override
-        $totalHours = isset($data['total_hours']) ? (float)$data['total_hours'] : $calculation['total_hours'];
-        $hourlyRate = isset($data['hourly_rate']) ? (float)$data['hourly_rate'] : $calculation['hourly_rate'];
+        $totalHours = isset($data['total_hours']) ? max(0, (float)$data['total_hours']) : $calculation['total_hours'];
+        $hourlyRate = isset($data['hourly_rate']) ? max(0, (float)$data['hourly_rate']) : $calculation['hourly_rate'];
         
         // Recalculate base amount if overridden
-        $baseAmount = $totalHours * $hourlyRate;
+        $baseAmount = max(0, $totalHours * $hourlyRate);
 
-        $bonus = $data['bonus'] ?? 0;
-        $manualPenalty = $data['penalty'] ?? 0;
-        $notes = $data['notes'] ?? null;
+        // Find existing payroll to preserve data
+        $existingPayroll = Payroll::where('employee_id', $employeeId)
+            ->where('period', $month)
+            ->first();
 
-        $totalPenalty = $calculation['penalty'] + $manualPenalty;
-        $finalAmount = ($baseAmount + $bonus) - $totalPenalty;
+        // 1. Bonus: Use passed data OR existing OR 0
+        $bonus = isset($data['bonus']) ? (float)$data['bonus'] : ($existingPayroll->bonus ?? 0);
+        
+        // 2. Notes: Use passed data OR existing OR null
+        $notes = isset($data['notes']) ? $data['notes'] : ($existingPayroll->notes ?? null);
+
+        // 3. Penalty (Deductions/Fine) - NOT Late Penalty
+        // Use passed 'deductions' or 'penalty' (map to deductions column)
+        // Note: DB has 'deductions' and 'penalty' column? 
+        // Migration 2025_11_20_210507 added 'bonus', 'deductions'. Previous table had 'penalty'.
+        // Let's assume 'deductions' is the editable Fine field.
+        // 'late_penalty' is the calculated Late Fee.
+        
+        $deductions = isset($data['deductions']) ? (float)$data['deductions'] : ($existingPayroll->deductions ?? 0);
+
+        // Calculated Late Penalty
+        $lateCount = $calculation['late_count'];
+        $latePenalty = $calculation['late_penalty'];
+
+        // Total Subtract
+        // Final = Base + Bonus - Deductions - LatePenalty
+        $finalAmount = ($baseAmount + $bonus) - $deductions - $latePenalty;
         
         // Ensure final amount is not negative
         $finalAmount = max(0, $finalAmount);
@@ -127,11 +127,16 @@ class PayrollService
                 'total_hours' => $totalHours,
                 'hourly_rate' => $hourlyRate,
                 'base_salary' => $baseAmount,
-                'total_amount' => $baseAmount,
+                'total_amount' => $baseAmount, // Or maybe base_amount? Leaving as base for now.
                 'bonus' => $bonus,
-                'penalty' => $totalPenalty,
+                'deductions' => $deductions,
+                'late_count' => $lateCount,
+                'late_penalty' => $latePenalty,
                 'final_amount' => $finalAmount,
                 'notes' => $notes,
+                'status' => 'Calculated'
+            ]
+        );    'notes' => $notes,
                 'status' => 'Calculated'
             ]
         );

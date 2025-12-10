@@ -169,10 +169,6 @@
                         </td>
                         <td class="py-3 px-4">
                             <div class="flex items-center justify-center gap-1">
-                                <button onclick="openSalaryModal({{ $employee->id }}, {{ $employee->hourly_rate }})"
-                                    class="btn-icon bg-blue-50 text-blue-600 hover:bg-blue-100" title="Sửa lương giờ">
-                                    <i class="fas fa-pen text-xs"></i>
-                                </button>
                                 <button onclick="openPayrollModal({{ $employee->id }}, {{ $bonus }}, {{ $penalty }}, '{{ $notes }}', {{ $payroll ? $payroll->total_hours : 0 }}, {{ $hourlyRate }})"
                                     class="btn-icon bg-purple-50 text-purple-600 hover:bg-purple-100" title="Điều chỉnh lương">
                                     <i class="fas fa-edit text-xs"></i>
@@ -297,87 +293,127 @@
 @endsection
 
 @section('scripts')
-    <script>
-        function openSalaryModal(id, rate) {
-            document.getElementById('employeeId').value = id;
-            document.getElementById('hourlyRate').value = rate;
-            document.getElementById('salaryModal').classList.remove('hidden');
+<script>
+    // Mở modal lương giờ
+    function openSalaryModal(id, rate) {
+        document.getElementById('employeeId').value = id;
+        document.getElementById('hourlyRate').value = rate || 0;
+        document.getElementById('salaryModal').classList.remove('hidden');
+    }
+
+    function closeSalaryModal() {
+        document.getElementById('salaryModal').classList.add('hidden');
+    }
+
+    // === HÀM MỚI: Lưu lương giờ ===
+    function submitSalaryUpdate() {
+        const employeeId = document.getElementById('employeeId').value;
+        const hourlyRate = document.getElementById('hourlyRate').value.trim();
+
+        if (!hourlyRate || hourlyRate < 0) {
+            Swal.fire('Lỗi', 'Vui lòng nhập mức lương giờ hợp lệ', 'error');
+            return;
         }
 
-        function closeSalaryModal() {
-            document.getElementById('salaryModal').classList.add('hidden');
-        }
+        Swal.fire({
+            title: 'Đang lưu...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
 
-        function openPayrollModal(id, bonus, penalty, notes, totalHours, hourlyRate) {
-            document.getElementById('payrollEmployeeId').value = id;
-            document.getElementById('bonus').value = bonus;
-            document.getElementById('penalty').value = penalty;
-            document.getElementById('notes').value = notes;
-            document.getElementById('modalTotalHours').value = totalHours;
-            document.getElementById('modalHourlyRate').value = hourlyRate;
-            document.getElementById('payrollModal').classList.remove('hidden');
-        }
-
-        function closePayrollModal() {
-            document.getElementById('payrollModal').classList.add('hidden');
-        }
-
-        // ... (submitSalaryUpdate remains same)
-
-        function submitPayrollUpdate() {
-            const id = document.getElementById('payrollEmployeeId').value;
-            const bonus = document.getElementById('bonus').value;
-            const penalty = document.getElementById('penalty').value;
-            const notes = document.getElementById('notes').value;
-            const totalHours = document.getElementById('modalTotalHours').value;
-            const hourlyRate = document.getElementById('modalHourlyRate').value;
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
-
-            calculateSalary(id, month, { 
-                bonus, 
-                penalty, 
-                notes,
-                total_hours: totalHours,
-                hourly_rate: hourlyRate
-            });
-        }
-
-        function calculateSalary(id, month, extraData = {}) {
-            closePayrollModal();
-            
-            Swal.fire({
-                title: 'Đang xử lý',
-                text: 'Vui lòng đợi...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            fetch(`/api/payroll/generate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ employee_id: id, month, ...extraData })
+        fetch(`/api/employees/${employeeId}/update-hourly-rate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                hourly_rate: parseFloat(hourlyRate)
             })
-            .then(response => response.json())
-            .then(data => {
+        })
+        .then(res => res.json())
+        .then(result => {
+            if (result.success) {
                 Swal.fire({
                     icon: 'success',
-                    title: 'Hoàn tất',
-                    text: 'Đã tính lương thành công',
-                    timer: 1500,
+                    title: 'Thành công!',
+                    text: result.message || 'Đã cập nhật lương giờ',
+                    timer: 2000,
                     showConfirmButton: false
-                }).then(() => location.reload());
-            })
-            .catch(() => Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Có lỗi xảy ra' }));
-        }
+                }).then(() => {
+                    closeSalaryModal();
+                    location.reload(); // Reload để thấy giá trị mới ngay
+                });
+            } else {
+                throw new Error(result.message || 'Lỗi server');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Lỗi', 'Không thể cập nhật lương giờ. Vui lòng thử lại.', 'error');
+        });
+    }
 
-        function calculateAllSalaries() {
-            // Not implemented in controller yet, but UI is ready
-            alert('Chức năng này chưa được kích hoạt.');
-        }
-    </script>
+    // Các hàm cũ (giữ nguyên, chỉ sửa nhỏ cho chắc chắn)
+    function openPayrollModal(id, bonus = 0, penalty = 0, notes = '', totalHours = 0, hourlyRate = 0) {
+        document.getElementById('payrollEmployeeId').value = id;
+        document.getElementById('bonus').value = bonus;
+        document.getElementById('penalty').value = penalty;
+        document.getElementById('notes').value = notes || '';
+        document.getElementById('modalTotalHours').value = totalHours;
+        document.getElementById('modalHourlyRate').value = hourlyRate;
+        document.getElementById('payrollModal').classList.remove('hidden');
+    }
+
+    function closePayrollModal() {
+        document.getElementById('payrollModal').classList.add('hidden');
+    }
+
+    function submitPayrollUpdate() {
+        const id = document.getElementById('payrollEmployeeId').value;
+        const bonus = document.getElementById('bonus').value || 0;
+        const penalty = document.getElementById('penalty').value || 0;
+        const notes = document.getElementById('notes').value || '';
+        const totalHours = document.getElementById('modalTotalHours').value;
+        const hourlyRate = document.getElementById('modalHourlyRate').value;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
+
+        calculateSalary(id, month, { bonus, penalty, notes, total_hours: totalHours, hourly_rate: hourlyRate });
+    }
+
+    function calculateSalary(id, month, extraData = {}) {
+        closePayrollModal();
+
+        Swal.fire({
+            title: 'Đang tính lương...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        fetch('/api/payroll/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ employee_id: id, month, month, ...extraData })
+        })
+        .then(r => r.json())
+        .then(() => {
+            Swal.fire('Thành công!', 'Tính lương hoàn tất', 'success')
+                .then(() => location.reload());
+        })
+        .catch(() => Swal.fire('Lỗi', 'Không thể tính lương', 'error'));
+    }
+
+    function calculateAllSalaries() {
+        if (!confirm('Bạn có chắc muốn tính lương cho TẤT CẢ nhân viên trong tháng này?')) return;
+
+        // Có thể implement sau, hiện tại chỉ cảnh báo
+        Swal.fire('Chưa hỗ trợ', 'Chức năng tính tất cả đang phát triển', 'info');
+    }
+</script>
 @endsection
