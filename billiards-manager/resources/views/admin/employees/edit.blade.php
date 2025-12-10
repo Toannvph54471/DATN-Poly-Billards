@@ -166,7 +166,7 @@
                             </div>
 
                             <!-- Ngày kết thúc -->
-                            <div>
+                            {{-- <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Ngày kết thúc
                                 </label>
@@ -177,7 +177,7 @@
                                 @error('end_date')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
-                            </div>
+                            </div> --}}
 
                             <!-- Trạng thái -->
                             <div>

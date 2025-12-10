@@ -50,7 +50,7 @@ class EmployeeController extends Controller
 
     public function create()
     {
-        $roles = Role::all();
+        $roles = Role::whereIn('id', [2, 3])->get();
         return view('admin.employees.create', compact('roles'));
     }
 
@@ -120,7 +120,7 @@ class EmployeeController extends Controller
     public function edit($id)
     {
         $employee = Employee::findOrFail($id);
-        $roles = Role::all();
+        $roles = Role::whereIn('id', [2, 3])->get();
 
         return view('admin.employees.edit', compact('employee', 'roles'));
     }
