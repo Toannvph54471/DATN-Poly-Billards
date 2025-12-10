@@ -104,8 +104,9 @@
                     <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Lương Giờ</th>
                     <th class="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Tổng Giờ</th>
                     <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Lương CB</th>
+                    <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Đi muộn</th>
                     <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Thưởng</th>
-                    <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Phạt</th>
+                    <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Khấu trừ</th>
                     <th class="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Thực lĩnh</th>
                     <th class="text-center py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Thao tác</th>
                 </tr>
@@ -118,7 +119,9 @@
                         $calculatedSalary = $payroll ? $payroll->final_amount : 0;
                         $baseAmount = $payroll ? $payroll->base_salary : 0; // or total_amount
                         $bonus = $payroll ? $payroll->bonus : 0;
-                        $penalty = $payroll ? $payroll->penalty : 0;
+                        $deductions = $payroll ? $payroll->deductions : 0;
+                        $lateCount = $payroll ? $payroll->late_count : 0;
+                        $latePenalty = $payroll ? $payroll->late_penalty : 0;
                         $notes = $payroll ? $payroll->notes : '';
                         $hourlyRate = $payroll ? $payroll->hourly_rate : $employee->hourly_rate;
                     @endphp
@@ -152,10 +155,18 @@
                             <span class="text-sm text-gray-600">{{ number_format($baseAmount) }}</span>
                         </td>
                         <td class="py-3 px-4 text-right">
+                            <div class="flex flex-col items-end">
+                                <span class="text-sm font-bold text-red-500">-{{ number_format($latePenalty) }}</span>
+                                @if($lateCount > 0)
+                                    <span class="text-xs text-gray-400">({{ $lateCount }} lần)</span>
+                                @endif
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-right">
                             <span class="text-sm font-medium text-green-600">{{ number_format($bonus) }}</span>
                         </td>
                         <td class="py-3 px-4 text-right">
-                            <span class="text-sm font-medium text-red-600">{{ number_format($penalty) }}</span>
+                            <span class="text-sm font-medium text-red-600">{{ number_format($deductions) }}</span>
                         </td>
                         <td class="py-3 px-4 text-right">
                             @if($isCalculated)
@@ -169,7 +180,7 @@
                         </td>
                         <td class="py-3 px-4">
                             <div class="flex items-center justify-center gap-1">
-                                <button onclick="openPayrollModal({{ $employee->id }}, {{ $bonus }}, {{ $penalty }}, '{{ $notes }}', {{ $payroll ? $payroll->total_hours : 0 }}, {{ $hourlyRate }})"
+                                <button onclick="openPayrollModal({{ $employee->id }}, {{ $bonus }}, {{ $deductions }}, '{{ $notes }}', {{ $payroll ? $payroll->total_hours : 0 }}, {{ $hourlyRate }})"
                                     class="btn-icon bg-purple-50 text-purple-600 hover:bg-purple-100" title="Điều chỉnh lương">
                                     <i class="fas fa-edit text-xs"></i>
                                 </button>
@@ -262,8 +273,8 @@
                                 placeholder="0">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Phạt (VNĐ)</label>
-                            <input type="number" id="penalty" value="0"
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Khấu trừ khác (VNĐ)</label>
+                            <input type="number" id="deductions" value="0"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                                 placeholder="0">
                         </div>
@@ -356,10 +367,10 @@
     }
 
     // Các hàm cũ (giữ nguyên, chỉ sửa nhỏ cho chắc chắn)
-    function openPayrollModal(id, bonus = 0, penalty = 0, notes = '', totalHours = 0, hourlyRate = 0) {
+    function openPayrollModal(id, bonus = 0, deductions = 0, notes = '', totalHours = 0, hourlyRate = 0) {
         document.getElementById('payrollEmployeeId').value = id;
         document.getElementById('bonus').value = bonus;
-        document.getElementById('penalty').value = penalty;
+        document.getElementById('deductions').value = deductions;
         document.getElementById('notes').value = notes || '';
         document.getElementById('modalTotalHours').value = totalHours;
         document.getElementById('modalHourlyRate').value = hourlyRate;
@@ -373,7 +384,7 @@
     function submitPayrollUpdate() {
         const id = document.getElementById('payrollEmployeeId').value;
         const bonus = document.getElementById('bonus').value || 0;
-        const penalty = document.getElementById('penalty').value || 0;
+        const deductions = document.getElementById('deductions').value || 0;
         const notes = document.getElementById('notes').value || '';
         const totalHours = document.getElementById('modalTotalHours').value;
         const hourlyRate = document.getElementById('modalHourlyRate').value;
@@ -381,7 +392,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
 
-        calculateSalary(id, month, { bonus, penalty, notes, total_hours: totalHours, hourly_rate: hourlyRate });
+        calculateSalary(id, month, { bonus, deductions, notes, total_hours: totalHours, hourly_rate: hourlyRate });
     }
 
     function calculateSalary(id, month, extraData = {}) {

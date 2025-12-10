@@ -136,9 +136,6 @@ class PayrollService
                 'notes' => $notes,
                 'status' => 'Calculated'
             ]
-        );    'notes' => $notes,
-                'status' => 'Calculated'
-            ]
         );
     }
 }

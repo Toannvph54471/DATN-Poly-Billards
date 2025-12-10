@@ -52,7 +52,7 @@ class PayrollController extends Controller
             $payroll->period,
             [
                 'bonus' => $request->bonus ?? $payroll->bonus,
-                'penalty' => $request->penalty ?? $payroll->penalty, // Use existing or new
+                'deductions' => $request->deductions ?? $payroll->deductions,
                 'notes' => $request->notes ?? $payroll->notes
             ]
         );
