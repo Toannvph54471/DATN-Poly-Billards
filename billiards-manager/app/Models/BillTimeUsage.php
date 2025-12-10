@@ -57,10 +57,11 @@ class BillTimeUsage extends Model
             return $this->duration_minutes ?? 0;
         }
     }
+
     public function getEffectiveDuration()
     {
         $baseDuration = $this->duration_minutes ?? 0;
-        $pausedMinutes = floor($this->paused_duration / 60);
+        $pausedMinutes = $this->paused_duration ?? 0;
 
         return max(0, $baseDuration - $pausedMinutes);
     }
