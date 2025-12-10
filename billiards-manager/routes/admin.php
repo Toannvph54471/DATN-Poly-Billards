@@ -101,6 +101,9 @@ Route::prefix('admin')
         Route::get('tables/{id}/detail', [TableController::class, 'showDetail'])->name('tables.detail');
         Route::get('tables/simple-dashboard', [TableController::class, 'simpleDashboard'])->name('tables.simple-dashboard');
         Route::get('{billId}/check-combo-time', [BillController::class, 'checkComboTimeStatus'])->name('tables.check-combo-time');
+         // TẠM DỪNG BÀN - THÊM VÀO ĐÂY
+        Route::post('/tables/{table}/pause', [TableController::class, 'pause'])->name('tables.pause');
+        Route::post('/tables/{table}/resume', [TableController::class, 'resume'])->name('tables.resume');
         // routes/admin.php
         Route::post('/update-positions', [TableController::class, 'updatePositions'])->name('update-positions');
 
