@@ -24,14 +24,12 @@ class BillsTableSeeder extends Seeder
             Bill::create([
                 'bill_number' => 'BILL2025001',
                 'table_id' => $table->id,
-                'customer_id' => $customer->id,
                 'staff_id' => $staff->id,
                 'start_time' => now()->subHour(),
                 'status' => 'Open',
             ]);
         } else {
             \Log::warning('Không đủ dữ liệu để tạo Bill trong seeder', [
-                'customer' => $customer?->id,
                 'staff' => $staff?->id,
                 'table' => $table?->id,
             ]);

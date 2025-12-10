@@ -4,24 +4,33 @@ namespace App\Models;
 
 class Attendance extends BaseModel
 {
-    const TYPE_CHECK_IN = 'check_in';
-    const TYPE_CHECK_OUT = 'check_out';
-    const TYPE_BREAK_START = 'break_start';
-    const TYPE_BREAK_END = 'break_end';
+    protected $table = 'attendance';
 
     protected $fillable = [
         'employee_id',
-        'employee_shift_id',
-        'type',
-        'time',
-        'notes',
+        'check_in',
+        'check_out',
+        'status',
+        'late_minutes',
+        'early_minutes',
+        'late_reason',
+        'approval_status',
+        'approved_by',
+        'approved_at',
+        'total_minutes',
+        'confirmed_by',
+        'note',
         'latitude',
         'longitude',
-        'created_by'
+        'created_by',
+        'admin_checkout_by',
+        'admin_checkout_reason'
     ];
 
     protected $casts = [
-        'time' => 'datetime',
+        'check_in' => 'datetime',
+        'check_out' => 'datetime',
+        'approved_at' => 'datetime',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8'
     ];
@@ -37,25 +46,24 @@ class Attendance extends BaseModel
         return $this->belongsTo(EmployeeShift::class);
     }
 
+    public function confirmedByUser()
+    {
+        return $this->belongsTo(User::class, 'confirmed_by');
+    }
+
+    public function adminCheckoutUser()
+    {
+        return $this->belongsTo(User::class, 'admin_checkout_by');
+    }
+
     // Scopes
     public function scopeToday($query)
     {
-        return $query->whereDate('time', today());
+        return $query->whereDate('check_in', today());
     }
 
     public function scopeByEmployee($query, $employeeId)
     {
         return $query->where('employee_id', $employeeId);
-    }
-
-    // Methods
-    public function isCheckIn(): bool
-    {
-        return $this->type === self::TYPE_CHECK_IN;
-    }
-
-    public function isCheckOut(): bool
-    {
-        return $this->type === self::TYPE_CHECK_OUT;
     }
 }

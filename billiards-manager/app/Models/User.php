@@ -51,13 +51,6 @@ class User extends Authenticatable
     {
         return $this->hasMany(Attendance::class);
     }
-
-      public function reservations()
-    {
-        return $this->hasMany(Reservation::class);
-    }
-    
-    // Helper methods
     public function isAdmin(): bool
     {
         return $this->role && $this->role->slug === self::ROLE_ADMIN;
@@ -81,5 +74,16 @@ class User extends Authenticatable
         ], false));
 
         $this->notify(new ResetPasswordNotification($url));
+    }
+
+    public function addedBillDetails()
+    {
+        return $this->hasMany(BillDetail::class, 'added_by');
+    }
+
+    // Quan hệ với các bill đã tạo (nếu có cột staff_id trong bills)
+    public function createdBills()
+    {
+        return $this->hasMany(Bill::class, 'staff_id');
     }
 }

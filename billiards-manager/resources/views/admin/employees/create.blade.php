@@ -11,7 +11,7 @@
         </div>
 
         <a href="{{ route('admin.employees.index') }}"
-           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition flex items-center">
+            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition flex items-center">
             <i class="fas fa-arrow-left mr-2"></i>
             Quay lại danh sách
         </a>
@@ -36,9 +36,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Mã nhân viên *
                                 </label>
-                                <input type="text" name="employee_code"
-                                       value="{{ old('employee_code') }}" required
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                <input type="text" name="employee_code" value="{{ old('employee_code') }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('employee_code')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -50,9 +49,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Họ và tên *
                                 </label>
-                                <input type="text" name="name"
-                                       value="{{ old('name') }}" required
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                <input type="text" name="name" value="{{ old('name') }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('name')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -64,9 +62,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Số điện thoại *
                                 </label>
-                                <input type="text" name="phone"
-                                       value="{{ old('phone') }}" required
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                <input type="text" name="phone" value="{{ old('phone') }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('phone')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -78,9 +75,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Email *
                                 </label>
-                                <input type="email" name="email"
-                                       value="{{ old('email') }}"
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                <input type="email" name="email" value="{{ old('email') }}"
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('email')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -93,7 +89,7 @@
                                     Địa chỉ
                                 </label>
                                 <textarea name="address"
-                                          class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                                  focus:ring-2 focus:ring-blue-500">{{ old('address') }}</textarea>
                                 @error('address')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -116,44 +112,36 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Chức vụ *
                                 </label>
-                                <select name="position" required
-                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
-                                               focus:ring-2 focus:ring-blue-500">
+                                <select name="role_id" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800 focus:ring-2 focus:ring-blue-500">
                                     <option value="">Chọn chức vụ</option>
-                                    <option value="manager" {{ old('position') == 'manager' ? 'selected' : '' }}>
-                                        Quản lý
-                                    </option>
-                                    <option value="staff" {{ old('position') == 'staff' ? 'selected' : '' }}>
-                                        Nhân viên
-                                    </option>
-                                    <option value="cashier" {{ old('position') == 'cashier' ? 'selected' : '' }}>
-                                        Thu ngân
-                                    </option>
-                                    <option value="waiter" {{ old('position') == 'waiter' ? 'selected' : '' }}>
-                                        Phục vụ
-                                    </option>
+
+                                    @foreach ($roles as $role)
+                                        <option value="{{ $role->id }}"
+                                            {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                            {{ $role->name }}
+                                        </option>
+                                    @endforeach
+
                                 </select>
-                                @error('position')
+
+                                @error('role_id')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
+
                             </div>
 
-                            <!-- Loại lương -->
+
+                            <!-- Mức lương theo giờ -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                                    Loại lương *
+                                    Mức lương theo giờ (VND) *
                                 </label>
-                                <select name="salary_type" required
-                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
-                                               focus:ring-2 focus:ring-blue-500">
-                                    <option value="hourly" {{ old('salary_type') == 'hourly' ? 'selected' : '' }}>
-                                        Part-time (25.000 VND/giờ)
-                                    </option>
-                                    <option value="monthly" {{ old('salary_type') == 'monthly' ? 'selected' : '' }}>
-                                        Lương cứng (35.000 VND/giờ)
-                                    </option>
-                                </select>
-                                @error('salary_type')
+                                <input type="number" name="hourly_rate" step="0.01" value="{{ old('hourly_rate', 25000) }}"
+                                    required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                              focus:ring-2 focus:ring-blue-500">
+                                @error('hourly_rate')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -165,9 +153,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Ngày bắt đầu *
                                 </label>
-                                <input type="date" name="start_date"
-                                       value="{{ old('start_date') }}" required
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                <input type="date" name="start_date" value="{{ old('start_date') }}" required
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('start_date')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -179,9 +166,8 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">
                                     Ngày kết thúc
                                 </label>
-                                <input type="date" name="end_date"
-                                       value="{{ old('end_date') }}"
-                                       class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                <input type="date" name="end_date" value="{{ old('end_date') }}"
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                               focus:ring-2 focus:ring-blue-500">
                                 @error('end_date')
                                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
@@ -194,7 +180,7 @@
                                     Trạng thái *
                                 </label>
                                 <select name="status" required
-                                        class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
+                                    class="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-800
                                                focus:ring-2 focus:ring-blue-500">
                                     <option value="Active" {{ old('status', 'Active') === 'Active' ? 'selected' : '' }}>
                                         Đang hoạt động
@@ -215,7 +201,7 @@
             <!-- Buttons -->
             <div class="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
                 <button type="submit"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition font-medium flex items-center">
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition font-medium flex items-center">
                     <i class="fas fa-save mr-2"></i>
                     Thêm nhân viên
                 </button>

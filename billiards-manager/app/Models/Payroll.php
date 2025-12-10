@@ -10,33 +10,27 @@ class Payroll extends BaseModel
     const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
-        'payroll_code',
         'employee_id',
-        'period_start',
-        'period_end',
+        'period',
+        'total_minutes',
+        'total_hours',
+        'hourly_rate',
         'base_salary',
-        'overtime_hours',
-        'overtime_pay',
         'bonus',
-        'deductions',
+        'penalty',
         'total_amount',
-        'payment_date',
-        'status',
+        'final_amount',
+        'deductions',
         'notes',
-        'created_by',
-        'updated_by'
+        'status',
     ];
 
     protected $casts = [
         'base_salary' => 'decimal:2',
-        'overtime_hours' => 'decimal:2',
-        'overtime_pay' => 'decimal:2',
+        'total_hours' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'bonus' => 'decimal:2',
         'deductions' => 'decimal:2',
-        'total_amount' => 'decimal:2',
-        'period_start' => 'date',
-        'period_end' => 'date',
-        'payment_date' => 'date'
     ];
 
     // Relationships
