@@ -140,12 +140,15 @@ Route::prefix('admin')
 
             // Print bill
             Route::get('/{id}/print', [BillController::class, 'printBill'])->name('print');
+            Route::get('/print-multiple', [BillController::class, 'printBillMultiple'])->name('print-multiple');
         });
 
         // Payments Management
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/{id}/payment', [PaymentController::class, 'showPayment'])->name('payment-page');
+            Route::get('/payment', [PaymentController::class, 'showPaymentMultiple'])->name('payment-page-multiple');
             Route::post('/{id}/process', [PaymentController::class, 'processPayment'])->name('process-payment');
+            Route::post('/pprocess/multiple', [PaymentController::class, 'processPaymentMultiple'])->name('process-payment-multiple');
             Route::post('/payments/check-promotion', [PaymentController::class, 'checkPromotion'])->name('check-promotion');
             Route::post('/payments/apply-promotion', [PaymentController::class, 'applyPromotion'])->name('apply-promotion');
             Route::post('/payments/remove-promotion', [PaymentController::class, 'removePromotion'])->name('remove-promotion');

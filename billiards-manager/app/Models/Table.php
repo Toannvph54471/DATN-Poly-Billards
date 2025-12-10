@@ -151,7 +151,7 @@ class Table extends BaseModel
      * DEPRECATED: Dùng getHourlyRate() thay thế
      * Giữ lại để tương thích ngược
      */
-    public function hourly_rate(): float
+    public function getHourlyRateAttribute(): float
     {
         return $this->getHourlyRate();
     }
