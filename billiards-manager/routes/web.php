@@ -56,3 +56,9 @@ Route::get('/test/seed-attendance/{employeeId}', function ($employeeId) {
 
     return "Đã tạo dữ liệu chấm công 8 tiếng (8:00 - 16:00) cho nhân viên: " . $employee->name . ". <br> <a href='/admin/payroll'>Quay lại bảng lương</a>";
 });
+use App\Http\Controllers\Admin\AdminStatisticsController;
+
+Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::get('/statistics', [AdminStatisticsController::class, 'index'])
+        ->name('admin.statistics');
+});

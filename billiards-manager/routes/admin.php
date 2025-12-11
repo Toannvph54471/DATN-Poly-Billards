@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
@@ -16,6 +15,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Admin\AdminStatisticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,9 +31,12 @@ Route::prefix('admin')
     ->group(function () {
 
         // Dashboard
+
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('chart-data', [DashboardController::class, 'getChartData'])->name('chart-data');
-
+         
+     
+        Route::get('/statistics', [AdminStatisticsController::class, 'index']) ->name('admin.statistics');
         Route::get('/quick-stats', [DashboardController::class, 'getQuickStats'])->name('quick-stats');
         Route::get('/top-products', [DashboardController::class, 'getTopProductsData'])->name('top-products');
         Route::get('/table-stats', [DashboardController::class, 'getTableStatsData'])->name('table-stats');
@@ -76,7 +79,7 @@ Route::prefix('admin')
         | ADMIN + MANAGER (Management functions)
         |--------------------------------------------------------------------------
         */
-
+           
         // Combos Management
         Route::prefix('combos')->name('combos.')->group(function () {
             Route::get('/', [ComboController::class, 'index'])->name('index');
@@ -181,4 +184,11 @@ Route::prefix('admin')
         Route::get('customers/trashed', [CustomerController::class, 'trash'])->name('customers.trashed');
         Route::post('customers/{id}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
         Route::delete('customers/{id}/force-delete', [CustomerController::class, 'forceDelete'])->name('customers.force-delete');
+
+        
+
+Route::prefix('admin')->middleware('auth')->group(function () {
+    Route::get('/statistics', [AdminStatisticsController::class, 'index'])
+        ->name('admin.statistics');
+});
     });
