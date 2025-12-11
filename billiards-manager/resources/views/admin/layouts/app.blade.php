@@ -193,11 +193,23 @@
 
                     <!-- Menu cho Admin & Manager -->
                     @if ($isAdminOrManager)
-                        <a href="{{ route('admin.dashboard') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.dashboard', $currentRoute) ? 'active bg-white/20' : '' }}">
-                            <i class="fas fa-chart-pie w-5 md:w-6 mr-3"></i>
-                            <span class="font-medium text-sm md:text-base">Tổng quan</span>
-                        </a>
+                       <a href="{{ route('admin.dashboard') }}"
+   onclick="closeMobileMenu()"
+   class="nav-item flex items-center p-3 text-white rounded-lg 
+          hover:bg-white/10
+          {{ isRouteActive('admin.dashboard', $currentRoute) ? 'active bg-white/20' : '' }}">
+    <i class="fas fa-chart-pie w-5 md:w-6 mr-3"></i>
+    <span class="font-medium text-sm md:text-base">Tổng quan</span>
+</a>
+
+<a href="{{ route('admin.statistics') }}"
+   onclick="closeMobileMenu()"
+   class="nav-item flex items-center p-3 text-white rounded-lg 
+          hover:bg-white/10
+          {{ isRouteActive('admin.statistics', $currentRoute) ? 'active bg-white/20' : '' }}">
+    <i class="fas fa-chart-bar w-5 md:w-6 mr-3"></i>
+    <span class="font-medium text-sm md:text-base">Thống kê</span>
+</a>
 
                         <a href="{{ route('admin.tables.index') }}" onclick="closeMobileMenu()"
                             class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.tables', $currentRoute) ? 'active bg-white/20' : '' }}">
