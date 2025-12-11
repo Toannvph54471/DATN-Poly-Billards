@@ -2059,7 +2059,7 @@
                                                                 <div>
                                                                     <span class="text-gray-600">Từ bàn:</span>
                                                                     <span
-                                                                        class="font-medium">{{ $previousUsage->table->table_number ?? 'N/A' }}</span>
+                                                                        class="font-medium">{{ $previousUsage->table->table_number ?? $table->table_name }}</span>
                                                                     <span
                                                                         class="text-xs text-gray-500">({{ number_format($previousUsage->hourly_rate) }}₫/h)</span>
                                                                 </div>
@@ -2270,7 +2270,22 @@
                             THAO TÁC NHANH
                         </h2>
 
-                        <div class="action-buttons">
+                        <div class="action-buttons">   
+                            @if ($table->currentBill && $table->currentBill->status !== 'quick')
+                                @if ($table->status === 'occupied')
+                                    <button onclick="pauseTable()" class="action-btn action-btn-warning" id="pauseBtn">
+                                        <i class="fas fa-pause"></i>
+                                        <span class="desktop-only">TẠM DỪNG BÀN</span>
+                                        <span class="mobile-only">TẠM DỪNG</span>
+                                    </button>
+                                @elseif($table->status === 'paused')
+                                    <button onclick="resumeTable()" class="action-btn action-btn-success" id="resumeBtn">
+                                        <i class="fas fa-play"></i>
+                                        <span class="desktop-only">TIẾP TỤC BÀN</span>
+                                        <span class="mobile-only">TIẾP TỤC</span>
+                                    </button>
+                                @endif
+                            @endif
                             @if ($table->currentBill)
                                 @if ($table->currentBill->status === 'quick')
                                     <form action="{{ route('admin.bills.start-playing', $table->currentBill->id) }}"
@@ -2512,6 +2527,89 @@
         let refreshInterval = null;
         let currentDeleteForm = null;
 
+        // Function tạm dừng bàn
+        async function pauseTable() {
+            if (!confirm('Bạn có chắc muốn tạm dừng bàn này? Thời gian sẽ không được tính trong khi tạm dừng.')) {
+                return;
+            }
+
+            const pauseBtn = document.getElementById('pauseBtn');
+            const originalText = pauseBtn.innerHTML;
+            
+            // Show loading state
+            pauseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            pauseBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/admin/tables/{{ $table->id }}/pause`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Đã tạm dừng bàn thành công', 'success', 3000);
+                    
+                    // Cập nhật trạng thái hiển thị
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showToast(data.message || 'Có lỗi xảy ra', 'error', 5000);
+                    pauseBtn.innerHTML = originalText;
+                    pauseBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra khi tạm dừng bàn', 'error', 5000);
+                pauseBtn.innerHTML = originalText;
+                pauseBtn.disabled = false;
+            }
+        }
+
+        // Function tiếp tục bàn
+        async function resumeTable() {
+            const resumeBtn = document.getElementById('resumeBtn');
+            const originalText = resumeBtn.innerHTML;
+            
+            // Show loading state
+            resumeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            resumeBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/admin/tables/{{ $table->id }}/resume`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Đã tiếp tục bàn thành công', 'success', 3000);
+                    
+                    // Cập nhật trạng thái hiển thị
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showToast(data.message || 'Có lỗi xảy ra', 'error', 5000);
+                    resumeBtn.innerHTML = originalText;
+                    resumeBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra khi tiếp tục bàn', 'error', 5000);
+                resumeBtn.innerHTML = originalText;
+                resumeBtn.disabled = false;
+            }
+        }
         // Toast Notification System
         function showToast(message, type = 'info', duration = 5000) {
             const toastContainer = document.getElementById('toastContainer');

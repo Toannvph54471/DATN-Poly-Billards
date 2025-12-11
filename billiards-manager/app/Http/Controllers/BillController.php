@@ -1015,14 +1015,69 @@ class BillController extends Controller
      */
     private function calculateElapsedMinutes(BillTimeUsage $timeUsage): int
     {
-        if ($timeUsage->paused_at) {
-            return Carbon::parse($timeUsage->start_time)
-                ->diffInMinutes(Carbon::createFromTimestamp($timeUsage->paused_at));
+       try {
+        if (is_null($timeUsage->end_time)) {
+            // Session chưa kết thúc
+            $start = Carbon::parse($timeUsage->start_time);
+            
+            if ($timeUsage->paused_at) {
+                // Đang tạm dừng - trả về thời gian đã chạy (paused_duration)
+                return (int) ($timeUsage->paused_duration ?? 0);
+            } else {
+                // Đang chạy - tính từ start_time đến now
+                $elapsedMinutes = $start->diffInMinutes(now());
+                return $elapsedMinutes;
+            }
         } else {
-            return Carbon::parse($timeUsage->start_time)->diffInMinutes(now());
+            // Session đã kết thúc - trả về duration_minutes
+            return (int) ($timeUsage->duration_minutes ?? 0);
         }
+    } catch (\Exception $e) {
+        Log::error('Error in calculateElapsedMinutes: ' . $e->getMessage(), [
+            'time_usage_id' => $timeUsage->id,
+            'paused_at' => $timeUsage->paused_at,
+            'paused_duration' => $timeUsage->paused_duration,
+            'end_time' => $timeUsage->end_time
+        ]);
+        return 0;
+    }
+    }
+    private function calculateRegularTimeInfo($regularTime, $hourlyRate){
+     $isPaused = !is_null($regularTime->paused_at);
+
+    if ($isPaused) {
+        // Đang tạm dừng - sử dụng paused_duration đã lưu
+        $isRunning = false;
+        $effectiveMinutes = $regularTime->paused_duration ?? 0;
+    } else {
+        // Đang chạy - tính từ start_time đến now
+        $start = Carbon::parse($regularTime->start_time);
+        $elapsedMinutes = $start->diffInMinutes(now());
+        
+        // KHÔNG trừ paused_duration nữa vì start_time đã được cập nhật khi resume
+        $effectiveMinutes = $elapsedMinutes;
+        $isRunning = true;
     }
 
+    // Tính chi phí hiện tại
+    $currentCost = max(0, $effectiveMinutes) * ($hourlyRate / 60);
+
+    return [
+        'is_running' => $isRunning,
+        'mode' => 'regular',
+        'elapsed_minutes' => (int) round($effectiveMinutes),
+        'current_cost' => $currentCost,
+        'hourly_rate' => $hourlyRate,
+        'total_minutes' => 0,
+        'remaining_minutes' => 0,
+        'is_near_end' => false,
+        'is_paused' => $isPaused,
+        'paused_duration' => $regularTime->paused_duration ?? 0,
+        'bill_status' => 'regular',
+        'needs_switch' => false,
+        'is_auto_stopped' => false
+    ];
+}
     public function showTransferForm($billId)
     {
         try {
@@ -1371,6 +1426,87 @@ class BillController extends Controller
             ]));
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Lỗi khi in hóa đơn: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * In hóa đơn nhiều
+     */
+    public function printBillMultiple(Request $request)
+    {
+        $ids = $request->ids;
+
+        if (!is_array($ids) || empty($ids)) {
+            return back()->with('error', 'Không có hóa đơn nào được chọn.');
+        }
+
+        try {
+            // Lấy tất cả bills theo mảng ID
+            $bills = Bill::with([
+                'table',
+                'user',
+                'billDetails.product',
+                'billDetails.combo',
+                'billTimeUsages',
+                'comboTimeUsages.combo'
+            ])
+                ->whereIn('id', $ids)
+                ->get();
+
+            if ($bills->isEmpty()) {
+                return back()->with('error', 'Không tìm thấy hóa đơn.');
+            }
+
+            $billsData = [];
+
+            foreach ($bills as $bill) {
+                // Tính chi phí thời gian (chi tiết)
+                $timeDetails = $this->calculateTimeChargeDetailed($bill);
+                $timeCost = $timeDetails['totalCost'] ?? 0;
+
+                // Tổng SP/Combo (không tính thành phần combo)
+                $productTotal = $bill->billDetails->where('is_combo_component', false)->sum('total_price');
+
+                $totalAmount = $timeCost + $productTotal;
+
+                $discountAmount = $bill->discount_amount ?? 0;
+                $finalAmount = $totalAmount - $discountAmount;
+
+                $promotionInfo = $this->extractPromotionInfoFromNote($bill->note);
+
+                // QR URL
+                $qrUrl = "https://img.vietqr.io/image/MB-0368015218-qr_only.png?"
+                    . http_build_query([
+                        'amount' => $finalAmount,
+                        'addInfo' => "TT Bill {$bill->bill_number}"
+                    ]);
+
+                // Gán các thuộc tính tạm thời vào model để view dễ truy cập
+                $bill->timeCost = $timeCost;
+                $bill->timeDetails = $timeDetails;
+                $bill->productTotal = $productTotal;
+                $bill->totalAmount = $totalAmount;
+                // giữ nguyên attribute DB final_amount nhưng thêm alias rõ ràng
+                $bill->finalAmount = $finalAmount;
+                $bill->discountAmount = $discountAmount;
+                $bill->promotionInfo = $promotionInfo;
+                $bill->printTime = now()->format('H:i d/m/Y');
+                $bill->staff = Auth::user()->name;
+                $bill->qrUrl = $qrUrl;
+
+                // push model đã mở rộng vào mảng trả về
+                $billsData[] = $bill;
+            }
+
+            // Truyền cả 'staff' top-level (dùng cho các chỗ view gọi $staff trực tiếp)
+            return view('admin.bills.print-multiple', [
+                'billsData' => $billsData,
+                'autoRedirect' => $request->auto_print == 'true',
+                'redirectUrl' => route('admin.bills.index'),
+                'staff' => Auth::user()->name
+            ]);
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Lỗi khi in nhiều hóa đơn: ' . $e->getMessage());
         }
     }
 
