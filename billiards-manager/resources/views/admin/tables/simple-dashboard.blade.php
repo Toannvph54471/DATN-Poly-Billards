@@ -721,6 +721,14 @@
             box-shadow: 0 0 15px rgba(255, 71, 87, 0.4);
         }
 
+        /* Thêm vào file CSS của bạn */
+        .status-paused {
+            background-color: #ffc107 !important;
+            /* Màu vàng */
+            color: #333 !important;
+            border-color: #ff9800 !important;
+        }
+
         .status-quick {
             color: #ff9f43;
             border-color: #ff9f43;
@@ -1504,14 +1512,6 @@
                             <i class="fas fa-billiard"></i>
                             Quản lý bàn
                         </button>
-                        <button class="action-btn" onclick="quickCheckout()">
-                            <i class="fas fa-cash-register"></i>
-                            Thanh toán
-                        </button>
-                        <button class="action-btn" onclick="quickReport()">
-                            <i class="fas fa-chart-line"></i>
-                            Báo cáo
-                        </button>
                     </div>
                 </div>
 
@@ -1563,6 +1563,9 @@
                                     $comboRemaining = $table['combo_remaining'] ?? null;
                                     $isUnprocessed = $table['is_unprocessed'] ?? false;
 
+                                    // LẤY TRẠNG THÁI BÀN
+                                    $tableStatus = $table['status'] ?? 'available';
+
                                     // ĐẢM BẢO THỜI GIAN KHÔNG BAO GIỜ ÂM
                                     $safeRemaining = $comboRemaining !== null ? max(0, $comboRemaining) : 0;
 
@@ -1581,44 +1584,48 @@
                                         }
                                     }
 
-                                    // XÁC ĐỊNH THỜI GIAN HIỂN THỊ
+                                    // XÁC ĐỊNH THỜI GIAN HIỂN THỊ (CHỈ HIỂN THỊ KHI KHÔNG PHẢI TRẠNG THÁI PAUSED)
                                     $displayTime = '';
                                     $timerClass = '';
                                     $badgeClass = '';
                                     $containerClass = '';
 
-                                    if ($hasCombo) {
-                                        if ($isUnprocessed) {
-                                            // Bàn combo đã hết nhưng chưa xử lý
-                                            $displayTime = 'HẾT COMBO!';
-                                            $timerClass = 'unprocessed';
-                                            $badgeClass = 'unprocessed';
-                                            $containerClass = 'unprocessed';
-                                        } elseif ($safeRemaining <= 0) {
-                                            // Combo đã hết thời gian và đã xử lý
-                                            $displayTime = 'COMBO ĐÃ HẾT';
-                                            $timerClass = '';
-                                            $badgeClass = '';
+                                    // CHỈ XỬ LÝ HIỂN THỊ THỜI GIAN NẾU KHÔNG PHẢI TRẠNG THÁI PAUSED
+                                    if ($tableStatus !== 'paused') {
+                                        if ($hasCombo) {
+                                            if ($isUnprocessed) {
+                                                // Bàn combo đã hết nhưng chưa xử lý
+                                                $displayTime = 'HẾT COMBO!';
+                                                $timerClass = 'unprocessed';
+                                                $badgeClass = 'unprocessed';
+                                                $containerClass = 'unprocessed';
+                                            } elseif ($safeRemaining <= 0) {
+                                                // Combo đã hết thời gian và đã xử lý
+                                                $displayTime = 'COMBO ĐÃ HẾT';
+                                                $timerClass = '';
+                                                $badgeClass = '';
+                                            } else {
+                                                // Combo còn thời gian - hiển thị định dạng XhYp
+                                                $displayTime = $comboTimeDisplay;
+                                                $timerClass = '';
+                                                $badgeClass = '';
+                                            }
                                         } else {
-                                            // Combo còn thời gian - hiển thị định dạng XhYp
-                                            $displayTime = $comboTimeDisplay;
-                                            $timerClass = '';
-                                            $badgeClass = '';
+                                            // Không có combo, hiển thị thời gian sử dụng giờ thường
+                                            $displayTime = $elapsedTime;
                                         }
-                                    } else {
-                                        // Không có combo, hiển thị thời gian sử dụng giờ thường
-                                        $displayTime = $elapsedTime;
                                     }
 
                                     // Xác định class status bàn
                                     $statusConfig = [
                                         'available' => ['class' => 'status-available', 'text' => 'TRỐNG'],
+                                        'paused' => ['class' => 'status-paused', 'text' => 'Tạm Dừng'],
                                         'occupied' => ['class' => 'status-occupied', 'text' => 'ĐANG DÙNG'],
                                         'quick' => ['class' => 'status-quick', 'text' => 'NHANH'],
                                         'maintenance' => ['class' => 'status-maintenance', 'text' => 'BẢO TRÌ'],
                                     ];
 
-                                    $status = $statusConfig[$table['status']] ?? $statusConfig['available'];
+                                    $status = $statusConfig[$tableStatus] ?? $statusConfig['available'];
 
                                     // Tính vị trí hiển thị
                                     $posX = $table['position_x'] ?? ($loop->index % 5) * 220 + 50;
@@ -1631,7 +1638,7 @@
                                     data-table-number="{{ $table['table_number'] }}"
                                     data-combo-remaining="{{ $safeRemaining }}"
                                     data-is-unprocessed="{{ $isUnprocessed ? 'true' : 'false' }}"
-                                    id="table-{{ $table['id'] }}"
+                                    data-status="{{ $tableStatus }}" id="table-{{ $table['id'] }}"
                                     style="left: {{ $posX }}px; top: {{ $posY }}px; z-index: {{ $zIndex }};">
 
                                     <div class="pool-table">
@@ -1657,7 +1664,7 @@
                                             <div class="table-number">{{ $table['table_number'] }}</div>
                                             <div class="table-name">{{ $table['table_name'] }}</div>
 
-                                            @if ($displayTime)
+                                            @if ($displayTime && $tableStatus !== 'paused')
                                                 <div class="table-timer {{ $timerClass }}">
                                                     {{ $displayTime }}
                                                 </div>
@@ -1668,7 +1675,8 @@
                                             </div>
                                         </div>
 
-                                        @if ($hasCombo || $isUnprocessed)
+                                        <!-- CHỈ HIỂN THỊ BADGE COMBO KHI KHÔNG PHẢI TRẠNG THÁI PAUSED -->
+                                        @if (($hasCombo || $isUnprocessed) && $tableStatus !== 'paused')
                                             <div class="combo-badge {{ $badgeClass }}">
                                                 @if ($isUnprocessed)
                                                     <i class="fas fa-exclamation-triangle"></i> CHƯA XỬ LÝ
@@ -2420,19 +2428,11 @@
         }
 
         function quickNewBill() {
-            window.location.href = '/admin/bills/create';
+            window.location.href = '/admin/bills/index';
         }
 
         function quickTableManagement() {
             window.location.href = '/admin/tables';
-        }
-
-        function quickCheckout() {
-            window.location.href = '/admin/bills';
-        }
-
-        function quickReport() {
-            window.location.href = '/admin/reports';
         }
 
         function refreshDashboard() {

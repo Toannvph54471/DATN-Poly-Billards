@@ -689,40 +689,40 @@ class TableController extends Controller
 
     private function calculateRegularTimeInfo($regularTime, $hourlyRate)
     {
-         $isPaused = !is_null($regularTime->paused_at);
+        $isPaused = !is_null($regularTime->paused_at);
 
-    if ($isPaused) {
-        // Đang tạm dừng - sử dụng paused_duration đã lưu
-        $isRunning = false;
-        $effectiveMinutes = $regularTime->paused_duration ?? 0;
-    } else {
-        // Đang chạy - tính từ start_time đến now
-        $start = Carbon::parse($regularTime->start_time);
-        $elapsedMinutes = $start->diffInMinutes(now());
-        
-        // KHÔNG trừ paused_duration nữa
-        $effectiveMinutes = $elapsedMinutes;
-        $isRunning = true;
-    }
+        if ($isPaused) {
+            // Đang tạm dừng - sử dụng paused_duration đã lưu
+            $isRunning = false;
+            $effectiveMinutes = $regularTime->paused_duration ?? 0;
+        } else {
+            // Đang chạy - tính từ start_time đến now
+            $start = Carbon::parse($regularTime->start_time);
+            $elapsedMinutes = $start->diffInMinutes(now());
 
-    // Tính chi phí hiện tại
-    $currentCost = max(0, $effectiveMinutes) * ($hourlyRate / 60);
+            // KHÔNG trừ paused_duration nữa
+            $effectiveMinutes = $elapsedMinutes;
+            $isRunning = true;
+        }
 
-    return [
-        'is_running' => $isRunning,
-        'mode' => 'regular',
-        'elapsed_minutes' => (int) round($effectiveMinutes),
-        'current_cost' => $currentCost,
-        'hourly_rate' => $hourlyRate,
-        'total_minutes' => 0,
-        'remaining_minutes' => 0,
-        'is_near_end' => false,
-        'is_paused' => $isPaused,
-        'paused_duration' => $regularTime->paused_duration ?? 0,
-        'bill_status' => 'regular',
-        'needs_switch' => false,
-        'is_auto_stopped' => false
-    ];
+        // Tính chi phí hiện tại
+        $currentCost = max(0, $effectiveMinutes) * ($hourlyRate / 60);
+
+        return [
+            'is_running' => $isRunning,
+            'mode' => 'regular',
+            'elapsed_minutes' => (int) round($effectiveMinutes),
+            'current_cost' => $currentCost,
+            'hourly_rate' => $hourlyRate,
+            'total_minutes' => 0,
+            'remaining_minutes' => 0,
+            'is_near_end' => false,
+            'is_paused' => $isPaused,
+            'paused_duration' => $regularTime->paused_duration ?? 0,
+            'bill_status' => 'regular',
+            'needs_switch' => false,
+            'is_auto_stopped' => false
+        ];
     }
 
     /**
@@ -784,170 +784,168 @@ class TableController extends Controller
             return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()], 500);
         }
     }
-public function pause(Table $table)
-{
-    if ($table->status !== 'occupied') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Bàn không đang được sử dụng'
-        ]);
-    }
-
-    DB::beginTransaction();
-    try {
-        // Cập nhật trạng thái bàn
-        $table->status = 'paused';
-        $table->save();
-
-        // Nếu có bill đang chạy, cập nhật thời gian tạm dừng
-        if ($table->currentBill) {
-            // Lấy record time usage đang chạy
-            $lastTimeUsage = $table->currentBill->billTimeUsages()
-                ->whereNull('end_time')
-                ->whereNull('paused_at') // Chỉ pause những cái chưa pause
-                ->latest()
-                ->first();
-                
-            if ($lastTimeUsage) {
-                // Tính thời gian đã chạy từ start_time đến lúc pause
-                $startTime = Carbon::parse($lastTimeUsage->start_time);
-                $elapsedMinutes = $startTime->diffInMinutes(now());
-                
-                // Lưu paused_duration và paused_at
-                $lastTimeUsage->update([
-                    'paused_duration' => $elapsedMinutes, // Lưu thời gian đã chạy
-                    'paused_at' => now()->timestamp,      // Lưu thời điểm pause
-                ]);
-                
-                Log::info('Paused time usage', [
-                    'time_usage_id' => $lastTimeUsage->id,
-                    'start_time' => $lastTimeUsage->start_time,
-                    'elapsed_minutes' => $elapsedMinutes,
-                    'paused_at' => now()
-                ]);
-            } else {
-                Log::warning('No active time usage found for table', [
-                    'table_id' => $table->id,
-                    'bill_id' => $table->currentBill->id
-                ]);
-            }
+    public function pause(Table $table)
+    {
+        if ($table->status !== 'occupied') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bàn không đang được sử dụng'
+            ]);
         }
 
-        DB::commit();
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Đã tạm dừng bàn thành công',
-            'status' => 'paused'
-        ]);
-        
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Pause table error: ' . $e->getMessage());
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
-        ], 500);
-    }
-}
-public function resume(Table $table)
-{
-    if ($table->status !== 'paused') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Bàn không đang ở trạng thái tạm dừng'
-        ]);
-    }
+        DB::beginTransaction();
+        try {
+            // Cập nhật trạng thái bàn
+            $table->status = 'paused';
+            $table->save();
 
-    DB::beginTransaction();
-    try {
-        // Cập nhật trạng thái bàn
-        $table->status = 'occupied';
-        $table->save();
+            // Nếu có bill đang chạy, cập nhật thời gian tạm dừng
+            if ($table->currentBill) {
+                // Lấy record time usage đang chạy
+                $lastTimeUsage = $table->currentBill->billTimeUsages()
+                    ->whereNull('end_time')
+                    ->whereNull('paused_at') // Chỉ pause những cái chưa pause
+                    ->latest()
+                    ->first();
 
-        // Nếu có bill đang chạy, tiếp tục session cũ
-        if ($table->currentBill) {
-            // Lấy record time usage đang tạm dừng
-            $lastTimeUsage = $table->currentBill->billTimeUsages()
-                ->whereNotNull('paused_at')
-                ->whereNull('end_time')
-                ->latest()
-                ->first();
-                
-            if ($lastTimeUsage) {
-                // Tính tổng thời gian đã chạy (paused_duration)
-                $totalElapsedMinutes = $lastTimeUsage->paused_duration ?? 0;
-                
-                // Cập nhật start_time để phản ánh thời gian đã chạy
-                $lastTimeUsage->update([
-                    'start_time' => Carbon::now()->subMinutes($totalElapsedMinutes), // Điều chỉnh start_time
-                    'paused_at' => null,   // Xóa thời điểm pause
-                    'paused_duration' => $totalElapsedMinutes // Giữ nguyên để tham khảo
-                ]);
-                
-                Log::info('Resumed time usage', [
-                    'time_usage_id' => $lastTimeUsage->id,
-                    'paused_duration' => $totalElapsedMinutes,
-                    'new_start_time' => Carbon::now()->subMinutes($totalElapsedMinutes),
-                    'resumed_at' => now()
-                ]);
-            } else {
-                Log::warning('No paused time usage found for table', [
-                    'table_id' => $table->id,
-                    'bill_id' => $table->currentBill->id
-                ]);
+                if ($lastTimeUsage) {
+                    // Tính thời gian đã chạy từ start_time đến lúc pause
+                    $startTime = Carbon::parse($lastTimeUsage->start_time);
+                    $elapsedMinutes = $startTime->diffInMinutes(now());
+
+                    // Lưu paused_duration và paused_at
+                    $lastTimeUsage->update([
+                        'paused_duration' => $elapsedMinutes, // Lưu thời gian đã chạy
+                        'paused_at' => now()->timestamp,      // Lưu thời điểm pause
+                    ]);
+
+                    Log::info('Paused time usage', [
+                        'time_usage_id' => $lastTimeUsage->id,
+                        'start_time' => $lastTimeUsage->start_time,
+                        'elapsed_minutes' => $elapsedMinutes,
+                        'paused_at' => now()
+                    ]);
+                } else {
+                    Log::warning('No active time usage found for table', [
+                        'table_id' => $table->id,
+                        'bill_id' => $table->currentBill->id
+                    ]);
+                }
             }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã tạm dừng bàn thành công',
+                'status' => 'paused'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Pause table error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    public function resume(Table $table)
+    {
+        if ($table->status !== 'paused') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bàn không đang ở trạng thái tạm dừng'
+            ]);
         }
 
-        DB::commit();
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Đã tiếp tục bàn thành công',
-            'status' => 'occupied'
-        ]);
-        
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Resume table error: ' . $e->getMessage());
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
-        ], 500);
-    }
-}
-/**
- * Tính số phút đã sử dụng từ BillTimeUsage
- */
-private function calculateElapsedMinutes(BillTimeUsage $timeUsage): int
-{
-    try {
-        if (is_null($timeUsage->end_time)) {
-            // Session chưa kết thúc
-            $start = Carbon::parse($timeUsage->start_time);
-            
-            if ($timeUsage->paused_at) {
-                // Đang tạm dừng - trả về paused_duration
-                return (int) ($timeUsage->paused_duration ?? 0);
-            } else {
-                // Đang chạy - tính từ start_time đến now
-                $elapsedMinutes = $start->diffInMinutes(now());
-                return $elapsedMinutes;
+        DB::beginTransaction();
+        try {
+            // Cập nhật trạng thái bàn
+            $table->status = 'occupied';
+            $table->save();
+
+            // Nếu có bill đang chạy, tiếp tục session cũ
+            if ($table->currentBill) {
+                // Lấy record time usage đang tạm dừng
+                $lastTimeUsage = $table->currentBill->billTimeUsages()
+                    ->whereNotNull('paused_at')
+                    ->whereNull('end_time')
+                    ->latest()
+                    ->first();
+
+                if ($lastTimeUsage) {
+                    // Tính tổng thời gian đã chạy (paused_duration)
+                    $totalElapsedMinutes = $lastTimeUsage->paused_duration ?? 0;
+
+                    // Cập nhật start_time để phản ánh thời gian đã chạy
+                    $lastTimeUsage->update([
+                        'start_time' => Carbon::now()->subMinutes($totalElapsedMinutes), // Điều chỉnh start_time
+                        'paused_at' => null,   // Xóa thời điểm pause
+                        'paused_duration' => $totalElapsedMinutes // Giữ nguyên để tham khảo
+                    ]);
+
+                    Log::info('Resumed time usage', [
+                        'time_usage_id' => $lastTimeUsage->id,
+                        'paused_duration' => $totalElapsedMinutes,
+                        'new_start_time' => Carbon::now()->subMinutes($totalElapsedMinutes),
+                        'resumed_at' => now()
+                    ]);
+                } else {
+                    Log::warning('No paused time usage found for table', [
+                        'table_id' => $table->id,
+                        'bill_id' => $table->currentBill->id
+                    ]);
+                }
             }
-        } else {
-            // Session đã kết thúc - trả về duration_minutes
-            return (int) ($timeUsage->duration_minutes ?? 0);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã tiếp tục bàn thành công',
+                'status' => 'occupied'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Resume table error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
         }
-    } catch (\Exception $e) {
-        Log::error('Error in calculateElapsedMinutes: ' . $e->getMessage(), [
-            'time_usage_id' => $timeUsage->id,
-            'paused_at' => $timeUsage->paused_at,
-            'paused_duration' => $timeUsage->paused_duration,
-            'end_time' => $timeUsage->end_time
-        ]);
-        return 0;
     }
-}
+    /**
+     * Tính số phút đã sử dụng từ BillTimeUsage
+     */
+    private function calculateElapsedMinutes(BillTimeUsage $timeUsage): int
+    {
+        try {
+            if (is_null($timeUsage->end_time)) {
+                // Session chưa kết thúc
+                $start = Carbon::parse($timeUsage->start_time);
+
+                if ($timeUsage->paused_at) {
+                    // Đang tạm dừng - trả về paused_duration
+                    return (int) ($timeUsage->paused_duration ?? 0);
+                } else {
+                    // Đang chạy - tính từ start_time đến now
+                    $elapsedMinutes = $start->diffInMinutes(now());
+                    return $elapsedMinutes;
+                }
+            } else {
+                // Session đã kết thúc - trả về duration_minutes
+                return (int) ($timeUsage->duration_minutes ?? 0);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in calculateElapsedMinutes: ' . $e->getMessage(), [
+                'time_usage_id' => $timeUsage->id,
+                'paused_at' => $timeUsage->paused_at,
+                'paused_duration' => $timeUsage->paused_duration,
+                'end_time' => $timeUsage->end_time
+            ]);
+            return 0;
+        }
+    }
 }
