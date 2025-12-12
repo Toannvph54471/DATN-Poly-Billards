@@ -144,7 +144,7 @@
                     <i class="fas fa-calendar-alt text-blue-500"></i>
                 </div>
                 <p class="text-2xl font-bold text-gray-900">
-                    {{ number_format($monthlyStats['revenue'] ?? 0, 0, ',', '.') }}₫</p>
+                    {{ number_format($monthlyStats['total'] ?? 0, 0, ',', '.') }}₫</p>
             </div>
             <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
                 <div class="flex items-center justify-between mb-2">

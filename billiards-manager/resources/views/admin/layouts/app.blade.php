@@ -200,15 +200,9 @@
                         </a>
                         <a href="{{ route('admin.tables.simple-dashboard') }}" onclick="closeMobileMenu()"
                             class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.tables.simple-dashboard', $currentRoute) ? 'active bg-white/20' : '' }}">
-                            <i class="fas fa-chart-pie w-5 md:w-6 mr-3"></i>
+                            <i class="fas fa-th-large w-5 md:w-6 mr-3"></i>
                             <span class="font-medium text-sm md:text-base">Tổng quan bàn</span>
                         </a>
-                        <a href="{{ route('admin.daily-reports.dashboard') }}" onclick="closeMobileMenu()"
-                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.daily-reports.dashboard', $currentRoute) ? 'active bg-white/20' : '' }}">
-                            <i class="fas fa-chart-line w-5 md:w-6 mr-3"></i>
-                            <span class="font-medium text-sm md:text-base">Thống kê</span>
-                        </a>
-
                         <a href="{{ route('admin.tables.index') }}" onclick="closeMobileMenu()"
                             class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.tables', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fa-solid fa-table w-5 md:w-6 mr-3"></i>

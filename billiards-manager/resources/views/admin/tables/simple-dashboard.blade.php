@@ -1368,12 +1368,55 @@
     <div class="dashboard-container">
         <!-- Header -->
         <div class="dashboard-header">
+            @php
+                $userRole = Auth::user()->role->slug ?? '';
+                $isAdminOrManager = in_array($userRole, ['admin', 'manager']);
+                $isStaff = in_array($userRole, ['admin', 'manager', 'employee']);
+
+                // Lấy tên route hiện tại
+                $currentRoute = request()->route()->getName();
+
+                // Hàm kiểm tra route có active không
+                function isRouteActive($routePattern, $currentRoute)
+                {
+                    // Nếu là route chính xác
+                    if ($routePattern === $currentRoute) {
+                        return true;
+                    }
+
+                    // Nếu có wildcard * (cho các route con)
+                    if (strpos($routePattern, '*') !== false) {
+                        $pattern = str_replace('*', '.*', $routePattern);
+                        $pattern = '/^' . str_replace('.', '\.', $pattern) . '$/';
+                        return preg_match($pattern, $currentRoute);
+                    }
+
+                    // Kiểm tra route bắt đầu bằng
+                    if (strpos($currentRoute, $routePattern . '.') === 0) {
+                        return true;
+                    }
+
+                    return false;
+                }
+            @endphp
+
             <div class="header-back">
-                <button onclick="window.location.href='{{ route('admin.dashboard') }}'" class="back-btn">
-                    <i class="fas fa-chevron-left"></i>
-                    <span>Dashboard</span>
-                </button>
+                @if ($userRole === 'employee')
+                    {{-- Employee chuyển về simple-dashboard --}}
+                    <button onclick="window.location.href='{{ route('admin.pos.dashboard') }}'"
+                        class="back-btn">
+                        <i class="fas fa-chevron-left"></i>
+                        <span>Dashboard</span>
+                    </button>
+                @else
+                    {{-- Admin + Manager chuyển về admin.dashboard --}}
+                    <button onclick="window.location.href='{{ route('admin.dashboard') }}'" class="back-btn">
+                        <i class="fas fa-chevron-left"></i>
+                        <span>Dashboard</span>
+                    </button>
+                @endif
             </div>
+
 
             <button class="mobile-menu-toggle left-toggle" id="leftPanelToggle">
                 <i class="fas fa-chart-bar"></i>

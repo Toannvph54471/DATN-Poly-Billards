@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
@@ -35,14 +36,12 @@ class DashboardController extends Controller
 
             return view('admin.dashboard', $data);
         } catch (\Exception $e) {
-            \Log::error('Dashboard Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Dashboard Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return view('admin.dashboard', $this->getFallbackData());
         }
     }
 
-    // ===================================================================
-    // DỮ LIỆU CHÍNH
-    // ===================================================================
+    // Dữ liệu chính cho dashboard
     private function getBasicData(Carbon $start, Carbon $end)
     {
         $revenuePaid     = $this->getRevenuePaidInRange($start, $end);
