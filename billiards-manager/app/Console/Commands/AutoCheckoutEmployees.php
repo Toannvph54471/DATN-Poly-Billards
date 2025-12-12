@@ -74,10 +74,23 @@ class AutoCheckoutEmployees extends Command
                         ->first();
 
                     if ($attendance) {
-                        $attendance->check_out = $shiftEnd; // Set checkout time to Shift End Time (not now)
+                        $attendance->check_out = $shiftEnd; // Set checkout to Shift End
                         
+                        // Calculate Payroll Start
                         $checkIn = Carbon::parse($attendance->check_in);
-                        $attendance->total_minutes = $checkIn->diffInMinutes($shiftEnd);
+                        $payrollStart = $checkIn->copy();
+                        
+                        if ($attendance->approval_status === 'approved') {
+                            $payrollStart = $shiftStart;
+                        } else {
+                            if ($payrollStart->lt($shiftStart)) {
+                                $payrollStart = $shiftStart;
+                            }
+                        }
+                        
+                        // Calculate minutes (Ensure non-negative)
+                        $attendance->total_minutes = max(0, $payrollStart->diffInMinutes($shiftEnd));
+                        
                         $attendance->note = ($attendance->note ? $attendance->note . "\n" : "") . "System Auto Checkout";
                         
                         $attendance->save();
