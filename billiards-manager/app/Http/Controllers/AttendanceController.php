@@ -22,9 +22,16 @@ class AttendanceController extends Controller
 
         if ($shift) {
             if ($status === 'active') {
-                $shift->checkIn();
+                $shift->update([
+                    'status' => \App\Models\EmployeeShift::STATUS_ACTIVE,
+                    'actual_start_time' => now(),
+                    'is_locked' => true
+                ]);
             } elseif ($status === 'completed') {
-                $shift->checkOut();
+                $shift->update([
+                    'status' => \App\Models\EmployeeShift::STATUS_COMPLETED,
+                    'actual_end_time' => now()
+                ]);
             }
         } else {
              // Fallback: Try to find any active shift for this employee
@@ -198,14 +205,41 @@ class AttendanceController extends Controller
         $now = now();
         $attendance->check_out = $now;
         
-        // Calculate total minutes
-        $checkIn = Carbon::parse($attendance->check_in);
-        $attendance->total_minutes = $checkIn->diffInMinutes($now);
+        // Find the shift to determine end time
+        $employeeShift = \App\Models\EmployeeShift::where('employee_id', $employee->id)
+            ->whereDate('shift_date', today())
+            ->with('shift')
+            ->first();
 
-        // Calculate early minutes (assume work ends at 17:00)
-        $workEnd = Carbon::parse(today()->format('Y-m-d') . ' 17:00:00');
+        // Calculate total minutes for PAYROLL (capped at shift end)
+        $checkIn = Carbon::parse($attendance->check_in);
+        $payrollEndTime = $now->copy(); // Default to now
+
+        if ($employeeShift && $employeeShift->shift) {
+            $shiftEndTime = Carbon::parse(today()->format('Y-m-d') . ' ' . $employeeShift->shift->end_time);
+            
+            // If checked out AFTER shift end, cap at shift end
+            if ($now->gt($shiftEndTime)) {
+                $payrollEndTime = $shiftEndTime;
+            }
+        }
+
+        // Calculate duration in minutes (ensure non-negative)
+        $workMinutes = $checkIn->diffInMinutes($payrollEndTime, false); // false = absolute difference if negative? No, false = relative.
+        // Actually diffInMinutes return absolute by default unless false passed? 
+        // Let's use max(0, ...)
+        $attendance->total_minutes = max(0, $checkIn->diffInMinutes($payrollEndTime));
+
+        // Calculate early minutes (assume work ends at 17:00 or Shift End)
+        // Use Shift End if available, else 17:00 fallback
+        $workEnd = $employeeShift && $employeeShift->shift 
+            ? Carbon::parse(today()->format('Y-m-d') . ' ' . $employeeShift->shift->end_time)
+            : Carbon::parse(today()->format('Y-m-d') . ' 17:00:00');
+
         if ($now->lt($workEnd)) {
             $attendance->early_minutes = $workEnd->diffInMinutes($now);
+        } else {
+             $attendance->early_minutes = 0;
         }
 
         $attendance->save();
@@ -253,14 +287,15 @@ class AttendanceController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get active employees (checked in today)
-        $activeEmployees = Attendance::with('employee')
-            ->whereDate('check_in', today())
-            ->whereNull('check_out')
-            ->orderBy('check_in', 'desc')
+        // Get ALL shifts for today (for full status monitoring)
+        $todayShifts = \App\Models\EmployeeShift::whereDate('shift_date', today())
+            ->with(['employee', 'shift'])
             ->get();
+            
+        // Append real-time status to each shift (optional, purely for explicit knowing)
+        // Accessor $shift->real_time_status is available automatically when accessed.
 
-        return view('admin.attendance.monitor', compact('pendingLate', 'activeEmployees'));
+        return view('admin.attendance.monitor', compact('pendingLate', 'todayShifts'));
     }
     
     // Helper for simulator to get token

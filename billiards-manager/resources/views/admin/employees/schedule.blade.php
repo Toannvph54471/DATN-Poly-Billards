@@ -203,17 +203,22 @@
                                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div class="flex-1">
                                         <div class="flex items-center gap-3 mb-2">
-                                            <span class="shift-status status-{{ $shift->status }}">
+                                            <span class="shift-status">
                                                 @php
-                                                    $statusNames = [
-                                                        'scheduled' => 'Đã lên lịch',
-                                                        'completed' => 'Đã hoàn thành',
-                                                        'absent' => 'Vắng mặt',
-                                                        'cancelled' => 'Đã hủy',
-                                                        'late' => 'Đi muộn',
-                                                    ];
+                                                    $rtStatus = $shift->real_time_status;
+                                                    $colorClass = match($rtStatus) {
+                                                        'Đang trong ca làm' => 'text-green-800 bg-green-100',
+                                                        'Chưa checkin' => 'text-gray-800 bg-gray-100',
+                                                        'Đã checkout' => 'text-blue-800 bg-blue-100',
+                                                        'Vắng mặt' => 'text-red-800 bg-red-100',
+                                                        'Đi muộn' => 'text-orange-800 bg-orange-100',
+                                                        'Tan ca nhưng quên checkout' => 'text-yellow-800 bg-yellow-100',
+                                                        default => 'text-gray-800 bg-gray-100'
+                                                    };
                                                 @endphp
-                                                {{ $statusNames[$shift->status] ?? ucfirst($shift->status) }}
+                                                <span class="px-2 py-1 rounded-full text-xs font-semibold {{ $colorClass }}">
+                                                    {{ $rtStatus }}
+                                                </span>
                                             </span>
                                         </div>
 
@@ -289,17 +294,22 @@
                                             </p>
                                         </div>
                                     </div>
-                                    <span class="shift-status status-{{ $shift->status }}">
+                                    <span class="shift-status">
                                         @php
-                                            $statusNames = [
-                                                'scheduled' => 'Đã lên lịch',
-                                                'completed' => 'Đã hoàn thành',
-                                                'absent' => 'Vắng mặt',
-                                                'cancelled' => 'Đã hủy',
-                                                'late' => 'Đi muộn',
-                                            ];
+                                            $rtStatus = $shift->real_time_status;
+                                            $colorClass = match($rtStatus) {
+                                                'Đang trong ca làm' => 'text-green-800 bg-green-100',
+                                                'Chưa checkin' => 'text-gray-800 bg-gray-100',
+                                                'Đã checkout' => 'text-blue-800 bg-blue-100',
+                                                'Vắng mặt' => 'text-red-800 bg-red-100',
+                                                'Đi muộn' => 'text-orange-800 bg-orange-100',
+                                                'Tan ca nhưng quên checkout' => 'text-yellow-800 bg-yellow-100',
+                                                default => 'text-gray-800 bg-gray-100'
+                                            };
                                         @endphp
-                                        {{ $statusNames[$shift->status] ?? ucfirst($shift->status) }}
+                                        <span class="px-2 py-1 rounded-full text-xs font-semibold {{ $colorClass }}">
+                                            {{ $rtStatus }}
+                                        </span>
                                     </span>
                                 </div>
                             </div>
@@ -382,24 +392,19 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     @php
-                                        $statusColors = [
-                                            'scheduled' => 'status-scheduled',
-                                            'completed' => 'status-completed',
-                                            'absent' => 'status-absent',
-                                            'late' => 'status-absent',
-                                            'cancelled' => 'status-cancelled',
-                                        ];
-                                        $statusNames = [
-                                            'scheduled' => 'Đã lên lịch',
-                                            'completed' => 'Đã hoàn thành',
-                                            'absent' => 'Vắng mặt',
-                                            'cancelled' => 'Đã hủy',
-                                            'late' => 'Đi muộn',
-                                        ];
-                                        $statusClass = $statusColors[$shift->status] ?? 'status-scheduled';
+                                        $rtStatus = $shift->real_time_status;
+                                        $colorClass = match($rtStatus) {
+                                            'Đang trong ca làm' => 'text-green-800 bg-green-100',
+                                            'Chưa checkin' => 'text-gray-800 bg-gray-100',
+                                            'Đã checkout' => 'text-blue-800 bg-blue-100',
+                                            'Vắng mặt' => 'text-red-800 bg-red-100',
+                                            'Đi muộn' => 'text-orange-800 bg-orange-100',
+                                            'Tan ca nhưng quên checkout' => 'text-yellow-800 bg-yellow-100',
+                                            default => 'text-gray-800 bg-gray-100'
+                                        };
                                     @endphp
-                                    <span class="shift-status {{ $statusClass }}">
-                                        {{ $statusNames[$shift->status] ?? ucfirst($shift->status) }}
+                                    <span class="px-2 py-1 rounded-full text-xs font-semibold {{ $colorClass }}">
+                                        {{ $rtStatus }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">

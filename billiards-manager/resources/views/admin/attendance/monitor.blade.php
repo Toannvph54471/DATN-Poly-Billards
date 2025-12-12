@@ -63,69 +63,96 @@
     </div>
     @endif
 
-    <!-- Active Employees Section -->
+    <!-- Today's Shifts Monitor Section -->
     <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-        <i class="fas fa-user-clock mr-2"></i> Nhân viên đang làm việc
+        <i class="fas fa-desktop mr-2"></i> Giám sát Ca làm việc Hôm nay
     </h2>
     
-    @if($activeEmployees->isEmpty())
+    @if($todayShifts->isEmpty())
         <div class="bg-white rounded-xl shadow-sm p-8 text-center text-gray-500">
-            Hiện không có nhân viên nào đang check-in.
+            Hôm nay không có ca làm việc nào được phân công.
         </div>
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            @foreach($activeEmployees as $attendance)
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden border-l-4 border-green-500">
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 rounded-full flex items-center justify-center bg-green-100 text-green-600 font-bold text-lg">
-                                {{ substr($attendance->employee->name, 0, 1) }}
-                            </div>
-                            <div class="ml-4">
-                                <h3 class="text-lg font-semibold text-gray-900">{{ $attendance->employee->name }}</h3>
-                                <p class="text-sm text-gray-500">{{ $attendance->employee->employee_code }}</p>
+            @foreach($todayShifts as $shift)
+                @php
+                    $status = $shift->real_time_status;
+                    $statusColor = match($status) {
+                        'Đang trong ca làm' => 'green',
+                        'Chưa checkin' => 'gray',
+                        'Đã checkout' => 'blue',
+                        'Vắng mặt' => 'red',
+                        'Đi muộn' => 'orange',
+                        'Tan ca nhưng quên checkout' => 'yellow',
+                        default => 'gray'
+                    };
+                    
+                    // Fetch attendance for actions/details
+                    $attendance = \App\Models\Attendance::where('employee_id', $shift->employee_id)
+                        ->whereDate('check_in', $shift->shift_date)
+                        ->orderBy('check_in', 'desc')
+                        ->first();
+                @endphp
+                
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden border-l-4 border-{{ $statusColor }}-500 relative">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 rounded-full flex items-center justify-center bg-{{ $statusColor }}-100 text-{{ $statusColor }}-600 font-bold text-lg">
+                                    {{ substr($shift->employee->name, 0, 1) }}
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold text-gray-900">{{ $shift->employee->name }}</h3>
+                                    <p class="text-sm text-gray-500">{{ $shift->shift->name }} ({{ \Carbon\Carbon::parse($shift->shift->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($shift->shift->end_time)->format('H:i') }})</p>
+                                </div>
                             </div>
                         </div>
-                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full animate-pulse">
-                            Online
-                        </span>
-                    </div>
+                        
+                        <div class="mb-3">
+                             <span class="px-3 py-1 bg-{{ $statusColor }}-100 text-{{ $statusColor }}-800 text-xs font-bold rounded-full">
+                                {{ $status }}
+                            </span>
+                        </div>
 
-                    <div class="border-t border-gray-100 pt-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm text-gray-500">Giờ vào:</span>
-                            <span class="text-sm font-medium text-gray-900">
-                                {{ \Carbon\Carbon::parse($attendance->check_in)->format('H:i') }}
-                            </span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-500">Thời gian:</span>
-                            <span class="text-sm font-bold text-green-600">
-                                {{ \Carbon\Carbon::parse($attendance->check_in)->diffForHumans(null, true) }}
-                            </span>
-                        </div>
-                        @if($attendance->late_minutes > 0)
-                        <div class="mt-2 text-xs text-red-500 flex items-center">
-                            <i class="fas fa-exclamation-triangle mr-1"></i> Đi muộn {{ $attendance->late_minutes }} phút
-                            @if($attendance->approval_status == 'pending')
-                                (Chờ duyệt)
-                            @elseif($attendance->approval_status == 'approved')
-                                (Đã duyệt)
+                        <div class="border-t border-gray-100 pt-3 text-sm">
+                            @if($attendance)
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-gray-500">Giờ vào:</span>
+                                    <span class="font-medium">{{ \Carbon\Carbon::parse($attendance->check_in)->format('H:i') }}</span>
+                                </div>
+                                @if($attendance->check_out)
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-gray-500">Giờ ra:</span>
+                                        <span class="font-medium">{{ \Carbon\Carbon::parse($attendance->check_out)->format('H:i') }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-500">Tổng giờ:</span>
+                                        <span class="font-bold text-blue-600">{{ round($attendance->total_minutes / 60, 2) }}h</span>
+                                    </div>
+                                @else
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-gray-500">Thời gian:</span>
+                                        <span class="font-bold text-green-600">
+                                            {{ \Carbon\Carbon::parse($attendance->check_in)->diffForHumans(null, true) }}
+                                        </span>
+                                    </div>
+                                @endif
+                            @else
+                                <div class="text-gray-400 italic">Chưa có dữ liệu chấm công</div>
                             @endif
                         </div>
-                        @endif
-
                         
-                        <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
-                            <button onclick="openCheckoutModal({{ $attendance->id }})" 
-                                class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition flex items-center">
-                                <i class="fas fa-sign-out-alt mr-1"></i> Check-out hộ
-                            </button>
-                        </div>
+                        <!-- Actions -->
+                        @if($attendance && !$attendance->check_out)
+                            <div class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                                <button onclick="openCheckoutModal({{ $attendance->id }})" 
+                                    class="text-xs bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition flex items-center">
+                                    <i class="fas fa-sign-out-alt mr-1"></i> Check-out hộ
+                                </button>
+                            </div>
+                        @endif
                     </div>
                 </div>
-            </div>
             @endforeach
         </div>
     @endif

@@ -20,7 +20,8 @@ class EmployeeShift extends BaseModel
         'status',
         'confirmed_by',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'is_locked'
     ];
 
     protected $casts = [
@@ -57,6 +58,57 @@ class EmployeeShift extends BaseModel
         return $query->where('status', self::STATUS_ACTIVE);
     }
 
+    public function getRealTimeStatusAttribute()
+    {
+        if (!$this->shift) return 'Chưa xác định';
+        
+        $shiftDate = $this->shift_date instanceof \Carbon\Carbon ? $this->shift_date : \Carbon\Carbon::parse($this->shift_date);
+        $start = \Carbon\Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $this->shift->start_time);
+        $end = \Carbon\Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $this->shift->end_time);
+        
+        if ($end->lt($start)) {
+            $end->addDay();
+        }
+        
+        $now = now();
+        
+        // Find Attendance safely
+        $attendance = \App\Models\Attendance::where('employee_id', $this->employee_id)
+            ->whereDate('check_in', $shiftDate)
+            ->first();
+
+        // 1. Not Checked In
+        if (!$attendance) {
+            if ($now->gt($end)) return 'Vắng mặt';
+            
+            $lateThreshold = $start->copy()->addMinutes(15);
+            if ($now->gt($lateThreshold)) return 'Đi muộn'; // Late arrival pending
+            
+            return 'Chưa checkin';
+        }
+        
+        // 2. Checked Out
+        if ($attendance->check_out) {
+            return 'Đã checkout';
+        }
+        
+        // 3. Checked In (Active)
+        
+        // Check for "Forgot Checkout" (End + 30 mins buffer)
+        if ($now->gt($end->copy()->addMinutes(30))) {
+            return 'Tan ca nhưng quên checkout';
+        }
+        
+        // Check for Late Checkin (Only if late_minutes > 0 in DB or calculated)
+        // Relying on DB late_minutes is better if available, but calculation is fine
+        $checkInTime = \Carbon\Carbon::parse($attendance->check_in);
+        if ($checkInTime->gt($start->copy()->addMinutes(15))) {
+            return 'Đi muộn';
+        }
+        
+        // Ensure we catch all active cases
+        return 'Đang trong ca làm';
+    }
     // Methods
     public function checkIn(): bool
     {
