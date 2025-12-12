@@ -342,6 +342,9 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="bills-table-body">
                         @forelse($bills as $bill)
+                            @php
+                                $checkInfoUser = $bill->user && $bill->user->name && $bill->user->phone;
+                            @endphp
                             <tr class="bill-row group hover:bg-blue-50 transition-all duration-200 cursor-pointer border-l-4 hover:border-l-blue-500 border-l-transparent"
                                 data-id="{{ $bill->id }}" data-status="{{ $bill->status }}"
                                 data-payment-status="{{ $bill->payment_status }}"
@@ -355,9 +358,11 @@
                                         <div class="flex-shrink-0">
                                             @if ($bill->payment_status === 'Paid')
                                                 <i
-                                                    class="fa-solid fa-check-circle text-green-500 text-lg group-hover:text-green-600 transition-colors pl-4"></i>
+                                                    class="fa-solid fa-check-circle text-green-500 text-lg group-hover:text-green-600 transition-colors {{ $checkInfoUser ? 'pl-4' : '' }}"></i>
                                             @elseif($bill->status === 'Open')
-                                                <input type="checkbox" class="bill-select">
+                                                @if ($checkInfoUser)
+                                                    <input type="checkbox" class="bill-select">
+                                                @endif
                                                 <i
                                                     class="fa-solid fa-clock text-blue-500 text-lg group-hover:text-blue-600 transition-colors"></i>
                                             @else
@@ -1379,7 +1384,7 @@
             const selected = [...document.querySelectorAll(".bill-select:checked")];
 
             if (selected.length === 0) {
-                alert("Vui lòng chọn ít nhất 1 hóa đơn!");
+                showToast('Vui lòng chọn ít nhất 1 hóa đơn!', 'error');
                 return;
             }
 
