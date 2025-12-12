@@ -113,6 +113,8 @@ class AttendanceController extends Controller
 
         $employee->invalidateQrToken();
 
+        \App\Models\ActivityLog::log('check_in', "Employee {$employee->name} checked in.", ['attendance_id' => $attendance->id, 'time' => $now]);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Check-in thành công!',
@@ -161,6 +163,8 @@ class AttendanceController extends Controller
 
         $employee->invalidateQrToken();
 
+        \App\Models\ActivityLog::log('check_in_late', "Employee {$employee->name} submitted late reason.", ['attendance_id' => $attendance->id, 'reason' => $request->reason, 'late_minutes' => $lateMinutes]);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Đã gửi lý do đi muộn. Vui lòng đợi quản lý duyệt.',
@@ -207,6 +211,8 @@ class AttendanceController extends Controller
         $attendance->save();
         $this->updateShiftStatus($employee->id, 'completed');
         $employee->invalidateQrToken();
+
+        \App\Models\ActivityLog::log('check_out', "Employee {$employee->name} checked out.", ['attendance_id' => $attendance->id, 'time' => $now, 'total_hours' => round($attendance->total_minutes / 60, 2)]);
 
         return response()->json([
             'status' => 'success',
@@ -328,6 +334,8 @@ class AttendanceController extends Controller
         $attendance->save();
         
         $this->updateShiftStatus($attendance->employee_id, 'completed');
+
+        \App\Models\ActivityLog::log('admin_checkout', "Admin checked out for employee ID {$attendance->employee_id}.", ['attendance_id' => $attendance->id, 'reason' => $request->reason, 'admin_id' => Auth::id()]);
 
         return response()->json(['status' => 'success', 'message' => 'Đã check-out hộ nhân viên thành công.']);
     }

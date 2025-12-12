@@ -155,7 +155,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->name ?? 'N/A' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $employee->position ?? 'N/A' }}</td>
+                                {{ $employee->user->role->name ?? 'N/A' }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $employee->phone ?? 'N/A' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">

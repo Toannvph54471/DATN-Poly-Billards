@@ -17,24 +17,37 @@
     </div>
 
     <!-- Filter Bar -->
-    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-        <form action="{{ route('admin.payroll.index') }}" method="GET" class="flex items-center gap-4">
-            <div class="flex-1">
-                <label class="block text-xs font-medium text-gray-600 mb-1.5">Tháng</label>
+    <!-- Toolbar -->
+    <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <!-- Left: Filter -->
+        <form action="{{ route('admin.payroll.index') }}" method="GET" class="flex items-end gap-3">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1.5">Chọn tháng</label>
                 <input type="month" name="month" value="{{ $month }}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
             </div>
-            <div class="flex gap-2 pt-5">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-filter"></i>
-                    Lọc
-                </button>
-                <button type="button" onclick="calculateAllSalaries()" class="btn btn-success">
-                    <i class="fas fa-calculator"></i>
-                    Tính tất cả
-                </button>
-            </div>
+            <button type="submit" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition-colors border border-gray-200">
+                <i class="fas fa-filter mr-1"></i>
+                Xem
+            </button>
         </form>
+
+        <!-- Right: Actions -->
+        <div class="flex gap-3">
+            <div class="h-8 w-px bg-gray-200 mx-2 hidden md:block"></div>
+            
+            <button type="button" onclick="calculateAllSalaries()" 
+                class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm shadow-sm transition-all flex items-center gap-2">
+                <i class="fas fa-calculator"></i>
+                Tính lương tháng này
+            </button>
+            
+            <button type="button" onclick="payAllSalaries()" 
+                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-sm shadow-sm transition-all flex items-center gap-2">
+                <i class="fas fa-check-double"></i>
+                Thanh toán hết
+            </button>
+        </div>
     </div>
 
     <!-- Stats Cards -->
@@ -171,6 +184,15 @@
                         <td class="py-3 px-4 text-right">
                             @if($isCalculated)
                                 <p class="text-sm font-bold text-gray-900">{{ number_format($calculatedSalary) }}</p>
+                                @if($payroll->status === 'paid')
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-700 mt-1">
+                                        <i class="fas fa-check-circle text-xs"></i> ĐÃ THANH TOÁN
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-yellow-100 text-yellow-700 mt-1">
+                                        <i class="fas fa-clock text-xs"></i> Chờ thanh toán
+                                    </span>
+                                @endif
                             @else
                                 <span class="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 text-yellow-700 rounded text-xs font-medium">
                                     <i class="fas fa-clock text-xs"></i>
@@ -185,9 +207,15 @@
                                     <i class="fas fa-edit text-xs"></i>
                                 </button>
                                 <button onclick="calculateSalary({{ $employee->id }}, '{{ $month }}')"
-                                    class="btn-icon bg-green-50 text-green-600 hover:bg-green-100" title="Tính lương">
+                                    class="btn-icon bg-green-50 text-green-600 hover:bg-green-100" title="Tính lại lương">
                                     <i class="fas fa-calculator text-xs"></i>
                                 </button>
+                                @if($isCalculated && $payroll->status !== 'paid')
+                                    <button onclick="markAsPaid({{ $payroll->id }})"
+                                        class="btn-icon bg-blue-50 text-blue-600 hover:bg-blue-100" title="Xác nhận thanh toán">
+                                        <i class="fas fa-check-double text-xs"></i>
+                                    </button>
+                                @endif
                             </div>
                         </td>
                     </tr>
@@ -202,7 +230,7 @@
             </tbody>
         </table>
         
-        <div class="border-t border-gray-200 px-4 py-3">
+     <div class="border-t border-gray-200 px-4 py-3">
             {{ $employees->appends(['month' => $month])->links('pagination::tailwind') }}
         </div>
     </div>
@@ -304,6 +332,7 @@
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // Mở modal lương giờ
     function openSalaryModal(id, rate) {
@@ -396,35 +425,182 @@
     }
 
     function calculateSalary(id, month, extraData = {}) {
-        closePayrollModal();
+        closePayrollModal(); // Ensure modal is closed if it was open
+
+        // Check if just simple calculation requested (via action button) or update via modal
+        const isUpdate = Object.keys(extraData).length > 0;
+        const title = isUpdate ? 'Lưu & Tính lương?' : 'Tính lương?';
 
         Swal.fire({
-            title: 'Đang tính lương...',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
+            title: title,
+            text: "Xác nhận tính lương cho nhân viên này.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Xác nhận',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Đang xử lý...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
 
-        fetch('/api/payroll/generate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ employee_id: id, month, month, ...extraData })
-        })
-        .then(r => r.json())
-        .then(() => {
-            Swal.fire('Thành công!', 'Tính lương hoàn tất', 'success')
-                .then(() => location.reload());
-        })
-        .catch(() => Swal.fire('Lỗi', 'Không thể tính lương', 'error'));
+                fetch('/api/payroll/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ employee_id: id, month, month, ...extraData })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Thành công!',
+                        text: 'Đã tính lương xong.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                })
+                .catch(err => {
+                    Swal.fire('Lỗi', 'Không thể tính lương.', 'error');
+                });
+            }
+        });
     }
 
     function calculateAllSalaries() {
-        if (!confirm('Bạn có chắc muốn tính lương cho TẤT CẢ nhân viên trong tháng này?')) return;
+        const urlParams = new URLSearchParams(window.location.search);
+        const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
 
-        // Có thể implement sau, hiện tại chỉ cảnh báo
-        Swal.fire('Chưa hỗ trợ', 'Chức năng tính tất cả đang phát triển', 'info');
+        Swal.fire({
+            title: 'Tính lương tất cả?',
+            text: `Bạn có chắc muốn tính lương cho TẤT CẢ nhân viên trong tháng ${month}? Những phiếu lương đã chỉnh sửa thủ công hoặc đã thanh toán sẽ không bị ảnh hưởng.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Tính ngay',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Đang tính toán...',
+                    text: 'Vui lòng đợi giây lát.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                fetch('{{ route("admin.payroll.generate-all") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ month: month })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        Swal.fire('Thành công', data.message, 'success').then(() => location.reload());
+                    } else {
+                         Swal.fire('Lỗi', data.message, 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Lỗi', 'Có lỗi xảy ra khi tính lương.', 'error');
+                });
+            }
+        });
+    }
+
+    function payAllSalaries() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const month = urlParams.get('month') || '{{ now()->format("Y-m") }}';
+
+        Swal.fire({
+            title: 'Thanh toán tất cả?',
+            text: `Bạn có chắc muốn chuyển trạng thái TẤT CẢ phiếu lương chưa thanh toán trong tháng ${month} sang ĐÃ THANH TOÁN?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3b82f6',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Xác nhận',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Đang xử lý...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                fetch('{{ route("admin.payroll.pay-all") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ month: month })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        Swal.fire('Thành công', data.message, 'success').then(() => location.reload());
+                    } else {
+                         Swal.fire('Lỗi', data.message, 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Lỗi', 'Có lỗi xảy ra.', 'error');
+                });
+            }
+        });
+    }
+
+    function markAsPaid(payrollId) {
+        Swal.fire({
+            title: 'Xác nhận thanh toán?',
+            text: "Đánh dấu phiếu lương này là ĐÃ THANH TOÁN (Paid)?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Xác nhận',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Đang xử lý...',
+                    didOpen: () => Swal.showLoading()
+                });
+
+                // Correct URL construction using admin prefix
+                fetch(`{{ url('/admin/payroll') }}/${payrollId}/pay`, {
+                    method: 'POST',
+                    headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        Swal.fire('Thành công', 'Đã cập nhật trạng thái đã thanh toán.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Lỗi', data.message, 'error');
+                    }
+                })
+                .catch(err => {
+                    Swal.fire('Lỗi', 'Không thể cập nhật trạng thái.', 'error');
+                });
+            }
+        });
     }
 </script>
-@endsection

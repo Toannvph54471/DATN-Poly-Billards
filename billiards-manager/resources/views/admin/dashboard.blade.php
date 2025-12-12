@@ -3,504 +3,501 @@
 @section('title', 'Dashboard - F&B Management')
 
 @section('content')
-<div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+<div class="space-y-6" id="dashboard-container">
+    <!-- Header + Filter -->
+    <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
         <div>
             <h1 class="text-2xl font-bold text-gray-900 mb-1">Tổng quan hệ thống</h1>
-            <p class="text-sm text-gray-500">Cập nhật lúc {{ date('H:i, d/m/Y') }}</p>
+            <p class="text-sm text-gray-500">
+                <span class="font-medium text-blue-600">{{ $filterLabel }}</span>
+                • Cập nhật lúc <span id="current-time">{{ now()->format('H:i, d/m/Y') }}</span>
+                <span class="ml-3 text-green-600 font-medium">
+                    <i class="fas fa-circle text-xs animate-pulse"></i> Live
+                </span>
+            </p>
         </div>
-        <div class="flex items-center gap-3">
-            <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <i class="fas fa-download mr-2"></i>Xuất báo cáo
-            </button>
-            <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-                <i class="fas fa-plus mr-2"></i>Tạo đơn mới
-            </button>
+
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <!-- Filter Form -->
+            <form method="GET" class="flex items-center gap-2">
+                <select name="filter" id="filter-type" onchange="toggleCustomDate()"
+                    class="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="today" {{ $filterType == 'today' ? 'selected' : '' }}>Hôm nay</option>
+                    <option value="yesterday" {{ $filterType == 'yesterday' ? 'selected' : '' }}>Hôm qua</option>
+                    <option value="week" {{ $filterType == 'week' ? 'selected' : '' }}>Tuần này</option>
+                    <option value="last_week" {{ $filterType == 'last_week' ? 'selected' : '' }}>Tuần trước</option>
+                    <option value="month" {{ $filterType == 'month' ? 'selected' : '' }}>Tháng này</option>
+                    <option value="last_month" {{ $filterType == 'last_month' ? 'selected' : '' }}>Tháng trước</option>
+                    <option value="custom" {{ $filterType == 'custom' ? 'selected' : '' }}>Tùy chỉnh</option>
+                </select>
+
+                <div id="custom-date-range"
+                    class="flex items-center gap-2 {{ $filterType !== 'custom' ? 'hidden' : '' }}">
+                    <input type="date" name="start_date" value="{{ request('start_date') }}"
+                        class="px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                    <span class="text-gray-500">→</span>
+                    <input type="date" name="end_date" value="{{ request('end_date') }}"
+                        class="px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                </div>
+
+                <button type="submit"
+                    class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 flex items-center">
+                    <i class="fas fa-search mr-2"></i>Xem báo cáo
+                </button>
+            </form>
+
+            <div class="flex items-center gap-3">
+             
+                <a href="{{ route('admin.dashboard') }}"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center">
+                    <i class="fas fa-undo mr-2"></i>Reset
+                </a>
+                <button onclick="refreshDashboard()" id="refresh-btn"
+                    class="px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center">
+                    <i class="fas fa-sync-alt mr-2"></i>Làm mới
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Doanh thu hôm nay -->
-        <div class="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow">
-            <div class="flex items-start justify-between mb-3">
-                <div class="p-2 bg-green-50 rounded-lg">
-                    <i class="fas fa-money-bill-wave text-green-600 text-lg"></i>
-                </div>
-                <span class="text-xs font-medium px-2 py-1 rounded-full {{ $revenueGrowth >= 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
-                    <i class="fas {{ $revenueGrowth >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} text-xs"></i>
-                    {{ number_format(abs($revenueGrowth), 1) }}%
-                </span>
-            </div>
-            <h3 class="text-sm font-medium text-gray-600 mb-1">Doanh thu hôm nay</h3>
-            <p class="text-2xl font-bold text-gray-900">{{ number_format($todayRevenue, 0, ',', '.') }}₫</p>
-            <p class="text-xs text-gray-500 mt-2">So với hôm qua</p>
-        </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        @php
+        $stats = [
+        [
+        'label' => 'Đã thu',
+        'value' => $revenuePaid ?? ($todayRevenue ?? 0),
+        'icon' => 'money-bill-wave',
+        'color' => 'green',
+        'growth' => $revenuePaidGrowth ?? 0,
+        ],
+        ['label' => 'Dự kiến', 'value' => $revenueExpected ?? 0, 'icon' => 'clock', 'color' => 'amber'],
+        [
+        'label' => 'Tổng doanh thu',
+        'value' => ($revenuePaid ?? 0) + ($revenueExpected ?? 0),
+        'icon' => 'chart-line',
+        'color' => 'purple',
+        'growth' => $totalRevenueGrowth ?? 0,
+        ],
+        [
+        'label' => 'Đã thanh toán',
+        'value' => $billsPaid ?? ($todayBills ?? 0),
+        'icon' => 'check-circle',
+        'color' => 'emerald',
+        'growth' => $billsPaidGrowth ?? 0,
+        ],
+        [
+        'label' => 'Chờ thanh toán',
+        'value' => $billsExpected ?? 0,
+        'icon' => 'hourglass-half',
+        'color' => 'orange',
+        ],
+        [
+        'label' => 'Bàn đang dùng',
+        'value' =>
+        ($tableStats['occupied'] ?? 0) +
+        ($tableStats['reserved'] ?? 0) .
+        ' / ' .
+        ($tableStats['total'] ?? 0),
+        'icon' => 'chair',
+        'color' => 'indigo',
+        'rate' => $tableStats['occupancy_rate'] ?? 0,
+        ],
+        [
+            'label' => 'Đi muộn',
+            'value' => $lateCount ?? 0,
+            'icon' => 'user-clock',
+            'color' => 'red',
+        ],
+        [
+            'label' => 'Chưa checkout',
+            'value' => $missedCheckoutCount ?? 0,
+            'icon' => 'sign-out-alt',
+            'color' => 'pink',
+        ],
+        [
+            'label' => 'Tổng giờ làm',
+            'value' => number_format($totalHoursMonth ?? 0, 1),
+            'icon' => 'clock',
+            'color' => 'blue',
+        ],
+        ];
+        @endphp
 
-        <!-- Số bill hôm nay -->
+        @foreach ($stats as $stat)
         <div class="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow">
             <div class="flex items-start justify-between mb-3">
-                <div class="p-2 bg-blue-50 rounded-lg">
-                    <i class="fas fa-receipt text-blue-600 text-lg"></i>
+                <div class="p-2 bg-{{ $stat['color'] }}-50 rounded-lg">
+                    <i class="fas fa-{{ $stat['icon'] }} text-{{ $stat['color'] }}-600 text-lg"></i>
                 </div>
-                <span class="text-xs font-medium px-2 py-1 rounded-full {{ $billGrowth >= 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
-                    <i class="fas {{ $billGrowth >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }} text-xs"></i>
-                    {{ number_format(abs($billGrowth), 1) }}%
+                @if (isset($stat['growth']))
+                <span
+                    class="text-xs font-medium px-2 py-1 rounded-full {{ $stat['growth'] >= 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700' }}">
+                    <i class="fas {{ $stat['growth'] >= 0 ? 'fa-arrow-up' : 'fa-arrow-down' }}"></i>
+                    {{ number_format(abs($stat['growth']), 1) }}%
                 </span>
+                @elseif(isset($stat['rate']))
+                <span class="text-xs font-medium px-2 py-1 rounded-full bg-blue-50 text-blue-700">
+                    {{ number_format($stat['rate'], 0) }}%
+                </span>
+                @endif
             </div>
-            <h3 class="text-sm font-medium text-gray-600 mb-1">Số đơn hàng</h3>
-            <p class="text-2xl font-bold text-gray-900">{{ $todayBills }}</p>
-            <p class="text-xs text-gray-500 mt-2">So với hôm qua</p>
+            <h3 class="text-sm font-medium text-gray-600 mb-1">{{ $stat['label'] }}</h3>
+            <p class="text-xl font-bold text-gray-900">
+                @if (in_array($stat['icon'], ['money-bill-wave', 'chart-line']))
+                {{ number_format($stat['value'], 0, ',', '.') }}₫
+                @else
+                {{ $stat['value'] }}
+                @endif
+            </p>
         </div>
+        @endforeach
+    </div>
 
-        <!-- Bàn đang hoạt động -->
-        <div class="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow">
-            <div class="flex items-start justify-between mb-3">
-                <div class="p-2 bg-orange-50 rounded-lg">
-                    <i class="fas fa-chair text-orange-600 text-lg"></i>
-                </div>
-                <span class="text-xs font-medium px-2 py-1 rounded-full bg-orange-50 text-orange-700">
-                    {{ number_format($tableStats['occupancy_rate'], 0) }}%
-                </span>
+    <!-- Monthly Stats -->
+    <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-500">Doanh thu tháng</h3>
+                <i class="fas fa-calendar-alt text-blue-500"></i>
             </div>
-            <h3 class="text-sm font-medium text-gray-600 mb-1">Bàn đang sử dụng</h3>
-            <p class="text-2xl font-bold text-gray-900">{{ $tableStats['occupied'] + $tableStats['reserved'] }}<span class="text-base text-gray-400 font-normal">/{{ $tableStats['total'] }}</span></p>
-            <p class="text-xs text-gray-500 mt-2">Tỷ lệ sử dụng</p>
+            <p class="text-2xl font-bold text-gray-900">
+                {{ number_format($monthlyStats['revenue'] ?? 0, 0, ',', '.') }}₫
+            </p>
         </div>
-
-        <!-- Khách hàng mới -->
-        <div class="bg-white rounded-xl p-5 border border-gray-200 hover:shadow-md transition-shadow">
-            <div class="flex items-start justify-between mb-3">
-                <div class="p-2 bg-purple-50 rounded-lg">
-                    <i class="fas fa-users text-purple-600 text-lg"></i>
-                </div>
-                <span class="text-xs font-medium px-2 py-1 rounded-full bg-purple-50 text-purple-700">
-                    +{{ $newCustomersThisMonth }}
-                </span>
+        <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-500">Tổng đơn hàng</h3>
+                <i class="fas fa-file-invoice text-green-500"></i>
             </div>
-            <h3 class="text-sm font-medium text-gray-600 mb-1">Khách hàng mới</h3>
-            <p class="text-2xl font-bold text-gray-900">{{ $newCustomersToday }}</p>
-            <p class="text-xs text-gray-500 mt-2">Hôm nay</p>
+            <p class="text-2xl font-bold text-gray-900">{{ $monthlyStats['bills'] ?? 0 }}</p>
+        </div>
+        <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-medium text-gray-500">Khách hàng mới</h3>
+                <i class="fas fa-user-plus text-purple-500"></i>
+            </div>
+            <p class="text-2xl font-bold text-gray-900">{{ $monthlyStats['customers'] ?? 0 }}</p>
         </div>
     </div>
 
-    <!-- Monthly Stats Section -->
-    <div class="mt-8">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Thống kê tháng {{ date('m/Y') }}</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <!-- Monthly Revenue -->
-            <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium text-gray-500">Doanh thu tháng</h3>
-                    <i class="fas fa-calendar-alt text-blue-500"></i>
+    <!-- Chart + Sidebar -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 mt-6">
+        <!-- Biểu đồ -->
+        <div class="xl:col-span-8">
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Biểu đồ doanh thu</h3>
+                        <p class="text-sm text-gray-500 mt-1">{{ $startDateFormatted }} → {{ $endDateFormatted }}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="flex bg-gray-100 rounded-lg p-1">
+                            <button onclick="switchChartDataType('paid')" id="chart-data-paid"
+                                class="chart-data-btn active text-xs px-3 py-1">Đã thu</button>
+                            <button onclick="switchChartDataType('expected')" id="chart-data-expected"
+                                class="chart-data-btn text-xs px-3 py-1">Dự kiến</button>
+                            <button onclick="switchChartDataType('all')" id="chart-data-all"
+                                class="chart-data-btn text-xs px-3 py-1">Tổng</button>
+                        </div>
+                        <div class="flex bg-gray-100 rounded-lg p-1">
+                            <button onclick="switchChartType('bar')" id="chart-type-bar"
+                                class="chart-type-btn active px-3 py-1"><i class="fas fa-chart-bar"></i></button>
+                            <button onclick="switchChartType('line')" id="chart-type-line"
+                                class="chart-type-btn px-3 py-1"><i class="fas fa-chart-line"></i></button>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">{{ number_format($monthlyStats['revenue'], 0, ',', '.') }}₫</p>
-            </div>
 
-            <!-- Monthly Bills -->
-            <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium text-gray-500">Tổng đơn hàng</h3>
-                    <i class="fas fa-file-invoice text-green-500"></i>
+                <div class="h-80">
+                    <canvas id="revenueChart"></canvas>
                 </div>
-                <p class="text-2xl font-bold text-gray-900">{{ $monthlyStats['bills'] }}</p>
-            </div>
 
-            <!-- Monthly Customers -->
-            <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium text-gray-500">Khách hàng mới</h3>
-                    <i class="fas fa-user-plus text-purple-500"></i>
-                </div>
-                <p class="text-2xl font-bold text-gray-900">{{ $monthlyStats['customers'] }}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts and Tables Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <!-- Doanh thu theo tuần -->
-        <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-900">Doanh thu 7 ngày</h3>
-                    <p class="text-sm text-gray-500 mt-1">Biểu đồ doanh thu theo thời gian</p>
-                </div>
-                <select id="chart-period" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="weekly">7 ngày</option>
-                    <option value="monthly">30 ngày</option>
-                    <option value="yearly">12 tháng</option>
-                </select>
-            </div>
-            
-            <div class="h-72 mb-6">
-                <canvas id="revenueChart"></canvas>
-            </div>
-            
-            <!-- Thống kê tổng quan -->
-            <div class="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
-                <div>
-                    <p class="text-xs text-gray-500 mb-1" id="chart-total-label">Tổng tuần</p>
-                    <p class="text-lg font-bold text-gray-900" id="chart-total">0₫</p>
-                </div>
-                <div>
-                    <p class="text-xs text-gray-500 mb-1" id="chart-average-label">Trung bình/ngày</p>
-                    <p class="text-lg font-bold text-gray-900" id="chart-average">0₫</p>
-                </div>
-                <div>
-                    <p class="text-xs text-gray-500 mb-1">Tăng trưởng</p>
-                    <p class="text-lg font-bold text-green-600" id="chart-growth">0%</p>
+                <div class="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200 mt-4">
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1" id="chart-total-label">Tổng</p>
+                        <p class="text-lg font-bold text-gray-900" id="chart-total">0₫</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1" id="chart-average-label">Trung bình/ngày</p>
+                        <p class="text-lg font-bold text-gray-900" id="chart-average">0₫</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 mb-1">Tăng trưởng</p>
+                        <p class="text-lg font-bold text-green-600" id="chart-growth">0%</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Sản phẩm bán chạy -->
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Sản phẩm bán chạy</h3>
-            <div class="space-y-3">
-                @foreach($topProducts as $index => $product)
-                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
-                        {{ $index + 1 }}
+        <!-- Sidebar Right -->
+        <div class="xl:col-span-4 space-y-6">
+            <!-- Top sản phẩm -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top món bán chạy</h3>
+                <div class="space-y-3">
+                    @foreach ($topProducts as $index => $product)
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                        <div
+                            class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+                            {{ $index + 1 }}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ $product->name }}</p>
+                            <p class="text-xs text-gray-500">{{ $product->category_name ?? 'Không phân loại' }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-gray-900">{{ $product->total_quantity }}</p>
+                            <p class="text-xs text-gray-500">
+                                {{ number_format($product->total_revenue / 1000, 0) }}k
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 truncate">{{ $product->name }}</p>
-                        <p class="text-xs text-gray-500">{{ $product->category_name }}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-semibold text-gray-900">{{ $product->total_quantity }}</p>
-                        <p class="text-xs text-gray-500">{{ number_format($product->total_revenue/1000, 0) }}k</p>
-                    </div>
+                    @endforeach
+                    @if ($topProducts->count() == 0)
+                    <p class="text-center text-gray-400 py-6">Chưa có dữ liệu</p>
+                    @endif
                 </div>
-                @endforeach
-                @if($topProducts->count() == 0)
-                <div class="text-center py-8 text-gray-400">
-                    <i class="fas fa-chart-bar text-3xl mb-2"></i>
-                    <p class="text-sm">Chưa có dữ liệu</p>
+            </div>
+
+            <!-- Cảnh báo tồn kho -->
+            <div class="bg-white rounded-xl border border-red-200 p-6">
+                <h3 class="text-lg font-semibold text-red-600 mb-4 flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Cảnh báo tồn kho
+                </h3>
+                @if ($lowStockProducts->count() > 0)
+                <div class="space-y-3">
+                    @foreach ($lowStockProducts->take(5) as $p)
+                    <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-exclamation-circle text-red-500"></i>
+                            <span class="text-sm font-medium text-gray-900">{{ $p->name }}</span>
+                        </div>
+                        <span class="text-sm font-bold text-red-600">{{ $p->stock_quantity }} /
+                            {{ $p->min_stock_level }}</span>
+                    </div>
+                    @endforeach
+                </div>
+                @else
+                <div class="text-center py-4 text-gray-400">
+                    <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
+                    <p class="text-sm">Kho hàng ổn định!</p>
                 </div>
                 @endif
             </div>
-        </div>
-    </div>
 
-    <!-- Recent Bills and Statistics -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        <!-- Bill gần đây -->
-        <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Đơn hàng gần đây</h3>
-                <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-700">
-                    Xem tất cả <i class="fas fa-arrow-right ml-1"></i>
-                </a>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-b border-gray-200">
-                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Mã đơn</th>
-                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Bàn</th>
-                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Tổng tiền</th>
-                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Trạng thái</th>
-                            <th class="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">Thời gian</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @foreach($recentBills as $bill)
-                        <tr class="hover:bg-gray-50">
-                            <td class="py-3 px-4">
-                                <span class="font-mono text-sm font-medium text-gray-900">{{ $bill['bill_number'] }}</span>
-                            </td>
-                            <td class="py-3 px-4">
-                                <span class="text-sm text-gray-900">{{ $bill['table_name'] }}</span>
-                            </td>
-                            <td class="py-3 px-4">
-                                <span class="text-sm font-medium text-gray-900">{{ number_format($bill['total_amount'], 0, ',', '.') }}₫</span>
-                            </td>
-                            <td class="py-3 px-4">
-                                @if($bill['payment_status'] == 'Paid')
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
-                                    Đã thanh toán
-                                </span>
-                                @else
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700">
-                                    Chờ thanh toán
-                                </span>
-                                @endif
-                            </td>
-                            <td class="py-3 px-4">
-                                <span class="text-sm text-gray-500">{{ $bill['time_ago'] }}</span>
-                            </td>
-                        </tr>
-                        @endforeach
-                        @if($recentBills->count() == 0)
-                        <tr>
-                            <td colspan="5" class="py-8 text-center text-gray-400">
-                                <i class="fas fa-receipt text-3xl mb-2"></i>
-                                <p class="text-sm">Chưa có đơn hàng</p>
-                            </td>
-                        </tr>
-                        @endif
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Thống kê nhanh -->
-        <div class="space-y-6">
-            <!-- Tình trạng bàn -->
+            <!-- Nhân viên xuất sắc -->
             <div class="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Tình trạng bàn</h3>
-                <div class="space-y-3">
-                    @php
-                        $statusItems = [
-                            ['color' => 'green', 'label' => 'Trống', 'value' => $tableStats['available']],
-                            ['color' => 'blue', 'label' => 'Đang dùng', 'value' => $tableStats['occupied']],
-                            ['color' => 'yellow', 'label' => 'Đã đặt', 'value' => $tableStats['reserved']],
-                            ['color' => 'gray', 'label' => 'Bảo trì', 'value' => $tableStats['maintenance']]
-                        ];
-                    @endphp
-                    
-                    @foreach($statusItems as $item)
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <div class="w-3 h-3 bg-{{ $item['color'] }}-500 rounded-full"></div>
-                            <span class="text-sm text-gray-700">{{ $item['label'] }}</span>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                    Nhân viên xuất sắc
+                </h3>
+                <div class="space-y-4">
+                    @forelse ($topEmployees as $index => $emp)
+                    <div
+                        class="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 {{ $index === 0 ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200' : '' }}">
+                        <div class="flex-shrink-0 relative">
+                            <div
+                                class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                {{ strtoupper(substr($emp->name, 0, 2)) }}
+                            </div>
+                            @if ($index === 0)
+                            <i
+                                class="fas fa-crown text-yellow-500 text-xl absolute -top-2 -right-2 drop-shadow"></i>
+                            @endif
                         </div>
-                        <span class="text-sm font-semibold text-gray-900">{{ $item['value'] }}</span>
-                    </div>
-                    @endforeach
-                </div>
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                    <div class="flex justify-between text-sm mb-2">
-                        <span class="text-gray-600">Tỷ lệ sử dụng</span>
-                        <span class="font-semibold text-gray-900">{{ number_format($tableStats['occupancy_rate'], 1) }}%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-blue-600 h-2 rounded-full transition-all duration-500" 
-                             style="width: {{ $tableStats['occupancy_rate'] }}%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Cảnh báo kho (Low Stock) -->
-            <div class="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Cảnh báo kho</h3>
-                <div class="space-y-3">
-                    @foreach($lowStockProducts as $product)
-                    <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-exclamation-circle text-red-500"></i>
-                            <span class="text-sm font-medium text-gray-900">{{ $product->name }}</span>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-gray-900">{{ $emp->name }}</p>
+                            <p class="text-xs text-gray-600 mt-1">
+                                <span
+                                    class="font-bold text-green-600">{{ number_format($emp->total_revenue / 1000) }}k</span>
+                                <span class="text-gray-400 mx-1">•</span>
+                                <span>{{ $emp->bill_count ?? 0 }} đơn</span>
+                            </p>
                         </div>
-                        <span class="text-sm font-bold text-red-600">{{ $product->stock_quantity }} <span class="text-xs font-normal text-gray-500">/{{ $product->min_stock_level }}</span></span>
-                    </div>
-                    @endforeach
-                    @if($lowStockProducts->count() == 0)
-                    <div class="text-center py-4 text-gray-400">
-                        <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
-                        <p class="text-sm">Kho hàng ổn định</p>
+                        @if ($index < 3)
+                            <div class="text-2xl font-bold text-gray-300">#{{ $index + 1 }}
                     </div>
                     @endif
                 </div>
+                @empty
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fas fa-users text-4xl mb-3 opacity-50"></i>
+                    <p class="text-sm">Chưa có dữ liệu</p>
+                </div>
+                @endforelse
             </div>
-
-            <!-- Ca làm việc (Shift Stats) -->
-            <div class="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Ca làm việc hôm nay</h3>
-                <div class="flex justify-between items-center mb-4">
-                    <div class="text-center">
-                        <p class="text-xs text-gray-500">Đang làm việc</p>
-                        <p class="text-xl font-bold text-blue-600">{{ $shiftStats['active_count'] }}</p>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xs text-gray-500">Tổng giờ công</p>
-                        <p class="text-xl font-bold text-green-600">{{ number_format($shiftStats['total_hours'], 1) }}h</p>
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <p class="text-xs font-medium text-gray-500 uppercase">Nhân viên đang trực:</p>
-                    @foreach($shiftStats['working_employees'] as $emp)
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-700">{{ $emp->name }}</span>
-                        <span class="text-gray-500 text-xs">{{ \Carbon\Carbon::parse($emp->actual_start_time)->format('H:i') }}</span>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- Nhân viên tích cực -->
-            <div class="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Nhân viên xuất sắc</h3>
-                <div class="space-y-3">
-                    @foreach($activeEmployees as $index => $employee)
-                    <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                            {{ substr($employee->name, 0, 2) }}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-900 truncate">{{ $employee->name }}</p>
-                            <p class="text-xs text-gray-500">{{ number_format($employee->total_revenue/1000, 0) }}k • {{ $employee->bill_count }} đơn</p>
-                        </div>
-                        @if($index == 0)
-                        <i class="fas fa-crown text-yellow-500"></i>
-                        @endif
-                    </div>
-                    @endforeach
-                    @if($activeEmployees->count() == 0)
-                    <div class="text-center py-4 text-gray-400">
-                        <i class="fas fa-users text-2xl mb-2"></i>
-                        <p class="text-sm">Chưa có dữ liệu</p>
-                    </div>
-                    @endif
-                </div>
-            </div>            
         </div>
     </div>
 </div>
+</div>
+
+<!-- DỮ LIỆU CHO BIỂU ĐỒ (ĐÃ SỬA HOÀN TOÀN) -->
+<script type="application/json" id="chart-config">
+    {
+        "labels": {
+            !!json_encode($chartLabels) !!
+        },
+        "datasets": {
+            "paid": {
+                !!json_encode($chartData['paid'] ?? []) !!
+            },
+            "expected": {
+                !!json_encode($chartData['expected'] ?? []) !!
+            },
+            "all": {
+                !!json_encode($chartData['all'] ?? []) !!
+            }
+        },
+        "stats": {
+            !!json_encode($chartStats ?? []) !!
+        }
+    }
+</script>
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    let revenueChart;
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        let revenueChart;
+        let currentDataType = 'paid';
+        let currentChartType = 'bar';
 
-    const weeklyData = @json($weeklyRevenue);
+        const config = JSON.parse(document.getElementById('chart-config').textContent);
+        const colors = {
+            paid: '#10b981',
+            expected: '#f59e0b',
+            all: '#8b5cf6'
+        };
 
-    function initChart(data) {
-        if (revenueChart) {
-            revenueChart.destroy();
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
         }
 
-        const gradient = revenueCtx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.1)');
-        gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+        function initChart(type = 'paid', chartType = 'bar') {
+            if (revenueChart) revenueChart.destroy();
 
-        revenueChart = new Chart(revenueCtx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: 'Doanh thu',
-                    data: data.revenues,
-                    borderColor: '#3b82f6',
-                    backgroundColor: gradient,
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#3b82f6',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
+            const data = config.datasets[type];
+            const total = data.reduce((a, b) => a + b, 0);
+            const average = data.length ? total / data.length : 0;
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, `${colors[type]}20`);
+            gradient.addColorStop(1, `${colors[type]}05`);
+
+            revenueChart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: config.labels,
+                    datasets: [{
+                        label: type === 'paid' ? 'Đã thu' : type === 'expected' ? 'Dự kiến' : 'Tổng',
+                        data: data,
+                        borderColor: colors[type],
+                        backgroundColor: chartType === 'bar' ? `${colors[type]}40` : gradient,
+                        borderWidth: 3,
+                        borderRadius: chartType === 'bar' ? 6 : 0,
+                        fill: chartType === 'line',
+                        tension: 0.4,
+                        pointBackgroundColor: colors[type],
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
                     },
-                    tooltip: {
-                        backgroundColor: '#ffffff',
-                        titleColor: '#111827',
-                        bodyColor: '#111827',
-                        borderColor: '#e5e7eb',
-                        borderWidth: 1,
-                        cornerRadius: 8,
-                        padding: 12,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                return formatCurrency(context.parsed.y);
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: v => v >= 1000000 ? (v / 1000000).toFixed(1) + 'tr' : (v /
+                                    1000).toFixed(0) + 'k'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
                             }
                         }
                     }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        border: {
-                            display: false
-                        },
-                        grid: {
-                            color: '#f3f4f6',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return (value / 1000000).toFixed(0) + 'tr';
-                            },
-                            font: {
-                                size: 11
-                            },
-                            color: '#6b7280'
-                        }
-                    },
-                    x: {
-                        border: {
-                            display: false
-                        },
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                size: 11
-                            },
-                            color: '#6b7280'
-                        }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
                 }
-            }
-        });
-
-        updateStatistics(data);
-    }
-
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND'
-        }).format(amount);
-    }
-
-    function updateStatistics(data) {
-        const total = data.revenues.reduce((sum, revenue) => sum + revenue, 0);
-        const average = total / data.revenues.length;
-        const growth = 15.3;
-
-        document.getElementById('chart-total').textContent = formatCurrency(total);
-        document.getElementById('chart-average').textContent = formatCurrency(average);
-        document.getElementById('chart-growth').textContent = '+' + growth + '%';
-    }
-
-    const chartData = {
-        labels: weeklyData.map(item => item.day),
-        revenues: weeklyData.map(item => item.revenue)
-    };
-    
-    initChart(chartData);
-
-    document.getElementById('chart-period').addEventListener('change', function() {
-        loadChartData(this.value);
-    });
-
-    function loadChartData(period) {
-        fetch(`/admin/dashboard/chart-data?type=${period}`)
-            .then(response => response.json())
-            .then(data => initChart(data))
-            .catch(error => {
-                console.error('Error:', error);
-                initChart(chartData);
             });
-    }
-});
+
+            document.getElementById('chart-total').textContent = formatCurrency(total);
+            document.getElementById('chart-average').textContent = formatCurrency(average);
+            const labels = {
+                paid: 'Đã thu',
+                expected: 'Dự kiến',
+                all: 'Tổng'
+            };
+            document.getElementById('chart-total-label').textContent = `Tổng ${labels[type]}`;
+            document.getElementById('chart-average-label').textContent = `TB/ngày ${labels[type]}`;
+        }
+
+        window.switchChartDataType = function(t) {
+            currentDataType = t;
+            document.querySelectorAll('.chart-data-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('chart-data-' + t).classList.add('active');
+            initChart(t, currentChartType);
+        };
+
+        window.switchChartType = function(t) {
+            currentChartType = t;
+            document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('chart-type-' + t).classList.add('active');
+            initChart(currentDataType, t);
+        };
+
+        function refreshDashboard() {
+            const btn = document.getElementById('refresh-btn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang tải...';
+            btn.disabled = true;
+            setTimeout(() => location.reload(), 800);
+        }
+
+        function toggleCustomDate() {
+            document.getElementById('custom-date-range').classList.toggle('hidden', document.getElementById(
+                'filter-type').value !== 'custom');
+        }
+
+        // Khởi tạo
+        initChart();
+        setInterval(() => {
+            document.getElementById('current-time').textContent = new Date().toLocaleString('vi-VN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }, 60000);
+    });
 </script>
+
+<style>
+    .chart-data-btn.active,
+    .chart-type-btn.active {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .chart-data-btn,
+    .chart-type-btn {
+        transition: all 0.2s;
+        border-radius: 6px;
+    }
+</style>
 @endsection

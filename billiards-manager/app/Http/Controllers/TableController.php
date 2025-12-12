@@ -12,6 +12,7 @@ use App\Models\TableRate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TableController extends Controller
 {
@@ -68,7 +69,6 @@ class TableController extends Controller
 
         return view('admin.tables.index', compact('tables', 'tableRates', 'statuses'));
     }
-
     public function simpleDashboard()
     {
         try {
@@ -79,68 +79,275 @@ class TableController extends Controller
                     $query->whereIn('status', ['Open', 'quick'])
                         ->with(['billTimeUsages', 'comboTimeUsages']);
                 }
-            ])->get();
+            ])->orderByRaw('ISNULL(position_y), position_y ASC')
+                ->orderByRaw('ISNULL(position_x), position_x ASC')
+                ->orderBy('table_number')
+                ->get();
 
             // Thống kê
             $totalTables = $tables->count();
-            $availableTables = $tables->where('status', 'available')->count();
-            $occupiedTables = $tables->where('status', 'occupied')->count();
-            $quickTables = $tables->where('status', 'quick')->count();
 
+            // Phân loại bàn
+            $availableTables = $tables->where('status', 'available');
+            $occupiedTables = $tables->where('status', 'occupied');
+            $quickTables = $tables->where('status', 'quick');
+            $maintenanceTables = $tables->where('status', 'maintenance');
+
+            // Tổng hợp tất cả bàn đang dùng (bao gồm cả quick)
+            $allOccupiedTables = $tables->filter(function ($table) {
+                return in_array($table->status, ['occupied', 'quick']);
+            });
+
+            // Lấy hóa đơn đang mở
+            $openBills = Bill::whereIn('status', ['Open', 'quick'])
+                ->with(['table'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Tính doanh thu hôm nay
+            $todayRevenue = Bill::whereDate('created_at', today())
+                ->where('status', 'Closed')
+                ->sum('total_amount') ?? 0;
+
+            // Tính toán các số liệu thống kê
+            $availableCount = $availableTables->count();
+            $occupiedCount = $occupiedTables->count();
+            $quickCount = $quickTables->count();
+            $maintenanceCount = $maintenanceTables->count();
+            $totalOccupiedCount = $occupiedCount + $quickCount;
+
+            // Tính occupancy rate
             $occupancyRate = $totalTables > 0
-                ? round((($occupiedTables + $quickTables) / $totalTables) * 100)
+                ? round(($totalOccupiedCount / $totalTables) * 100)
                 : 0;
 
             $stats = [
                 'total' => $totalTables,
-                'available' => $availableTables,
-                'occupied' => $occupiedTables,
-                'quick' => $quickTables,
+                'available' => $availableCount,
+                'occupied' => $occupiedCount,
+                'quick' => $quickCount,
+                'maintenance' => $maintenanceCount,
+                'total_occupied' => $totalOccupiedCount,
+                'open_bills' => $openBills->count(),
+                'today_revenue' => $todayRevenue,
                 'occupancy_rate' => $occupancyRate
             ];
 
-            // Format table data
-            $formattedTables = $tables->map(function ($table) {
-                $currentBillData = null;
-                $hasCombo = false;
-                $elapsedTime = null;
+            // Mảng lưu các bàn cần cảnh báo
+            $unprocessedTables = []; // Bàn combo đã hết nhưng chưa xử lý
 
+            // Format table data với tính toán elapsed time
+            $formattedTables = $tables->map(function ($table) use (&$unprocessedTables) {
+                $elapsedTime = null;
+                $hasCombo = false;
+                $comboRemaining = null;
+                $isUnprocessed = false;
+
+                // TÍNH TOÁN THỜI GIAN GIỜ THƯỜNG
                 if ($table->currentBill) {
-                    // Kiểm tra xem có combo_time_usages không
+                    // Tính thời gian đã sử dụng (giờ thường)
+                    $elapsedTime = $this->calculateElapsedTime($table->currentBill);
+
+                    // Kiểm tra combo
                     $hasCombo = $table->currentBill->comboTimeUsages()->exists();
 
-                    // Tính thời gian đã sử dụng
-                    $elapsedTime = $this->calculateSimpleElapsedTime($table->currentBill);
+                    if ($hasCombo) {
+                        // Lấy tất cả combo, bao gồm cả đã hết hạn
+                        $allCombos = $table->currentBill->comboTimeUsages()
+                            ->orderBy('remaining_minutes')
+                            ->get();
 
-                    $currentBillData = [
-                        'elapsed_time' => $elapsedTime,
-                        'has_combo' => $hasCombo
-                    ];
+                        if ($allCombos->isNotEmpty()) {
+                            // Tìm combo chưa hết hạn (is_expired = 0 và còn thời gian)
+                            $activeCombo = $allCombos->first(function ($combo) {
+                                return $combo->is_expired == 0 && $combo->remaining_minutes > 0;
+                            });
+
+                            if ($activeCombo) {
+                                // Có combo đang active và còn thời gian
+                                $comboRemaining = max(0, $activeCombo->remaining_minutes); // Đảm bảo không âm
+
+                                // KIỂM TRA THỜI GIAN CÒN LẠI THỰC TẾ
+                                if (is_null($activeCombo->end_time)) {
+                                    // Combo đang chạy, tính thời gian đã sử dụng
+                                    $startTime = Carbon::parse($activeCombo->start_time);
+                                    $elapsedComboMinutes = $startTime->diffInMinutes(now());
+                                    $comboRemaining = max(0, $activeCombo->total_minutes - $elapsedComboMinutes);
+                                } else {
+                                    // Combo đã tạm dừng, sử dụng remaining_minutes
+                                    $comboRemaining = max(0, $activeCombo->remaining_minutes);
+                                }
+                            } else {
+                                // Không có combo active, kiểm tra xem có combo đã hết nhưng chưa xử lý không
+                                $expiredCombo = $allCombos->first(function ($combo) {
+                                    // Combo đã hết thời gian (remaining_minutes <= 0) nhưng chưa đánh dấu expired
+                                    return $combo->is_expired == 0 && $combo->remaining_minutes <= 0;
+                                });
+
+                                if ($expiredCombo) {
+                                    // Combo đã hết thời gian nhưng chưa đánh dấu expired
+                                    $isUnprocessed = true;
+                                    $comboRemaining = 0;
+                                    $unprocessedTables[] = [
+                                        'id' => $table->id,
+                                        'table_number' => $table->table_number,
+                                        'table_name' => $table->table_name ?? "Bàn {$table->table_number}"
+                                    ];
+                                }
+                            }
+                        }
+                    }
                 }
 
                 return [
                     'id' => $table->id,
                     'table_number' => $table->table_number,
-                    'table_name' => $table->table_name,
+                    'table_name' => $table->table_name ?? "Bàn {$table->table_number}",
                     'capacity' => $table->capacity,
                     'status' => $table->status,
                     'hourly_rate' => $table->getHourlyRate(),
-                    'current_bill' => $currentBillData,
+                    'elapsed_time' => $elapsedTime,
                     'has_combo' => $hasCombo,
-                    'elapsed_time' => $elapsedTime
+                    'combo_remaining' => $comboRemaining, // Thêm comboRemaining - LUÔN >= 0
+                    'is_unprocessed' => $isUnprocessed, // Thêm is_unprocessed
+                    'position_x' => $table->position_x,
+                    'position_y' => $table->position_y,
+                    'z_index' => $table->z_index
                 ];
             });
 
             return view('admin.tables.simple-dashboard', [
                 'stats' => $stats,
-                'tables' => $formattedTables
+                'tables' => $formattedTables,
+                'openBills' => $openBills,
+                'availableTables' => $availableTables,
+                'occupiedTables' => $occupiedTables,
+                'quickTables' => $quickTables,
+                'maintenanceTables' => $maintenanceTables,
+                'unprocessedTables' => $unprocessedTables, // Truyền thêm dữ liệu này
             ]);
         } catch (\Exception $e) {
+            Log::error('Dashboard error: ' . $e->getMessage());
+
             return view('admin.tables.simple-dashboard', [
-                'stats' => null,
-                'tables' => [],
-                'error' => 'Lỗi khi tải dữ liệu!'
+                'stats' => [
+                    'total' => 0,
+                    'available' => 0,
+                    'occupied' => 0,
+                    'quick' => 0,
+                    'maintenance' => 0,
+                    'total_occupied' => 0,
+                    'open_bills' => 0,
+                    'today_revenue' => 0,
+                    'occupancy_rate' => 0
+                ],
+                'tables' => collect(),
+                'openBills' => collect(),
+                'availableTables' => collect(),
+                'occupiedTables' => collect(),
+                'quickTables' => collect(),
+                'maintenanceTables' => collect(),
+                'unprocessedTables' => [],
+                'error' => 'Lỗi khi tải dữ liệu: ' . $e->getMessage()
             ]);
+        }
+    }
+
+    /**
+     * Tính thời gian đã sử dụng của bill
+     */
+    private function calculateElapsedTime(Bill $bill)
+    {
+        $elapsedMinutes = 0;
+
+        if ($bill->status === 'quick') {
+            // Bàn lẻ không tính giờ
+            return null;
+        }
+
+        // Tính tổng thời gian từ tất cả các session giờ thường
+        foreach ($bill->billTimeUsages as $timeUsage) {
+            if (is_null($timeUsage->end_time)) {
+                // Session đang chạy
+                $start = Carbon::parse($timeUsage->start_time);
+                $elapsedMinutes += $start->diffInMinutes(now());
+            } else {
+                // Session đã kết thúc
+                $start = Carbon::parse($timeUsage->start_time);
+                $end = Carbon::parse($timeUsage->end_time);
+                $elapsedMinutes += $start->diffInMinutes($end);
+            }
+        }
+
+        if ($elapsedMinutes <= 0) {
+            return null;
+        }
+
+        // Format thời gian
+        $hours = floor($elapsedMinutes / 60);
+        $minutes = $elapsedMinutes % 60;
+
+        if ($hours > 0 && $minutes > 0) {
+            return "{$hours}h{$minutes}p";
+        } elseif ($hours > 0) {
+            return "{$hours}h";
+        } else {
+            return "{$minutes}p";
+        }
+    }
+
+
+
+    public function saveLayout(Request $request)
+    {
+        try {
+            $positions = $request->input('positions', []);
+
+            foreach ($positions as $tableId => $position) {
+                Table::where('id', $tableId)->update([
+                    'position_x' => $position['x'],
+                    'position_y' => $position['y'],
+                    'z_index' => $position['z'] ?? 0,
+                    'updated_at' => now()
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã lưu bố cục thành công!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Save layout error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi lưu bố cục'
+            ], 500);
+        }
+    }
+
+    public function resetLayout()
+    {
+        try {
+            // Reset tất cả vị trí về null
+            Table::query()->update([
+                'position_x' => null,
+                'position_y' => null,
+                'z_index' => 0,
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã reset bố cục về mặc định!'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Reset layout error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi reset bố cục'
+            ], 500);
         }
     }
 
@@ -482,44 +689,41 @@ class TableController extends Controller
 
     private function calculateRegularTimeInfo($regularTime, $hourlyRate)
     {
-        $isPaused = !is_null($regularTime->paused_at);
+         $isPaused = !is_null($regularTime->paused_at);
 
-        if ($isPaused) {
-            // Đang tạm dừng - sử dụng paused_duration đã lưu
-            $isRunning = false;
-            $effectiveMinutes = $regularTime->paused_duration ?? 0;
-        } else {
-            // Đang chạy - tính từ start_time đến now
-            $start = Carbon::parse($regularTime->start_time);
-            $elapsedMinutes = $start->diffInMinutes(now());
-
-            // Trừ thời gian đã pause trước đó (nếu có)
-            $effectiveMinutes = $elapsedMinutes - ($regularTime->paused_duration ?? 0);
-            $isRunning = true;
-        }
-
-        // Tính chi phí hiện tại
-        $currentCost = max(0, $effectiveMinutes) * ($hourlyRate / 60);
-
-        return [
-            'is_running' => $isRunning,
-            'mode' => 'regular',
-            'elapsed_minutes' => (int) round($effectiveMinutes),
-            'current_cost' => $currentCost,
-            'hourly_rate' => $hourlyRate,
-            'total_minutes' => 0,
-            'remaining_minutes' => 0,
-            'is_near_end' => false,
-            'is_paused' => $isPaused,
-            'paused_duration' => $regularTime->paused_duration ?? 0,
-            'bill_status' => 'regular',
-            'needs_switch' => false, // Thêm dòng này
-            'is_auto_stopped' => false // Thêm dòng này
-        ];
+    if ($isPaused) {
+        // Đang tạm dừng - sử dụng paused_duration đã lưu
+        $isRunning = false;
+        $effectiveMinutes = $regularTime->paused_duration ?? 0;
+    } else {
+        // Đang chạy - tính từ start_time đến now
+        $start = Carbon::parse($regularTime->start_time);
+        $elapsedMinutes = $start->diffInMinutes(now());
+        
+        // KHÔNG trừ paused_duration nữa
+        $effectiveMinutes = $elapsedMinutes;
+        $isRunning = true;
     }
 
+    // Tính chi phí hiện tại
+    $currentCost = max(0, $effectiveMinutes) * ($hourlyRate / 60);
 
-
+    return [
+        'is_running' => $isRunning,
+        'mode' => 'regular',
+        'elapsed_minutes' => (int) round($effectiveMinutes),
+        'current_cost' => $currentCost,
+        'hourly_rate' => $hourlyRate,
+        'total_minutes' => 0,
+        'remaining_minutes' => 0,
+        'is_near_end' => false,
+        'is_paused' => $isPaused,
+        'paused_duration' => $regularTime->paused_duration ?? 0,
+        'bill_status' => 'regular',
+        'needs_switch' => false,
+        'is_auto_stopped' => false
+    ];
+    }
 
     /**
      * Tính thời gian đã sử dụng (đơn giản)
@@ -561,4 +765,189 @@ class TableController extends Controller
 
         return '--:--';
     }
+
+    // TableController.php
+    public function updatePositions(Request $request)
+    {
+        try {
+            $positions = $request->input('positions', []);
+
+            foreach ($positions as $position) {
+                Table::where('id', $position['id'])->update([
+                    'position_x' => $position['position_x'],
+                    'position_y' => $position['position_y']
+                ]);
+            }
+
+            return response()->json(['success' => true, 'message' => 'Đã cập nhật vị trí bàn']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()], 500);
+        }
+    }
+public function pause(Table $table)
+{
+    if ($table->status !== 'occupied') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Bàn không đang được sử dụng'
+        ]);
+    }
+
+    DB::beginTransaction();
+    try {
+        // Cập nhật trạng thái bàn
+        $table->status = 'paused';
+        $table->save();
+
+        // Nếu có bill đang chạy, cập nhật thời gian tạm dừng
+        if ($table->currentBill) {
+            // Lấy record time usage đang chạy
+            $lastTimeUsage = $table->currentBill->billTimeUsages()
+                ->whereNull('end_time')
+                ->whereNull('paused_at') // Chỉ pause những cái chưa pause
+                ->latest()
+                ->first();
+                
+            if ($lastTimeUsage) {
+                // Tính thời gian đã chạy từ start_time đến lúc pause
+                $startTime = Carbon::parse($lastTimeUsage->start_time);
+                $elapsedMinutes = $startTime->diffInMinutes(now());
+                
+                // Lưu paused_duration và paused_at
+                $lastTimeUsage->update([
+                    'paused_duration' => $elapsedMinutes, // Lưu thời gian đã chạy
+                    'paused_at' => now()->timestamp,      // Lưu thời điểm pause
+                ]);
+                
+                Log::info('Paused time usage', [
+                    'time_usage_id' => $lastTimeUsage->id,
+                    'start_time' => $lastTimeUsage->start_time,
+                    'elapsed_minutes' => $elapsedMinutes,
+                    'paused_at' => now()
+                ]);
+            } else {
+                Log::warning('No active time usage found for table', [
+                    'table_id' => $table->id,
+                    'bill_id' => $table->currentBill->id
+                ]);
+            }
+        }
+
+        DB::commit();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã tạm dừng bàn thành công',
+            'status' => 'paused'
+        ]);
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Pause table error: ' . $e->getMessage());
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+        ], 500);
+    }
+}
+public function resume(Table $table)
+{
+    if ($table->status !== 'paused') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Bàn không đang ở trạng thái tạm dừng'
+        ]);
+    }
+
+    DB::beginTransaction();
+    try {
+        // Cập nhật trạng thái bàn
+        $table->status = 'occupied';
+        $table->save();
+
+        // Nếu có bill đang chạy, tiếp tục session cũ
+        if ($table->currentBill) {
+            // Lấy record time usage đang tạm dừng
+            $lastTimeUsage = $table->currentBill->billTimeUsages()
+                ->whereNotNull('paused_at')
+                ->whereNull('end_time')
+                ->latest()
+                ->first();
+                
+            if ($lastTimeUsage) {
+                // Tính tổng thời gian đã chạy (paused_duration)
+                $totalElapsedMinutes = $lastTimeUsage->paused_duration ?? 0;
+                
+                // Cập nhật start_time để phản ánh thời gian đã chạy
+                $lastTimeUsage->update([
+                    'start_time' => Carbon::now()->subMinutes($totalElapsedMinutes), // Điều chỉnh start_time
+                    'paused_at' => null,   // Xóa thời điểm pause
+                    'paused_duration' => $totalElapsedMinutes // Giữ nguyên để tham khảo
+                ]);
+                
+                Log::info('Resumed time usage', [
+                    'time_usage_id' => $lastTimeUsage->id,
+                    'paused_duration' => $totalElapsedMinutes,
+                    'new_start_time' => Carbon::now()->subMinutes($totalElapsedMinutes),
+                    'resumed_at' => now()
+                ]);
+            } else {
+                Log::warning('No paused time usage found for table', [
+                    'table_id' => $table->id,
+                    'bill_id' => $table->currentBill->id
+                ]);
+            }
+        }
+
+        DB::commit();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã tiếp tục bàn thành công',
+            'status' => 'occupied'
+        ]);
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Resume table error: ' . $e->getMessage());
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+        ], 500);
+    }
+}
+/**
+ * Tính số phút đã sử dụng từ BillTimeUsage
+ */
+private function calculateElapsedMinutes(BillTimeUsage $timeUsage): int
+{
+    try {
+        if (is_null($timeUsage->end_time)) {
+            // Session chưa kết thúc
+            $start = Carbon::parse($timeUsage->start_time);
+            
+            if ($timeUsage->paused_at) {
+                // Đang tạm dừng - trả về paused_duration
+                return (int) ($timeUsage->paused_duration ?? 0);
+            } else {
+                // Đang chạy - tính từ start_time đến now
+                $elapsedMinutes = $start->diffInMinutes(now());
+                return $elapsedMinutes;
+            }
+        } else {
+            // Session đã kết thúc - trả về duration_minutes
+            return (int) ($timeUsage->duration_minutes ?? 0);
+        }
+    } catch (\Exception $e) {
+        Log::error('Error in calculateElapsedMinutes: ' . $e->getMessage(), [
+            'time_usage_id' => $timeUsage->id,
+            'paused_at' => $timeUsage->paused_at,
+            'paused_duration' => $timeUsage->paused_duration,
+            'end_time' => $timeUsage->end_time
+        ]);
+        return 0;
+    }
+}
 }

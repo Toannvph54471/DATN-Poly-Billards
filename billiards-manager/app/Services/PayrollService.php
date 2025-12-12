@@ -117,6 +117,9 @@ class PayrollService
         // Ensure final amount is not negative
         $finalAmount = max(0, $finalAmount);
 
+        // Determine if this is a manual calculation
+        $isManual = (isset($data['total_hours']) || isset($data['bonus']) || isset($data['deductions']));
+
         return Payroll::updateOrCreate(
             [
                 'employee_id' => $employeeId,
@@ -134,7 +137,8 @@ class PayrollService
                 'late_penalty' => $latePenalty,
                 'final_amount' => $finalAmount,
                 'notes' => $notes,
-                'status' => 'Calculated'
+                'status' => \App\Models\Payroll::STATUS_PENDING,
+                'is_manual' => $isManual
             ]
         );
     }
