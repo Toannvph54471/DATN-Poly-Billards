@@ -17,6 +17,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DailyReportController;
+use App\Http\Controllers\Admin\AdminStatisticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,14 +33,17 @@ Route::prefix('admin')
     ->group(function () {
 
         // Dashboard
+
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('chart-data', [DashboardController::class, 'getChartData'])->name('chart-data');
 
+
+        Route::get('/statistics', [AdminStatisticsController::class, 'index'])->name('statistics');
         Route::get('/quick-stats', [DashboardController::class, 'getQuickStats'])->name('quick-stats');
         Route::get('/top-products', [DashboardController::class, 'getTopProductsData'])->name('top-products');
         Route::get('/table-stats', [DashboardController::class, 'getTableStatsData'])->name('table-stats');
         Route::get('/report-data', [DashboardController::class, 'getReportData'])->name('report-data');
-        Route::get('/quick-stats', [DashboardController::class, 'getQuickStats'])->name('quick-stats');
+
 
 
         Route::get('/admin/dashboard/debug', [DashboardController::class, 'debugToday'])->name('dashboard.debug');
@@ -63,6 +67,10 @@ Route::prefix('admin')
 
             // Payroll Management
             Route::get('/payroll', [PayrollController::class, 'adminIndex'])->name('payroll.index');
+            Route::post('/payroll/lock', [PayrollController::class, 'lockMonth'])->name('payroll.lock');
+            Route::post('/payroll/generate-all', [PayrollController::class, 'generateAll'])->name('payroll.generate-all');
+            Route::post('/payroll/pay-all', [PayrollController::class, 'payAll'])->name('payroll.pay-all');
+            Route::post('/payroll/{id}/pay', [PayrollController::class, 'markAsPaid'])->name('payroll.pay');
 
             // Attendance Monitoring
             Route::get('/attendance/monitor', [AttendanceController::class, 'monitor'])->name('attendance.monitor');
@@ -101,7 +109,7 @@ Route::prefix('admin')
         Route::get('tables/{id}/detail', [TableController::class, 'showDetail'])->name('tables.detail');
         Route::get('tables/simple-dashboard', [TableController::class, 'simpleDashboard'])->name('tables.simple-dashboard');
         Route::get('{billId}/check-combo-time', [BillController::class, 'checkComboTimeStatus'])->name('tables.check-combo-time');
-         // TẠM DỪNG BÀN - THÊM VÀO ĐÂY
+        // TẠM DỪNG BÀN - THÊM VÀO ĐÂY
         Route::post('/tables/{table}/pause', [TableController::class, 'pause'])->name('tables.pause');
         Route::post('/tables/{table}/resume', [TableController::class, 'resume'])->name('tables.resume');
         // routes/admin.php

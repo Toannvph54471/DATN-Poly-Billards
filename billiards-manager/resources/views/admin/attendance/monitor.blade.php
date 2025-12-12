@@ -146,50 +146,76 @@
 </div>
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     function approveLate(id) {
-        if(!confirm('Duyệt yêu cầu đi muộn này?')) return;
-        
-        fetch(`{{ url('/admin/attendance') }}/${id}/approve-late`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status === 'success') {
-                location.reload();
-            } else {
-                alert(data.message);
+        Swal.fire({
+            title: 'Duyệt yêu cầu?',
+            text: "Xác nhận duyệt yêu cầu đi muộn này.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Duyệt',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`{{ url('/admin/attendance') }}/${id}/approve-late`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        Swal.fire('Thành công', 'Đã duyệt yêu cầu.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Lỗi', data.message, 'error');
+                    }
+                });
             }
         });
     }
 
     function rejectLate(id) {
-        if(!confirm('Từ chối yêu cầu đi muộn này?')) return;
-
-        fetch(`{{ url('/admin/attendance') }}/${id}/reject-late`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.status === 'success') {
-                location.reload();
-            } else {
-                alert(data.message);
-            }
+        Swal.fire({
+            title: 'Từ chối yêu cầu?',
+            text: "Xác nhận từ chối yêu cầu đi muộn này.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Từ chối',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+             if (result.isConfirmed) {
+                fetch(`{{ url('/admin/attendance') }}/${id}/reject-late`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        Swal.fire('Thành công', 'Đã từ chối yêu cầu.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Lỗi', data.message, 'error');
+                    }
+                });
+             }
         });
     }
 
     // Auto refresh every 60 seconds
     setInterval(() => {
-        location.reload();
+        // Only refresh if modal is hidden to avoid interrupting user
+        if(document.getElementById('checkoutModal').classList.contains('hidden')) {
+             location.reload();
+        }
     }, 60000);
 
     function openCheckoutModal(id) {
@@ -207,32 +233,42 @@
         const reason = document.getElementById('checkoutReason').value;
 
         if (!reason.trim()) {
-            alert('Vui lòng nhập lý do check-out.');
+            Swal.fire('Chú ý', 'Vui lòng nhập lý do check-out.', 'warning');
             return;
         }
 
-        if (!confirm('Xác nhận check-out cho nhân viên này?')) return;
-
-        fetch(`{{ url('/admin/attendance') }}/${id}/admin-checkout`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ reason: reason })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert(data.message);
+        Swal.fire({
+            title: 'Xác nhận Check-out',
+            text: "Bạn có chắc chắn muốn check-out hộ nhân viên này?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Check-out ngay',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`{{ url('/admin/attendance') }}/${id}/admin-checkout`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason: reason })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                         Swal.fire('Thành công', data.message, 'success').then(() => location.reload());
+                    } else {
+                         Swal.fire('Lỗi', data.message, 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Lỗi', 'Có lỗi xảy ra.', 'error');
+                });
             }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Có lỗi xảy ra.');
         });
     }
 </script>

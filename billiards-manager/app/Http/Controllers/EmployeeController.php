@@ -203,7 +203,35 @@ class EmployeeController extends Controller
 
         return redirect()->route('admin.employees.index')
             ->with('success', 'Cập nhật nhân viên thành công.');
-    }
+    }   
+
+    // File: app/Http/Controllers/EmployeeController.php
+
+public function updateHourlyRate(Request $request, $id)
+    {
+        // Chỉ admin/manager mới được phép
+        if (!Auth::user()->hasRole(['admin', 'manager'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không có quyền thực hiện hành động này.'
+            ], 403);
+        }
+    $request->validate([
+        'hourly_rate' => 'required|numeric|min:0',
+    ]);
+
+    $employee = \App\Models\Employee::findOrFail($id);
+
+    $employee->update([
+        'hourly_rate' => $request->hourly_rate
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Cập nhật lương giờ thành công!',
+        'hourly_rate' => number_format($employee->hourly_rate, 0, ',', '.')
+    ]);
+}
 
 
     public function destroy($id)
