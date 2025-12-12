@@ -32,3 +32,6 @@ Route::post('/attendance/submit-late-reason', [AttendanceController::class, 'sub
 Route::post('/attendance/check-out', [App\Http\Controllers\AttendanceController::class, 'checkOut'])->name('api.attendance.check-out');
 Route::get('/attendance/active', [App\Http\Controllers\AttendanceController::class, 'getActiveEmployees']);
 Route::get('/attendance/server-time', [App\Http\Controllers\AttendanceController::class, 'getServerTime']);
+
+Route::post('/api/employees/{id}/update-hourly-rate', [App\Http\Controllers\EmployeeController::class, 'updateHourlyRate'])
+     ->name('api.employees.update-hourly-rate');

@@ -13,8 +13,24 @@ class ShiftController extends Controller
 {
     public function index()
     {
-        $shifts = Shift::orderBy('start_time', 'asc')->get();
-        return view('admin.shifts.index', compact('shifts'));
+        // 1. Stats
+        $totalShifts = Shift::count();
+        $activeShifts = Shift::where('status', 'active')->count();
+        $inactiveShifts = Shift::where('status', 'inactive')->count();
+        
+        // Count unique employees currently checked in (today, no checkout)
+        $currentWorkingEmployees = \App\Models\Attendance::whereDate('check_in', today())
+            ->whereNull('check_out')
+            ->distinct('employee_id')
+            ->count('employee_id');
+
+        // 2. Shifts List with "today's employee count"
+        // We want to count how many employees are scheduled for this shift TODAY.
+        $shifts = Shift::withCount(['employeeShifts' => function ($query) {
+            $query->whereDate('shift_date', today());
+        }])->orderBy('start_time', 'asc')->get();
+
+        return view('admin.shifts.index', compact('shifts', 'totalShifts', 'activeShifts', 'inactiveShifts', 'currentWorkingEmployees'));
     }
 
     public function create()

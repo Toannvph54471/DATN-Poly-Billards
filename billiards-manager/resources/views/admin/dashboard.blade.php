@@ -104,6 +104,24 @@
         'color' => 'indigo',
         'rate' => $tableStats['occupancy_rate'] ?? 0,
         ],
+        [
+            'label' => 'Đi muộn',
+            'value' => $lateCount ?? 0,
+            'icon' => 'user-clock',
+            'color' => 'red',
+        ],
+        [
+            'label' => 'Chưa checkout',
+            'value' => $missedCheckoutCount ?? 0,
+            'icon' => 'sign-out-alt',
+            'color' => 'pink',
+        ],
+        [
+            'label' => 'Tổng giờ làm',
+            'value' => number_format($totalHoursMonth ?? 0, 1),
+            'icon' => 'clock',
+            'color' => 'blue',
+        ],
         ];
         @endphp
 

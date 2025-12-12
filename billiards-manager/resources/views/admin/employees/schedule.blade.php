@@ -204,7 +204,16 @@
                                     <div class="flex-1">
                                         <div class="flex items-center gap-3 mb-2">
                                             <span class="shift-status status-{{ $shift->status }}">
-                                                {{ ucfirst($shift->status) }}
+                                                @php
+                                                    $statusNames = [
+                                                        'scheduled' => 'Đã lên lịch',
+                                                        'completed' => 'Đã hoàn thành',
+                                                        'absent' => 'Vắng mặt',
+                                                        'cancelled' => 'Đã hủy',
+                                                        'late' => 'Đi muộn',
+                                                    ];
+                                                @endphp
+                                                {{ $statusNames[$shift->status] ?? ucfirst($shift->status) }}
                                             </span>
                                         </div>
 
@@ -281,7 +290,16 @@
                                         </div>
                                     </div>
                                     <span class="shift-status status-{{ $shift->status }}">
-                                        {{ ucfirst($shift->status) }}
+                                        @php
+                                            $statusNames = [
+                                                'scheduled' => 'Đã lên lịch',
+                                                'completed' => 'Đã hoàn thành',
+                                                'absent' => 'Vắng mặt',
+                                                'cancelled' => 'Đã hủy',
+                                                'late' => 'Đi muộn',
+                                            ];
+                                        @endphp
+                                        {{ $statusNames[$shift->status] ?? ucfirst($shift->status) }}
                                     </span>
                                 </div>
                             </div>
@@ -371,10 +389,17 @@
                                             'late' => 'status-absent',
                                             'cancelled' => 'status-cancelled',
                                         ];
+                                        $statusNames = [
+                                            'scheduled' => 'Đã lên lịch',
+                                            'completed' => 'Đã hoàn thành',
+                                            'absent' => 'Vắng mặt',
+                                            'cancelled' => 'Đã hủy',
+                                            'late' => 'Đi muộn',
+                                        ];
                                         $statusClass = $statusColors[$shift->status] ?? 'status-scheduled';
                                     @endphp
                                     <span class="shift-status {{ $statusClass }}">
-                                        {{ ucfirst($shift->status) }}
+                                        {{ $statusNames[$shift->status] ?? ucfirst($shift->status) }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3">

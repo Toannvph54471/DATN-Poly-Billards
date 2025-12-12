@@ -26,7 +26,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-600">Tổng số ca</p>
-                    <p class="text-2xl font-bold text-gray-800">8</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $totalShifts }}</p>
                 </div>
             </div>
         </div>
@@ -38,7 +38,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-600">Đang hoạt động</p>
-                    <p class="text-2xl font-bold text-gray-800">6</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $activeShifts }}</p>
                 </div>
             </div>
         </div>
@@ -50,7 +50,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-600">Tạm ngừng</p>
-                    <p class="text-2xl font-bold text-gray-800">2</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $inactiveShifts }}</p>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-600">NV đang làm</p>
-                    <p class="text-2xl font-bold text-gray-800">24</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $currentWorkingEmployees }}</p>
                 </div>
             </div>
         </div>
@@ -142,8 +142,8 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ rand(2, 8) }} nhân viên</div>
-                                <div class="text-sm text-gray-500">Đang làm việc</div>
+                                <div class="text-sm text-gray-900">{{ $shift->employee_shifts_count }} nhân viên</div>
+                                <div class="text-sm text-gray-500">Phân công hôm nay</div>
                             </td>
                             <td class="py-4 px-6">
                                 @if ($shift->status === 'active')
@@ -182,22 +182,10 @@
         <div class="px-6 py-4 border-t border-gray-200">
             <div class="flex justify-between items-center">
                 <div class="text-sm text-gray-700">
-                    Hiển thị <span class="font-medium">1</span> đến <span class="font-medium">8</span> của <span
-                        class="font-medium">8</span> kết quả
+                    Hiển thị <span class="font-medium">{{ count($shifts) }}</span> kết quả
                 </div>
                 <div class="flex space-x-2">
-                    <button
-                        class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50">
-                        Trước
-                    </button>
-                    <button
-                        class="px-3 py-1 border border-blue-500 bg-blue-50 text-blue-600 rounded-md text-sm font-medium">
-                        1
-                    </button>
-                    <button
-                        class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-white hover:bg-gray-50">
-                        Sau
-                    </button>
+                    {{-- Pagination removed as we show all shifts --}}
                 </div>
             </div>
         </div>

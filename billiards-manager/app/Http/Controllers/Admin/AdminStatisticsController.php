@@ -29,6 +29,11 @@ class AdminStatisticsController extends Controller
             'totalBills'     => $this->countBills($start, $end),
             'totalCustomers' => $this->countCustomers($start, $end),
             'growth'         => $this->calcGrowthPeriod($start, $end),
+            
+            // Attendance custom stats
+            'lateCount'      => $this->countLate($start, $end),
+            'missedCheckoutCount' => $this->countMissedCheckout($start, $end),
+            'totalHoursMonth' => $this->countTotalHours($start, $end),
 
             // Chi tiết
             'revenueByDay'   => $this->statsRevenueByDay($start, $end),
@@ -270,5 +275,45 @@ class AdminStatisticsController extends Controller
         return $previous > 0
             ? round((($current - $previous) / $previous) * 100, 1)
             : 0;
+    }
+
+    /* =====================================================
+       ATTENDANCE STATS
+    ===================================================== */
+    private function countLate($start, $end)
+    {
+         if (!Schema::hasTable('attendance')) return 0;
+         
+         return DB::table('attendance')
+            ->whereBetween('check_in', [$start, $end])
+            ->where(function($q) {
+                $q->where('status', 'like', '%Late%')
+                  ->orWhere('late_minutes', '>', 0);
+            })
+            ->count();
+    }
+
+    private function countMissedCheckout($start, $end)
+    {
+        if (!Schema::hasTable('attendance')) return 0;
+        
+        // Logic: Has check_in but check_out is null and day has passed (or shift end passed)
+        // Simply checking check_out is null for past dates in range
+        return DB::table('attendance')
+            ->whereBetween('check_in', [$start, $end])
+            ->whereNull('check_out')
+            ->where('check_in', '<', now()->subHours(12)) // Assume shift not longer than 12h
+            ->count();
+    }
+
+    private function countTotalHours($start, $end)
+    {
+        if (!Schema::hasTable('attendance')) return 0;
+        
+        $minutes = DB::table('attendance')
+            ->whereBetween('check_in', [$start, $end])
+            ->sum('total_minutes');
+            
+        return round($minutes / 60, 1);
     }
 }

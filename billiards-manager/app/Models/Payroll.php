@@ -23,6 +23,9 @@ class Payroll extends BaseModel
         'deductions',
         'notes',
         'status',
+        'is_locked',
+        'locked_at',
+        'is_manual'
     ];
 
     protected $casts = [
@@ -31,6 +34,7 @@ class Payroll extends BaseModel
         'total_amount' => 'decimal:2',
         'bonus' => 'decimal:2',
         'deductions' => 'decimal:2',
+        'locked_at' => 'datetime',
     ];
 
     // Relationships
