@@ -246,6 +246,25 @@
         .bg-orange-100 { background: #ffedd5; border-color: #fdba74; }
         .bg-purple-100 { background: #f3e8ff; border-color: #d8b4fe; }
         .bg-gray-100 { background: #f3f4f6; border-color: #d1d5db; }
+        
+        .locked-cell {
+            background: #f1f5f9;
+            cursor: not-allowed !important;
+            opacity: 0.9;
+        }
+        
+        .locked-cell .shift-badge {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+        
+        .locked-icon {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            color: #64748b;
+            font-size: 10px;
+        }
 
         .text-blue-800 { color: #1e40af; }
         .text-orange-800 { color: #9a3412; }
@@ -414,24 +433,35 @@
                                 </div>
                             </td>
                             
-                            @foreach ($weekDays as $day)
+                                @foreach ($weekDays as $day)
                                 @php
                                     $shift = $employee->employeeShifts->first(function ($s) use ($day) {
                                         return $s->shift_date->format('Y-m-d') === $day['full_date'];
                                     });
                                     $isPast = $day['is_past'] || $isPastWeek;
                                     $isToday = $day['is_today'];
-                                    $isEditable = !$isPast;
+                                    
+                                    // Check if locked
+                                    $isLocked = $shift && $shift->is_locked;
+                                    
+                                    // If locked, NOT editable. If past, NOT editable.
+                                    $isEditable = !$isPast && !$isLocked;
                                 @endphp
-                                <td class="shift-cell text-center {{ $isToday ? 'today-cell' : '' }} {{ $isPast ? 'past-cell' : '' }} {{ $isEditable ? 'editable' : '' }}" 
+                                <td class="shift-cell text-center {{ $isToday ? 'today-cell' : '' }} {{ $isPast ? 'past-cell' : '' }} {{ $isLocked ? 'locked-cell' : '' }} {{ $isEditable ? 'editable' : '' }}" 
                                     data-employee="{{ $employee->id }}"
                                     data-date="{{ $day['full_date'] }}"
                                     data-past="{{ $isPast ? 'true' : 'false' }}"
+                                    data-locked="{{ $isLocked ? 'true' : 'false' }}"
                                     onclick="{{ $isEditable ? 'openShiftModal(this)' : '' }}">
 
                                     @if ($shift && $shift->shift)
-                                        <div class="shift-badge {{ $shift->color_class }}"
+                                        <div class="shift-badge {{ $isLocked ? '' : $shift->color_class }}"
                                             data-shift-id="{{ $shift->shift_id }}">
+                                            
+                                            @if($isLocked)
+                                                <i class="fas fa-lock locked-icon" title="Ca đã khóa (Đã check-in)"></i>
+                                            @endif
+                                            
                                             <div class="font-semibold">{{ $shift->shift->name }}</div>
                                             <div class="shift-time">
                                                 {{ \Carbon\Carbon::parse($shift->shift->start_time)->format('H:i') }} -

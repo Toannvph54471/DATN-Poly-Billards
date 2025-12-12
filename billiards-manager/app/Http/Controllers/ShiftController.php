@@ -168,22 +168,41 @@ class ShiftController extends Controller
             'assignments.*.shift_id' => 'required|exists:shifts,id',
         ]);
 
-        DB::transaction(function () use ($request, $date) {
-            // Xóa các ca cũ của ngày đó cho employee cụ thể
-            $employeeIds = collect($request->assignments)->pluck('employee_id')->toArray();
-            EmployeeShift::whereDate('shift_date', $date)
-                ->whereIn('employee_id', $employeeIds)
-                ->delete();
+        try {
+            DB::transaction(function () use ($request, $date) {
+                // 1. Check for LOCKED shifts before deleting
+                $employeeIds = collect($request->assignments)->pluck('employee_id')->toArray();
+                
+                $lockedShifts = EmployeeShift::whereDate('shift_date', $date)
+                    ->whereIn('employee_id', $employeeIds)
+                    ->where('is_locked', true)
+                    ->exists();
 
-            foreach ($request->assignments as $assignment) {
-                EmployeeShift::create([
-                    'employee_id' => $assignment['employee_id'],
-                    'shift_id' => $assignment['shift_id'],
-                    'shift_date' => $date,
-                    'status' => EmployeeShift::STATUS_SCHEDULED,
-                ]);
-            }
-        });
+                if ($lockedShifts) {
+                    // Since this is inside transaction, throwing exception rolls it back
+                     throw new \Exception('Không thể thay đổi ca phân công vì đã có nhân viên check-in và khóa ca.');
+                }
+
+                // Xóa các ca cũ của ngày đó cho employee cụ thể
+                EmployeeShift::whereDate('shift_date', $date)
+                    ->whereIn('employee_id', $employeeIds)
+                    ->delete();
+
+                foreach ($request->assignments as $assignment) {
+                    EmployeeShift::create([
+                        'employee_id' => $assignment['employee_id'],
+                        'shift_id' => $assignment['shift_id'],
+                        'shift_date' => $date,
+                        'status' => EmployeeShift::STATUS_SCHEDULED,
+                    ]);
+                }
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 403);
+        }
 
         return response()->json([
             'success' => true,
@@ -213,29 +232,46 @@ class ShiftController extends Controller
 
         $weekEnd = $weekStart->copy()->addDays(6);
 
-        DB::transaction(function () use ($request, $weekStart, $weekEnd) {
-            // Xóa tất cả ca trong tuần
-            EmployeeShift::whereBetween('shift_date', [
-                $weekStart->format('Y-m-d'),
-                $weekEnd->format('Y-m-d')
-            ])->delete();
+        try {
+            DB::transaction(function () use ($request, $weekStart, $weekEnd) {
+                // Check for locked shifts in this range
+                $lockedShifts = EmployeeShift::whereBetween('shift_date', [
+                    $weekStart->format('Y-m-d'),
+                    $weekEnd->format('Y-m-d')
+                ])->where('is_locked', true)->exists();
 
-            // Tạo ca mới
-            foreach ($request->schedule as $assignment) {
-                if (!empty($assignment['shift_id'])) {
-                    // Kiểm tra từng ngày xem có phải ngày đã qua không
-                    $assignmentDate = Carbon::parse($assignment['date']);
-                    if ($assignmentDate->gte(Carbon::now()->startOfDay())) {
-                        EmployeeShift::create([
-                            'employee_id' => $assignment['employee_id'],
-                            'shift_id' => $assignment['shift_id'],
-                            'shift_date' => $assignment['date'],
-                            'status' => EmployeeShift::STATUS_SCHEDULED,
-                        ]);
+                if ($lockedShifts) {
+                     throw new \Exception('Không thể cập nhật lịch làm việc vì đã có ca được khóa (đã check-in) trong tuần này.');
+                }
+
+                // Xóa tất cả ca trong tuần
+                EmployeeShift::whereBetween('shift_date', [
+                    $weekStart->format('Y-m-d'),
+                    $weekEnd->format('Y-m-d')
+                ])->delete();
+
+                // Tạo ca mới
+                foreach ($request->schedule as $assignment) {
+                    if (!empty($assignment['shift_id'])) {
+                        // Kiểm tra từng ngày xem có phải ngày đã qua không
+                        $assignmentDate = Carbon::parse($assignment['date']);
+                        if ($assignmentDate->gte(Carbon::now()->startOfDay())) {
+                            EmployeeShift::create([
+                                'employee_id' => $assignment['employee_id'],
+                                'shift_id' => $assignment['shift_id'],
+                                'shift_date' => $assignment['date'],
+                                'status' => EmployeeShift::STATUS_SCHEDULED,
+                            ]);
+                        }
                     }
                 }
-            }
-        });
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 403);
+        }
 
         return response()->json([
             'success' => true,
