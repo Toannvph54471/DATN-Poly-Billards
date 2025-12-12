@@ -871,43 +871,6 @@
                     <span>{{ number_format($totalAmount, 0, ',', '.') }}₫</span>
                 </div>
 
-                <!-- Giảm giá & Khuyến mãi -->
-                @if ($discountAmount > 0)
-                    <div class="flex justify-between text-sm-print receipt-item">
-                        <span>Giảm giá:</span>
-                        <span class="text-red-600">-{{ number_format($discountAmount, 0, ',', '.') }}₫</span>
-                    </div>
-
-                    <!-- Hiển thị thông tin khuyến mãi -->
-                    @if ($promotionInfo && isset($promotionInfo['name']))
-                        <div class="text-xs-print receipt-item text-center text-gray-600">
-                            <div>{{ $promotionInfo['name'] }}</div>
-                            @if (isset($promotionInfo['code']))
-                                <div>Mã: {{ $promotionInfo['code'] }}</div>
-                            @endif
-                        </div>
-                    @else
-                        <!-- Fallback: Trích xuất từ note -->
-                        @php
-                            $promotionText = '';
-                            if ($bill->note) {
-                                // Sử dụng cùng logic với controller
-                                if (preg_match('/Mã KM:\s*(\w+)\s*-\s*(.+?)(?:\s*\||$)/', $bill->note, $matches)) {
-                                    $promoCode = trim($matches[1]);
-                                    $promoName = trim($matches[2]);
-                                    $promotionText = "<div>$promoName</div><div>Mã: $promoCode</div>";
-                                }
-                            }
-                        @endphp
-                        @if ($promotionText)
-                            <div class="text-xs-print receipt-item text-center text-gray-600">
-                                {!! $promotionText !!}
-                            </div>
-                        @endif
-                    @endif
-                    <div class="receipt-line receipt-item"></div>
-                @endif
-
                 <!-- Tổng cộng -->
                 <div class="flex justify-between font-bold text-sm-print mt-2 receipt-item">
                     <span>TỔNG CỘNG:</span>
