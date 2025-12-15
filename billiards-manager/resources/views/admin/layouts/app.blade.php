@@ -31,6 +31,17 @@
             transform: translateX(-100%);
             transition: transform 0.3s ease;
             z-index: 50;
+            /* Ẩn scrollbar nhưng vẫn cho phép cuộn */
+            overflow-y: auto;
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE 10+ */
+        }
+
+        /* Ẩn scrollbar cho Chrome, Safari, Opera */
+        .sidebar::-webkit-scrollbar {
+            display: none;
         }
 
         .sidebar.mobile-open {
@@ -67,6 +78,23 @@
             display: block;
         }
 
+        /* Navigation trong sidebar - Ẩn scrollbar */
+        .sidebar nav {
+            flex: 1;
+            padding: 1rem;
+            space-y: 0.25rem;
+            overflow-y: auto;
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE 10+ */
+        }
+
+        .sidebar nav::-webkit-scrollbar {
+            display: none;
+            /* Chrome, Safari, Opera*/
+        }
+
         @media (min-width: 768px) {
             .sidebar {
                 transform: translateX(0);
@@ -80,6 +108,25 @@
             .mobile-overlay {
                 display: none !important;
             }
+        }
+
+        /* Custom scrollbar cho main content nếu cần */
+        main::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        main::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        main::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
         }
     </style>
     @yield('styles')
@@ -134,7 +181,7 @@
                     </div>
                 </a>
                 <!-- Navigation -->
-                <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                <nav class="flex-1 p-4 space-y-1">
                     @php
                         $userRole = Auth::user()->role->slug ?? '';
                         $isAdminOrManager = in_array($userRole, ['admin', 'manager']);
@@ -193,24 +240,26 @@
 
                     <!-- Menu cho Admin & Manager -->
                     @if ($isAdminOrManager)
-                       <a href="{{ route('admin.dashboard') }}"
-   onclick="closeMobileMenu()"
-   class="nav-item flex items-center p-3 text-white rounded-lg 
-          hover:bg-white/10
-          {{ isRouteActive('admin.dashboard', $currentRoute) ? 'active bg-white/20' : '' }}">
-    <i class="fas fa-chart-pie w-5 md:w-6 mr-3"></i>
-    <span class="font-medium text-sm md:text-base">Tổng quan</span>
-</a>
+                        <a href="{{ route('admin.dashboard') }}" onclick="closeMobileMenu()"
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.dashboard', $currentRoute) ? 'active bg-white/20' : '' }}">
+                            <i class="fas fa-chart-pie w-5 md:w-6 mr-3"></i>
+                            <span class="font-medium text-sm md:text-base">Tổng quan</span>
+                        </a>
 
-<a href="{{ route('admin.statistics') }}"
-   onclick="closeMobileMenu()"
-   class="nav-item flex items-center p-3 text-white rounded-lg 
-          hover:bg-white/10
-          {{ isRouteActive('admin.statistics', $currentRoute) ? 'active bg-white/20' : '' }}">
-    <i class="fas fa-chart-bar w-5 md:w-6 mr-3"></i>
-    <span class="font-medium text-sm md:text-base">Thống kê</span>
-</a>
 
+
+                        <a href="{{ route('admin.statistics') }}" onclick="closeMobileMenu()"
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10{{ isRouteActive('admin.statistics', $currentRoute) ? 'active bg-white/20' : '' }}">
+                            <i class="fas fa-chart-bar w-5 md:w-6 mr-3"></i>
+                            <span class="font-medium text-sm md:text-base">Thống kê</span>
+                        </a>
+
+
+                        <a href="{{ route('admin.tables.simple-dashboard') }}" onclick="closeMobileMenu()"
+                            class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.tables.simple-dashboard', $currentRoute) ? 'active bg-white/20' : '' }}">
+                            <i class="fas fa-th-large w-5 md:w-6 mr-3"></i>
+                            <span class="font-medium text-sm md:text-base">Tổng quan bàn</span>
+                        </a>
                         <a href="{{ route('admin.tables.index') }}" onclick="closeMobileMenu()"
                             class="nav-item flex items-center p-3 text-white rounded-lg hover:bg-white/10 {{ isRouteActive('admin.tables', $currentRoute) ? 'active bg-white/20' : '' }}">
                             <i class="fa-solid fa-table w-5 md:w-6 mr-3"></i>
@@ -333,24 +382,29 @@
                                 </p>
                             </div>
                             <div class="relative">
-                                <button id="accountDropdownBtn" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm md:text-base hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-blue-400">
+                                <button id="accountDropdownBtn"
+                                    class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm md:text-base hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-blue-400">
                                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                 </button>
-                                
+
                                 <!-- Dropdown Menu -->
-                                <div id="accountDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                                    <a href="{{ route('attendance.my-qr') }}" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition">
+                                <div id="accountDropdown"
+                                    class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                                    <a href="{{ route('attendance.my-qr') }}"
+                                        class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition">
                                         <i class="fas fa-qrcode w-5 mr-3 text-blue-600"></i>
                                         <span>Mã QR cá nhân</span>
                                     </a>
-                                    <a href="{{ route('admin.my-profile') }}" class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition">
+                                    <a href="{{ route('admin.my-profile') }}"
+                                        class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition">
                                         <i class="fas fa-user w-5 mr-3 text-green-600"></i>
                                         <span>Thông tin cá nhân</span>
                                     </a>
                                     <div class="border-t border-gray-200 my-1"></div>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition text-left">
+                                        <button type="submit"
+                                            class="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition text-left">
                                             <i class="fas fa-sign-out-alt w-5 mr-3"></i>
                                             <span>Đăng xuất</span>
                                         </button>

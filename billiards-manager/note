@@ -3,6 +3,6 @@ ngrok http 8000
 ngrok config add-authtoken 36KIf7mmRQNrE78RMqm56sepMIG_2Z38NB2EHoW8NZQcHurGc
 
 
-it reset --hard HEAD~ Dùng để quay về lúc commit 
+git reset --hard HEAD~ Dùng để quay về lúc commit 
 
 

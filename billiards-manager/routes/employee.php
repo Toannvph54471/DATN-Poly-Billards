@@ -5,7 +5,6 @@ use App\Http\Controllers\BillController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PosDashboardController;
 
