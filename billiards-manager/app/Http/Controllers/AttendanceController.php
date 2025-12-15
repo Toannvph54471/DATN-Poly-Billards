@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Services\WorkingTimeCalculator;
 
 class AttendanceController extends Controller
 {
@@ -234,58 +235,21 @@ class AttendanceController extends Controller
             ->with('shift')
             ->first();
 
-        $payrollTimeStart = Carbon::parse($attendance->check_in);
-        $payrollTimeEnd = $now->copy();
+        // Calculate Billable Time using Service
+        $calculation = WorkingTimeCalculator::calculate($attendance, $employeeShift);
         
-        $shiftEndTime = null;
-
-        if ($employeeShift && $employeeShift->shift) {
-            $shiftDate = Carbon::parse($employeeShift->shift_date);
-            $shiftStart = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->start_time);
-            $shiftEnd = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->end_time);
-            
-            if ($shiftEnd->lt($shiftStart)) {
-                $shiftEnd->addDay();
-            }
-            $shiftEndTime = $shiftEnd; // Save for early calculation
-
-            // Rule 1: Determine Payroll Start
-            // If Late reason is Approved, count from Shift Start
-            if ($attendance->approval_status === 'approved') {
-                 $payrollTimeStart = $shiftStart;
-            } else {
-                 // Otherwise, Cap Start at Shift Start (Early Check-in doesn't count, Late counts as late)
-                 if ($payrollTimeStart->lt($shiftStart)) {
-                      $payrollTimeStart = $shiftStart;
-                 }
-            }
-            
-            // Rule 2: Cap End at Shift End (Late Checkout doesn't count)
-            if ($payrollTimeEnd->gt($shiftEnd)) {
-                $payrollTimeEnd = $shiftEnd;
-            }
-        }
-
-        // Calculate minutes (ensure non-negative)
-        // If start > end (e.g. checked in after shift ended?), minutes = 0
-        if ($payrollTimeStart->gt($payrollTimeEnd)) {
-            $attendance->total_minutes = 0;
-        } else {
-            $attendance->total_minutes = $payrollTimeStart->diffInMinutes($payrollTimeEnd);
-        }
-        
-        // Save actual checkout time
-        $attendance->check_out = $now;
-
-        // Calculate early minutes
-        // Use Shift End if available, else 17:00 fallback
-        $workEnd = $shiftEndTime ?: Carbon::parse(today()->format('Y-m-d') . ' 17:00:00');
-
-        if ($now->lt($workEnd)) {
-            $attendance->early_minutes = $workEnd->diffInMinutes($now);
-        } else {
-             $attendance->early_minutes = 0;
-        }
+        // Save Actual Checkout Time (Truth)
+        // Note: Calculation uses this time (via now()) for bounds, but returns capped minutes.
+        $attendance->check_out = now();
+        $attendance->total_minutes = $calculation['total_minutes'];
+        $attendance->early_minutes = $calculation['early_minutes'];
+        // $attendance->late_minutes is already set at Check-in, but Service recalculates it too. 
+        // We probably shouldn't overwrite late_minutes on checkout unless we want to "fix" it?
+        // Check-in sets 'late_minutes' based on START time.
+        // Service returns 'late_minutes'. Let's keep consistency.
+        // But check-in logic sets it and status 'Late'.
+        // Service just calculates duration.
+        // Let's only update total/early on checkout.
 
         $attendance->save();
         $this->updateShiftStatus($employee->id, 'completed');
@@ -323,27 +287,12 @@ class AttendanceController extends Controller
                 ->first();
                 
              if ($employeeShift && $employeeShift->shift) {
-                $shiftDate = Carbon::parse($employeeShift->shift_date);
-                $shiftStart = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->start_time);
-                $shiftEnd = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->end_time);
-
-                if ($shiftEnd->lt($shiftStart)) {
-                    $shiftEnd->addDay();
-                }
-                
-                // If Approved, Start = Shift Start
-                $payrollTimeStart = $shiftStart;
-                
-                // End = min(Checkout, Shift End)
-                $payrollTimeEnd = $checkoutTime->copy();
-                if ($payrollTimeEnd->gt($shiftEnd)) {
-                    $payrollTimeEnd = $shiftEnd;
-                }
-                
-                $minutes = ($payrollTimeStart->gt($payrollTimeEnd)) ? 0 : $payrollTimeStart->diffInMinutes($payrollTimeEnd);
-                
-                $attendance->total_minutes = $minutes;
-                $attendance->save();
+                 // Recalculate using unified service
+                 // Note: attendance has check_out set, so it will be used.
+                 $calculation = WorkingTimeCalculator::calculate($attendance, $employeeShift);
+                 
+                 $attendance->total_minutes = $calculation['total_minutes'];
+                 $attendance->save();
              }
         }
 
@@ -370,13 +319,26 @@ class AttendanceController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get ALL shifts for today (for full status monitoring)
+        // Get ALL shifts for today
         $todayShifts = \App\Models\EmployeeShift::whereDate('shift_date', today())
             ->with(['employee', 'shift'])
             ->get();
             
-        // Append real-time status to each shift (optional, purely for explicit knowing)
-        // Accessor $shift->real_time_status is available automatically when accessed.
+        // Pre-fetch attendances for today to avoid N+1 and calculate live stats
+        $attendances = Attendance::whereDate('check_in', today())
+            ->get()
+            ->keyBy('employee_id');
+
+        foreach ($todayShifts as $shift) {
+            $att = $attendances->get($shift->employee_id);
+            $shift->attendance = $att; // Attach manually for View
+            
+            if ($att && !$att->check_out) {
+                 // Calculate Live Billable Time
+                 $calc = WorkingTimeCalculator::calculate($att, $shift, now());
+                 $shift->live_billable_minutes = $calc['total_minutes'];
+            }
+        }
 
         return view('admin.attendance.monitor', compact('pendingLate', 'todayShifts'));
     }
@@ -434,59 +396,35 @@ class AttendanceController extends Controller
             ->with('shift')
             ->first();
 
-        $payrollTimeStart = $checkInTime->copy();
-        $payrollTimeEnd = $checkoutTime->copy();
-        $shiftEndTime = null;
-
         if ($employeeShift && $employeeShift->shift) {
-            $shiftDate = Carbon::parse($employeeShift->shift_date);
-            $shiftStart = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->start_time);
-            $shiftEnd = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->end_time);
-            
-            if ($shiftEnd->lt($shiftStart)) {
-                $shiftEnd->addDay();
-            }
-            $shiftEndTime = $shiftEnd;
-
-            // Rule 1: Determine Payroll Start
-            if ($attendance->approval_status === 'approved') {
-                 $payrollTimeStart = $shiftStart;
-            } else {
-                 // Cap Start at Shift Start
-                 if ($payrollTimeStart->lt($shiftStart)) {
-                      $payrollTimeStart = $shiftStart;
-                 }
-            }
-            
-            // Rule 2: Cap End at Shift End (Late Checkout doesn't count)
-            if ($payrollTimeEnd->gt($shiftEnd)) {
-                $payrollTimeEnd = $shiftEnd;
-            }
+             $calculation = WorkingTimeCalculator::calculate($attendance, $employeeShift, $checkoutTime);
+             $minutes = $calculation['total_minutes'];
+             $earlyMinutes = $calculation['early_minutes'];
+        } else {
+             $minutes = 0; // Or raw minutes? The service handles "No Shift" as raw.
+             $calculation = WorkingTimeCalculator::calculate($attendance, null, $checkoutTime); // No shift passed?
+             // Wait, we fetched $employeeShift just above.
+             // If validation says $attendance but no shift?
+             // Existing code calculates minutes = 0 if start > end.
+             // Let's iterate:
+             // If we found a shift, pass it.
+             // If not, pass null (and Service does raw calc).
         }
         
-        // Calculate minutes (avoid negative)
-        if ($payrollTimeStart->gt($payrollTimeEnd)) {
-             $minutes = 0;
-        } else {
-             $minutes = $payrollTimeStart->diffInMinutes($payrollTimeEnd);
-        }
+        // Re-do the logic cleanly:
+        $calculation = WorkingTimeCalculator::calculate($attendance, $employeeShift, $checkoutTime);
+        $minutes = $calculation['total_minutes'];
+        $earlyMinutes = $calculation['early_minutes'];
 
         $attendance->fill([
             'check_out' => $checkoutTime,
             'total_minutes' => $minutes,
+            'early_minutes' => $earlyMinutes,
             'admin_checkout_by' => Auth::id(),
             'admin_checkout_reason' => $request->reason
         ]);
-
-        // Calculate early minutes
-        $workEnd = $shiftEndTime ?: Carbon::parse($attendance->check_in)->setTime(17, 0); 
         
-        // Only calculate early minutes if checkout is BEFORE shift end
-        if ($checkoutTime->lt($workEnd)) {
-             $attendance->early_minutes = $checkoutTime->diffInMinutes($workEnd);
-        } else {
-             $attendance->early_minutes = 0;
-        }
+        // Removing old early minute calc block entirely as it is handled above.
         
         $attendance->save();
         
