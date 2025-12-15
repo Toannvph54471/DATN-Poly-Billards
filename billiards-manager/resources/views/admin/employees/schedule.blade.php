@@ -209,7 +209,7 @@
                                                     $colorClass = match($rtStatus) {
                                                         'Đang trong ca làm' => 'text-green-800 bg-green-100',
                                                         'Chưa checkin' => 'text-gray-800 bg-gray-100',
-                                                        'Đã checkout' => 'text-blue-800 bg-blue-100',
+                                                        'Đã checkin' => 'text-blue-800 bg-blue-100',
                                                         'Vắng mặt' => 'text-red-800 bg-red-100',
                                                         'Đi muộn' => 'text-orange-800 bg-orange-100',
                                                         'Tan ca nhưng quên checkout' => 'text-yellow-800 bg-yellow-100',
