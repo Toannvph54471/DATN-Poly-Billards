@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\Admin\AdminStatisticsController;
 
 /*
@@ -34,9 +36,9 @@ Route::prefix('admin')
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('chart-data', [DashboardController::class, 'getChartData'])->name('chart-data');
-         
-     
-        Route::get('/statistics', [AdminStatisticsController::class, 'index']) ->name('statistics');
+
+
+        Route::get('/statistics', [AdminStatisticsController::class, 'index'])->name('statistics');
         Route::get('/quick-stats', [DashboardController::class, 'getQuickStats'])->name('quick-stats');
         Route::get('/top-products', [DashboardController::class, 'getTopProductsData'])->name('top-products');
         Route::get('/table-stats', [DashboardController::class, 'getTableStatsData'])->name('table-stats');
@@ -83,7 +85,7 @@ Route::prefix('admin')
         | ADMIN + MANAGER (Management functions)
         |--------------------------------------------------------------------------
         */
-           
+
         // Combos Management
         Route::prefix('combos')->name('combos.')->group(function () {
             Route::get('/', [ComboController::class, 'index'])->name('index');
@@ -107,7 +109,7 @@ Route::prefix('admin')
         Route::get('tables/{id}/detail', [TableController::class, 'showDetail'])->name('tables.detail');
         Route::get('tables/simple-dashboard', [TableController::class, 'simpleDashboard'])->name('tables.simple-dashboard');
         Route::get('{billId}/check-combo-time', [BillController::class, 'checkComboTimeStatus'])->name('tables.check-combo-time');
-         // TẠM DỪNG BÀN - THÊM VÀO ĐÂY
+        // TẠM DỪNG BÀN - THÊM VÀO ĐÂY
         Route::post('/tables/{table}/pause', [TableController::class, 'pause'])->name('tables.pause');
         Route::post('/tables/{table}/resume', [TableController::class, 'resume'])->name('tables.resume');
         // routes/admin.php
@@ -148,6 +150,10 @@ Route::prefix('admin')
             // Print bill
             Route::get('/{id}/print', [BillController::class, 'printBill'])->name('print');
             Route::get('/print-multiple', [BillController::class, 'printBillMultiple'])->name('print-multiple');
+
+            Route::post('/{id}/preview-payment', [PaymentController::class, 'previewPayment'])->name('preview-payment');
+            Route::post('/{id}/confirm-payment', [PaymentController::class, 'confirmPayment'])->name('confirm-payment');
+            Route::post('/{id}/cancel-payment', [PaymentController::class, 'cancelPayment'])->name('cancel-payment');
         });
 
         // Payments Management
@@ -159,6 +165,8 @@ Route::prefix('admin')
             Route::post('/payments/check-promotion', [PaymentController::class, 'checkPromotion'])->name('check-promotion');
             Route::post('/payments/apply-promotion', [PaymentController::class, 'applyPromotion'])->name('apply-promotion');
             Route::post('/payments/remove-promotion', [PaymentController::class, 'removePromotion'])->name('remove-promotion');
+
+           
         });
 
         // Products Management
@@ -188,8 +196,4 @@ Route::prefix('admin')
         Route::get('customers/trashed', [CustomerController::class, 'trash'])->name('customers.trashed');
         Route::post('customers/{id}/restore', [CustomerController::class, 'restore'])->name('customers.restore');
         Route::delete('customers/{id}/force-delete', [CustomerController::class, 'forceDelete'])->name('customers.force-delete');
-
-        
-
     });
-

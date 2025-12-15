@@ -22,9 +22,16 @@ class AttendanceController extends Controller
 
         if ($shift) {
             if ($status === 'active') {
-                $shift->checkIn();
+                $shift->update([
+                    'status' => \App\Models\EmployeeShift::STATUS_ACTIVE,
+                    'actual_start_time' => now(),
+                    'is_locked' => true
+                ]);
             } elseif ($status === 'completed') {
-                $shift->checkOut();
+                $shift->update([
+                    'status' => \App\Models\EmployeeShift::STATUS_COMPLETED,
+                    'actual_end_time' => now()
+                ]);
             }
         } else {
              // Fallback: Try to find any active shift for this employee
@@ -84,6 +91,29 @@ class AttendanceController extends Controller
         $now = now();
         // Use shift start time from the assigned shift
         $shiftStartTime = Carbon::parse(today()->format('Y-m-d') . ' ' . $employeeShift->shift->start_time);
+        $shiftEndTime = Carbon::parse(today()->format('Y-m-d') . ' ' . $employeeShift->shift->end_time);
+
+        if ($shiftEndTime->lt($shiftStartTime)) {
+            $shiftEndTime->addDay();
+        }
+
+        // Validate 1: Check if Shift Ended
+        if ($now->gt($shiftEndTime)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Ca làm việc đã kết thúc (' . $employeeShift->shift->end_time . '). Bạn không thể check-in.',
+            ], 403);
+        }
+
+        // Validate 2: Check if Too Early (> 15 minutes)
+        $earlyLimit = $shiftStartTime->copy()->subMinutes(15);
+        if ($now->lt($earlyLimit)) {
+             return response()->json([
+                'status' => 'error',
+                'message' => 'Bạn chỉ có thể check-in trước giờ vào ca 15 phút. Giờ vào ca: ' . $employeeShift->shift->start_time,
+            ], 403);
+        }
+
         $lateThreshold = $shiftStartTime->copy()->addMinutes(self::LATE_THRESHOLD_MINUTES);
 
         if ($now->gt($lateThreshold)) {
@@ -196,16 +226,65 @@ class AttendanceController extends Controller
         }
 
         $now = now();
-        $attendance->check_out = $now;
         
-        // Calculate total minutes
-        $checkIn = Carbon::parse($attendance->check_in);
-        $attendance->total_minutes = $checkIn->diffInMinutes($now);
+        // Find the shift based on Check-in Date (to handle crossover days correctly if needed)
+        // Note: Using today() for check_in date as this is "live" checkout.
+        $employeeShift = \App\Models\EmployeeShift::where('employee_id', $employee->id)
+            ->whereDate('shift_date', $attendance->check_in) 
+            ->with('shift')
+            ->first();
 
-        // Calculate early minutes (assume work ends at 17:00)
-        $workEnd = Carbon::parse(today()->format('Y-m-d') . ' 17:00:00');
+        $payrollTimeStart = Carbon::parse($attendance->check_in);
+        $payrollTimeEnd = $now->copy();
+        
+        $shiftEndTime = null;
+
+        if ($employeeShift && $employeeShift->shift) {
+            $shiftDate = Carbon::parse($employeeShift->shift_date);
+            $shiftStart = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->start_time);
+            $shiftEnd = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->end_time);
+            
+            if ($shiftEnd->lt($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+            $shiftEndTime = $shiftEnd; // Save for early calculation
+
+            // Rule 1: Determine Payroll Start
+            // If Late reason is Approved, count from Shift Start
+            if ($attendance->approval_status === 'approved') {
+                 $payrollTimeStart = $shiftStart;
+            } else {
+                 // Otherwise, Cap Start at Shift Start (Early Check-in doesn't count, Late counts as late)
+                 if ($payrollTimeStart->lt($shiftStart)) {
+                      $payrollTimeStart = $shiftStart;
+                 }
+            }
+            
+            // Rule 2: Cap End at Shift End (Late Checkout doesn't count)
+            if ($payrollTimeEnd->gt($shiftEnd)) {
+                $payrollTimeEnd = $shiftEnd;
+            }
+        }
+
+        // Calculate minutes (ensure non-negative)
+        // If start > end (e.g. checked in after shift ended?), minutes = 0
+        if ($payrollTimeStart->gt($payrollTimeEnd)) {
+            $attendance->total_minutes = 0;
+        } else {
+            $attendance->total_minutes = $payrollTimeStart->diffInMinutes($payrollTimeEnd);
+        }
+        
+        // Save actual checkout time
+        $attendance->check_out = $now;
+
+        // Calculate early minutes
+        // Use Shift End if available, else 17:00 fallback
+        $workEnd = $shiftEndTime ?: Carbon::parse(today()->format('Y-m-d') . ' 17:00:00');
+
         if ($now->lt($workEnd)) {
             $attendance->early_minutes = $workEnd->diffInMinutes($now);
+        } else {
+             $attendance->early_minutes = 0;
         }
 
         $attendance->save();
@@ -216,7 +295,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Check-out thành công! Tổng thời gian: ' . round($attendance->total_minutes / 60, 2) . ' giờ.',
+            'message' => 'Check-out thành công! Tổng thời gian tính lương: ' . round($attendance->total_minutes / 60, 2) . ' giờ.',
             'data' => $attendance
         ]);
     }
@@ -224,13 +303,51 @@ class AttendanceController extends Controller
     public function approveLate($id)
     {
         $attendance = Attendance::findOrFail($id);
-        $attendance->update([
-            'approval_status' => 'approved',
-            'approved_by' => Auth::id(),
-            'approved_at' => now()
-        ]);
+        
+        // 1. Approve
+        $attendance->approval_status = 'approved';
+        $attendance->approved_by = Auth::id();
+        $attendance->approved_at = now();
+        $attendance->save(); // Save status first
 
-        return response()->json(['status' => 'success', 'message' => 'Đã duyệt đi muộn.']);
+        // 2. Recalculate Payroll if checked out OR if checked in (future checkout will handle it, but for Monitor we might want to know?)
+        // Currently monitor doesn't show salary until checkout.
+        // However, if they ARE checked out, we must recalculate.
+        
+        if ($attendance->check_out) {
+             $checkoutTime = Carbon::parse($attendance->check_out);
+             // Find Shift
+             $employeeShift = \App\Models\EmployeeShift::where('employee_id', $attendance->employee_id)
+                ->whereDate('shift_date', $attendance->check_in)
+                ->with('shift')
+                ->first();
+                
+             if ($employeeShift && $employeeShift->shift) {
+                $shiftDate = Carbon::parse($employeeShift->shift_date);
+                $shiftStart = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->start_time);
+                $shiftEnd = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->end_time);
+
+                if ($shiftEnd->lt($shiftStart)) {
+                    $shiftEnd->addDay();
+                }
+                
+                // If Approved, Start = Shift Start
+                $payrollTimeStart = $shiftStart;
+                
+                // End = min(Checkout, Shift End)
+                $payrollTimeEnd = $checkoutTime->copy();
+                if ($payrollTimeEnd->gt($shiftEnd)) {
+                    $payrollTimeEnd = $shiftEnd;
+                }
+                
+                $minutes = ($payrollTimeStart->gt($payrollTimeEnd)) ? 0 : $payrollTimeStart->diffInMinutes($payrollTimeEnd);
+                
+                $attendance->total_minutes = $minutes;
+                $attendance->save();
+             }
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Đã duyệt đi muộn. Lương sẽ được tính từ đầu ca.']);
     }
 
     public function rejectLate($id)
@@ -253,14 +370,15 @@ class AttendanceController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get active employees (checked in today)
-        $activeEmployees = Attendance::with('employee')
-            ->whereDate('check_in', today())
-            ->whereNull('check_out')
-            ->orderBy('check_in', 'desc')
+        // Get ALL shifts for today (for full status monitoring)
+        $todayShifts = \App\Models\EmployeeShift::whereDate('shift_date', today())
+            ->with(['employee', 'shift'])
             ->get();
+            
+        // Append real-time status to each shift (optional, purely for explicit knowing)
+        // Accessor $shift->real_time_status is available automatically when accessed.
 
-        return view('admin.attendance.monitor', compact('pendingLate', 'activeEmployees'));
+        return view('admin.attendance.monitor', compact('pendingLate', 'todayShifts'));
     }
     
     // Helper for simulator to get token
@@ -307,28 +425,67 @@ class AttendanceController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Nhân viên này đã check-out rồi.']);
         }
 
-        $now = now();
-        $checkIn = \Carbon\Carbon::parse($attendance->check_in);
+        $checkoutTime = now(); // Use Now as Checkout Time
+        $checkInTime = \Carbon\Carbon::parse($attendance->check_in);
 
-        if ($now->lt($checkIn)) {
-             return response()->json(['status' => 'error', 'message' => 'Lỗi: Thời gian check-out (' . $now->format('H:i') . ') sớm hơn thời gian check-in (' . $checkIn->format('H:i') . '). Vui lòng kiểm tra lại thời gian server.'], 400);
+        // Find Shift
+        $employeeShift = \App\Models\EmployeeShift::where('employee_id', $attendance->employee_id)
+            ->whereDate('shift_date', $checkInTime) // Match Check-in date
+            ->with('shift')
+            ->first();
+
+        $payrollTimeStart = $checkInTime->copy();
+        $payrollTimeEnd = $checkoutTime->copy();
+        $shiftEndTime = null;
+
+        if ($employeeShift && $employeeShift->shift) {
+            $shiftDate = Carbon::parse($employeeShift->shift_date);
+            $shiftStart = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->start_time);
+            $shiftEnd = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $employeeShift->shift->end_time);
+            
+            if ($shiftEnd->lt($shiftStart)) {
+                $shiftEnd->addDay();
+            }
+            $shiftEndTime = $shiftEnd;
+
+            // Rule 1: Determine Payroll Start
+            if ($attendance->approval_status === 'approved') {
+                 $payrollTimeStart = $shiftStart;
+            } else {
+                 // Cap Start at Shift Start
+                 if ($payrollTimeStart->lt($shiftStart)) {
+                      $payrollTimeStart = $shiftStart;
+                 }
+            }
+            
+            // Rule 2: Cap End at Shift End (Late Checkout doesn't count)
+            if ($payrollTimeEnd->gt($shiftEnd)) {
+                $payrollTimeEnd = $shiftEnd;
+            }
+        }
+        
+        // Calculate minutes (avoid negative)
+        if ($payrollTimeStart->gt($payrollTimeEnd)) {
+             $minutes = 0;
+        } else {
+             $minutes = $payrollTimeStart->diffInMinutes($payrollTimeEnd);
         }
 
-        $minutes = $now->diffInMinutes($checkIn);
-        
         $attendance->fill([
-            'check_out' => $now,
+            'check_out' => $checkoutTime,
             'total_minutes' => $minutes,
-            // 'status' => 'present', // Don't override status (keep Late if Late)
             'admin_checkout_by' => Auth::id(),
             'admin_checkout_reason' => $request->reason
         ]);
 
-        // Calculate early minutes (assume work ends at 17:00, or should use Shift logic)
-        // Ideally we should get the shift from EmployeeShift
-        $workEnd = Carbon::parse($now->format('Y-m-d') . ' 17:00:00'); 
-        if ($now->lt($workEnd)) {
-             $attendance->early_minutes = $workEnd->diffInMinutes($now);
+        // Calculate early minutes
+        $workEnd = $shiftEndTime ?: Carbon::parse($attendance->check_in)->setTime(17, 0); 
+        
+        // Only calculate early minutes if checkout is BEFORE shift end
+        if ($checkoutTime->lt($workEnd)) {
+             $attendance->early_minutes = $checkoutTime->diffInMinutes($workEnd);
+        } else {
+             $attendance->early_minutes = 0;
         }
         
         $attendance->save();
@@ -337,7 +494,7 @@ class AttendanceController extends Controller
 
         \App\Models\ActivityLog::log('admin_checkout', "Admin checked out for employee ID {$attendance->employee_id}.", ['attendance_id' => $attendance->id, 'reason' => $request->reason, 'admin_id' => Auth::id()]);
 
-        return response()->json(['status' => 'success', 'message' => 'Đã check-out hộ nhân viên thành công.']);
+        return response()->json(['status' => 'success', 'message' => 'Đã check-out hộ nhân viên thành công. Giờ công: ' . round($minutes / 60, 2) . 'h']);
     }
 
     public function manualCheckoutHistory()

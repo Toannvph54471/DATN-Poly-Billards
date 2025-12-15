@@ -5,7 +5,6 @@ use App\Http\Controllers\BillController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PosDashboardController;
 
@@ -63,6 +62,10 @@ Route::prefix('admin')
             Route::post('/transfer', [BillController::class, 'transferTable'])->name('transfer');
             Route::get('/transfer/available/{billId}', [BillController::class, 'getAvailableTables'])->name('transfer.available');
             Route::get('/{id}/print', [BillController::class, 'printBill'])->name('print');
+
+            Route::post('/{id}/preview-payment', [PaymentController::class, 'previewPayment'])->name('preview-payment');
+            Route::post('/{id}/confirm-payment', [PaymentController::class, 'confirmPayment'])->name('confirm-payment');
+            Route::post('/{id}/cancel-payment', [PaymentController::class, 'cancelPayment'])->name('cancel-payment');
         });
 
         // ============================
