@@ -1171,7 +1171,7 @@ class PaymentController extends Controller
 
                 // 9. Redirect với thông báo thành công
                 return redirect()
-                    ->route('admin.tables.index')
+                    ->route('admin.bills.index')
                     ->with('success', 'Thanh toán thành công! Hóa đơn đã được xác nhận.');
             });
         } catch (Exception $e) {
