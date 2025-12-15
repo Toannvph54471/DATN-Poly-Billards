@@ -1359,35 +1359,57 @@ class BillController extends Controller
                 'comboTimeUsages.combo'
             ])->findOrFail($id);
 
-            // Tính toán chi phí với thông tin chi tiết
-            $timeDetails = $this->calculateTimeChargeDetailed($bill);
-            $timeCost = $timeDetails['totalCost'];
+            // Kiểm tra xem có phải là preview thanh toán không
+            $isPreview = request()->has('preview');
+            $paymentMethod = request()->get('payment_method');
+            $finalAmount = request()->get('final_amount');
 
-            $productTotal = BillDetail::where('bill_id', $bill->id)
-                ->where('is_combo_component', false)
-                ->sum('total_price');
+            if ($isPreview) {
+                // Lấy thông tin từ session
+                $paymentData = session('pending_payment_' . $id);
 
-            $totalAmount = $timeCost + $productTotal;
+                if (!$paymentData) {
+                    return redirect()
+                        ->route('admin.payments.show', $id)
+                        ->with('error', 'Thông tin thanh toán không tồn tại. Vui lòng thử lại.');
+                }
 
-            // SỬ DỤNG DISCOUNT_AMOUNT TỪ BILL
-            $discountAmount = $bill->discount_amount ?? 0;
-            $finalAmount = $totalAmount - $discountAmount;
+                $timeCost = $paymentData['time_price'] ?? 0;
+                $productTotal = $paymentData['product_total'] ?? 0;
+                $totalAmount = $paymentData['total_amount'] ?? 0;
+                $discountAmount = $paymentData['discount_amount'] ?? 0;
+                $finalAmount = $paymentData['final_amount'] ?? 0;
+                $paymentMethod = $paymentData['payment_method'] ?? 'cash';
+
+                // Tính toán chi tiết thời gian cho display
+                $timeDetails = $this->calculateTimeChargeDetailed($bill);
+            } else {
+                // Tính toán thông thường (xem bill đã thanh toán)
+                $timeDetails = $this->calculateTimeChargeDetailed($bill);
+                $timeCost = $timeDetails['totalCost'];
+                $productTotal = BillDetail::where('bill_id', $bill->id)
+                    ->where('is_combo_component', false)
+                    ->sum('total_price');
+                $totalAmount = $timeCost + $productTotal;
+                $discountAmount = $bill->discount_amount ?? 0;
+                $finalAmount = $totalAmount - $discountAmount;
+                $paymentMethod = $bill->payment_method;
+            }
 
             // Lấy thông tin khuyến mãi từ note
             $promotionInfo = $this->extractPromotionInfoFromNote($bill->note);
 
-            // TẠO QR CODE DỮ LIỆU (quan trọng: thêm số tiền vào dữ liệu QR)
+            // Tạo QR code
             $qrData = [
                 'bill_number' => $bill->bill_number,
                 'amount' => $finalAmount,
                 'currency' => 'VND',
-                'account' => '0368015218', // Số tài khoản của bạn
+                'account' => '0368015218',
                 'bank' => 'MBBank',
                 'content' => "TT Bill {$bill->bill_number}"
             ];
 
-            // Tạo URL QR code với thông tin tiền tệ
-            $qrUrl = "https://img.vietqr.io/image/MB-0368015218-qr_only.png"
+            $qrUrl = "https://img.vietqr.io/image/MB-0368015218-qr_only.png?"
                 . http_build_query([
                     'amount' => $finalAmount,
                     'addInfo' => "TT Bill {$bill->bill_number}"
@@ -1405,26 +1427,14 @@ class BillController extends Controller
                 'promotionInfo' => $promotionInfo,
                 'printTime' => now()->format('H:i d/m/Y'),
                 'staff' => Auth::user()->name,
-                'qrUrl' => $qrUrl, // THÊM QR URL
-                'qrData' => $qrData // THÊM QR DATA
+                'qrUrl' => $qrUrl,
+                'qrData' => $qrData,
+                'isPreview' => $isPreview, // Thêm flag để biết là preview
+                'paymentMethod' => $paymentMethod,
+                'paymentData' => $isPreview ? $paymentData : null
             ];
 
-            // Auto redirect logic
-            $autoRedirect = session()->has('redirect_after_print');
-            if ($autoRedirect) {
-                $redirectUrl = session('redirect_after_print');
-                session()->forget('redirect_after_print');
-
-                return view('admin.bills.print', array_merge($billData, [
-                    'autoRedirect' => true,
-                    'redirectUrl' => $redirectUrl
-                ]));
-            }
-
-            return view('admin.bills.print', array_merge($billData, [
-                'autoRedirect' => false,
-                'redirectUrl' => route('admin.bills.index')
-            ]));
+            return view('admin.bills.print', $billData);
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Lỗi khi in hóa đơn: ' . $e->getMessage());
         }

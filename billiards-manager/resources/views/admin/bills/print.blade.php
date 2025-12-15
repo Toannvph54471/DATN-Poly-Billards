@@ -106,6 +106,7 @@
 
         .redirect-overlay.show {
             opacity: 1;
+            display: flex;
         }
 
         .success-icon {
@@ -126,24 +127,6 @@
         .print-btn {
             position: relative;
             overflow: hidden;
-        }
-
-        .print-btn::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.5);
-            opacity: 0;
-            border-radius: 100%;
-            transform: scale(1, 1) translate(-50%);
-            transform-origin: 50% 50%;
-        }
-
-        .print-btn:focus:not(:active)::after {
-            animation: ripple 1s ease-out;
         }
 
         .receipt-item {
@@ -200,83 +183,9 @@
             padding: 5px;
         }
 
-        .qr-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .qr-container:hover .qr-overlay {
-            opacity: 1;
-        }
-
-        .qr-amount {
-            font-size: 12px;
-            font-weight: bold;
-            color: #059669;
-            text-align: center;
-        }
-
-        /* Animation cho QR */
-        @keyframes qrPulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-            }
-        }
-
-        .qr-pulse {
-            animation: qrPulse 2s infinite;
-        }
-
-        /* Toast notification styles */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-        }
-
-        .toast-success {
-            background: #10b981;
-        }
-
-        .toast-error {
-            background: #ef4444;
-        }
-
-        .toast-info {
-            background: #3b82f6;
-        }
-
         /* MB Bank specific colors */
         .bg-mbbank {
             background-color: #9e1f63;
-        }
-
-        .hover\:bg-mbbank:hover {
-            background-color: #7a174d;
         }
 
         .text-mbbank {
@@ -292,18 +201,6 @@
 
             50% {
                 transform: translateY(-15px);
-            }
-        }
-
-        @keyframes ripple {
-            0% {
-                transform: scale(0, 0);
-                opacity: 0.5;
-            }
-
-            100% {
-                transform: scale(20, 20);
-                opacity: 0;
             }
         }
 
@@ -467,6 +364,10 @@
             background-color: #e53e3e;
         }
 
+        .bg-yellow-600 {
+            background-color: #d97706;
+        }
+
         .text-white {
             color: white;
         }
@@ -545,6 +446,10 @@
 
         .hover\:bg-red-700:hover {
             background-color: #c53030;
+        }
+
+        .hover\:bg-yellow-700:hover {
+            background-color: #b45309;
         }
 
         .transition-all {
@@ -627,6 +532,104 @@
         .space-y-2>*+* {
             margin-top: 0.5rem;
         }
+
+        /* Toast notification styles */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-success {
+            background: #10b981;
+        }
+
+        .toast-error {
+            background: #ef4444;
+        }
+
+        .toast-info {
+            background: #3b82f6;
+        }
+
+        /* Confirmation buttons styles */
+        .confirmation-section {
+            max-width: 300px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .confirmation-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .confirm-btn,
+        .cancel-btn {
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .confirm-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .cancel-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .notice-box {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+
+        .notice-box strong {
+            color: #92400e;
+        }
+
+        .notice-box p {
+            color: #78350f;
+            margin: 5px 0;
+            font-size: 12px;
+        }
     </style>
 </head>
 
@@ -659,12 +662,10 @@
             class="print-btn bg-blue-600 text-white px-5 py-3 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center">
             <i class="fas fa-print mr-2"></i> In hóa đơn
         </button>
-        <a href="{{ route('admin.bills.index') }}">
-            <button
-                class="bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 flex items-center">
-                <i class="fas fa-arrow-left mr-2"></i> Quay lại
-            </button>
-        </a>
+        <button onclick="goBackWithConfirmation()"
+            class="bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i> Quay lại
+        </button>
         <button id="animateBtn" onclick="animateReceipt()"
             class="bg-purple-600 text-white px-5 py-3 rounded-lg shadow-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center">
             <i class="fas fa-play mr-2"></i> Hiệu ứng hóa đơn
@@ -716,66 +717,32 @@
             <div class="text-center font-bold text-sm-print mb-2 receipt-item">CHI TIẾT HÓA ĐƠN</div>
 
             @php
-                // SỬ DỤNG DỮ LIỆU ĐÃ ĐƯỢC TÍNH TOÁN TỪ BILL
-                $finalAmount = $bill->final_amount;
-                $totalAmount = $bill->total_amount;
-                $discountAmount = $bill->discount_amount;
+                // Tính toán các giá trị
+                $finalAmount = $bill->final_amount ?? 0;
+                $totalAmount = $bill->total_amount ?? 0;
+                $discountAmount = $bill->discount_amount ?? 0;
 
-                // Tính tiền giờ và sản phẩm từ bill details
-                $productDetails = $bill->billDetails->where('is_combo_component', false);
-                $productTotal = $productDetails->sum('total_price');
+                // Tính tiền giờ và sản phẩm
+                $productDetails = $bill->billDetails->where('is_combo_component', false) ?? collect();
+                $productTotal = $productDetails->sum('total_price') ?? 0;
                 $timeCost = $totalAmount - $productTotal;
 
-                // Lấy thông tin làm tròn từ controller
-                $timeDetails = isset($timeDetails) ? $timeDetails : [];
-                $roundingInfo = $timeDetails['roundingInfo'] ?? null;
-                $hasRounding = isset($roundingInfo) && $roundingInfo['total_rounding_diff'] > 0;
-
-                // Tạo thông tin QR với số tiền động - CẬP NHẬT THÀNH MB BANK
-                $qrData = [
-                    'bill_number' => $bill->bill_number,
-                    'amount' => $finalAmount,
-                    'currency' => 'VND',
-                    'account' => '0368015218',
-                    'bank' => 'MB Bank',
-                    'content' => "TT Bill {$bill->bill_number}",
-                ];
-
-                // Tạo URL QR code - CẬP NHẬT LINK QR CODE MỚI
+                // QR Code URL
                 $qrUrl =
-                    $qrUrl ??
                     'https://img.vietqr.io/image/MB-0368015218-qr_only.png?' .
-                        http_build_query([
-                            'amount' => $finalAmount,
-                            'addInfo' => "TT Bill {$bill->bill_number}",
-                        ]);
+                    http_build_query([
+                        'amount' => $finalAmount,
+                        'addInfo' => "TT Bill {$bill->bill_number}",
+                    ]);
             @endphp
-
-            {{-- @if ($hasRounding)
-                <!-- Hiển thị thông tin làm tròn -->
-                <div class="rounded-info mb-2 p-2 text-xs-print receipt-item">
-                    <div class="flex justify-between">
-                        <span class="font-bold text-yellow-600">Làm tròn:</span>
-                        <span class="font-bold text-yellow-600">
-                            +{{ number_format($roundingInfo['total_rounding_diff'], 0, ',', '.') }}₫
-                        </span>
-                    </div>
-                    <div class="time-comparison mt-1">
-                        <span>Thời gian: {{ $roundingInfo['rounding_minutes'] ?? 15 }} phút</span>
-                        <span class="ml-2">Tiền: {{ $roundingInfo['rounding_amount'] ?? '1,000' }}₫</span>
-                    </div>
-                </div>
-            @endif --}}
 
             @if ($productDetails->count() > 0)
                 <div class="space-y-1 text-xs-print">
                     @foreach ($productDetails as $detail)
                         @php
                             $itemName = $detail->product->name ?? ($detail->combo->name ?? 'Sản phẩm');
-                            $itemPrice = $detail->unit_price;
-                            $itemTotal = $detail->total_price;
+                            $itemTotal = $detail->total_price ?? 0;
 
-                            // Xác định loại item để hiển thị
                             if ($detail->combo_id && !$detail->is_combo_component) {
                                 $itemName = '[COMBO] ' . $itemName;
                             }
@@ -783,7 +750,7 @@
                         <div class="flex justify-between receipt-item">
                             <div class="flex-1">
                                 <span>{{ $itemName }}</span>
-                                <span class="text-gray-600">x{{ $detail->quantity }}</span>
+                                <span class="text-gray-600">x{{ $detail->quantity ?? 1 }}</span>
                             </div>
                             <div class="text-right">
                                 {{ number_format($itemTotal, 0, ',', '.') }}₫
@@ -791,7 +758,7 @@
                         </div>
                         @if ($detail->combo && $detail->combo->is_time_combo)
                             <div class="text-xs-print receipt-item text-gray-600 ml-2">
-                                ↳ {{ $detail->combo->play_duration_minutes }} phút chơi
+                                ↳ {{ $detail->combo->play_duration_minutes ?? 0 }} phút chơi
                             </div>
                         @endif
                     @endforeach
@@ -799,67 +766,11 @@
                 <div class="receipt-line receipt-item"></div>
             @endif
 
-            <!-- Thời gian chơi với thông tin làm tròn -->
+            <!-- Thời gian chơi -->
             @if ($timeCost > 0)
-                @php
-                    $hourlyRate = $bill->table->tableRate->hourly_rate ?? 0;
-                    $actualMinutes = 0;
-                    $roundedMinutes = 0;
-
-                    // Tính thông tin thời gian nếu có
-                    if (isset($timeDetails['sessions'])) {
-                        foreach ($timeDetails['sessions'] as $session) {
-                            $actualMinutes += $session['actual_minutes'] ?? 0;
-                            $roundedMinutes += $session['rounded_minutes'] ?? 0;
-                        }
-                    }
-
-                    $hasTimeRounding = $actualMinutes > 0 && $roundedMinutes > $actualMinutes;
-                @endphp
-
-                @if ($hasTimeRounding)
-                    <!-- Hiển thị chi tiết thời gian với làm tròn -->
-                    <div class="space-y-1 text-xs-print receipt-item">
-                        <div class="flex justify-between">
-                            <span>Thời gian thực:</span>
-                            <span>{{ floor($actualMinutes / 60) }}h{{ $actualMinutes % 60 }}p</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Thời gian tính phí:<span class="rounding-badge">làm tròn</span></span>
-                            <span
-                                class="font-bold">{{ floor($roundedMinutes / 60) }}h{{ $roundedMinutes % 60 }}p</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Đơn giá:</span>
-                            <span>{{ number_format($hourlyRate, 0, ',', '.') }}₫/h</span>
-                        </div>
-                        <div class="receipt-line"></div>
-                    </div>
-                @endif
-
                 <div class="flex justify-between text-sm-print receipt-item">
-                    <span>
-                        Tiền giờ
-                        @if ($hasTimeRounding)
-                            <span class="rounding-badge">+{{ number_format($roundedMinutes - $actualMinutes) }}p</span>
-                        @endif
-                        :
-                    </span>
-                    <span>
-                        {{ number_format($timeCost, 0, ',', '.') }}₫
-                        @if ($hasTimeRounding && isset($timeDetails['sessions'][0]['rounded_price']))
-                            @php
-                                $rawTimeCost = ($hourlyRate / 60) * $actualMinutes;
-                                $roundingDiff = $timeCost - $rawTimeCost;
-                            @endphp
-                            @if ($roundingDiff > 0)
-                                <br>
-                                <small class="text-yellow-600 time-comparison">
-                                    (+{{ number_format($roundingDiff, 0, ',', '.') }}₫ làm tròn)
-                                </small>
-                            @endif
-                        @endif
-                    </span>
+                    <span>Tiền giờ:</span>
+                    <span>{{ number_format($timeCost, 0, ',', '.') }}₫</span>
                 </div>
             @endif
 
@@ -875,60 +786,14 @@
                     <span>Giảm giá:</span>
                     <span class="text-red-600">-{{ number_format($discountAmount, 0, ',', '.') }}₫</span>
                 </div>
-
-                <!-- Hiển thị thông tin khuyến mãi -->
-                @if ($promotionInfo && isset($promotionInfo['name']))
-                    <div class="text-xs-print receipt-item text-center text-gray-600">
-                        <div>{{ $promotionInfo['name'] }}</div>
-                        @if (isset($promotionInfo['code']))
-                            <div>Mã: {{ $promotionInfo['code'] }}</div>
-                        @endif
-                    </div>
-                @else
-                    <!-- Fallback: Trích xuất từ note -->
-                    @php
-                        $promotionText = '';
-                        if ($bill->note) {
-                            // Sử dụng cùng logic với controller
-                            if (preg_match('/Mã KM:\s*(\w+)\s*-\s*(.+?)(?:\s*\||$)/', $bill->note, $matches)) {
-                                $promoCode = trim($matches[1]);
-                                $promoName = trim($matches[2]);
-                                $promotionText = "<div>$promoName</div><div>Mã: $promoCode</div>";
-                            }
-                        }
-                    @endphp
-                    @if ($promotionText)
-                        <div class="text-xs-print receipt-item text-center text-gray-600">
-                            {!! $promotionText !!}
-                        </div>
-                    @endif
-                @endif
                 <div class="receipt-line receipt-item"></div>
             @endif
 
             <!-- Tổng cộng -->
             <div class="flex justify-between font-bold text-sm-print mt-2 receipt-item">
                 <span>TỔNG CỘNG:</span>
-                <span>
-                    {{ number_format($finalAmount, 0, ',', '.') }}₫
-                    @if ($hasRounding && $roundingInfo['total_rounding_diff'] > 0)
-                        <br>
-                        <small class="text-yellow-600 time-comparison">
-                            (đã bao gồm {{ number_format($roundingInfo['total_rounding_diff'], 0, ',', '.') }}₫ làm
-                            tròn)
-                        </small>
-                    @endif
-                </span>
+                <span>{{ number_format($finalAmount, 0, ',', '.') }}₫</span>
             </div>
-
-            <!-- Thông tin làm tròn cuối cùng -->
-            @if ($hasRounding)
-                <div class="text-xs-print receipt-item text-center text-gray-600 mt-1">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Phí làm tròn: {{ $roundingInfo['rounding_minutes'] ?? 15 }} phút /
-                    {{ $roundingInfo['rounding_amount'] ?? '1,000' }}₫
-                </div>
-            @endif
         </div>
 
         <!-- Phương thức thanh toán -->
@@ -950,18 +815,6 @@
                                 Thẻ
                             @break
 
-                            @case('bank_transfer')
-                                Chuyển khoản
-                            @break
-
-                            @case('vnpay')
-                                VNPay
-                            @break
-
-                            @case('momo')
-                                MoMo
-                            @break
-
                             @default
                                 {{ $bill->payment_method }}
                         @endswitch
@@ -970,7 +823,7 @@
             </div>
         @endif
 
-        <!-- QR Code Thanh Toán - ĐÃ CẬP NHẬT MB BANK -->
+        <!-- QR Code Thanh Toán -->
         <div class="mt-4 text-center receipt-item">
             <div class="receipt-line mb-2"></div>
 
@@ -980,7 +833,7 @@
                     class="w-32 h-32 object-contain mx-auto border border-gray-300 rounded qr-container" id="qrImage">
             </div>
 
-            <!-- Thông tin thanh toán QR - ĐÃ CẬP NHẬT THÔNG TIN MB BANK -->
+            <!-- Thông tin thanh toán QR -->
             <div class="text-xs-print space-y-1 mb-2">
                 <div class="flex justify-between">
                     <span>Số tài khoản:</span>
@@ -1009,41 +862,7 @@
                 Quét mã QR để thanh toán {{ number_format($finalAmount, 0, ',', '.') }}₫
             </p>
 
-            <!-- Link thanh toán nhanh (tùy chọn) -->
-            <div class="text-xs-print text-blue-600 mt-1 no-print">
-                <i class="fas fa-link mr-1"></i>
-                Link thanh toán:
-                <a href="mbbank://payment?account=0368015218&amount={{ $finalAmount }}&content=Bill{{ $bill->bill_number }}"
-                    class="underline">
-                    mbbank://Bill{{ $bill->bill_number }}
-                </a>
-            </div>
-
             <div class="receipt-line mt-2"></div>
-        </div>
-
-        <!-- Thông tin thêm về QR code -->
-        <div class="text-center text-xs-print text-gray-600 mt-1 receipt-item">
-            <i class="fas fa-info-circle mr-1"></i>
-            Mở ứng dụng MB Bank & quét QR để thanh toán nhanh
-        </div>
-
-        <!-- Tối ưu hóa cho mobile banking (tùy chọn nâng cao) -->
-        <div class="mt-2 text-center text-xs-print receipt-item no-print">
-            <div class="flex flex-col space-y-1">
-                <button onclick="openBankApp('momo')"
-                    class="bg-pink-600 text-white px-3 py-1 rounded text-xs hover:bg-pink-700 transition-all duration-300">
-                    <i class="fab fa-app-store-ios mr-1"></i> MoMo
-                </button>
-                <button onclick="openBankApp('vnpay')"
-                    class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-all duration-300">
-                    <i class="fas fa-mobile-alt mr-1"></i> VNPay
-                </button>
-                <button onclick="openBankApp('mbbank')"
-                    class="bg-mbbank text-white px-3 py-1 rounded text-xs hover:bg-mbbank transition-all duration-300">
-                    <i class="fas fa-university mr-1"></i> MB Bank
-                </button>
-            </div>
         </div>
 
         <!-- Footer -->
@@ -1051,66 +870,87 @@
             <div class="receipt-line receipt-item"></div>
             <p class="mt-2 receipt-item">Cảm ơn quý khách!</p>
             <p class="receipt-item">Hẹn gặp lại</p>
-            <p class="mt-1 receipt-item">In lúc: {{ $printTime }}</p>
+            <p class="mt-1 receipt-item">In lúc: {{ $printTime ?? now()->format('H:i d/m/Y') }}</p>
         </div>
 
         <!-- Khoảng trắng cuối bill -->
         <div class="mt-8"></div>
     </div>
 
+    <!-- Phần xác nhận thanh toán - CHỈ HIỂN THỊ KHI LÀ PREVIEW -->
+    @if (isset($isPreview) && $isPreview)
+        <div class="confirmation-section no-print">
+            <h3 class="font-bold text-sm-print mb-3 text-blue-600 text-center">
+                <i class="fas fa-check-circle mr-2"></i>
+                XÁC NHẬN THANH TOÁN VỚI KHÁCH HÀNG
+            </h3>
+
+            <div class="confirmation-buttons">
+                <!-- Form xác nhận thanh toán thành công -->
+                <form action="{{ route('admin.bills.confirm-payment', $bill->id) }}" method="POST" class="w-full">
+                    @csrf
+                    <button type="submit" onclick="return confirmPaymentSuccess()" class="confirm-btn">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Xác nhận thanh toán thành công
+                    </button>
+                    <p class="text-xs text-gray-600 mt-1 text-center">
+                        Nhấn khi khách hàng đã thanh toán xong
+                    </p>
+                </form>
+
+                <!-- Form hủy thanh toán (thanh toán lúc khác) -->
+                <form action="{{ route('admin.bills.cancel-payment', $bill->id) }}" method="POST" class="w-full">
+                    @csrf
+                    <button type="submit" onclick="return confirmCancelPayment()" class="cancel-btn">
+                        <i class="fas fa-clock mr-2"></i>
+                        Hủy - Thanh toán lúc khác
+                    </button>
+                    <p class="text-xs text-gray-600 mt-1 text-center">
+                        Nhấn nếu khách hàng chưa thanh toán
+                    </p>
+                </form>
+
+                <!-- Nút in lại -->
+                <button onclick="window.print()"
+                    class="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center w-full mt-2">
+                    <i class="fas fa-print mr-2"></i>
+                    In lại hóa đơn
+                </button>
+            </div>
+
+            <!-- Thông báo quan trọng -->
+            <div class="notice-box">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mt-1 mr-2"></i>
+                    <div class="text-left">
+                        <p class="text-xs font-semibold text-yellow-800">LƯU Ý QUAN TRỌNG:</p>
+                        <p class="text-xs text-yellow-700">
+                            1. Hãy đưa hóa đơn cho khách hàng xác nhận<br>
+                            2. Chỉ nhấn "Xác nhận thanh toán thành công" khi đã nhận tiền<br>
+                            3. Nếu khách chưa trả tiền, nhấn "Hủy - Thanh toán lúc khác"
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <script>
+        // Khai báo biến toàn cục
         let countdown = 3;
         let countdownInterval;
-        const redirectUrl = '{{ $redirectUrl ?? route('admin.bills.index') }}';
-        const autoRedirect = {{ $autoRedirect ? 'true' : 'false' }};
+        const redirectUrl = '{{ route('admin.bills.index') }}';
+        const autoRedirect = {{ isset($autoRedirect) && $autoRedirect ? 'true' : 'false' }};
         const isPaid = {{ $bill->payment_status === 'Paid' ? 'true' : 'false' }};
+        const isPreview = {{ isset($isPreview) && $isPreview ? 'true' : 'false' }};
         let hasPrinted = false;
-        let animationEnabled = false;
 
-        // Tự động in khi trang load
+        // Tự động in khi trang load (chỉ khi là preview)
         document.addEventListener('DOMContentLoaded', function() {
-            // Đảm bảo hóa đơn hiển thị ngay lập tức
             resetReceiptAnimation();
 
-            // QR Code interaction
-            const qrImage = document.getElementById('qrImage');
-
-            if (qrImage) {
-                // Add click to copy payment info
-                qrImage.addEventListener('click', function() {
-                    const paymentInfo = `Thanh toán bill {{ $bill->bill_number }}
-Số tiền: {{ number_format($finalAmount, 0, ',', '.') }}₫
-TK: 0368015218 - MB Bank
-Chủ TK: BILLIARDS CLUB
-Nội dung: TT Bill {{ $bill->bill_number }}`;
-
-                    navigator.clipboard.writeText(paymentInfo).then(function() {
-                        // Show toast notification
-                        showToast('Đã sao chép thông tin thanh toán!', 'success');
-                    }).catch(function(err) {
-                        // Fallback for older browsers
-                        const textArea = document.createElement('textarea');
-                        textArea.value = paymentInfo;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        showToast('Đã sao chép thông tin thanh toán!', 'success');
-                    });
-                });
-
-                // Add hover effect
-                qrImage.addEventListener('mouseenter', function() {
-                    this.classList.add('qr-pulse');
-                });
-
-                qrImage.addEventListener('mouseleave', function() {
-                    this.classList.remove('qr-pulse');
-                });
-            }
-
-            // Tự động in sau 1 giây nếu là thanh toán mới
-            if (isPaid && !hasPrinted) {
+            // Tự động in khi là preview
+            if (isPreview && !hasPrinted) {
                 setTimeout(() => {
                     printReceipt();
                 }, 1000);
@@ -1138,7 +978,7 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
                             printBtn.innerHTML = '<i class="fas fa-print mr-2"></i> In hóa đơn';
                         }
 
-                        // CHỈ HIỂN THỊ OVERLAY CHUYỂN HƯỚNG NẾU CÓ autoRedirect VÀ ĐÃ THANH TOÁN
+                        // Hiển thị overlay chuyển hướng
                         if (autoRedirect && isPaid) {
                             showRedirectOverlay();
                         }
@@ -1163,7 +1003,6 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
                 clearInterval(countdownInterval);
             }
 
-            // Ẩn overlay với hiệu ứng
             const overlay = document.getElementById('redirectOverlay');
             overlay.classList.remove('show');
 
@@ -1171,47 +1010,6 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
                 overlay.style.display = 'none';
             }, 500);
         }
-
-        // Hiệu ứng confetti
-        function createConfetti() {
-            const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
-            const confettiCount = 50;
-
-            for (let i = 0; i < confettiCount; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.top = '-10px';
-                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-                document.body.appendChild(confetti);
-
-                // Animation
-                const animation = confetti.animate([{
-                        transform: `translate(0, 0) rotate(0deg)`,
-                        opacity: 1
-                    },
-                    {
-                        transform: `translate(${Math.random() * 100 - 50}px, ${window.innerHeight}px) rotate(${Math.random() * 360}deg)`,
-                        opacity: 0
-                    }
-                ], {
-                    duration: 1000 + Math.random() * 2000,
-                    easing: 'cubic-bezier(0.1, 0.8, 0.3, 1)'
-                });
-
-                animation.onfinish = () => {
-                    confetti.remove();
-                };
-            }
-        }
-
-        // Hiển thị overlay sau khi in - CHỈ KHI CÓ autoRedirect VÀ ĐÃ THANH TOÁN
-        window.onafterprint = function() {
-            if (autoRedirect && isPaid) {
-                showRedirectOverlay();
-            }
-        };
 
         // Hiển thị overlay chuyển hướng với hiệu ứng
         function showRedirectOverlay() {
@@ -1222,9 +1020,6 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
             setTimeout(() => {
                 overlay.classList.add('show');
                 content.style.transform = 'scale(1)';
-
-                // Tạo confetti
-                createConfetti();
 
                 // Bắt đầu đếm ngược
                 countdownInterval = setInterval(function() {
@@ -1238,43 +1033,9 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
             }, 100);
         }
 
-        // Fallback: nếu onafterprint không hoạt động, sử dụng setTimeout
-        setTimeout(function() {
-            // Kiểm tra nếu đang ở chế độ màn hình (không phải print preview) VÀ có autoRedirect VÀ đã thanh toán
-            if (!window.matchMedia('print').matches && document.hasFocus() && !hasPrinted && autoRedirect &&
-                isPaid) {
-                // Chờ thêm 2 giây rồi hiển thị overlay
-                setTimeout(function() {
-                    const overlay = document.getElementById('redirectOverlay');
-                    if (!overlay.classList.contains('show') && overlay.style.display !== 'flex') {
-                        showRedirectOverlay();
-                    }
-                }, 2000);
-            }
-        }, 3000);
-
-        // Cho phép đóng bằng phím ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                stayHere();
-            }
-        });
-
-        // Hiệu ứng hover cho các nút
-        document.querySelectorAll('button').forEach(button => {
-            button.addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.05)';
-            });
-
-            button.addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-            });
-        });
-
         // Hiệu ứng cho hóa đơn
         function animateReceipt() {
             const items = document.querySelectorAll('.receipt-item');
-            animationEnabled = true;
             items.forEach(item => {
                 item.classList.add('animated');
                 item.classList.remove('visible');
@@ -1292,15 +1053,96 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
                 item.classList.remove('animated');
                 item.classList.remove('visible');
             });
-            animationEnabled = false;
         }
 
-        // Thêm sự kiện cho nút hiệu ứng
-        document.getElementById('animateBtn')?.addEventListener('click', animateReceipt);
+        // Xác nhận thanh toán thành công
+        function confirmPaymentSuccess() {
+            const finalAmount = {{ $finalAmount }};
 
-        // Toast notification function
+            return confirmAction(
+                'Xác nhận thanh toán thành công?',
+                `Bạn có chắc khách hàng đã thanh toán số tiền: ${formatCurrency(finalAmount)}?`,
+                'success',
+                'Xác nhận, khách đã trả tiền',
+                '#059669'
+            );
+        }
+
+        // Xác nhận hủy thanh toán
+        function confirmCancelPayment() {
+            return confirmAction(
+                'Hủy thanh toán?',
+                'Khách hàng sẽ thanh toán vào lúc khác?',
+                'warning',
+                'Xác nhận hủy',
+                '#f59e0b'
+            );
+        }
+
+        // Hàm chung xác nhận
+        function confirmAction(title, text, icon, confirmText, confirmColor) {
+            return new Promise((resolve) => {
+                if (typeof Swal === 'undefined') {
+                    // Nếu không có SweetAlert, sử dụng confirm thông thường
+                    const result = window.confirm(`${title}\n\n${text}`);
+                    resolve(result);
+                    return;
+                }
+
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: icon,
+                    showCancelButton: true,
+                    confirmButtonText: confirmText,
+                    cancelButtonText: 'Hủy bỏ',
+                    confirmButtonColor: confirmColor,
+                    cancelButtonColor: '#6b7280'
+                }).then((result) => {
+                    resolve(result.isConfirmed);
+                });
+            });
+        }
+
+        // Xử lý quay lại với xác nhận
+        async function goBackWithConfirmation() {
+            if (isPreview) {
+                const confirmed = await confirmAction(
+                    'Rời khỏi trang thanh toán?',
+                    'Bạn có một thanh toán đang chờ xác nhận. Nếu rời đi mà chưa xác nhận, thanh toán sẽ bị hủy.',
+                    'warning',
+                    'Hủy thanh toán và quay lại',
+                    '#ef4444'
+                );
+
+                if (confirmed) {
+                    // Gọi API hủy thanh toán
+                    fetch('{{ route('admin.bills.cancel-payment', $bill->id) }}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json'
+                        }
+                    }).then(() => {
+                        window.location.href = '{{ route('admin.tables.detail', $bill->table_id) }}';
+                    });
+                }
+            } else {
+                window.location.href = '{{ route('admin.bills.index') }}';
+            }
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Toast notification
         function showToast(message, type = 'info') {
-            // Tạo toast element
             const toast = document.createElement('div');
             toast.className = `toast toast-${type} no-print`;
             toast.innerHTML = `
@@ -1310,57 +1152,19 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
 
             document.body.appendChild(toast);
 
-            // Auto remove after 3 seconds
             setTimeout(() => {
                 toast.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        // Generate QR code on the fly (tùy chọn nâng cao)
-        function generateDynamicQR() {
-            const qrCodeElement = document.getElementById('dynamicQR');
-            if (qrCodeElement) {
-                const amount = {{ $finalAmount }};
-                const billNumber = '{{ $bill->bill_number }}';
-                const qrUrl =
-                    `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`mbbank://payment?account=0368015218&amount=${amount}&content=Bill${billNumber}`)}`;
-
-                qrCodeElement.src = qrUrl;
+        // Ngăn chặn đóng trang khi đang có thanh toán chờ xác nhận
+        window.addEventListener('beforeunload', function(e) {
+            if (isPreview) {
+                e.preventDefault();
+                e.returnValue = 'Bạn có thanh toán đang chờ xác nhận. Bạn có chắc muốn rời đi?';
             }
-        }
-
-        // Mobile banking app deep links - ĐÃ CẬP NHẬT CHO MB BANK
-        function openBankApp(app) {
-            const amount = {{ $finalAmount }};
-            const billNumber = '{{ $bill->bill_number }}';
-            let url = '';
-
-            switch (app) {
-                case 'momo':
-                    url = `momo://payment?phone=0912345678&amount=${amount}&content=Bill${billNumber}`;
-                    break;
-                case 'vnpay':
-                    url = `vnpay://payment?amount=${amount}&billId=${billNumber}`;
-                    break;
-                case 'mbbank':
-                    url = `mbbank://transfer?account=0368015218&amount=${amount}&content=Bill${billNumber}`;
-                    break;
-                default:
-                    url = `mbbank://payment?account=0368015218&amount=${amount}&content=Bill${billNumber}`;
-            }
-
-            // Try to open app, fallback to web
-            window.location.href = url;
-
-            // Fallback after 500ms
-            setTimeout(() => {
-                if (document.hasFocus()) {
-                    window.open('https://mbbank.com.vn', '_blank');
-                    showToast('Không thể mở ứng dụng ngân hàng. Vui lòng mở ứng dụng thủ công.', 'info');
-                }
-            }, 500);
-        }
+        });
     </script>
 </body>
 
