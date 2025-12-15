@@ -1358,12 +1358,23 @@ class BillController extends Controller
                 'billTimeUsages',
                 'comboTimeUsages.combo'
             ])->findOrFail($id);
+            
+                // Kiểm tra nếu là success từ VNPay
+                if (request()->has('vnpay_success')) {
+                 // Xóa session pending
+                session()->forget([
+                'pending_vnpay_bill_id',
+                'pending_vnpay_txn_ref',
+                'pending_vnpay_amount',
+                'pending_vnpay_time'
+                 ]);
+                }
 
             // Kiểm tra xem có phải là preview thanh toán không
             $isPreview = request()->has('preview');
             $paymentMethod = request()->get('payment_method');
             $finalAmount = request()->get('final_amount');
-
+            
             if ($isPreview) {
                 // Lấy thông tin từ session
                 $paymentData = session('pending_payment_' . $id);
