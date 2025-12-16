@@ -686,83 +686,6 @@
             }
         }
 
-         .vnpay-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 10000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .vnpay-modal.active {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .vnpay-modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-
-        .vnpay-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 25px;
-            justify-content: center;
-        }
-
-        .vnpay-btn {
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 140px;
-            justify-content: center;
-        }
-
-        .vnpay-btn-primary {
-            background: #374151;
-            color: white;
-            border: none;
-        }
-
-        .vnpay-btn-primary:hover {
-            background: #111827;
-        }
-
-        .vnpay-btn-secondary {
-            background: #f3f4f6;
-            color: #374151;
-            border: 1px solid #d1d5db;
-        }
-
-        .vnpay-btn-secondary:hover {
-            background: #e5e7eb;
-        }
-
-        .vnpay-btn-cancel {
-            background: #dc2626;
-            color: white;
-            border: none;
-        }
-
-        .vnpay-btn-cancel:hover {
-            background: #b91c1c;
-        }
 
         .payment-timer {
             margin-top: 20px;
@@ -1156,53 +1079,6 @@
         </div>
     </div>
 
-        <!-- Modal VNPay -->
-    <div id="vnpayModal" class="vnpay-modal">
-        <div class="vnpay-modal-content">
-            <div class="spinner-border text-primary mb-4" style="width: 3rem; height: 3rem;" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <h4 class="mb-2">Đang tạo giao dịch VNPay...</h4>
-            <p class="text-gray-600 mb-4">Vui lòng chờ trong giây lát</p>
-            <div class="vnpay-actions">
-                <button onclick="cancelVNPayCreation()" class="vnpay-btn vnpay-btn-cancel">
-                    <i class="fas fa-times"></i>
-                    Hủy
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal chờ thanh toán -->
-    <div id="vnpayWaitingModal" class="vnpay-modal">
-        <div class="vnpay-modal-content">
-            <div class="spinner-border text-primary mb-4" style="width: 3rem; height: 3rem;" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <h4 class="mb-3">Đang chờ thanh toán...</h4>
-            <p>Vui lòng hoàn tất thanh toán trên trang VNPay</p>
-            <p class="text-sm text-gray-500 mt-2">
-                Sau khi thanh toán xong, bạn có thể đóng tab VNPay và quay lại đây
-            </p>
-            
-            <div class="payment-timer">
-                <p class="text-sm font-semibold text-amber-700 mb-2">
-                    <i class="fas fa-clock"></i> Thời gian còn lại:
-                </p>
-                <div class="timer-display" id="paymentTimer">03:00</div>
-                <p class="timer-note">
-                    Giao dịch sẽ tự động hủy sau 3 phút
-                </p>
-            </div>
-            
-            <div class="vnpay-actions">
-                <button onclick="cancelVNPayPayment()" class="vnpay-btn vnpay-btn-cancel">
-                    <i class="fas fa-times"></i>
-                    Hủy thanh toán
-                </button>
-            </div>
-        </div>
-    </div>
     <script>
         const totalAmount = {{ $totalAmount }};
         const originalFinalAmount = {{ $finalAmount }};
@@ -1405,7 +1281,6 @@
             }
 
             appliedPromotion.classList.add('active');
-            showToast('Đã xóa mã giảm giá', 'success');
             // Update total amount
             updateTotalAmount();
         }
@@ -1541,254 +1416,41 @@
            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
             const finalAmount = totalAmount - currentDiscount;
 
-            if (paymentMethod !== 'vnpay') {
-                const result = await showConfirmation();
-                if (!result.isConfirmed) {
-                    return false;
-                }
-                showLoading();
-                setTimeout(() => {
-                    this.submit();
-                }, 500);
-                return;
-            }
-
           // Xử lý VNPay - mở tab mới
-    if (paymentMethod === 'vnpay') {
-                // Hiển thị modal tạo giao dịch
-                showVNPayModal();
-                
-                try {
-                    // Gọi API tạo thanh toán VNPay
-                    const response = await fetch('{{ route("admin.payments.vnpay.create") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            bill_id: {{ $bill->id }},
-                            amount: finalAmount
-                        })
-                    });
+        if (paymentMethod === 'vnpay') {
+            try {
+                const response = await fetch('{{ route("admin.payments.vnpay.create") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        bill_id: {{ $bill->id }},
+                        amount: finalAmount
+                    })
+                });
 
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        // Ẩn modal tạo giao dịch
-                        hideVNPayModal();
-                        
-                        // Mở VNPay trong tab mới
-                        vnpayWindow = window.open(result.payment_url, '_blank', 'width=1024,height=768');
-                        
-                        if (vnpayWindow) {
-                            // Hiển thị modal chờ thanh toán
-                            showVNPayWaitingModal();
-                            
-                            // Bắt đầu kiểm tra trạng thái thanh toán
-                            startPaymentStatusCheck({{ $bill->id }});
-                        } else {
-                            Swal.fire('Lỗi', 'Trình duyệt chặn mở cửa sổ mới. Vui lòng cho phép popup.', 'error');
-                        }
-                    } else {
-                        hideVNPayModal();
-                        Swal.fire('Lỗi', result.message, 'error');
-                    }
-                } catch (error) {
-                    hideVNPayModal();
-                    Swal.fire('Lỗi', 'Không thể kết nối đến server', 'error');
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Direct to VNPay page in new tab
+                    window.open(result.payment_url, '_blank');
+                } else {
+                    Swal.fire('Lỗi', result.message, 'error');
                 }
-                return;
-            }
-        });
-
-        function startPaymentStatusCheck(billId) {
-            let checkCount = 0;
-            const maxChecks = 180; // 3 phút
-            
-            paymentCheckInterval = setInterval(async () => {
-                checkCount++;
-                
-                // Kiểm tra nếu tab VNPay đã đóng
-                if (vnpayWindow && vnpayWindow.closed) {
-                    // Đợi thêm 5 giây rồi kiểm tra trạng thái
-                    setTimeout(async () => {
-                        const result = await checkBillStatus(billId);
-                        if (result.paid) {
-                            clearInterval(paymentCheckInterval);
-                            hideVNPayWaitingModal();
-                            showPaymentSuccessModal(result);
-                        } else {
-                            // Người dùng đã đóng cửa sổ nhưng chưa thanh toán
-                            showPaymentCancelledModal();
-                        }
-                    }, 5000);
-                    return;
-                }
-                
-                // Nếu quá thời gian chờ
-                if (checkCount > maxChecks) {
-                    clearInterval(paymentCheckInterval);
-                    timeoutPayment();
-                    return;
-                }
-                
-                // Kiểm tra trạng thái bill mỗi 5 giây
-                if (checkCount % 5 === 0) {
-                    const result = await checkBillStatus(billId);
-                    if (result.paid) {
-                        clearInterval(paymentCheckInterval);
-                        stopPaymentTimer();
-                        hideVNPayWaitingModal();
-                        if (vnpayWindow && !vnpayWindow.closed) {
-                            vnpayWindow.close();
-                        }
-                        showPaymentSuccessModal(result);
-                    }
-                }
-                
-            }, 1000);
-        }
-
-        // // Show confirmation dialog
-        //     const result = await showConfirmation();
-
-        //     if (!result.isConfirmed) {
-        //         return false;
-        //     }
-
-        //     showLoading();
-
-        //     // Submit form
-        //     setTimeout(() => {
-        //         this.submit();
-        //     }, 500);
-        // });
-
-    // Hàm kiểm tra trạng thái thanh toán
-    function checkPaymentStatus(billId, vnpayWindow) {
-    let checkCount = 0;
-    const maxChecks = 180; // 3 phút (mỗi giây check 1 lần)
-    
-    const checkInterval = setInterval(async () => {
-        checkCount++;
-        
-        // Kiểm tra nếu tab VNPay đã đóng
-        if (vnpayWindow.closed) {
-            clearInterval(checkInterval);
-            hidePaymentWaitingModal();
-            
-            // Kiểm tra lại trạng thái bill
-            const result = await checkBillStatus(billId);
-            
-            if (result.paid) {
-                showPaymentSuccessModal(result);
-            } else {
-                showPaymentCancelledModal();
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể kết nối đến server', 'error');
             }
             return;
         }
-        
-        // Nếu quá thời gian chờ
-        if (checkCount > maxChecks) {
-            clearInterval(checkInterval);
-            hidePaymentWaitingModal();
-            Swal.fire('Hết thời gian', 'Thanh toán đã quá thời gian chờ. Vui lòng kiểm tra lại.', 'warning');
-            vnpayWindow.close();
-        }
-        
-        // Kiểm tra trạng thái bill mỗi 5 giây
-        if (checkCount % 5 === 0) {
-            const result = await checkBillStatus(billId);
-            if (result.paid) {
-                clearInterval(checkInterval);
-                hidePaymentWaitingModal();
-                vnpayWindow.close();
-                showPaymentSuccessModal(result);
-            }
-        }
-        
-    }, 1000); // Kiểm tra mỗi giây
-}
 
-// Hàm kiểm tra trạng thái bill
-async function checkBillStatus(billId) {
-    try {
-        const response = await fetch(`/admin/bills/${billId}/status`);
-        return await response.json();
-    } catch (error) {
-        return { paid: false };
-    }
-}
-
-// Hàm hiển thị modal chờ thanh toán
-function showPaymentWaitingModal() {
-    Swal.fire({
-        title: 'Đang chờ thanh toán...',
-        html: `
-            <div class="text-center">
-                <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p>Vui lòng hoàn tất thanh toán trên trang VNPay</p>
-                <p class="text-sm text-gray-500">
-                    Sau khi thanh toán xong, bạn có thể đóng tab VNPay và quay lại đây
-                </p>
-                <div class="mt-4">
-                    <button onclick="reopenVNPayWindow()" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-external-link-alt"></i> Mở lại trang thanh toán
-                    </button>
-                </div>
-            </div>
-        `,
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        allowEscapeKey: false
-    });
-}
-
-function hidePaymentWaitingModal() {
-    Swal.close();
-}
-
-function showPaymentSuccessModal(result) {
-    Swal.fire({
-        title: 'Thanh toán thành công!',
-        html: `
-            <div class="text-center">
-                <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
-                <p class="text-lg font-bold">${formatCurrency(result.amount)}</p>
-                <p>Mã giao dịch: <strong>${result.transaction_id}</strong></p>
-                <div class="mt-4">
-                    <button onclick="printBill(${result.bill_id})" class="btn btn-primary">
-                        <i class="fas fa-print"></i> In hóa đơn
-                    </button>
-                    <button onclick="closeAndRefresh()" class="btn btn-secondary">
-                        <i class="fas fa-check"></i> Hoàn tất
-                    </button>
-                </div>
-            </div>
-        `,
-        icon: 'success',
-        showCancelButton: false,
-        confirmButtonText: 'Đóng',
-        allowOutsideClick: false
-    }).then((result) => {
+        // For other methods: show confirmation and submit form
+        const result = await showConfirmation();
         if (result.isConfirmed) {
-            window.location.href = '/admin/tables';
+            this.submit();
         }
     });
-}
-
-
-function printBill(billId) {
-    window.open(`/admin/bills/${billId}/print?auto_print=true`, '_blank');
-}
-
-function closeAndRefresh() {
-    window.location.href = '/admin/tables';
-}
-
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('.payment-method[data-method="cash"]').click();
@@ -1834,7 +1496,6 @@ function closeAndRefresh() {
           if (modal) {
             modal.classList.remove('active');
             }
-            showToast('Đã hủy tạo giao dịch VNPay', 'info');
         }
 
         // Hàm hủy thanh toán VNPay
@@ -1865,119 +1526,10 @@ function closeAndRefresh() {
         paymentCheckInterval = null;
     }
     
-    // 5. Hiển thị thông báo đơn giản
-    showToast('Đã hủy thanh toán VNPay', 'success');
 }
 
-        function showToast(message, type = 'info') {
-    const colors = {
-        success: '#059669',
-        error: '#dc2626',
-        info: '#3b82f6',
-        warning: '#f59e0b'
-    };
-    
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${colors[type] || colors.info};
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10001;
-        font-weight: 500;
-        animation: slideInRight 0.3s ease;
-    `;
-    
-    toast.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 
-                         type === 'error' ? 'exclamation-circle' : 
-                         type === 'warning' ? 'exclamation-triangle' : 
-                         'info-circle'} mr-2"></i>
-        ${message}
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.parentNode.removeChild(toast);
-            }
-        }, 300);
-    }, 3000);
-}
+      
 
-// Thêm animation vào CSS
-const animationCSS = `
-    @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    
-    @keyframes slideOutRight {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-`;
-
-        // Hàm bộ đếm thời gian
-        function startPaymentTimer() {
-            paymentTimeLeft = 180;
-            updateTimerDisplay();
-            
-            paymentTimerInterval = setInterval(() => {
-                paymentTimeLeft--;
-                updateTimerDisplay();
-                
-                if (paymentTimeLeft <= 0) {
-                    clearInterval(paymentTimerInterval);
-                    timeoutPayment();
-                }
-            }, 1000);
-        }
-        function stopPaymentTimer() {
-            if (paymentTimerInterval) {
-                clearInterval(paymentTimerInterval);
-            }
-        }
-        function updateTimerDisplay() {
-            const minutes = Math.floor(paymentTimeLeft / 60);
-            const seconds = paymentTimeLeft % 60;
-            document.getElementById('paymentTimer').textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Đổi màu khi sắp hết giờ
-            if (paymentTimeLeft <= 60) {
-                document.getElementById('paymentTimer').style.color = '#dc2626';
-            } else if (paymentTimeLeft <= 120) {
-                document.getElementById('paymentTimer').style.color = '#f59e0b';
-            } else {
-                document.getElementById('paymentTimer').style.color = '#059669';
-            }
-        }
-        function timeoutPayment() {
-            hideVNPayWaitingModal();
-            
-            // Đóng cửa sổ VNPay nếu đang mở
-            if (vnpayWindow && !vnpayWindow.closed) {
-                vnpayWindow.close();
-                vnpayWindow = null;
-            }
-            
-            // Dừng kiểm tra
-            if (paymentCheckInterval) {
-                clearInterval(paymentCheckInterval);
-                paymentCheckInterval = null;
-            }
-            
-            showToast('Đã hết thời gian thanh toán', 'warning');
-        }
-</script>
 
 </body>
 

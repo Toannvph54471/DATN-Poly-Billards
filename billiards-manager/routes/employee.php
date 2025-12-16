@@ -77,10 +77,8 @@ Route::prefix('admin')
             // VNPay Routes
             Route::post('/vnpay/create', [PaymentController::class, 'createVNPayPayment'])->name('vnpay.create');
             Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])->name('vnpay.return');
-            Route::post('/vnpay/ipn', [PaymentController::class, 'vnpayIPN'])->name('vnpay.ipn');
-
-            Route::get('/{id}/status', [PaymentController::class, 'checkPaymentStatus'])->name('payments.status');
-            Route::get('/bills/{id}/status', [PaymentController::class, 'checkBillStatus'])->name('bills.status');
+            Route::get('/vnpay/ipn', [PaymentController::class, 'vnpayIPN'])->name('vnpay.ipn');
+            Route::get('/payment/check-vnpay-status/{billId}', [PaymentController::class, 'checkVnpayPaymentStatus'])->name('payment.checkVnpayStatus');
         });
 
         // ============================
