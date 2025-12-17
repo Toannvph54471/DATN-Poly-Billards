@@ -46,7 +46,7 @@ Route::prefix('admin')
 
 
 
-        Route::get('/admin/dashboard/debug', [DashboardController::class, 'debugToday'])->name('dashboard.debug');
+
         /*
         |--------------------------------------------------------------------------
         | ADMIN ONLY

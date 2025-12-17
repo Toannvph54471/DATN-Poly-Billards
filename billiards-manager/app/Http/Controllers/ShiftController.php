@@ -77,6 +77,19 @@ class ShiftController extends Controller
             'end_time.required'    => 'Vui lòng nhập thời gian kết thúc.',
         ]);
 
+        // Check if shift is currently active (has check-in employees today or locked shift)
+        $hasActiveEmployees = EmployeeShift::where('shift_id', $id)
+            ->whereDate('shift_date', today())
+            ->where(function ($query) {
+                $query->where('status', EmployeeShift::STATUS_ACTIVE)
+                      ->orWhere('is_locked', true);
+            })
+            ->exists();
+
+        if ($hasActiveEmployees) {
+            return redirect()->back()->withErrors(['error' => 'Không thể chỉnh sửa ca làm việc này vì đang có nhân viên đang làm việc hoặc đã check-in trong hôm nay.']);
+        }
+
         $shift = Shift::findOrFail($id);
         // var_dump($shift);die;
         $shift->update($validated);
