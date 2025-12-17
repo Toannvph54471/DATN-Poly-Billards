@@ -8,6 +8,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+    .swal2-popup {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .swal2-confirm {
+        background: #4f46e5 !important;
+    }
+    </style>
     <style>
         * {
             margin: 0;
@@ -675,6 +685,47 @@
                 transform: rotate(360deg);
             }
         }
+
+
+        .payment-timer {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fefce8;
+            border-radius: 8px;
+            border: 1px solid #eab308;
+        }
+
+        .timer-display {
+            font-size: 24px;
+            font-weight: 700;
+            color: #dc2626;
+            margin: 10px 0;
+        }
+
+        .timer-note {
+            font-size: 12px;
+            color: #854d0e;
+            margin-top: 8px;
+        }
+
+        .reopen-btn {
+            background: transparent;
+            border: 2px solid #3b82f6;
+            color: #3b82f6;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .reopen-btn:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
     </style>
 </head>
 
@@ -936,6 +987,20 @@
                                     </div>
                                 </div>
                                 <input type="radio" name="payment_method" value="bank" hidden>
+                            </div>
+
+                            <!-- Thêm vào phần Payment Methods -->
+                            <div class="payment-method" data-method="vnpay">
+                            <div class="method-header">
+                            <div class="method-icon">
+                            <i class="fas fa-qrcode"></i>
+                            </div>
+                             <div>
+                             <div class="method-name">VNPay</div>
+                                <div class="method-desc">Thanh toán qua VNPay QR</div>
+                            </div>
+                            </div>
+                             <input type="radio" name="payment_method" value="vnpay" hidden>
                             </div>
 
                             <div class="payment-method" data-method="card">
@@ -1216,7 +1281,6 @@
             }
 
             appliedPromotion.classList.add('active');
-
             // Update total amount
             updateTotalAmount();
         }
@@ -1271,6 +1335,9 @@
                     break;
                 case 'card':
                     paymentMethodText = 'Thẻ';
+                    break;
+                case 'vnpay':
+                    paymentMethodText = 'VNPay QR';
                     break;
             }
 
@@ -1346,24 +1413,44 @@
         document.getElementById('paymentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+           const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
             const finalAmount = totalAmount - currentDiscount;
 
-            // Show confirmation dialog
-            const result = await showConfirmation();
+          // Xử lý VNPay - mở tab mới
+        if (paymentMethod === 'vnpay') {
+            try {
+                const response = await fetch('{{ route("admin.payments.vnpay.create") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        bill_id: {{ $bill->id }},
+                        amount: finalAmount
+                    })
+                });
 
-            if (!result.isConfirmed) {
-                return false;
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Direct to VNPay page in new tab
+                    window.open(result.payment_url, '_blank');
+                } else {
+                    Swal.fire('Lỗi', result.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Lỗi', 'Không thể kết nối đến server', 'error');
             }
+            return;
+        }
 
-            showLoading();
-
-            // Submit form
-            setTimeout(() => {
-                this.submit();
-            }, 500);
-        });
-
+        // For other methods: show confirmation and submit form
+        const result = await showConfirmation();
+        if (result.isConfirmed) {
+            this.submit();
+        }
+    });
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelector('.payment-method[data-method="cash"]').click();
@@ -1373,7 +1460,77 @@
                 updatePromotionUI(currentPromotion.name, currentDiscount, currentPromotion.code);
             }
         });
-    </script>
+</script>
+
+
+<script>
+        // Biến toàn cục
+        let vnpayWindow = null;
+        let paymentCheckInterval = null;
+        let paymentTimerInterval = null;
+        let paymentTimeLeft = 180; // 3 phút = 180 giây
+
+        // Các hàm modal
+        function showVNPayModal() {
+            document.getElementById('vnpayModal').classList.add('active');
+        }
+
+        function hideVNPayModal() {
+            document.getElementById('vnpayModal').classList.remove('active');
+        }
+
+        function showVNPayWaitingModal() {
+            document.getElementById('vnpayWaitingModal').classList.add('active');
+            startPaymentTimer();
+        }
+
+        function hideVNPayWaitingModal() {
+            document.getElementById('vnpayWaitingModal').classList.remove('active');
+            stopPaymentTimer();
+        }
+
+        // Hàm hủy tạo giao dịch VNPay
+        function cancelVNPayCreation() {
+            console.log('Hủy tạo giao dịch VNPay');
+          const modal = document.getElementById('vnpayModal');
+          if (modal) {
+            modal.classList.remove('active');
+            }
+        }
+
+        // Hàm hủy thanh toán VNPay
+        function cancelVNPayPayment() {
+    console.log('Hủy thanh toán VNPay');
+    
+    // 1. Tắt modal chờ
+    const waitingModal = document.getElementById('vnpayWaitingModal');
+    if (waitingModal) {
+        waitingModal.classList.remove('active');
+    }
+    
+    // 2. Đóng cửa sổ VNPay nếu đang mở
+    if (vnpayWindow && !vnpayWindow.closed) {
+        vnpayWindow.close();
+        vnpayWindow = null;
+    }
+    
+    // 3. Dừng timer
+    if (paymentTimerInterval) {
+        clearInterval(paymentTimerInterval);
+        paymentTimerInterval = null;
+    }
+    
+    // 4. Dừng kiểm tra trạng thái
+    if (paymentCheckInterval) {
+        clearInterval(paymentCheckInterval);
+        paymentCheckInterval = null;
+    }
+    
+}
+
+      
+
+
 </body>
 
 </html>

@@ -1901,6 +1901,11 @@
                             <h2 class="section-title">
                                 <i class="fas fa-receipt text-gray-600"></i>
                                 CHI TIẾT HÓA ĐƠN
+                                @if ($table->currentBill)
+                                    <span class="text-sm font-normal text-gray-500 ml-2">
+                                        ({{ $table->currentBill->bill_number }})
+                                    </span>
+                                @endif
                             </h2>
                         </div>
 
@@ -1910,78 +1915,158 @@
                                 <table class="bill-table">
                                     <thead>
                                         <tr>
-                                            <th>Sản phẩm/Dịch vụ</th>
-                                            <th width="80">SL</th>
-                                            <th width="120">Đơn giá</th>
-                                            <th width="140">Thành tiền</th>
-                                            <th width="80"></th>
+                                            <th width="40%">Sản phẩm/Dịch vụ</th>
+                                            <th width="10%">SL</th>
+                                            <th width="15%">Đơn giá</th>
+                                            <th width="20%">Thành tiền</th>
+                                            <th width="15%">Thêm bởi</th>
+                                            <th width="10%">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($table->currentBill->billDetails as $item)
                                             @if (!$item->is_combo_component)
-                                                <tr>
-                                                    <td>
-                                                        @if ($item->product_id && $item->product)
-                                                            <i class="fas fa-utensils text-green-500 mr-2"></i>
-                                                            {{ $item->product->name }}
-                                                        @elseif($item->combo_id && $item->combo)
-                                                            <i class="fas fa-gift text-purple-500 mr-2"></i>
-                                                            {{ $item->combo->name }}
-                                                            @if ($item->combo->is_time_combo)
-                                                                <span class="text-xs text-purple-500">
-                                                                    ({{ $item->combo->play_duration_minutes }} phút)
-                                                                </span>
-                                                            @endif
-                                                        @endif
+                                                @php
+                                                    // KIỂM TRA QUYỀN XÓA
+                                                    $currentUser = Auth::user();
+                                                    $canDelete = false;
 
-                                                        <!-- HIỂN THỊ NHÂN VIÊN ĐÃ THÊM -->
-                                                        @if ($item->added_by)
-                                                            @php
-                                                                $addedByUser = App\Models\User::find($item->added_by);
-                                                                $staffName = $addedByUser->name ?? 'N/A';
-                                                                $staffCode =
-                                                                    $addedByUser->employee->employee_code ?? 'N/A';
-                                                                $addedTime = $item->added_at
-                                                                    ? \Carbon\Carbon::parse($item->added_at)->format(
-                                                                        'H:i',
-                                                                    )
-                                                                    : '';
-                                                            @endphp
-                                                            <div class="bill-item-staff">
-                                                                <i class="fas fa-user-circle text-gray-400"></i>
-                                                                <span>{{ $staffName }}</span>
-                                                                @if ($staffCode !== 'N/A')
-                                                                    <span
-                                                                        class="text-gray-500">({{ $staffCode }})</span>
+                                                    // Admin (role_id = 1) và Manager (role_id = 2) có quyền xóa tất cả
+                                                    if (in_array($currentUser->role_id, [1, 2])) {
+                                                        $canDelete = true;
+                                                    }
+                                                    // Nhân viên (role_id = 3): chỉ xóa được sản phẩm mình thêm
+                                                    elseif ($currentUser->role_id == 3) {
+                                                        if ($item->added_by == $currentUser->id) {
+                                                            $canDelete = true;
+                                                        }
+                                                        // Nếu added_by là null, cho phép nhân viên tạo bill được xóa
+                                                        elseif (
+                                                            $item->added_by === null &&
+                                                            $table->currentBill->staff_id == $currentUser->id
+                                                        ) {
+                                                            $canDelete = true;
+                                                        }
+                                                    }
+
+                                                    // Lấy thông tin người thêm
+                                                    $addedByUser = $item->added_by
+                                                        ? App\Models\User::find($item->added_by)
+                                                        : null;
+                                                    $staffName = $addedByUser ? $addedByUser->name : 'Không xác định';
+                                                    $staffCode =
+                                                        $addedByUser && $addedByUser->employee
+                                                            ? $addedByUser->employee->employee_code
+                                                            : null;
+                                                    $addedTime = $item->added_at
+                                                        ? \Carbon\Carbon::parse($item->added_at)->format('H:i')
+                                                        : '';
+                                                @endphp
+
+                                                <tr class="bill-item-row hover:bg-gray-50 transition-colors">
+                                                    <td>
+                                                        <div class="flex items-center">
+                                                            @if ($item->product_id && $item->product)
+                                                                <i class="fas fa-utensils text-green-500 mr-2"></i>
+                                                                <span
+                                                                    class="font-medium">{{ $item->product->name }}</span>
+                                                            @elseif($item->combo_id && $item->combo)
+                                                                <i class="fas fa-gift text-purple-500 mr-2"></i>
+                                                                <span
+                                                                    class="font-medium">{{ $item->combo->name }}</span>
+                                                                @if ($item->combo->is_time_combo)
+                                                                    <span class="text-xs text-purple-500 ml-1">
+                                                                        ({{ $item->combo->play_duration_minutes }}
+                                                                        phút)
+                                                                    </span>
                                                                 @endif
-                                                                @if ($addedTime)
-                                                                    <span class="text-gray-400">•
-                                                                        {{ $addedTime }}</span>
-                                                                @endif
+                                                            @endif
+                                                        </div>
+
+                                                        @if ($item->product && $item->product->category)
+                                                            <div class="text-xs text-gray-500 mt-1">
+                                                                {{ $item->product->category->name }}
                                                             </div>
                                                         @endif
                                                     </td>
-                                                    <td class="text-center">{{ $item->quantity }}</td>
-                                                    <td class="text-right">{{ number_format($item->unit_price) }} ₫
+
+                                                    <td class="text-center">
+                                                        <span
+                                                            class="quantity-badge bg-blue-100 text-blue-800 text-sm font-medium px-2 py-1 rounded">
+                                                            {{ $item->quantity }}
+                                                        </span>
                                                     </td>
-                                                    <td class="text-right font-semibold">
-                                                        {{ number_format($item->total_price) }} ₫
+
+                                                    <td class="text-right">
+                                                        <span
+                                                            class="font-medium">{{ number_format($item->unit_price) }}
+                                                            ₫</span>
                                                     </td>
+
+                                                    <td class="text-right">
+                                                        <span class="font-semibold text-green-600">
+                                                            {{ number_format($item->total_price) }} ₫
+                                                        </span>
+                                                    </td>
+
+                                                    <td>
+                                                        @if ($addedByUser)
+                                                            <div class="staff-info">
+                                                                <div class="flex items-center">
+                                                                    <i
+                                                                        class="fas fa-user-circle text-gray-400 mr-1 text-sm"></i>
+                                                                    <span
+                                                                        class="text-sm font-medium">{{ $staffName }}</span>
+                                                                </div>
+                                                                @if ($staffCode)
+                                                                    <div class="text-xs text-gray-500">
+                                                                        {{ $staffCode }}
+                                                                    </div>
+                                                                @endif
+                                                                @if ($addedTime)
+                                                                    <div class="text-xs text-gray-400">
+                                                                        <i
+                                                                            class="far fa-clock mr-1"></i>{{ $addedTime }}
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        @else
+                                                            <div class="text-sm text-gray-400">
+                                                                <i class="fas fa-user-slash mr-1"></i>Không xác định
+                                                            </div>
+                                                        @endif
+                                                    </td>
+
                                                     <td class="text-center">
                                                         @if ($item->product_id && !$item->combo_id)
-                                                            <form
-                                                                action="{{ route('admin.bills.remove-product', ['bill' => $table->currentBill->id, 'billDetail' => $item->id]) }}"
-                                                                method="POST">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="button"
-                                                                    class="delete-product-btn text-red-500 hover:text-red-700 p-2"
-                                                                    title="Xóa sản phẩm"
-                                                                    data-product-name="{{ $item->product->name }}">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </button>
-                                                            </form>
+                                                            <div class="flex justify-center">
+                                                                @if ($canDelete)
+                                                                    <form id="deleteForm_{{ $item->id }}"
+                                                                        action="{{ route('admin.bills.remove-product', ['bill' => $table->currentBill->id, 'billDetail' => $item->id]) }}"
+                                                                        method="POST">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button type="button"
+                                                                            class="delete-btn text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors"
+                                                                            title="Xóa sản phẩm"
+                                                                            onclick="confirmDeleteProduct(
+                                                                        '{{ addslashes($item->product->name) }}',
+                                                                        {{ $item->quantity }},
+                                                                        'deleteForm_{{ $item->id }}'
+                                                                    )">
+                                                                            <i class="fas fa-trash"></i>
+                                                                        </button>
+                                                                    </form>
+                                                                @else
+                                                                    <button type="button"
+                                                                        class="delete-btn-disabled text-gray-300 p-2 cursor-not-allowed"
+                                                                        title="Bạn không có quyền xóa sản phẩm này. Sản phẩm được thêm bởi {{ $staffName }}">
+                                                                        <i class="fas fa-trash"></i>
+                                                                    </button>
+                                                                @endif
+                                                            </div>
+                                                        @elseif($item->combo_id)
+                                                            <span class="text-xs text-gray-400">Combo</span>
                                                         @endif
                                                     </td>
                                                 </tr>
@@ -1990,162 +2075,203 @@
 
                                         <!-- HIỂN THỊ GIẢM GIÁ -->
                                         @if ($discountAmount > 0)
-                                            <tr class="bg-red-50">
-                                                <td colspan="3" class="text-right font-semibold text-red-700">
-                                                    <i class="fas fa-tag mr-2"></i>Giảm giá
+                                            <tr class="discount-row bg-red-50">
+                                                <td colspan="4" class="text-right font-semibold text-red-700">
+                                                    <div class="flex items-center justify-end">
+                                                        <i class="fas fa-tag mr-2"></i>Giảm giá
+                                                        @if ($discountPercentage ?? 0 > 0)
+                                                            <span class="text-sm font-normal ml-2">
+                                                                ({{ $discountPercentage ?? 0 }}%)
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                 </td>
-                                                <td class="text-right font-bold text-red-700">
+                                                <td colspan="2" class="text-right font-bold text-red-700">
                                                     -{{ number_format($discountAmount) }} ₫
                                                 </td>
-                                                <td></td>
                                             </tr>
                                         @endif
 
                                         <!-- HIỂN THỊ TỔNG CỘNG -->
-                                        <tr class="bg-green-50 border-t-2 border-green-200">
-                                            <td colspan="3" class="text-right font-bold text-lg text-green-700">
-                                                <i class="fas fa-calculator mr-2"></i>TỔNG CỘNG
+                                        <tr class="total-row bg-green-50 border-t-2 border-green-200">
+                                            <td colspan="4" class="text-right font-bold text-lg text-green-700">
+                                                <div class="flex items-center justify-end">
+                                                    <i class="fas fa-calculator mr-2"></i>TỔNG CỘNG
+                                                </div>
                                             </td>
-                                            <td class="text-right font-bold text-lg text-green-700">
+                                            <td colspan="2" class="text-right font-bold text-lg text-green-700">
                                                 {{ number_format($finalAmount) }} ₫
                                             </td>
-                                            <td></td>
                                         </tr>
                                     </tbody>
                                 </table>
                             @else
-                                <div class="empty-state">
-                                    <i class="fas fa-receipt"></i>
-                                    <p class="text-lg font-medium mb-2">Chưa có sản phẩm nào trong hóa đơn</p>
-                                    <p class="text-sm">Thêm sản phẩm hoặc combo để bắt đầu</p>
+                                <div class="empty-state py-12 text-center">
+                                    <i class="fas fa-receipt text-4xl text-gray-300 mb-4"></i>
+                                    <p class="text-lg font-medium mb-2 text-gray-600">Chưa có sản phẩm nào trong hóa
+                                        đơn</p>
+                                    <p class="text-sm text-gray-500">Thêm sản phẩm hoặc combo để bắt đầu</p>
                                 </div>
                             @endif
 
                             <!-- PHẦN HIỂN THỊ CHI TIẾT CHUYỂN BÀN -->
-                            @if ($table->currentBill && $table->currentBill->billTimeUsages->count() > 1)
+                            @if ($table->currentBill && $table->currentBill->billTimeUsages->count() > 0)
                                 <div class="table-transfer-details mt-6">
                                     <h3 class="text-lg font-semibold mb-3 text-blue-600 border-b pb-2">
-                                        <i class="fas fa-exchange-alt mr-2"></i>LỊCH SỬ CHUYỂN BÀN
+                                        <i class="fas fa-history mr-2"></i>THÔNG TIN SỬ DỤNG
                                     </h3>
 
                                     <div class="space-y-3">
                                         @php
                                             $timeUsages = $table->currentBill->billTimeUsages->sortBy('created_at');
-                                            $transferCount = 0;
+                                            $firstUsage = $timeUsages->first();
+                                            $lastUsage = $timeUsages->last();
+                                            $totalMinutes = 0;
+                                            $totalPrice = 0;
                                         @endphp
 
-                                        @foreach ($timeUsages as $index => $timeUsage)
-                                            @if ($index > 0)
-                                                @php
-                                                    $previousUsage = $timeUsages[$index - 1];
-                                                    $transferCount++;
-                                                @endphp
-                                                <div
-                                                    class="transfer-item bg-blue-50 border border-blue-200 rounded-lg p-3 slide-in">
-                                                    <div class="flex justify-between items-start">
-                                                        <div class="flex-1">
-                                                            <div class="flex items-center mb-1">
-                                                                <span
-                                                                    class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
-                                                                    Lần {{ $transferCount }}
-                                                                </span>
-                                                                <span class="text-sm font-medium text-blue-900">
-                                                                    <i class="fas fa-arrow-right mr-1"></i>
-                                                                    Chuyển bàn
-                                                                </span>
-                                                            </div>
+                                        <!-- Hiển thị lịch sử chuyển bàn nếu có -->
+                                        @if ($timeUsages->count() > 1)
+                                            <div class="transfer-history">
+                                                <h4 class="text-md font-medium mb-3 text-gray-700">
+                                                    <i class="fas fa-exchange-alt mr-2"></i>Lịch sử chuyển bàn
+                                                </h4>
 
-                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                <div class="space-y-3">
+                                                    @foreach ($timeUsages as $index => $timeUsage)
+                                                        @if ($index > 0)
+                                                            @php
+                                                                $previousUsage = $timeUsages[$index - 1];
+                                                                if ($previousUsage->duration_minutes) {
+                                                                    $totalMinutes += $previousUsage->duration_minutes;
+                                                                }
+                                                                if ($previousUsage->total_price) {
+                                                                    $totalPrice += $previousUsage->total_price;
+                                                                }
+                                                            @endphp
+
+                                                            <div
+                                                                class="transfer-item bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                                                <div class="flex items-start justify-between">
+                                                                    <div class="flex-1">
+                                                                        <div class="flex items-center mb-2">
+                                                                            <span
+                                                                                class="bg-gray-200 text-gray-700 text-xs font-medium px-2 py-1 rounded mr-2">
+                                                                                Lần {{ $index }}
+                                                                            </span>
+                                                                            <span
+                                                                                class="text-sm font-medium text-gray-700">
+                                                                                <i
+                                                                                    class="fas fa-arrow-right text-gray-500 mr-1"></i>
+                                                                                Chuyển bàn
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div
+                                                                            class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                                            <div class="bg-white p-2 rounded border">
+                                                                                <div
+                                                                                    class="text-xs text-gray-500 mb-1">
+                                                                                    Từ bàn</div>
+                                                                                <div class="font-medium">
+                                                                                    {{ $previousUsage->table->table_number ?? 'N/A' }}
+                                                                                    <span
+                                                                                        class="text-xs text-gray-500 ml-1">
+                                                                                        ({{ number_format($previousUsage->hourly_rate) }}₫/h)
+                                                                                    </span>
+                                                                                </div>
+                                                                                @if ($previousUsage->end_time)
+                                                                                    <div
+                                                                                        class="text-xs text-gray-500 mt-1">
+                                                                                        {{ \Carbon\Carbon::parse($previousUsage->start_time)->format('H:i') }}
+                                                                                        →
+                                                                                        {{ \Carbon\Carbon::parse($previousUsage->end_time)->format('H:i') }}
+                                                                                    </div>
+                                                                                @endif
+                                                                            </div>
+
+                                                                            <div class="bg-white p-2 rounded border">
+                                                                                <div
+                                                                                    class="text-xs text-gray-500 mb-1">
+                                                                                    Sang bàn</div>
+                                                                                <div class="font-medium">
+                                                                                    {{ $timeUsage->table->table_number ?? 'N/A' }}
+                                                                                    <span
+                                                                                        class="text-xs text-gray-500 ml-1">
+                                                                                        ({{ number_format($timeUsage->hourly_rate) }}₫/h)
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div
+                                                                                    class="text-xs text-gray-500 mt-1">
+                                                                                    Bắt đầu:
+                                                                                    {{ \Carbon\Carbon::parse($timeUsage->start_time)->format('H:i') }}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        @if ($previousUsage->total_price > 0)
+                                                                            <div
+                                                                                class="mt-2 text-sm font-medium text-green-600">
+                                                                                <i class="fas fa-coins mr-1"></i>
+                                                                                Tiền giờ:
+                                                                                {{ number_format($previousUsage->total_price) }}₫
+                                                                            </div>
+                                                                        @endif
+                                                                    </div>
+
+                                                                    <div class="text-right ml-4">
+                                                                        <div class="text-xs text-gray-500 mb-1">
+                                                                            {{ \Carbon\Carbon::parse($previousUsage->end_time ?? $timeUsage->start_time)->format('d/m H:i') }}
+                                                                        </div>
+                                                                        @if ($previousUsage->note)
+                                                                            <div
+                                                                                class="text-xs text-blue-600 italic max-w-xs">
+                                                                                {{ $previousUsage->note }}
+                                                                            </div>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+
+                                                    <!-- Tổng kết -->
+                                                    @if ($totalMinutes > 0 || $totalPrice > 0)
+                                                        <div
+                                                            class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                                            <div class="flex justify-between items-center">
                                                                 <div>
-                                                                    <span class="text-gray-600">Từ bàn:</span>
-                                                                    <span
-                                                                        class="font-medium">{{ $previousUsage->table->table_number ?? $table->table_name }}</span>
-                                                                    <span
-                                                                        class="text-xs text-gray-500">({{ number_format($previousUsage->hourly_rate) }}₫/h)</span>
+                                                                    <div class="text-sm font-medium text-yellow-800">
+                                                                        Tổng kết lịch sử
+                                                                    </div>
+                                                                    <div class="text-xs text-yellow-600">
+                                                                        {{ $timeUsages->count() - 1 }} lần chuyển bàn
+                                                                    </div>
                                                                 </div>
-                                                                <div>
-                                                                    <span class="text-gray-600">Sang bàn:</span>
-                                                                    <span
-                                                                        class="font-medium">{{ $timeUsage->table->table_number ?? $table->table_number }}</span>
-                                                                    <span
-                                                                        class="text-xs text-gray-500">({{ number_format($timeUsage->hourly_rate) }}₫/h)</span>
+                                                                <div class="text-right">
+                                                                    @if ($totalMinutes > 0)
+                                                                        <div class="text-sm text-gray-700">
+                                                                            {{ $totalMinutes }} phút
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($totalPrice > 0)
+                                                                        <div class="text-lg font-bold text-green-600">
+                                                                            {{ number_format($totalPrice) }}₫
+                                                                        </div>
+                                                                    @endif
                                                                 </div>
                                                             </div>
-
-                                                            @if ($previousUsage->end_time)
-                                                                <div class="mt-2 text-xs text-gray-600">
-                                                                    <i class="far fa-clock mr-1"></i>
-                                                                    Thời gian sử dụng:
-                                                                    {{ \Carbon\Carbon::parse($previousUsage->start_time)->format('H:i') }}
-                                                                    →
-                                                                    {{ \Carbon\Carbon::parse($previousUsage->end_time)->format('H:i') }}
-                                                                    ({{ $previousUsage->duration_minutes ?? 0 }} phút)
-                                                                </div>
-                                                            @endif
-
-                                                            @if ($previousUsage->total_price > 0)
-                                                                <div class="mt-1 text-sm font-medium text-green-600">
-                                                                    <i class="fas fa-coins mr-1"></i>
-                                                                    Tiền giờ bàn cũ:
-                                                                    {{ number_format($previousUsage->total_price) }}₫
-                                                                </div>
-                                                            @endif
-                                                        </div>
-
-                                                        <div class="text-right">
-                                                            <div class="text-xs text-gray-500 mb-1">
-                                                                {{ \Carbon\Carbon::parse($previousUsage->end_time ?? $timeUsage->start_time)->format('d/m/Y H:i') }}
-                                                            </div>
-                                                            @if ($previousUsage->note)
-                                                                <div class="text-xs text-blue-600 italic">
-                                                                    "{{ $previousUsage->note }}"
-                                                                </div>
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        @endforeach
-
-                                        <!-- Hiển thị bàn hiện tại -->
-                                        <div
-                                            class="current-table bg-green-50 border border-green-200 rounded-lg p-3 fade-in">
-                                            <div class="flex justify-between items-center">
-                                                <div>
-                                                    <div class="flex items-center mb-1">
-                                                        <span
-                                                            class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2">
-                                                            Hiện tại
-                                                        </span>
-                                                        <span class="text-sm font-medium text-green-900">
-                                                            <i class="fas fa-map-marker-alt mr-1"></i>
-                                                            Bàn {{ $table->table_number }}
-                                                        </span>
-                                                    </div>
-                                                    <div class="text-sm text-gray-600">
-                                                        Giá giờ:
-                                                        {{ number_format($table->tableRate->hourly_rate ?? 0) }}₫/h
-                                                    </div>
-                                                </div>
-                                                <div class="text-right">
-                                                    <div class="text-xs text-gray-500">
-                                                        Bắt đầu:
-                                                        {{ \Carbon\Carbon::parse($timeUsages->last()->start_time)->format('H:i') }}
-                                                    </div>
-                                                    @if ($timeUsages->last()->note)
-                                                        <div class="text-xs text-green-600 italic">
-                                                            "{{ $timeUsages->last()->note }}"
                                                         </div>
                                                     @endif
                                                 </div>
                                             </div>
-                                        </div>
+                                        @endif
                                     </div>
                                 </div>
                             @elseif ($table->currentBill && $table->currentBill->billTimeUsages->count() == 1)
                                 <!-- Hiển thị thông tin bàn hiện tại nếu chưa chuyển bàn -->
                                 <div
-                                    class="current-table-simple bg-gray-50 border border-gray-200 rounded-lg p-3 mt-4 fade-in">
+                                    class="current-table-simple bg-gray-50 border border-gray-200 rounded-lg p-3 mt-4">
                                     <div class="flex justify-between items-center">
                                         <div>
                                             <span class="text-sm font-medium text-gray-900">
@@ -2168,6 +2294,235 @@
                     </div>
                 </div>
             </div>
+
+            <script>
+                function confirmDeleteProduct(productName, quantity, formId) {
+                    if (confirm(
+                            `Bạn có chắc chắn muốn xóa sản phẩm:\n\n"${productName}"\nSố lượng: ${quantity}\n\nSản phẩm sẽ được hoàn trả lại kho.`
+                            )) {
+                        // Thêm loading state
+                        const form = document.getElementById(formId);
+                        const button = form.querySelector('button');
+                        const originalHtml = button.innerHTML;
+
+                        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                        button.disabled = true;
+                        button.classList.add('opacity-50');
+
+                        // Submit form
+                        form.submit();
+
+                        // Nếu có lỗi, khôi phục button sau 3 giây
+                        setTimeout(() => {
+                            if (button.disabled) {
+                                button.innerHTML = originalHtml;
+                                button.disabled = false;
+                                button.classList.remove('opacity-50');
+                                alert('Có lỗi xảy ra khi xóa sản phẩm. Vui lòng thử lại.');
+                            }
+                        }, 3000);
+                    }
+                }
+
+                // Thêm style cho các trạng thái
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Thêm hover effect cho các hàng trong bảng
+                    const billRows = document.querySelectorAll('.bill-item-row');
+                    billRows.forEach(row => {
+                        row.addEventListener('mouseenter', function() {
+                            this.classList.add('bg-gray-50');
+                        });
+                        row.addEventListener('mouseleave', function() {
+                            this.classList.remove('bg-gray-50');
+                        });
+                    });
+
+                    // Setup delete buttons tooltip
+                    const disabledDeleteBtns = document.querySelectorAll('.delete-btn-disabled');
+                    disabledDeleteBtns.forEach(btn => {
+                        btn.addEventListener('mouseenter', function() {
+                            const title = this.getAttribute('title');
+                            if (title) {
+                                // Tạo tooltip tạm thời
+                                const tooltip = document.createElement('div');
+                                tooltip.className =
+                                    'fixed bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-lg z-50';
+                                tooltip.textContent = title;
+                                document.body.appendChild(tooltip);
+
+                                const rect = this.getBoundingClientRect();
+                                tooltip.style.top = (rect.top - 30) + 'px';
+                                tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth /
+                                    2) + 'px';
+
+                                this._tooltip = tooltip;
+                            }
+                        });
+
+                        btn.addEventListener('mouseleave', function() {
+                            if (this._tooltip) {
+                                this._tooltip.remove();
+                                delete this._tooltip;
+                            }
+                        });
+                    });
+                });
+            </script>
+
+            <style>
+                .bill-table {
+                    width: 100%;
+                    border-collapse: separate;
+                    border-spacing: 0;
+                }
+
+                .bill-table th {
+                    background-color: #f8fafc;
+                    padding: 12px 8px;
+                    font-weight: 600;
+                    color: #4b5563;
+                    border-bottom: 2px solid #e5e7eb;
+                    position: sticky;
+                    top: 0;
+                    z-index: 10;
+                }
+
+                .bill-table td {
+                    padding: 12px 8px;
+                    border-bottom: 1px solid #f1f5f9;
+                    vertical-align: middle;
+                }
+
+                .bill-item-row:hover {
+                    background-color: #f9fafb !important;
+                }
+
+                .discount-row {
+                    background-color: #fef2f2;
+                }
+
+                .total-row {
+                    background-color: #f0f9ff;
+                    border-top: 2px solid #dbeafe;
+                }
+
+                .quantity-badge {
+                    display: inline-block;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    font-size: 14px;
+                }
+
+                .staff-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+
+                .delete-btn {
+                    transition: all 0.2s;
+                    border-radius: 50%;
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .delete-btn:hover {
+                    background-color: #fef2f2;
+                    transform: scale(1.1);
+                }
+
+                .delete-btn:active {
+                    transform: scale(0.95);
+                }
+
+                .delete-btn-disabled {
+                    opacity: 0.4;
+                    cursor: not-allowed;
+                }
+
+                .empty-state {
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: #9ca3af;
+                }
+
+                .current-table {
+                    animation: fadeIn 0.5s ease-in;
+                }
+
+                .transfer-item {
+                    animation: slideInLeft 0.5s ease-out;
+                }
+
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                    }
+
+                    to {
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes slideInLeft {
+                    from {
+                        opacity: 0;
+                        transform: translateX(-20px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+
+                /* Responsive cho mobile */
+                @media (max-width: 768px) {
+                    .bill-table {
+                        font-size: 0.875rem;
+                    }
+
+                    .bill-table th,
+                    .bill-table td {
+                        padding: 8px 4px;
+                    }
+
+                    .bill-table th:nth-child(5),
+                    .bill-table td:nth-child(5) {
+                        display: none;
+                        /* Ẩn cột "Thêm bởi" trên mobile */
+                    }
+
+                    .staff-info {
+                        font-size: 0.75rem;
+                    }
+
+                    .delete-btn {
+                        width: 28px;
+                        height: 28px;
+                    }
+
+                    .quantity-badge {
+                        font-size: 0.75rem;
+                        padding: 2px 6px;
+                    }
+                }
+
+                @media (max-width: 480px) {
+                    .bill-table {
+                        font-size: 0.75rem;
+                    }
+
+                    .bill-table th:nth-child(4),
+                    .bill-table td:nth-child(4) {
+                        display: none;
+                        /* Ẩn cột "Đơn giá" trên mobile rất nhỏ */
+                    }
+                }
+            </style>
 
             <!-- Right Panel - Table Info & Actions -->
             <div class="right-panel panel" id="infoPanel">
@@ -2270,16 +2625,18 @@
                             THAO TÁC NHANH
                         </h2>
 
-                        <div class="action-buttons">   
+                        <div class="action-buttons">
                             @if ($table->currentBill && $table->currentBill->status !== 'quick')
                                 @if ($table->status === 'occupied')
-                                    <button onclick="pauseTable()" class="action-btn action-btn-warning" id="pauseBtn">
+                                    <button onclick="pauseTable()" class="action-btn action-btn-warning"
+                                        id="pauseBtn">
                                         <i class="fas fa-pause"></i>
                                         <span class="desktop-only">TẠM DỪNG BÀN</span>
                                         <span class="mobile-only">TẠM DỪNG</span>
                                     </button>
                                 @elseif($table->status === 'paused')
-                                    <button onclick="resumeTable()" class="action-btn action-btn-success" id="resumeBtn">
+                                    <button onclick="resumeTable()" class="action-btn action-btn-success"
+                                        id="resumeBtn">
                                         <i class="fas fa-play"></i>
                                         <span class="desktop-only">TIẾP TỤC BÀN</span>
                                         <span class="mobile-only">TIẾP TỤC</span>
@@ -2535,11 +2892,11 @@
 
             const pauseBtn = document.getElementById('pauseBtn');
             const originalText = pauseBtn.innerHTML;
-            
+
             // Show loading state
             pauseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             pauseBtn.disabled = true;
-            
+
             try {
                 const response = await fetch(`/admin/tables/{{ $table->id }}/pause`, {
                     method: 'POST',
@@ -2548,12 +2905,12 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Đã tạm dừng bàn thành công', 'success', 3000);
-                    
+
                     // Cập nhật trạng thái hiển thị
                     setTimeout(() => {
                         location.reload();
@@ -2575,11 +2932,11 @@
         async function resumeTable() {
             const resumeBtn = document.getElementById('resumeBtn');
             const originalText = resumeBtn.innerHTML;
-            
+
             // Show loading state
             resumeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             resumeBtn.disabled = true;
-            
+
             try {
                 const response = await fetch(`/admin/tables/{{ $table->id }}/resume`, {
                     method: 'POST',
@@ -2588,12 +2945,12 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     showToast('Đã tiếp tục bàn thành công', 'success', 3000);
-                    
+
                     // Cập nhật trạng thái hiển thị
                     setTimeout(() => {
                         location.reload();

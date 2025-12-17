@@ -77,6 +77,12 @@ Route::prefix('admin')
             Route::post('/payments/check-promotion', [PaymentController::class, 'checkPromotion'])->name('check-promotion');
             Route::post('/payments/apply-promotion', [PaymentController::class, 'applyPromotion'])->name('apply-promotion');
             Route::post('/payments/remove-promotion', [PaymentController::class, 'removePromotion'])->name('remove-promotion');
+
+            // VNPay Routes
+            Route::post('/vnpay/create', [PaymentController::class, 'createVNPayPayment'])->name('vnpay.create');
+            Route::get('/vnpay/return', [PaymentController::class, 'vnpayReturn'])->name('vnpay.return');
+            Route::get('/vnpay/ipn', [PaymentController::class, 'vnpayIPN'])->name('vnpay.ipn');
+            Route::get('/payment/check-vnpay-status/{billId}', [PaymentController::class, 'checkVnpayPaymentStatus'])->name('payment.checkVnpayStatus');
         });
 
         // ============================

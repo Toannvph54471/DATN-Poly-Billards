@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\VNPayService;
 
 class PaymentController extends Controller
 {
@@ -547,7 +548,7 @@ class PaymentController extends Controller
     public function processPayment(Request $request, $billId)
     {
         $request->validate([
-            'payment_method' => 'required|string|in:cash,bank,card',
+            'payment_method' => 'required|string|in:cash,bank,card,vnpay',
             'amount' => 'required|numeric|min:0',
             'promotion_code' => 'nullable|string',
             'note' => 'nullable|string|max:500',
@@ -711,7 +712,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'bill_ids' => 'required|array|min:1',
-            'payment_method' => 'required|string|in:cash,bank,card',
+            'payment_method' => 'required|string|in:cash,bank,card,vnpay',
             'amount' => 'required|numeric|min:0',
             'promotion_code' => 'nullable|string',
             'note' => 'nullable|string|max:500',
@@ -1068,7 +1069,7 @@ class PaymentController extends Controller
             ]);
 
             return redirect()
-                ->route('admin.payments.show', $billId)
+                ->route('admin.bills.show', $billId)
                 ->with('error', 'Lỗi khi xử lý thanh toán: ' . $e->getMessage());
         }
     }
@@ -1084,13 +1085,13 @@ class PaymentController extends Controller
 
                 // 1. Lấy thông tin thanh toán tạm từ session
                 $paymentData = session('pending_payment_' . $billId);
-
+                // dd($paymentData);
+                
                 if (!$paymentData) {
                     return redirect()
-                        ->route('admin.bills.index')  // Đổi từ admin.payments.show
+                        ->route('admin.bills.show', $billId)
                         ->with('error', 'Thông tin thanh toán không tồn tại hoặc đã hết hạn');
                 }
-
                 // 2. Lấy bill
                 $bill = Bill::with(['table.tableRate', 'billDetails.product', 'billDetails.combo', 'staff'])
                     ->whereIn('status', ['Open', 'quick'])
@@ -1154,9 +1155,10 @@ class PaymentController extends Controller
                 session()->forget('pending_payment_' . $billId);
 
                 // 8. Cập nhật số lần ghé thăm và tổng chi tiêu cho khách hàng
-                // **SỬA LỖI Ở ĐÂY**: Kiểm tra xem user_id có tồn tại không
-                if (!empty($bill->user_id)) {
+                if ($bill->user_id) {
+
                     $user = User::find($bill->user_id);
+
                     if ($user) {
                         $user->increment('total_visits');
                         $user->increment('total_spent', $paymentData['final_amount']);
@@ -1171,7 +1173,7 @@ class PaymentController extends Controller
 
                 // 9. Redirect với thông báo thành công
                 return redirect()
-                    ->route('admin.bills.index')
+                    ->route('admin.bills.show', $billId)
                     ->with('success', 'Thanh toán thành công! Hóa đơn đã được xác nhận.');
             });
         } catch (Exception $e) {
@@ -1250,4 +1252,665 @@ class PaymentController extends Controller
             $user->customer_type = 'New';
         }
     }
+
+    /**
+    * Tạo thanh toán VNPay
+    */
+   public function createVNPayPayment(Request $request)
+{
+    $request->validate([
+        'bill_id' => 'required|exists:bills,id',
+        'amount' => 'required|numeric|min:1000',
+    ]);
+
+    try {
+        $bill = Bill::with(['table', 'billDetails'])->findOrFail($request->bill_id);
+        
+        if ($bill->payment_status !== 'Pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hóa đơn đã được thanh toán hoặc đã đóng'
+            ]);
+        }
+
+        $vnpayService = new VNPayService();
+        
+        $txnRef = 'BILL_' . $bill->id . '_' . time();
+        
+        // Lưu thông tin vào session để theo dõi
+        session([
+            'pending_vnpay_bill_id' => $bill->id,
+            'pending_vnpay_txn_ref' => $txnRef,
+            'pending_vnpay_amount' => $request->amount,
+            'pending_vnpay_time' => now(),
+        ]);
+
+        $paymentData = [
+            'txn_ref' => $txnRef,
+            'order_info' => 'Thanh toán hóa đơn #' . $bill->bill_number,
+            'amount' => $request->amount,
+            'bank_code' => $request->bank_code ?? '',
+        ];
+        
+        $paymentUrl = $vnpayService->createPayment($paymentData);
+        
+        return response()->json([
+            'success' => true,
+            'payment_url' => $paymentUrl,
+            'bill_id' => $bill->id,
+            'amount' => $request->amount,
+            'txn_ref' => $txnRef
+        ]);
+        
+    } catch (Exception $e) {
+        Log::error('VNPay create error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Lỗi tạo thanh toán VNPay: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+    /**
+     * Xử lý return URL từ VNPay
+    */
+   public function vnpayReturn(Request $request)
+{
+    try {
+        Log::info('VNPay Return URL called:', $request->all());
+        
+        $vnpayService = new VNPayService();
+        
+        // Kiểm tra chữ ký
+        $secureHash = $request->vnp_SecureHash ?? '';
+        $inputData = $request->except('vnp_SecureHash');
+        
+        if (!$vnpayService->verifySignature($inputData, $secureHash)) {
+            Log::error('VNPay Return: Invalid signature');
+            return view('admin.payments.vnpay-result', [
+                'success' => false,
+                'message' => 'Chữ ký không hợp lệ!',
+                'transaction_code' => $request->vnp_TransactionNo ?? '',
+                'amount' => 0
+            ]);
+        }
+        
+        $vnp_TxnRef = $request->vnp_TxnRef;
+        $vnp_ResponseCode = $request->vnp_ResponseCode;
+        
+        // Trích xuất bill_id
+        preg_match('/BILL_(\d+)_/', $vnp_TxnRef, $matches);
+        $billId = $matches[1] ?? null;
+        
+        if (!$billId) {
+            return redirect()->route('admin.tables.index')
+                ->with('error', 'Không tìm thấy thông tin hóa đơn');
+        }
+        
+        $bill = Bill::with(['table'])->find($billId);
+        
+        if (!$bill) {
+            return redirect()->route('admin.tables.index')
+                ->with('error', 'Hóa đơn không tồn tại');
+        }
+        
+        // Kiểm tra response code
+        if ($vnp_ResponseCode == '00') {
+            // Thanh toán thành công - Xử lý ngay lập tức
+            return DB::transaction(function () use ($bill, $request) {
+                $bill = Bill::with(['table.tableRate', 'billDetails', 'staff'])
+                    ->whereIn('status', ['Open', 'quick'])
+                    ->where('payment_status', 'Pending')
+                    ->findOrFail($bill->id);
+                
+                $staffId = Auth::id();
+                $isQuickBill = $bill->status === 'quick';
+                
+                // 1. Tính toán tiền
+                $timeCost = $this->calculateTimeCharge($bill);
+                $productTotal = $bill->billDetails()
+                    ->where('is_combo_component', 0)
+                    ->sum('total_price');
+                $totalAmount = $isQuickBill ? $productTotal : ($timeCost + $productTotal);
+                $discountAmount = $bill->discount_amount ?? 0;
+                $finalAmount = max(0, $totalAmount - $discountAmount);
+                
+                // 2. Cập nhật bill
+                $bill->update([
+                    'end_time' => now(),
+                    'total_amount' => $totalAmount,
+                    'discount_amount' => $discountAmount,
+                    'final_amount' => $finalAmount,
+                    'payment_method' => 'vnpay',
+                    'payment_status' => 'Paid',
+                    'status' => 'Closed',
+                    'note' => $bill->note ? $bill->note . " | Thanh toán VNPay thành công" : "Thanh toán VNPay thành công",
+                ]);
+                
+                // 3. Tạo payment record
+                Payment::create([
+                    'bill_id' => $bill->id,
+                    'amount' => $finalAmount,
+                    'currency' => 'VND',
+                    'payment_method' => 'vnpay',
+                    'payment_type' => 'full',
+                    'status' => 'completed',
+                    'transaction_id' => $request->vnp_TransactionNo ?? ('VNPAY_' . time()),
+                    'paid_at' => now(),
+                    'completed_at' => now(),
+                    'processed_by' => $staffId,
+                    'payment_data' => json_encode([
+                        'bill_number' => $bill->bill_number,
+                        'table' => $bill->table->table_number,
+                        'bill_type' => $isQuickBill ? 'quick' : 'regular',
+                        'final_amount' => $finalAmount,
+                        'vnpay_transaction_no' => $request->vnp_TransactionNo,
+                        'vnpay_response_code' => $request->vnp_ResponseCode,
+                        'vnpay_txn_ref' => $request->vnp_TxnRef,
+                        'vnpay_bank_code' => $request->vnp_BankCode ?? '',
+                        'vnpay_card_type' => $request->vnp_CardType ?? '',
+                        'vnpay_pay_date' => $request->vnp_PayDate ?? '',
+                    ]),
+                ]);
+                
+                // 4. Giải phóng bàn
+                $bill->table->update(['status' => 'available']);
+                
+                // 5. Cập nhật báo cáo
+                $this->updateDailyReport($bill);
+                
+                // 6. Cập nhật thông tin khách hàng
+                if ($bill->user_id) {
+                    $user = User::find($bill->user_id);
+                    if ($user) {
+                        $user->increment('total_visits');
+                        $user->increment('total_spent', $finalAmount);
+                        $user->last_visit_date = now();
+                        $this->updateCustomerType($user);
+                        $user->save();
+                    }
+                }
+                
+                DB::commit();
+                
+                // 7. Redirect đến trang in hóa đơn với thông báo thành công
+                return redirect()->route('admin.bills.print', [
+                    'id' => $bill->id,
+                    'auto_print' => 'true',
+                    'payment_success' => 'true',
+                    'vnpay_transaction' => $request->vnp_TransactionNo ?? '',
+                    'success' => 'Thanh toán VNPay thành công! Mã giao dịch: ' . ($request->vnp_TransactionNo ?? '')
+                ]);
+            });
+        } else {
+            // Thất bại
+            return redirect()->route('admin.bills.show', $bill->id)
+                ->with('error', 'Thanh toán VNPay thất bại. Mã lỗi: ' . $vnp_ResponseCode)
+                ->with('vnpay_retry', 'true');
+        }
+        
+    } catch (Exception $e) {
+        DB::rollBack();
+        Log::error('VNPay Return Error: ' . $e->getMessage());
+        return redirect()->route('admin.tables.index')
+            ->with('error', 'Lỗi xử lý thanh toán VNPay: ' . $e->getMessage());
+    }
+}
+
+    /**
+    * Xử lý thanh toán VNPay thành công
+    */
+    private function processVnpaySuccess($billId, $vnpayData)
+    {
+    DB::beginTransaction();
+    try {
+        $bill = Bill::with(['table', 'billDetails', 'staff'])->findOrFail($billId);
+        $staffId = Auth::id();
+        
+        // Tính toán tổng tiền
+        $timeCost = $this->calculateTimeCharge($bill);
+        $productTotal = $bill->billDetails()
+            ->where('is_combo_component', 0)
+            ->sum('total_price');
+        $totalAmount = $bill->status === 'quick' ? $productTotal : ($timeCost + $productTotal);
+        $discountAmount = $bill->discount_amount ?? 0;
+        $finalAmount = max(0, $totalAmount - $discountAmount);
+        
+        // Cập nhật bill
+        $bill->update([
+            'total_amount' => $totalAmount,
+            'discount_amount' => $discountAmount,
+            'final_amount' => $finalAmount,
+            'payment_method' => 'vnpay',
+            'payment_status' => 'Paid',
+            'status' => 'Closed',
+            'end_time' => now(),
+        ]);
+        
+        // Tạo payment record
+        Payment::create([
+            'bill_id' => $bill->id,
+            'amount' => $finalAmount,
+            'currency' => 'VND',
+            'payment_method' => 'vnpay',
+            'payment_type' => 'full',
+            'status' => 'completed',
+            'transaction_id' => $vnpayData['vnp_TransactionNo'] ?? ('VNPAY_' . time()),
+            'paid_at' => now(),
+            'completed_at' => now(),
+            'processed_by' => $staffId,
+            'payment_data' => json_encode([
+                'bill_number' => $bill->bill_number,
+                'table' => $bill->table->table_number,
+                'bill_type' => $bill->status === 'quick' ? 'quick' : 'regular',
+                'final_amount' => $finalAmount,
+                'vnpay_data' => $vnpayData,
+                'transaction_time' => $vnpayData['vnp_PayDate'] ?? now()->format('YmdHis'),
+            ]),
+        ]);
+        
+        // Giải phóng bàn
+        $bill->table->update(['status' => 'available']);
+        
+        // Cập nhật báo cáo
+        $this->updateDailyReport($bill);
+        
+        // Cập nhật thông tin khách hàng
+        if ($bill->user_id) {
+            $user = User::find($bill->user_id);
+            if ($user) {
+                $user->increment('total_visits');
+                $user->increment('total_spent', $finalAmount);
+                $user->last_visit_date = now();
+                $this->updateCustomerType($user);
+                $user->save();
+            }
+        }
+        
+        // Xóa session
+        session()->forget(['vnpay_bill_id', 'vnpay_txn_ref', 'vnpay_amount']);
+        
+        DB::commit();
+        
+        return redirect()->route('admin.bills.print', [
+            'id' => $bill->id,
+            'auto_print' => 'true',
+            'success' => 'Thanh toán VNPay thành công! Mã giao dịch: ' . ($vnpayData['vnp_TransactionNo'] ?? '')
+        ]);
+        
+    } catch (Exception $e) {
+        DB::rollBack();
+        Log::error('VNPay payment error: ' . $e->getMessage());
+        throw $e;
+    }
+    }
+
+    /**
+     * Xử lý IPN từ VNPay
+    */
+    public function vnpayIPN(Request $request)
+{
+    try {
+        Log::info('VNPay IPN Received:', $request->all());
+        
+        $vnpayService = new VNPayService();
+        
+        // Kiểm tra chữ ký
+        $secureHash = $request->vnp_SecureHash ?? '';
+        $inputData = $request->except('vnp_SecureHash');
+        
+        if (!$vnpayService->verifySignature($inputData, $secureHash)) {
+            Log::error('VNPay IPN: Invalid signature', $request->all());
+            return response()->json([
+                'RspCode' => '97',
+                'Message' => 'Invalid signature'
+            ]);
+        }
+        
+        // Lấy thông tin từ request
+        $vnp_TxnRef = $request->vnp_TxnRef; // Mã đơn hàng: BILL_15_1765804804
+        $vnp_ResponseCode = $request->vnp_ResponseCode;
+        $vnp_TransactionNo = $request->vnp_TransactionNo;
+        $vnp_Amount = $request->vnp_Amount / 100; // Chia 100 vì VNPay gửi nhân 100
+        $vnp_OrderInfo = $request->vnp_OrderInfo;
+        
+        Log::info('VNPay IPN Data:', [
+            'txn_ref' => $vnp_TxnRef,
+            'response_code' => $vnp_ResponseCode,
+            'transaction_no' => $vnp_TransactionNo,
+            'amount' => $vnp_Amount,
+            'order_info' => $vnp_OrderInfo
+        ]);
+        
+        // Trích xuất bill_id từ txn_ref (format: BILL_{id}_{timestamp})
+        preg_match('/BILL_(\d+)_/', $vnp_TxnRef, $matches);
+        $billId = $matches[1] ?? null;
+        
+        if (!$billId) {
+            Log::error('VNPay IPN: Cannot extract bill_id from txn_ref', ['txn_ref' => $vnp_TxnRef]);
+            return response()->json([
+                'RspCode' => '01',
+                'Message' => 'Order not found'
+            ]);
+        }
+        
+        $bill = Bill::with(['table', 'billDetails', 'staff'])->find($billId);
+        
+        if (!$bill) {
+            Log::error('VNPay IPN: Bill not found', ['bill_id' => $billId]);
+            return response()->json([
+                'RspCode' => '01',
+                'Message' => 'Order not found'
+            ]);
+        }
+        
+        // Kiểm tra nếu đã xử lý thanh toán rồi
+        $existingPayment = Payment::where('transaction_id', $vnp_TransactionNo)->first();
+        if ($existingPayment) {
+            Log::info('VNPay IPN: Payment already processed', [
+                'bill_id' => $billId,
+                'transaction_no' => $vnp_TransactionNo
+            ]);
+            return response()->json([
+                'RspCode' => '02',
+                'Message' => 'Order already confirmed'
+            ]);
+        }
+        
+        // Xử lý theo mã phản hồi
+        if ($vnp_ResponseCode == '00') {
+            // THANH TOÁN THÀNH CÔNG
+            
+            DB::beginTransaction();
+            try {
+                // Tính toán tổng tiền
+                $timeCost = $this->calculateTimeCharge($bill);
+                $productTotal = $bill->billDetails()
+                    ->where('is_combo_component', 0)
+                    ->sum('total_price');
+                $totalAmount = $bill->status === 'quick' ? $productTotal : ($timeCost + $productTotal);
+                $discountAmount = $bill->discount_amount ?? 0;
+                $finalAmount = max(0, $totalAmount - $discountAmount);
+                
+                // Kiểm tra số tiền có khớp không
+                if (abs($vnp_Amount - $finalAmount) > 1000) { // Cho phép sai số 1000đ
+                    Log::warning('VNPay IPN: Amount mismatch', [
+                        'bill_amount' => $finalAmount,
+                        'vnpay_amount' => $vnp_Amount
+                    ]);
+                }
+                
+                // Cập nhật bill
+                $bill->update([
+                    'end_time' => now(),
+                    'total_amount' => $totalAmount,
+                    'discount_amount' => $discountAmount,
+                    'final_amount' => $finalAmount,
+                    'payment_method' => 'vnpay',
+                    'payment_status' => 'Paid',
+                    'status' => 'Closed',
+                    'note' => $bill->note ? $bill->note . " | Thanh toán VNPay thành công" : "Thanh toán VNPay thành công",
+                ]);
+                
+                // Tạo payment record
+                Payment::create([
+                    'bill_id' => $bill->id,
+                    'amount' => $finalAmount,
+                    'currency' => 'VND',
+                    'payment_method' => 'vnpay',
+                    'payment_type' => 'full',
+                    'status' => 'completed',
+                    'transaction_id' => $vnp_TransactionNo,
+                    'paid_at' => now(),
+                    'completed_at' => now(),
+                    'processed_by' => $bill->staff_id ?? 1,
+                    'note' => 'Thanh toán qua VNPay - ' . $vnp_OrderInfo,
+                    'payment_data' => json_encode([
+                        'vnpay_txn_ref' => $vnp_TxnRef,
+                        'vnpay_transaction_no' => $vnp_TransactionNo,
+                        'vnpay_amount' => $vnp_Amount,
+                        'vnpay_order_info' => $vnp_OrderInfo,
+                        'vnpay_response_code' => $vnp_ResponseCode,
+                        'bill_number' => $bill->bill_number,
+                        'table' => $bill->table->table_number,
+                        'bill_type' => $bill->status === 'quick' ? 'quick' : 'regular',
+                        'final_amount' => $finalAmount,
+                        'transaction_time' => now()->format('Y-m-d H:i:s'),
+                    ]),
+                ]);
+                
+                // Giải phóng bàn
+                $bill->table->update(['status' => 'available']);
+                
+                // Cập nhật báo cáo
+                $this->updateDailyReport($bill);
+                
+                // Cập nhật thông tin khách hàng
+                if ($bill->user_id) {
+                    $user = User::find($bill->user_id);
+                    if ($user) {
+                        $user->increment('total_visits');
+                        $user->increment('total_spent', $finalAmount);
+                        $user->last_visit_date = now();
+                        $this->updateCustomerType($user);
+                        $user->save();
+                    }
+                }
+                
+                DB::commit();
+                
+                Log::info('VNPay IPN: Payment processed successfully', [
+                    'bill_id' => $billId,
+                    'transaction_no' => $vnp_TransactionNo,
+                    'amount' => $finalAmount
+                ]);
+                
+                return response()->json([
+                    'RspCode' => '00',
+                    'Message' => 'Confirm Success'
+                ]);
+                
+            } catch (Exception $e) {
+                DB::rollBack();
+                Log::error('VNPay IPN: Error processing payment', [
+                    'bill_id' => $billId,
+                    'error' => $e->getMessage()
+                ]);
+                
+                return response()->json([
+                    'RspCode' => '99',
+                    'Message' => 'Unknown error'
+                ]);
+            }
+        } else {
+            // THANH TOÁN THẤT BẠI
+            Log::warning('VNPay IPN: Payment failed', [
+                'bill_id' => $billId,
+                'response_code' => $vnp_ResponseCode,
+                'message' => $request->vnp_Message ?? 'No message'
+            ]);
+            
+            // Cập nhật trạng thái thất bại (tùy chọn)
+            $bill->update([
+                'payment_status' => 'Failed',
+                'note' => $bill->note ? $bill->note . " | Thanh toán VNPay thất bại (Mã lỗi: $vnp_ResponseCode)" : "Thanh toán VNPay thất bại (Mã lỗi: $vnp_ResponseCode)",
+            ]);
+            
+            return response()->json([
+                'RspCode' => '99',
+                'Message' => 'Payment failed'
+            ]);
+        }
+        
+    } catch (Exception $e) {
+        Log::error('VNPay IPN: Exception', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'RspCode' => '99',
+            'Message' => 'Unknown error'
+        ]);
+    }
+}
+
+/**
+ * Cập nhật processPayment để hỗ trợ VNPay
+ */
+// Trong phương thức processPayment, sửa validation:
+// 'payment_method' => 'required|string|in:cash,bank,card,vnpay',
+
+// Thêm method xử lý VNPay trong processPayment:
+    private function handleVNPayPayment($request, $billId)
+    {
+    $bill = Bill::findOrFail($billId);
+    
+    // Tính toán tổng tiền
+    $timeCost = $this->calculateTimeCharge($bill);
+    $productTotal = $bill->billDetails()
+        ->where('is_combo_component', 0)
+        ->sum('total_price');
+    $totalAmount = $bill->status === 'quick' ? $productTotal : ($timeCost + $productTotal);
+    $discountAmount = $bill->discount_amount ?? 0;
+    $finalAmount = max(1000, $totalAmount - $discountAmount); // Tối thiểu 1000 VND
+    
+    // Lưu thông tin vào session
+    session([
+        'pending_vnpay_bill_id' => $billId,
+        'pending_vnpay_amount' => $finalAmount,
+        'pending_vnpay_note' => $request->note,
+    ]);
+    
+    // Tạo VNPay payment request
+    $vnpayRequest = new Request([
+        'bill_id' => $billId,
+        'amount' => $finalAmount,
+    ]);
+    
+    return $this->createVNPayPayment($vnpayRequest);
+    }
+
+    /**
+ * Kiểm tra trạng thái thanh toán
+ */
+public function checkPaymentStatus($billId)
+{
+    try {
+        $bill = Bill::find($billId);
+        
+        if (!$bill) {
+            return response()->json([
+                'pending' => false,
+                'paid' => false,
+                'message' => 'Bill not found'
+            ]);
+        }
+        
+        // Kiểm tra nếu có payment pending trong session
+        $pendingPayment = session('pending_vnpay_bill_id');
+        $isPending = $pendingPayment == $billId;
+        
+        // Kiểm tra nếu đã thanh toán
+        $payment = Payment::where('bill_id', $billId)
+            ->where('payment_method', 'vnpay')
+            ->where('status', 'completed')
+            ->first();
+        
+        $isPaid = $payment !== null;
+        
+        return response()->json([
+            'pending' => $isPending,
+            'paid' => $isPaid,
+            'bill_id' => $billId,
+            'bill_number' => $bill->bill_number,
+            'amount' => $isPaid ? $payment->amount : ($bill->final_amount ?? 0),
+            'transaction_id' => $isPaid ? $payment->transaction_id : null,
+            'payment_method' => $isPaid ? 'vnpay' : null
+        ]);
+        
+    } catch (Exception $e) {
+        return response()->json([
+            'pending' => false,
+            'paid' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+/**
+ * Kiểm tra trạng thái bill
+ */
+public function checkBillStatus($billId)
+{
+    try {
+        $bill = Bill::find($billId);
+        
+        if (!$bill) {
+            return response()->json([
+                'paid' => false,
+                'message' => 'Bill not found'
+            ]);
+        }
+        
+        $payment = Payment::where('bill_id', $billId)
+            ->where('status', 'completed')
+            ->first();
+        
+        return response()->json([
+            'paid' => $payment !== null,
+            'bill_id' => $billId,
+            'bill_number' => $bill->bill_number,
+            'amount' => $payment ? $payment->amount : 0,
+            'transaction_id' => $payment ? $payment->transaction_id : null,
+            'payment_method' => $payment ? $payment->payment_method : null
+        ]);
+        
+    } catch (Exception $e) {
+        return response()->json([
+            'paid' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
+public function checkVnpayPaymentStatus($billId)
+{
+    try {
+        $bill = Bill::find($billId);
+        
+        if (!$bill) {
+            return response()->json([
+                'paid' => false,
+                'message' => 'Bill not found'
+            ]);
+        }
+        
+        // Kiểm tra xem đã có payment VNPay chưa
+        $payment = Payment::where('bill_id', $billId)
+            ->where('payment_method', 'vnpay')
+            ->where('status', 'completed')
+            ->first();
+        
+        $isPaid = $payment !== null;
+        
+        return response()->json([
+            'paid' => $isPaid,
+            'bill_id' => $billId,
+            'bill_status' => $bill->status,
+            'payment_status' => $bill->payment_status,
+            'table_status' => $bill->table->status ?? 'unknown',
+            'payment_method' => $payment ? $payment->payment_method : null,
+            'transaction_id' => $payment ? $payment->transaction_id : null,
+            'paid_at' => $payment ? $payment->paid_at : null
+        ]);
+        
+    } catch (Exception $e) {
+        return response()->json([
+            'paid' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
 }

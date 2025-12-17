@@ -815,6 +815,10 @@
                                 Thẻ
                             @break
 
+                              @case('vnpay')
+                                VNPay
+                            @break
+
                             @default
                                 {{ $bill->payment_method }}
                         @endswitch
@@ -934,6 +938,29 @@
             </div>
         </div>
     @endif
+
+    @if($bill->payment_method == 'vnpay' && $bill->payment_status == 'Paid')
+<div class="text-center mt-4">
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle fa-2x"></i>
+        <h4>Đã thanh toán thành công qua VNPay</h4>
+        <p>Mã giao dịch: {{ $payment->transaction_id ?? 'N/A' }}</p>
+        <p>Thời gian: {{ $payment->paid_at ?? now() }}</p>
+    </div>
+</div>
+@elseif($bill->payment_method == 'vnpay')
+<div class="text-center mt-4">
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle fa-2x"></i>
+        <h4>Đang xử lý thanh toán VNPay</h4>
+        <p>Vui lòng đợi hệ thống xử lý...</p>
+        <button onclick="checkVnpayStatus()" class="btn btn-primary">
+            <i class="fas fa-sync-alt"></i> Kiểm tra trạng thái
+        </button>
+    </div>
+</div>
+@endif
+
 
     <script>
         // Khai báo biến toàn cục
@@ -1166,6 +1193,71 @@
             }
         });
     </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Kiểm tra nếu là thanh toán VNPay và chưa lưu vào database
+    const urlParams = new URLSearchParams(window.location.search);
+    const billId = {{ $bill->id ?? 0 }};
+    const isVnpaySuccess = urlParams.get('vnpay_success') === 'true';
+    const paymentMethod = '{{ $bill->payment_method ?? "" }}';
+    
+    if ((isVnpaySuccess || paymentMethod === 'vnpay') && billId > 0) {
+        // Kiểm tra trạng thái thanh toán
+        checkPaymentStatus();
+    }
+    
+    function checkPaymentStatus() {
+        fetch(`/payment/check-vnpay-status/${billId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.paid) {
+                    // Đã thanh toán thành công
+                    console.log('Payment already processed:', data);
+                    updateUIForPaidStatus();
+                } else {
+                    // Chưa thanh toán, hiển thị cảnh báo
+                    console.warn('Payment not yet processed');
+                    showPaymentWarning();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking payment status:', error);
+            });
+    }
+    
+    function updateUIForPaidStatus() {
+        // Ẩn nút "Quay lại thanh toán"
+        const backButton = document.querySelector('.btn-back-to-payment');
+        if (backButton) {
+            backButton.style.display = 'none';
+        }
+        
+        // Hiển thị thông báo đã thanh toán
+        const paymentStatus = document.querySelector('.payment-status');
+        if (paymentStatus) {
+            paymentStatus.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> 
+                    Đã thanh toán thành công qua VNPay
+                </div>
+            `;
+        }
+    }
+    
+    function showPaymentWarning() {
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'alert alert-warning mt-3';
+        warningDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Lưu ý:</strong> Thanh toán VNPay đã thành công nhưng chưa được lưu vào hệ thống.
+            Vui lòng không bấm "Quay lại" mà hãy liên hệ nhân viên.
+        `;
+        
+        const container = document.querySelector('.container') || document.body;
+        container.prepend(warningDiv);
+    }
+});
+</script>
 </body>
 
 </html>
