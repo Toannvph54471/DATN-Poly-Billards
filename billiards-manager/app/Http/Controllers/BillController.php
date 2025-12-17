@@ -468,38 +468,76 @@ class BillController extends Controller
                 ->where('bill_id', $billId)
                 ->firstOrFail();
 
-            // Kiểm tra xem bill có đang ở trạng thái có thể xóa sản phẩm không
+            $currentUser = Auth::user();
+            $currentUserId = $currentUser->id;
+            $currentUserRole = $currentUser->role_id;
+
+            // 1. Kiểm tra xem bill có đang ở trạng thái có thể xóa sản phẩm không
             if (!in_array($bill->status, ['Open', 'quick'])) {
                 return redirect()->back()->with('error', 'Chỉ có thể xóa sản phẩm khỏi bill đang mở');
             }
 
-            // KHÔNG cho phép xóa nếu là thành phần của combo
+            // 2. Kiểm tra quyền xóa - Chỉ người thêm sản phẩm mới được xóa
+            $addedBy = $billDetail->added_by;
+
+            // Admin (role_id = 1) có quyền xóa tất cả
+            $isAdmin = ($currentUserRole == 1);
+
+            // Manager (role_id = 2) có quyền xóa tất cả
+            $isManager = ($currentUserRole == 2);
+
+            // Kiểm tra xem current user có phải là người thêm sản phẩm không
+            $isAddedByCurrentUser = ($addedBy == $currentUserId);
+
+            // Trường hợp đặc biệt: nếu added_by là null, cho phép nhân viên tạo bill được xóa
+            $isBillCreator = ($addedBy === null && $bill->staff_id == $currentUserId);
+
+            // Kiểm tra quyền
+            if (!$isAdmin && !$isManager && !$isAddedByCurrentUser && !$isBillCreator) {
+                // Lấy thông tin người thêm sản phẩm để hiển thị thông báo
+                $addedByUser = null;
+                if ($addedBy) {
+                    $addedByUser = User::find($addedBy);
+                }
+
+                $addedByName = $addedByUser ? $addedByUser->name : 'Nhân viên khác';
+
+                return redirect()->back()->with(
+                    'error',
+                    "Bạn không có quyền xóa sản phẩm này. Sản phẩm được thêm bởi: {$addedByName}"
+                );
+            }
+
+            // 3. KHÔNG cho phép xóa nếu là thành phần của combo
             if ($billDetail->is_combo_component) {
                 return redirect()->back()->with('error', 'Không thể xóa sản phẩm là thành phần của combo');
             }
 
-            // KHÔNG cho phép xóa nếu là combo
+            // 4. KHÔNG cho phép xóa nếu là combo
             if ($billDetail->combo_id) {
                 return redirect()->back()->with('error', 'Không thể xóa combo bằng chức năng này. Vui lòng sử dụng chức năng xóa combo.');
             }
 
-            // Chỉ xử lý với sản phẩm thông thường
+            // 5. Chỉ xử lý với sản phẩm thông thường
             if ($billDetail->product_id) {
                 // Hoàn trả tồn kho
                 $product = Product::find($billDetail->product_id);
                 if ($product) {
                     $product->increment('stock_quantity', $billDetail->quantity);
-                    Log::info("Restored stock for product: {$product->name}, quantity: {$billDetail->quantity}");
+                    Log::info("Restored stock for product: {$product->name}, quantity: {$billDetail->quantity}, restored by user: {$currentUserId}");
                 }
             }
 
-            // Xóa bản ghi bill detail
+            // 6. Xóa bản ghi bill detail
             $billDetail->delete();
 
-            // Cập nhật lại tổng tiền bill
+            // 7. Cập nhật lại tổng tiền bill
             $this->calculateBillTotal($bill);
 
             DB::commit();
+
+            // Ghi log hành động xóa
+            Log::info("Product removed from bill by user {$currentUserId} (Role: {$currentUserRole}): BillDetail ID {$billDetailId}, Added by: {$addedBy}");
 
             return redirect()->back()->with('success', 'Xóa sản phẩm khỏi bill thành công');
         } catch (Exception $e) {
