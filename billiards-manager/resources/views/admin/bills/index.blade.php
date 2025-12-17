@@ -3,6 +3,57 @@
 @section('title', 'Quản lý hóa đơn')
 
 @section('content')
+
+    <!-- Real-time Notifications Container -->
+    <div id="realtime-notifications" class="fixed top-4 right-4 z-50 space-y-2 max-w-md"></div>
+
+    <!-- Flash Message từ Session (Thêm vào đây) -->
+    @if (session('success'))
+        <div id="flash-success" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div
+                class="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg shadow-lg animate-slide-in-down">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-check-circle mr-3 text-green-500"></i>
+                    <span class="font-medium">{{ session('success') }}</span>
+                    <button onclick="document.getElementById('flash-success').remove()"
+                        class="ml-4 text-green-600 hover:text-green-800">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div id="flash-error" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg shadow-lg animate-slide-in-down">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-exclamation-circle mr-3 text-red-500"></i>
+                    <span class="font-medium">{{ session('error') }}</span>
+                    <button onclick="document.getElementById('flash-error').remove()"
+                        class="ml-4 text-red-600 hover:text-red-800">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if (session('info'))
+        <div id="flash-info" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div
+                class="bg-blue-100 border border-blue-400 text-blue-700 px-6 py-4 rounded-lg shadow-lg animate-slide-in-down">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-info-circle mr-3 text-blue-500"></i>
+                    <span class="font-medium">{{ session('info') }}</span>
+                    <button onclick="document.getElementById('flash-info').remove()"
+                        class="ml-4 text-blue-600 hover:text-blue-800">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
     <!-- Real-time Notifications Container -->
     <div id="realtime-notifications" class="fixed top-4 right-4 z-50 space-y-2 max-w-md"></div>
 
@@ -136,7 +187,8 @@
                             </label>
                             <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                                 <option value="all">Tất cả trạng thái</option>
-                                <option value="Open" {{ ($filters['status'] ?? '') == 'Open' ? 'selected' : '' }}>Đang mở
+                                <option value="Open" {{ ($filters['status'] ?? '') == 'Open' ? 'selected' : '' }}>Đang
+                                    mở
                                 </option>
                                 <option value="Closed" {{ ($filters['status'] ?? '') == 'Closed' ? 'selected' : '' }}>Đã
                                     đóng</option>

@@ -1087,7 +1087,7 @@ class PaymentController extends Controller
 
                 if (!$paymentData) {
                     return redirect()
-                        ->route('admin.payments.show', $billId)
+                        ->route('admin.bills.index')  // Đổi từ admin.payments.show
                         ->with('error', 'Thông tin thanh toán không tồn tại hoặc đã hết hạn');
                 }
 
@@ -1154,12 +1154,12 @@ class PaymentController extends Controller
                 session()->forget('pending_payment_' . $billId);
 
                 // 8. Cập nhật số lần ghé thăm và tổng chi tiêu cho khách hàng
-                if ($bill->user_id) {
+                // **SỬA LỖI Ở ĐÂY**: Kiểm tra xem user_id có tồn tại không
+                if (!empty($bill->user_id)) {
                     $user = User::find($bill->user_id);
                     if ($user) {
                         $user->increment('total_visits');
                         $user->increment('total_spent', $paymentData['final_amount']);
-                        $user->last_visit_date = now();
 
                         // Cập nhật loại khách hàng dựa trên số lần ghé thăm
                         $this->updateCustomerType($user);
@@ -1181,8 +1181,9 @@ class PaymentController extends Controller
                 'staff_id' => Auth::id(),
             ]);
 
+            // **SỬA LẠI**: Đổi route không tồn tại
             return redirect()
-                ->route('admin.payments.show', $billId)
+                ->route('admin.bills.index')  // Đổi từ admin.payments.show
                 ->with('error', 'Lỗi khi xác nhận thanh toán: ' . $e->getMessage());
         }
     }
