@@ -87,11 +87,8 @@
                         default => 'gray'
                     };
                     
-                    // Fetch attendance for actions/details
-                    $attendance = \App\Models\Attendance::where('employee_id', $shift->employee_id)
-                        ->whereDate('check_in', $shift->shift_date)
-                        ->orderBy('check_in', 'desc')
-                        ->first();
+                    // Use pre-fetched attendance
+                    $attendance = $shift->attendance ?? null;
                 @endphp
                 
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden border-l-4 border-{{ $statusColor }}-500 relative">
@@ -131,9 +128,13 @@
                                     </div>
                                 @else
                                     <div class="flex justify-between items-center">
-                                        <span class="text-gray-500">Thời gian:</span>
+                                        <span class="text-gray-500">Giờ công (Billable):</span>
                                         <span class="font-bold text-green-600">
-                                            {{ \Carbon\Carbon::parse($attendance->check_in)->diffForHumans(null, true) }}
+                                            @if(isset($shift->live_billable_minutes))
+                                                {{ round($shift->live_billable_minutes / 60, 2) }}h
+                                            @else
+                                                {{ \Carbon\Carbon::parse($attendance->check_in)->diffForHumans(null, true) }}
+                                            @endif
                                         </span>
                                     </div>
                                 @endif
