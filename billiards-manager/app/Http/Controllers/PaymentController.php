@@ -1069,7 +1069,7 @@ class PaymentController extends Controller
             ]);
 
             return redirect()
-                ->route('admin.payments.show', $billId)
+                ->route('admin.bills.show', $billId)
                 ->with('error', 'Lỗi khi xử lý thanh toán: ' . $e->getMessage());
         }
     }
@@ -1085,13 +1085,13 @@ class PaymentController extends Controller
 
                 // 1. Lấy thông tin thanh toán tạm từ session
                 $paymentData = session('pending_payment_' . $billId);
-
+                // dd($paymentData);
+                
                 if (!$paymentData) {
                     return redirect()
-                        ->route('admin.payments.show', $billId)
+                        ->route('admin.bills.show', $billId)
                         ->with('error', 'Thông tin thanh toán không tồn tại hoặc đã hết hạn');
                 }
-
                 // 2. Lấy bill
                 $bill = Bill::with(['table.tableRate', 'billDetails.product', 'billDetails.combo', 'staff'])
                     ->whereIn('status', ['Open', 'quick'])
@@ -1156,11 +1156,13 @@ class PaymentController extends Controller
 
                 // 8. Cập nhật số lần ghé thăm và tổng chi tiêu cho khách hàng
                 if ($bill->user_id) {
+
                     $user = User::find($bill->user_id);
+
                     if ($user) {
                         $user->increment('total_visits');
                         $user->increment('total_spent', $paymentData['final_amount']);
-                        $user->last_visit_date = now();
+
 
                         // Cập nhật loại khách hàng dựa trên số lần ghé thăm
                         $this->updateCustomerType($user);
@@ -1172,7 +1174,7 @@ class PaymentController extends Controller
 
                 // 9. Redirect với thông báo thành công
                 return redirect()
-                    ->route('admin.bills.index')
+                    ->route('admin.bills.show', $billId)
                     ->with('success', 'Thanh toán thành công! Hóa đơn đã được xác nhận.');
             });
         } catch (Exception $e) {
@@ -1183,7 +1185,7 @@ class PaymentController extends Controller
             ]);
 
             return redirect()
-                ->route('admin.payments.show', $billId)
+                ->route('admin.bills.show', $billId)
                 ->with('error', 'Lỗi khi xác nhận thanh toán: ' . $e->getMessage());
         }
     }
@@ -1442,7 +1444,7 @@ class PaymentController extends Controller
             });
         } else {
             // Thất bại
-            return redirect()->route('admin.payments.show', $billId)
+            return redirect()->route('admin.bills.show', $bill->id)
                 ->with('error', 'Thanh toán VNPay thất bại. Mã lỗi: ' . $vnp_ResponseCode)
                 ->with('vnpay_retry', 'true');
         }
