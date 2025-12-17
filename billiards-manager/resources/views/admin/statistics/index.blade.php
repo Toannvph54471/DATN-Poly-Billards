@@ -3,7 +3,125 @@
 @section('title', 'Thống kê')
 
 @section('content')
-<div class="space-y-6">
+{{-- FILTER --}}
+<div 
+    x-data="{ filter: '{{ $filter }}' }"
+    class="relative bg-gradient-to-br from-white to-gray-50
+           rounded-2xl border border-gray-200
+           shadow-md hover:shadow-lg transition
+           p-6 mb-6"
+>
+
+    {{-- Header --}}
+    <div class="flex items-center gap-2 mb-5">
+        <div class="w-10 h-10 flex items-center justify-center
+                    rounded-xl bg-blue-100 text-blue-600 text-lg">
+            📊
+        </div>
+        <div>
+            <h2 class="text-lg font-semibold text-gray-800">
+                Bộ lọc thống kê
+            </h2>
+            <p class="text-sm text-gray-500">
+                Lọc dữ liệu theo thời gian mong muốn
+            </p>
+        </div>
+    </div>
+
+    <form method="GET" action="{{ route('admin.statistics') }}"
+          class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+
+        {{-- Loại thống kê --}}
+        <div class="md:col-span-2">
+            <label class="text-sm font-medium text-gray-600 flex items-center gap-1">
+                ⏱ Loại thống kê
+            </label>
+            <select
+                name="filter"
+                x-model="filter"
+                class="mt-1 w-full rounded-xl border-gray-300
+                       bg-white
+                       focus:border-blue-500 focus:ring-blue-500"
+            >
+                <option value="today">Hôm nay</option>
+                <option value="week">Tuần này</option>
+                <option value="month">Tháng này</option>
+                <option value="day">Chọn ngày</option>
+                <option value="month_custom">Chọn tháng</option>
+                <option value="custom">Từ ngày – đến ngày</option>
+            </select>
+        </div>
+
+        {{-- Từ ngày --}}
+        <div x-show="['day','custom'].includes(filter)" x-transition>
+            <label class="text-sm font-medium text-gray-600 flex items-center gap-1">
+                📅 Từ ngày
+            </label>
+            <input
+                type="date"
+                name="start_date"
+                value="{{ request('start_date') }}"
+                class="mt-1 w-full rounded-xl border-gray-300
+                       focus:border-blue-500 focus:ring-blue-500"
+            >
+        </div>
+
+        {{-- Đến ngày --}}
+        <div x-show="filter === 'custom'" x-transition>
+            <label class="text-sm font-medium text-gray-600 flex items-center gap-1">
+                📅 Đến ngày
+            </label>
+            <input
+                type="date"
+                name="end_date"
+                value="{{ request('end_date') }}"
+                class="mt-1 w-full rounded-xl border-gray-300
+                       focus:border-blue-500 focus:ring-blue-500"
+            >
+        </div>
+
+        {{-- Chọn tháng --}}
+        <div x-show="filter === 'month_custom'" x-transition>
+            <label class="text-sm font-medium text-gray-600 flex items-center gap-1">
+                🗓 Tháng
+            </label>
+            <input
+                type="month"
+                name="start_date"
+                value="{{ request('start_date') }}"
+                class="mt-1 w-full rounded-xl border-gray-300
+                       focus:border-blue-500 focus:ring-blue-500"
+            >
+        </div>
+
+        {{-- Buttons --}}
+        <div class="flex gap-3 md:col-span-2">
+            <button
+                type="submit"
+                class="flex-1 flex items-center justify-center gap-2
+                       bg-blue-600 hover:bg-blue-700
+                       text-white font-semibold
+                       py-2.5 px-4 rounded-xl
+                       transition active:scale-95"
+            >
+                🔍 Lọc dữ liệu
+            </button>
+
+            <a
+                href="{{ route('admin.statistics') }}"
+                class="flex-1 flex items-center justify-center gap-2
+                       bg-gray-100 hover:bg-gray-200
+                       text-gray-700 font-semibold
+                       py-2.5 px-4 rounded-xl
+                       transition active:scale-95"
+            >
+                ↺ Reset
+            </a>
+        </div>
+
+    </form>
+</div>
+
 
     <!-- HEADER -->
     <div class="flex justify-between items-center">
