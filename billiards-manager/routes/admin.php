@@ -150,6 +150,10 @@ Route::prefix('admin')
             // Print bill
             Route::get('/{id}/print', [BillController::class, 'printBill'])->name('print');
             Route::get('/print-multiple', [BillController::class, 'printBillMultiple'])->name('print-multiple');
+
+            Route::post('/{id}/preview-payment', [PaymentController::class, 'previewPayment'])->name('preview-payment');
+            Route::post('/{id}/confirm-payment', [PaymentController::class, 'confirmPayment'])->name('confirm-payment');
+            Route::post('/{id}/cancel-payment', [PaymentController::class, 'cancelPayment'])->name('cancel-payment');
         });
 
         // Payments Management
@@ -161,6 +165,8 @@ Route::prefix('admin')
             Route::post('/payments/check-promotion', [PaymentController::class, 'checkPromotion'])->name('check-promotion');
             Route::post('/payments/apply-promotion', [PaymentController::class, 'applyPromotion'])->name('apply-promotion');
             Route::post('/payments/remove-promotion', [PaymentController::class, 'removePromotion'])->name('remove-promotion');
+
+           
         });
 
         // Products Management
