@@ -107,6 +107,7 @@
 
             .redirect-overlay.show {
                 opacity: 1;
+                display: flex;
             }
 
             .success-icon {
@@ -127,24 +128,6 @@
             .print-btn {
                 position: relative;
                 overflow: hidden;
-            }
-
-            .print-btn::after {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 5px;
-                height: 5px;
-                background: rgba(255, 255, 255, 0.5);
-                opacity: 0;
-                border-radius: 100%;
-                transform: scale(1, 1) translate(-50%);
-                transform-origin: 50% 50%;
-            }
-
-            .print-btn:focus:not(:active)::after {
-                animation: ripple 1s ease-out;
             }
 
             .receipt-item {
@@ -201,83 +184,9 @@
                 padding: 5px;
             }
 
-            .qr-overlay {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(255, 255, 255, 0.9);
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                opacity: 0;
-                transition: opacity 0.3s;
-            }
-
-            .qr-container:hover .qr-overlay {
-                opacity: 1;
-            }
-
-            .qr-amount {
-                font-size: 12px;
-                font-weight: bold;
-                color: #059669;
-                text-align: center;
-            }
-
-            /* Animation cho QR */
-            @keyframes qrPulse {
-                0% {
-                    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-                }
-
-                70% {
-                    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-                }
-
-                100% {
-                    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-                }
-            }
-
-            .qr-pulse {
-                animation: qrPulse 2s infinite;
-            }
-
-            /* Toast notification styles */
-            .toast {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: #10b981;
-                color: white;
-                padding: 12px 20px;
-                border-radius: 6px;
-                z-index: 10000;
-                animation: slideIn 0.3s ease;
-            }
-
-            .toast-success {
-                background: #10b981;
-            }
-
-            .toast-error {
-                background: #ef4444;
-            }
-
-            .toast-info {
-                background: #3b82f6;
-            }
-
             /* MB Bank specific colors */
             .bg-mbbank {
                 background-color: #9e1f63;
-            }
-
-            .hover\:bg-mbbank:hover {
-                background-color: #7a174d;
             }
 
             .text-mbbank {
@@ -293,18 +202,6 @@
 
                 50% {
                     transform: translateY(-15px);
-                }
-            }
-
-            @keyframes ripple {
-                0% {
-                    transform: scale(0, 0);
-                    opacity: 0.5;
-                }
-
-                100% {
-                    transform: scale(20, 20);
-                    opacity: 0;
                 }
             }
 
@@ -468,6 +365,10 @@
                 background-color: #e53e3e;
             }
 
+            .bg-yellow-600 {
+                background-color: #d97706;
+            }
+
             .text-white {
                 color: white;
             }
@@ -546,6 +447,10 @@
 
             .hover\:bg-red-700:hover {
                 background-color: #c53030;
+            }
+
+            .hover\:bg-yellow-700:hover {
+                background-color: #b45309;
             }
 
             .transition-all {
@@ -628,12 +533,110 @@
             .space-y-2>*+* {
                 margin-top: 0.5rem;
             }
+
+            /* Toast notification styles */
+            .toast {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            }
+
+            .toast-success {
+                background: #10b981;
+            }
+
+            .toast-error {
+                background: #ef4444;
+            }
+
+            .toast-info {
+                background: #3b82f6;
+            }
+
+            /* Confirmation buttons styles */
+            .confirmation-section {
+                max-width: 300px;
+                margin: 20px auto;
+                padding: 20px;
+                background: #f8fafc;
+                border-radius: 8px;
+                border: 2px solid #e5e7eb;
+            }
+
+            .confirmation-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin: 15px 0;
+            }
+
+            .confirm-btn,
+            .cancel-btn {
+                padding: 14px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                transition: all 0.3s ease;
+                border: none;
+                cursor: pointer;
+                width: 100%;
+            }
+
+            .confirm-btn {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white;
+            }
+
+            .confirm-btn:hover {
+                background: linear-gradient(135deg, #059669 0%, #047857 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            }
+
+            .cancel-btn {
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                color: white;
+            }
+
+            .cancel-btn:hover {
+                background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+            }
+
+            .notice-box {
+                background: #fef3c7;
+                border: 1px solid #f59e0b;
+                border-radius: 6px;
+                padding: 12px;
+                margin-top: 15px;
+            }
+
+            .notice-box strong {
+                color: #92400e;
+            }
+
+            .notice-box p {
+                color: #78350f;
+                margin: 5px 0;
+                font-size: 12px;
+            }
         </style>
     </head>
 
     <body class="bg-gray-100">
         <!-- Redirect Overlay - CHỈ HIỂN THỊ KHI ĐÃ THANH TOÁN -->
-        <div id="redirectOverlay" class="redirect-overlay no-print">
+        <div id="redirectOverlay11" class="redirect-overlay no-print">
             <div class="text-center transform transition-all duration-500 scale-90" id="overlayContent">
                 <div class="success-icon">
                     <i class="fas fa-check-circle"></i>
@@ -660,12 +663,10 @@
                 class="print-btn bg-blue-600 text-white px-5 py-3 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center">
                 <i class="fas fa-print mr-2"></i> In hóa đơn
             </button>
-            <a href="{{ route('admin.bills.index') }}">
-                <button
-                    class="bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 flex items-center">
-                    <i class="fas fa-arrow-left mr-2"></i> Quay lại
-                </button>
-            </a>
+            <button onclick="goBackWithConfirmation()"
+                class="bg-green-600 text-white px-5 py-3 rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 transform hover:scale-105 flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại
+            </button>
             <button id="animateBtn" onclick="animateReceipt()"
                 class="bg-purple-600 text-white px-5 py-3 rounded-lg shadow-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center">
                 <i class="fas fa-play mr-2"></i> Hiệu ứng hóa đơn
@@ -975,41 +976,7 @@
                     Quét mã QR để thanh toán {{ number_format($finalAmount, 0, ',', '.') }}₫
                 </p>
 
-                <!-- Link thanh toán nhanh (tùy chọn) -->
-                <div class="text-xs-print text-blue-600 mt-1 no-print">
-                    <i class="fas fa-link mr-1"></i>
-                    Link thanh toán:
-                    <a href="mbbank://payment?account=0368015218&amount={{ $finalAmount }}&content=Bill{{ $bill->bill_number }}"
-                        class="underline">
-                        mbbank://Bill{{ $bill->bill_number }}
-                    </a>
-                </div>
-
                 <div class="receipt-line mt-2"></div>
-            </div>
-
-            <!-- Thông tin thêm về QR code -->
-            <div class="text-center text-xs-print text-gray-600 mt-1 receipt-item">
-                <i class="fas fa-info-circle mr-1"></i>
-                Mở ứng dụng MB Bank & quét QR để thanh toán nhanh
-            </div>
-
-            <!-- Tối ưu hóa cho mobile banking (tùy chọn nâng cao) -->
-            <div class="mt-2 text-center text-xs-print receipt-item no-print">
-                <div class="flex flex-col space-y-1">
-                    <button onclick="openBankApp('momo')"
-                        class="bg-pink-600 text-white px-3 py-1 rounded text-xs hover:bg-pink-700 transition-all duration-300">
-                        <i class="fab fa-app-store-ios mr-1"></i> MoMo
-                    </button>
-                    <button onclick="openBankApp('vnpay')"
-                        class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-all duration-300">
-                        <i class="fas fa-mobile-alt mr-1"></i> VNPay
-                    </button>
-                    <button onclick="openBankApp('mbbank')"
-                        class="bg-mbbank text-white px-3 py-1 rounded text-xs hover:bg-mbbank transition-all duration-300">
-                        <i class="fas fa-university mr-1"></i> MB Bank
-                    </button>
-                </div>
             </div>
 
             <!-- Footer -->
@@ -1024,12 +991,82 @@
             <div class="mt-8"></div>
         </div>
 
+        <!-- Phần xác nhận thanh toán - CHỈ HIỂN THỊ KHI LÀ PREVIEW VÀ LÀ PHẦN TỬ CUỐI -->
+        @if (isset($bill->isPreview) && $bill->isPreview && $loop->last)
+            <div class="confirmation-section no-print">
+                <h3 class="font-bold text-sm-print mb-3 text-blue-600 text-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    XÁC NHẬN THANH TOÁN VỚI KHÁCH HÀNG
+                </h3>
+
+                <div class="confirmation-buttons">
+                    <!-- Form xác nhận thanh toán thành công -->
+                    <form action="{{ route('admin.bills.confirm-payment-multiple') }}" method="POST"
+                        class="w-full">
+                        @csrf
+                        <!-- Lặp qua tất cả bills để gửi tất cả IDs -->
+                        @foreach ($billsData as $b)
+                            <input type="hidden" name="billIds[]" value="{{ $b->id }}">
+                        @endforeach
+                        <button type="submit" onclick="return confirmPaymentSuccess()" class="confirm-btn">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Xác nhận thanh toán thành công
+                        </button>
+                        <p class="text-xs text-gray-600 mt-1 text-center">
+                            Nhấn khi khách hàng đã thanh toán xong
+                        </p>
+                    </form>
+
+                    <!-- Form hủy thanh toán (thanh toán lúc khác) -->
+                    <form action="{{ route('admin.bills.cancel-payment-multiple') }}" method="POST" class="w-full">
+                        @csrf
+                        <!-- Lặp qua tất cả bills để gửi tất cả IDs -->
+                        @foreach ($billsData as $b)
+                            <input type="hidden" name="billIds[]" value="{{ $b->id }}">
+                        @endforeach
+                        <button type="submit" onclick="return confirmCancelPayment()" class="cancel-btn">
+                            <i class="fas fa-clock mr-2"></i>
+                            Hủy - Thanh toán lúc khác
+                        </button>
+                        <p class="text-xs text-gray-600 mt-1 text-center">
+                            Nhấn nếu khách hàng chưa thanh toán
+                        </p>
+                    </form>
+
+                    <!-- Nút in lại -->
+                    <button onclick="window.print()"
+                        class="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center w-full mt-2">
+                        <i class="fas fa-print mr-2"></i>
+                        In lại hóa đơn
+                    </button>
+                </div>
+
+                <!-- Thông báo quan trọng -->
+                <div class="notice-box">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 mt-1 mr-2"></i>
+                        <div class="text-left">
+                            <p class="text-xs font-semibold text-yellow-800">LƯU Ý QUAN TRỌNG:</p>
+                            <p class="text-xs text-yellow-700">
+                                1. Hãy đưa hóa đơn cho khách hàng xác nhận<br>
+                                2. Chỉ nhấn "Xác nhận thanh toán thành công" khi đã nhận tiền<br>
+                                3. Nếu khách chưa trả tiền, nhấn "Hủy - Thanh toán lúc khác"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <script>
             let countdown = 3;
             let countdownInterval;
             const redirectUrl = '{{ $redirectUrl ?? route('admin.bills.index') }}';
-            const autoRedirect = {{ $autoRedirect ? 'true' : 'false' }};
+            const autoRedirect = {{ isset($autoRedirect) && $autoRedirect ? 'true' : 'false' }};
             const isPaid = {{ $bill->payment_status === 'Paid' ? 'true' : 'false' }};
+            const isPreview = {{ isset($bill->isPreview) && $bill->isPreview ? 'true' : 'false' }};
+            const totalAmount = {{ $totalAmount ?? 0 }};
+
             let hasPrinted = false;
             let animationEnabled = false;
 
@@ -1076,7 +1113,7 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
                 }
 
                 // Tự động in sau 1 giây nếu là thanh toán mới
-                if (isPaid && !hasPrinted) {
+                if (isPreview && !hasPrinted) {
                     setTimeout(() => {
                         printReceipt();
                     }, 1000);
@@ -1120,7 +1157,7 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
                 if (countdownInterval) {
                     clearInterval(countdownInterval);
                 }
-                window.location.href = redirectUrl;
+                // window.location.href = redirectUrl;
             }
 
             // Hàm ở lại trang
@@ -1261,6 +1298,79 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
                 animationEnabled = false;
             }
 
+            // Xác nhận thanh toán thành công
+            function confirmPaymentSuccess() {
+                return confirmAction(
+                    'Xác nhận thanh toán thành công?',
+                    'Xác nhận, khách đã trả tiền',
+                );
+            }
+
+            // Xác nhận hủy thanh toán
+            function confirmCancelPayment() {
+                return confirmAction(
+                    'Hủy thanh toán?',
+                    'Khách hàng sẽ thanh toán vào lúc khác?',
+                    'warning',
+                    'Xác nhận hủy',
+                    '#f59e0b'
+                );
+            }
+
+            // Hàm chung xác nhận
+            function confirmAction(title, text, icon, confirmText, confirmColor) {
+                return new Promise((resolve) => {
+                    if (typeof Swal === 'undefined') {
+                        // Nếu không có SweetAlert, sử dụng confirm thông thường
+                        const result = window.confirm(`${title}\n\n${text}`);
+                        resolve(result);
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: title,
+                        text: text,
+                        icon: icon,
+                        showCancelButton: true,
+                        confirmButtonText: confirmText,
+                        cancelButtonText: 'Hủy bỏ',
+                        confirmButtonColor: confirmColor,
+                        cancelButtonColor: '#6b7280'
+                    }).then((result) => {
+                        resolve(result.isConfirmed);
+                    });
+                });
+            }
+
+            // Xử lý quay lại với xác nhận
+            async function goBackWithConfirmation() {
+                if (isPreview) {
+                    const confirmed = await confirmAction(
+                        'Rời khỏi trang thanh toán?',
+                        'Bạn có một thanh toán đang chờ xác nhận. Nếu rời đi mà chưa xác nhận, thanh toán sẽ bị hủy.',
+                        'warning',
+                        'Hủy thanh toán và quay lại',
+                        '#ef4444'
+                    );
+
+                    if (confirmed) {
+                        // Gọi API hủy thanh toán
+                        fetch('{{ route('admin.bills.cancel-payment', $bill->id) }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            }
+                        }).then(() => {
+                            window.location.href = '{{ route('admin.tables.detail', $bill->table_id) }}';
+                        });
+                    }
+                } else {
+                    window.location.href = '{{ route('admin.bills.index') }}';
+                }
+            }
+
+
             // Thêm sự kiện cho nút hiệu ứng
             document.getElementById('animateBtn')?.addEventListener('click', animateReceipt);
 
@@ -1283,50 +1393,38 @@ Nội dung: TT Bill {{ $bill->bill_number }}`;
                 }, 3000);
             }
 
-            // Generate QR code on the fly (tùy chọn nâng cao)
-            function generateDynamicQR() {
-                const qrCodeElement = document.getElementById('dynamicQR');
-                if (qrCodeElement) {
-                    const amount = {{ $finalAmount }};
-                    const billNumber = '{{ $bill->bill_number }}';
-                    const qrUrl =
-                        `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`mbbank://payment?account=0368015218&amount=${amount}&content=Bill${billNumber}`)}`;
-
-                    qrCodeElement.src = qrUrl;
-                }
+            // Format currency
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND',
+                    minimumFractionDigits: 0
+                }).format(amount);
             }
 
-            // Mobile banking app deep links - ĐÃ CẬP NHẬT CHO MB BANK
-            function openBankApp(app) {
-                const amount = {{ $finalAmount }};
-                const billNumber = '{{ $bill->bill_number }}';
-                let url = '';
+            // Toast notification
+            function showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type} no-print`;
+                toast.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>
+                <span>${message}</span>
+            `;
 
-                switch (app) {
-                    case 'momo':
-                        url = `momo://payment?phone=0912345678&amount=${amount}&content=Bill${billNumber}`;
-                        break;
-                    case 'vnpay':
-                        url = `vnpay://payment?amount=${amount}&billId=${billNumber}`;
-                        break;
-                    case 'mbbank':
-                        url = `mbbank://transfer?account=0368015218&amount=${amount}&content=Bill${billNumber}`;
-                        break;
-                    default:
-                        url = `mbbank://payment?account=0368015218&amount=${amount}&content=Bill${billNumber}`;
-                }
+                document.body.appendChild(toast);
 
-                // Try to open app, fallback to web
-                window.location.href = url;
-
-                // Fallback after 500ms
                 setTimeout(() => {
-                    if (document.hasFocus()) {
-                        window.open('https://mbbank.com.vn', '_blank');
-                        showToast('Không thể mở ứng dụng ngân hàng. Vui lòng mở ứng dụng thủ công.', 'info');
-                    }
-                }, 500);
+                    toast.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
             }
+
+            window.addEventListener('beforeunload', function(e) {
+                if (isPreview) {
+                    e.preventDefault();
+                    e.returnValue = 'Bạn có thanh toán đang chờ xác nhận. Bạn có chắc muốn rời đi?';
+                }
+            });
         </script>
     </body>
 
