@@ -18,6 +18,7 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\Admin\AdminStatisticsController;
+use App\Http\Controllers\PosDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,6 +79,8 @@ Route::prefix('admin')
             Route::post('/attendance/{id}/reject-late', [AttendanceController::class, 'rejectLate'])->name('attendance.reject-late');
             Route::post('/attendance/{id}/admin-checkout', [AttendanceController::class, 'adminCheckout'])->name('attendance.admin-checkout');
             Route::get('/attendance/manual-history', [AttendanceController::class, 'manualCheckoutHistory'])->name('attendance.manual-history');
+
+            
         });
 
         /*
@@ -165,8 +168,6 @@ Route::prefix('admin')
             Route::post('/payments/check-promotion', [PaymentController::class, 'checkPromotion'])->name('check-promotion');
             Route::post('/payments/apply-promotion', [PaymentController::class, 'applyPromotion'])->name('apply-promotion');
             Route::post('/payments/remove-promotion', [PaymentController::class, 'removePromotion'])->name('remove-promotion');
-
-           
         });
 
         // Products Management

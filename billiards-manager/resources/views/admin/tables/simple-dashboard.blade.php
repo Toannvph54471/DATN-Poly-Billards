@@ -1351,15 +1351,44 @@
         /* ===== GRID SNAP GUIDE ===== */
         .snap-guide {
             position: absolute;
-            background: rgba(0, 255, 136, 0.1);
-            border: 1px dashed rgba(0, 255, 136, 0.3);
+            background: rgba(0, 255, 136, 0.15);
+            border: 2px solid rgba(0, 255, 136, 0.5);
+            border-radius: 10px;
             pointer-events: none;
             z-index: 999;
-            display: none;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            transform-origin: center;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
         }
 
         .snap-guide.show {
-            display: block;
+            opacity: 1;
+            animation: snapGuidePulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes snapGuidePulse {
+            0% {
+                border-color: rgba(0, 255, 136, 0.5);
+                box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            }
+            50% {
+                border-color: rgba(0, 255, 136, 0.8);
+                box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+            }
+            100% {
+                border-color: rgba(0, 255, 136, 0.5);
+                box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+            }
+        }
+
+        /* ===== SMOOTH DRAGGING STYLES ===== */
+        .pool-table-container.smooth-drag {
+            transition: none !important;
+        }
+
+        .content-area.dragging-active {
+            cursor: grabbing !important;
         }
     </style>
 </head>
@@ -1863,6 +1892,8 @@
         };
         let lastTime = 0;
         let todayRevenue = {{ $todayRevenue ?? 0 }};
+        let isDragging = false;
+        let animationFrameId = null;
 
         // ===== DOM ELEMENTS =====
         const editModeBtn = document.getElementById('editModeBtn');
@@ -1884,6 +1915,7 @@
         const snapGuide = document.getElementById('snapGuide');
         const todayRevenueElement = document.getElementById('todayRevenue');
         const todayRevenueSummary = document.getElementById('todayRevenueSummary');
+        const contentArea = document.getElementById('contentArea');
 
         // ===== REVENUE FUNCTIONS =====
         function updateRevenueDisplay() {
@@ -1936,15 +1968,21 @@
             });
         }
 
-        // ===== DRAG AND DROP FUNCTIONS =====
+        // ===== DRAG AND DROP FUNCTIONS - IMPROVED =====
         function initDragAndDrop() {
             const poolTables = document.querySelectorAll('.pool-table-container');
 
             poolTables.forEach(table => {
+                // Mouse events
                 table.addEventListener('mousedown', startDrag);
-                table.addEventListener('touchstart', startDragTouch, {
-                    passive: false
-                });
+                
+                // Touch events
+                table.addEventListener('touchstart', (e) => {
+                    if (isEditMode) {
+                        e.preventDefault();
+                        startDragTouch(e);
+                    }
+                }, { passive: false });
 
                 // Double click to view details in edit mode
                 table.addEventListener('dblclick', (e) => {
@@ -1961,7 +1999,7 @@
 
                 // Click to view table details when not in edit mode
                 table.addEventListener('click', (e) => {
-                    if (!isEditMode && !draggedTable) {
+                    if (!isEditMode && !isDragging) {
                         const tableId = table.dataset.tableId;
                         viewTableDetail(tableId);
                     }
@@ -1971,9 +2009,7 @@
             // Add global event listeners for drag
             document.addEventListener('mousemove', drag);
             document.addEventListener('mouseup', stopDrag);
-            document.addEventListener('touchmove', dragTouch, {
-                passive: false
-            });
+            document.addEventListener('touchmove', dragTouch, { passive: false });
             document.addEventListener('touchend', stopDragTouch);
 
             // Handle window resize
@@ -1989,115 +2025,176 @@
             }
         }
 
-        // Mouse drag functions
+        // ===== IMPROVED DRAG FUNCTIONS =====
         function startDrag(e) {
             if (!isEditMode) return;
-
+            
             e.preventDefault();
             e.stopPropagation();
 
+            isDragging = true;
             draggedTable = this;
             const rect = this.getBoundingClientRect();
+            const containerRect = tablesContainer.getBoundingClientRect();
 
+            // Calculate offset from mouse to table position
             dragOffset.x = e.clientX - rect.left;
             dragOffset.y = e.clientY - rect.top;
 
-            // Tăng z-index khi kéo
+            // Increase z-index when dragging
             maxZIndex++;
-            this.style.zIndex = maxZIndex;
-            this.classList.add('dragging');
-            this.classList.add('edit-mode');
+            draggedTable.style.zIndex = maxZIndex;
+            draggedTable.classList.add('dragging');
+            draggedTable.classList.add('smooth-drag');
+            draggedTable.classList.add('edit-mode');
+            
+            // Add dragging class to content area
+            contentArea.classList.add('dragging-active');
 
             // Store initial position and time for velocity calculation
             lastPos = {
-                x: rect.left,
-                y: rect.top
+                x: e.clientX - containerRect.left,
+                y: e.clientY - containerRect.top
             };
             lastTime = Date.now();
 
-            // Show snap guide
-            showSnapGuide(rect);
+            // Show snap guide initially
+            updateSnapGuidePosition(e.clientX, e.clientY);
+            
+            // Cancel any existing animation frame
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
         }
 
         function drag(e) {
-            if (!draggedTable || !isEditMode) return;
+            if (!draggedTable || !isEditMode || !isDragging) return;
 
-            const areaRect = tablesContainer.getBoundingClientRect();
-            let x = e.clientX - areaRect.left - dragOffset.x;
-            let y = e.clientY - areaRect.top - dragOffset.y;
+            e.preventDefault();
+            
+            const containerRect = tablesContainer.getBoundingClientRect();
+            let x = e.clientX - containerRect.left - dragOffset.x;
+            let y = e.clientY - containerRect.top - dragOffset.y;
 
             // Calculate velocity for smooth movement
             const currentTime = Date.now();
             const deltaTime = currentTime - lastTime;
+            
             if (deltaTime > 0) {
-                velocity.x = (x - lastPos.x) / deltaTime;
-                velocity.y = (y - lastPos.y) / deltaTime;
-                lastPos = {
-                    x,
-                    y
+                const currentPos = {
+                    x: e.clientX - containerRect.left,
+                    y: e.clientY - containerRect.top
                 };
+                
+                velocity.x = (currentPos.x - lastPos.x) / deltaTime;
+                velocity.y = (currentPos.y - lastPos.y) / deltaTime;
+                lastPos = currentPos;
                 lastTime = currentTime;
             }
 
-            // Apply grid snapping
-            x = Math.round(x / snapGrid) * snapGrid;
-            y = Math.round(y / snapGrid) * snapGrid;
+            // Apply boundary checking with padding
+            x = Math.max(20, Math.min(x, containerRect.width - draggedTable.offsetWidth - 20));
+            y = Math.max(20, Math.min(y, containerRect.height - draggedTable.offsetHeight - 20));
 
-            // Boundary checking với padding
-            x = Math.max(20, Math.min(x, areaRect.width - draggedTable.offsetWidth - 20));
-            y = Math.max(20, Math.min(y, areaRect.height - draggedTable.offsetHeight - 20));
+            // Apply grid snapping (smoothly)
+            const snappedX = Math.round(x / snapGrid) * snapGrid;
+            const snappedY = Math.round(y / snapGrid) * snapGrid;
 
+            // Use requestAnimationFrame for smooth animation
+            if (!animationFrameId) {
+                animationFrameId = requestAnimationFrame(() => {
+                    updateTablePosition(snappedX, snappedY);
+                    updateSnapGuidePosition(e.clientX, e.clientY);
+                    animationFrameId = null;
+                });
+            }
+
+            // Update position immediately for responsiveness
+            draggedTable.style.left = `${snappedX}px`;
+            draggedTable.style.top = `${snappedY}px`;
+        }
+
+        function updateTablePosition(x, y) {
             draggedTable.style.left = `${x}px`;
             draggedTable.style.top = `${y}px`;
-
-            // Update snap guide
-            const rect = draggedTable.getBoundingClientRect();
-            showSnapGuide(rect);
         }
 
-        function stopDrag() {
-            if (draggedTable) {
-                // Apply momentum
-                if (Math.abs(velocity.x) > 0.1 || Math.abs(velocity.y) > 0.1) {
-                    applyMomentum();
-                }
+        function updateSnapGuidePosition(clientX, clientY) {
+            if (!draggedTable || !snapGuide) return;
 
-                draggedTable.classList.remove('dragging');
-                draggedTable.classList.remove('edit-mode');
-                draggedTable = null;
-
-                // Hide snap guide
-                hideSnapGuide();
-
-                // Reset velocity
-                velocity = {
-                    x: 0,
-                    y: 0
-                };
-            }
-        }
-
-        function applyMomentum() {
-            if (!draggedTable) return;
-
-            const areaRect = tablesContainer.getBoundingClientRect();
-            let x = parseInt(draggedTable.style.left);
-            let y = parseInt(draggedTable.style.top);
-
-            // Apply velocity with damping
-            x += velocity.x * 50;
-            y += velocity.y * 50;
-
-            // Boundary checking
-            x = Math.max(20, Math.min(x, areaRect.width - draggedTable.offsetWidth - 20));
-            y = Math.max(20, Math.min(y, areaRect.height - draggedTable.offsetHeight - 20));
-
+            const containerRect = tablesContainer.getBoundingClientRect();
+            const tableRect = draggedTable.getBoundingClientRect();
+            
+            // Calculate snapped position
+            let x = clientX - containerRect.left - dragOffset.x;
+            let y = clientY - containerRect.top - dragOffset.y;
+            
+            // Apply boundaries
+            x = Math.max(20, Math.min(x, containerRect.width - draggedTable.offsetWidth - 20));
+            y = Math.max(20, Math.min(y, containerRect.height - draggedTable.offsetHeight - 20));
+            
             // Snap to grid
             x = Math.round(x / snapGrid) * snapGrid;
             y = Math.round(y / snapGrid) * snapGrid;
 
-            // Smooth animation
-            draggedTable.style.transition = 'left 0.2s ease-out, top 0.2s ease-out';
+            // Update snap guide position and size
+            snapGuide.style.left = `${x}px`;
+            snapGuide.style.top = `${y}px`;
+            snapGuide.style.width = `${draggedTable.offsetWidth}px`;
+            snapGuide.style.height = `${draggedTable.offsetHeight}px`;
+            snapGuide.classList.add('show');
+        }
+
+        function stopDrag() {
+            if (!draggedTable || !isDragging) return;
+
+            isDragging = false;
+            
+            // Apply momentum if velocity is significant
+            if (Math.abs(velocity.x) > 0.2 || Math.abs(velocity.y) > 0.2) {
+                applyMomentum();
+            } else {
+                // Snap to final position
+                snapToGridFinal();
+            }
+
+            // Clean up dragging state
+            draggedTable.classList.remove('dragging');
+            draggedTable.classList.remove('smooth-drag');
+            draggedTable.classList.remove('edit-mode');
+            contentArea.classList.remove('dragging-active');
+            
+            // Hide snap guide
+            hideSnapGuide();
+            
+            // Reset velocity
+            velocity = { x: 0, y: 0 };
+            draggedTable = null;
+            
+            // Cancel animation frame if still running
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        function snapToGridFinal() {
+            if (!draggedTable) return;
+
+            const containerRect = tablesContainer.getBoundingClientRect();
+            let x = parseInt(draggedTable.style.left);
+            let y = parseInt(draggedTable.style.top);
+
+            // Apply grid snapping one more time
+            x = Math.round(x / snapGrid) * snapGrid;
+            y = Math.round(y / snapGrid) * snapGrid;
+
+            // Boundary checking
+            x = Math.max(20, Math.min(x, containerRect.width - draggedTable.offsetWidth - 20));
+            y = Math.max(20, Math.min(y, containerRect.height - draggedTable.offsetHeight - 20));
+
+            // Smooth animation to final position
+            draggedTable.style.transition = 'left 0.15s cubic-bezier(0.2, 0, 0.2, 1), top 0.15s cubic-bezier(0.2, 0, 0.2, 1)';
             draggedTable.style.left = `${x}px`;
             draggedTable.style.top = `${y}px`;
 
@@ -2106,102 +2203,149 @@
                 if (draggedTable) {
                     draggedTable.style.transition = '';
                 }
-            }, 200);
+            }, 150);
+        }
+
+        function applyMomentum() {
+            if (!draggedTable) return;
+
+            const containerRect = tablesContainer.getBoundingClientRect();
+            let x = parseInt(draggedTable.style.left);
+            let y = parseInt(draggedTable.style.top);
+
+            // Apply velocity with damping
+            x += velocity.x * 100;
+            y += velocity.y * 100;
+
+            // Boundary checking
+            x = Math.max(20, Math.min(x, containerRect.width - draggedTable.offsetWidth - 20));
+            y = Math.max(20, Math.min(y, containerRect.height - draggedTable.offsetHeight - 20));
+
+            // Snap to grid
+            x = Math.round(x / snapGrid) * snapGrid;
+            y = Math.round(y / snapGrid) * snapGrid;
+
+            // Smooth animation with easing
+            draggedTable.style.transition = 'left 0.3s cubic-bezier(0.2, 0, 0.2, 1), top 0.3s cubic-bezier(0.2, 0, 0.2, 1)';
+            draggedTable.style.left = `${x}px`;
+            draggedTable.style.top = `${y}px`;
+
+            // Update snap guide position
+            snapGuide.style.left = `${x}px`;
+            snapGuide.style.top = `${y}px`;
+
+            // Remove transition after animation
+            setTimeout(() => {
+                if (draggedTable) {
+                    draggedTable.style.transition = '';
+                }
+            }, 300);
         }
 
         // Touch drag functions
         function startDragTouch(e) {
-            if (!isEditMode) return;
+            if (!isEditMode || e.touches.length !== 1) return;
 
             e.preventDefault();
-            if (e.touches.length !== 1) return;
-
+            isDragging = true;
             draggedTable = this;
             const touch = e.touches[0];
             const rect = this.getBoundingClientRect();
+            const containerRect = tablesContainer.getBoundingClientRect();
 
             dragOffset.x = touch.clientX - rect.left;
             dragOffset.y = touch.clientY - rect.top;
 
-            this.classList.add('dragging');
-            this.classList.add('edit-mode');
+            draggedTable.style.zIndex = ++maxZIndex;
+            draggedTable.classList.add('dragging');
+            draggedTable.classList.add('smooth-drag');
+            draggedTable.classList.add('edit-mode');
+            contentArea.classList.add('dragging-active');
 
             lastPos = {
-                x: rect.left,
-                y: rect.top
+                x: touch.clientX - containerRect.left,
+                y: touch.clientY - containerRect.top
             };
             lastTime = Date.now();
 
-            showSnapGuide(rect);
+            updateSnapGuidePosition(touch.clientX, touch.clientY);
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
         }
 
         function dragTouch(e) {
-            if (!draggedTable || !isEditMode || e.touches.length !== 1) return;
+            if (!draggedTable || !isEditMode || !isDragging || e.touches.length !== 1) return;
 
             e.preventDefault();
             const touch = e.touches[0];
-            const areaRect = tablesContainer.getBoundingClientRect();
-            let x = touch.clientX - areaRect.left - dragOffset.x;
-            let y = touch.clientY - areaRect.top - dragOffset.y;
+            const containerRect = tablesContainer.getBoundingClientRect();
+            
+            let x = touch.clientX - containerRect.left - dragOffset.x;
+            let y = touch.clientY - containerRect.top - dragOffset.y;
 
             // Calculate velocity
             const currentTime = Date.now();
             const deltaTime = currentTime - lastTime;
+            
             if (deltaTime > 0) {
-                velocity.x = (x - lastPos.x) / deltaTime;
-                velocity.y = (y - lastPos.y) / deltaTime;
-                lastPos = {
-                    x,
-                    y
+                const currentPos = {
+                    x: touch.clientX - containerRect.left,
+                    y: touch.clientY - containerRect.top
                 };
+                
+                velocity.x = (currentPos.x - lastPos.x) / deltaTime;
+                velocity.y = (currentPos.y - lastPos.y) / deltaTime;
+                lastPos = currentPos;
                 lastTime = currentTime;
             }
 
-            // Grid snapping
-            x = Math.round(x / snapGrid) * snapGrid;
-            y = Math.round(y / snapGrid) * snapGrid;
-
             // Boundary checking
-            x = Math.max(20, Math.min(x, areaRect.width - draggedTable.offsetWidth - 20));
-            y = Math.max(20, Math.min(y, areaRect.height - draggedTable.offsetHeight - 20));
+            x = Math.max(20, Math.min(x, containerRect.width - draggedTable.offsetWidth - 20));
+            y = Math.max(20, Math.min(y, containerRect.height - draggedTable.offsetHeight - 20));
 
-            draggedTable.style.left = `${x}px`;
-            draggedTable.style.top = `${y}px`;
+            // Grid snapping
+            const snappedX = Math.round(x / snapGrid) * snapGrid;
+            const snappedY = Math.round(y / snapGrid) * snapGrid;
 
-            const rect = draggedTable.getBoundingClientRect();
-            showSnapGuide(rect);
+            if (!animationFrameId) {
+                animationFrameId = requestAnimationFrame(() => {
+                    updateTablePosition(snappedX, snappedY);
+                    updateSnapGuidePosition(touch.clientX, touch.clientY);
+                    animationFrameId = null;
+                });
+            }
+
+            draggedTable.style.left = `${snappedX}px`;
+            draggedTable.style.top = `${snappedY}px`;
         }
 
         function stopDragTouch() {
-            if (draggedTable) {
-                // Apply momentum for touch
-                if (Math.abs(velocity.x) > 0.05 || Math.abs(velocity.y) > 0.05) {
-                    applyMomentum();
-                }
+            if (!draggedTable || !isDragging) return;
 
-                draggedTable.classList.remove('dragging');
-                draggedTable.classList.remove('edit-mode');
-                draggedTable = null;
-
-                hideSnapGuide();
-                velocity = {
-                    x: 0,
-                    y: 0
-                };
+            isDragging = false;
+            
+            // Apply momentum for touch
+            if (Math.abs(velocity.x) > 0.1 || Math.abs(velocity.y) > 0.1) {
+                applyMomentum();
+            } else {
+                snapToGridFinal();
             }
-        }
 
-        // Snap guide functions
-        function showSnapGuide(rect) {
-            const containerRect = tablesContainer.getBoundingClientRect();
-            const x = Math.round((rect.left - containerRect.left) / snapGrid) * snapGrid;
-            const y = Math.round((rect.top - containerRect.top) / snapGrid) * snapGrid;
-
-            snapGuide.style.left = `${x}px`;
-            snapGuide.style.top = `${y}px`;
-            snapGuide.style.width = `${draggedTable.offsetWidth}px`;
-            snapGuide.style.height = `${draggedTable.offsetHeight}px`;
-            snapGuide.classList.add('show');
+            draggedTable.classList.remove('dragging');
+            draggedTable.classList.remove('smooth-drag');
+            draggedTable.classList.remove('edit-mode');
+            contentArea.classList.remove('dragging-active');
+            
+            hideSnapGuide();
+            velocity = { x: 0, y: 0 };
+            draggedTable = null;
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
         }
 
         function hideSnapGuide() {
@@ -2226,7 +2370,7 @@
                 table.classList.add('edit-mode');
             });
 
-            // Store original positions (lưu cả vị trí hiện tại)
+            // Store original positions
             originalPositions.clear();
             document.querySelectorAll('.pool-table-container').forEach(table => {
                 const currentX = parseInt(table.style.left) || 0;
@@ -2353,9 +2497,14 @@
             originalPositions.forEach((position, tableId) => {
                 const table = document.querySelector(`[data-table-id="${tableId}"]`);
                 if (table) {
+                    table.style.transition = 'left 0.3s ease, top 0.3s ease';
                     table.style.left = `${position.x}px`;
                     table.style.top = `${position.y}px`;
                     table.style.zIndex = `${position.z}`;
+                    
+                    setTimeout(() => {
+                        table.style.transition = '';
+                    }, 300);
                 }
             });
 
@@ -2537,6 +2686,13 @@
                 }
             }, {
                 passive: false
+            });
+            
+            // Prevent context menu on tables in edit mode
+            document.addEventListener('contextmenu', function(e) {
+                if (isEditMode && e.target.closest('.pool-table-container')) {
+                    e.preventDefault();
+                }
             });
         });
     </script>
