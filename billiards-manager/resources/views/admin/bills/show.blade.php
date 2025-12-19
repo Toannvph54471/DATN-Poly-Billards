@@ -121,7 +121,7 @@
                         <span class="font-medium">
                             @if ($bill->payment_method === 'cash')
                                 Tiền mặt
-                            @elseif($bill->payment_method === 'banking')
+                            @elseif($bill->payment_method === 'bank')
                                 Chuyển khoản
                             @elseif($bill->payment_method === 'vnpay')
                                 VNPay
@@ -329,7 +329,7 @@
                                     <td class="px-4 py-2">
                                         @if ($payment->payment_method === 'cash')
                                             Tiền mặt
-                                        @elseif($payment->payment_method === 'banking')
+                                        @elseif($payment->payment_method === 'bank')
                                             Chuyển khoản
                                         @elseif($payment->payment_method === 'vnpay')
                                             VNPay

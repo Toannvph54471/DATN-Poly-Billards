@@ -1517,10 +1517,6 @@
                             <div class="stat-label">HÓA ĐƠN MỞ</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-value" id="todayRevenue">{{ number_format($todayRevenue ?? 0) }}đ</div>
-                            <div class="stat-label">DOANH THU</div>
-                        </div>
-                        <div class="stat-card">
                             <div class="stat-value">{{ $stats['total_occupied'] ?? 0 }}</div>
                             <div class="stat-label">BÀN ĐANG DÙNG</div>
                         </div>
@@ -1795,9 +1791,6 @@
                                     <div class="bill-time">
                                         <i class="far fa-clock"></i>
                                         Mở: {{ $bill->created_at->format('H:i') }}
-                                        @if ($bill->start_time)
-                                            • {{ Carbon\Carbon::parse($bill->start_time)->diffForHumans() }}
-                                        @endif
                                     </div>
                                     @if ($bill->customer_name)
                                         <div class="bill-customer">
@@ -1842,11 +1835,6 @@
                         <div class="summary-item">
                             <div class="summary-label">Tỷ lệ sử dụng:</div>
                             <div class="summary-value">{{ $stats['occupancy_rate'] ?? 0 }}%</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">Doanh thu hôm nay:</div>
-                            <div class="summary-value" id="todayRevenueSummary">
-                                {{ number_format($todayRevenue ?? 0) }}đ</div>
                         </div>
                         <div class="summary-item">
                             <div class="summary-label">Hóa đơn đang mở:</div>
@@ -2612,11 +2600,11 @@
         }
 
         function viewBillDetail(billId) {
-            window.location.href = `/admin/bills/${billId}`;
+            window.location.href = `/admin/bills/${billId}/show`;
         }
 
         function checkoutBill(billId) {
-            window.location.href = `/admin/bills/${billId}/checkout`;
+            window.location.href = `/admin/payments/${billId}/payment`;
         }
 
         function quickNewBill() {
