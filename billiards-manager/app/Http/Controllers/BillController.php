@@ -1501,6 +1501,8 @@ class BillController extends Controller
         }
 
         try {
+            // Kiểm tra xem có phải là preview thanh toán không
+            $isPreview = request()->has('preview');
             // Lấy tất cả bills theo mảng ID
             $bills = Bill::with([
                 'table',
@@ -1520,21 +1522,44 @@ class BillController extends Controller
             $billsData = [];
 
             foreach ($bills as $bill) {
-                // Tính chi phí thời gian (chi tiết)
-                $timeDetails = $this->calculateTimeChargeDetailed($bill);
-                $timeCost = $timeDetails['totalCost'] ?? 0;
+                if ($isPreview) {
+                    // Lấy thông tin từ session cho từng bill
+                    $paymentData = session('pending_payment_' . $bill->id);
 
-                // Tổng SP/Combo (không tính thành phần combo)
-                $productTotal = $bill->billDetails->where('is_combo_component', false)->sum('total_price');
+                    if (!$paymentData) {
+                        return redirect()
+                            ->route('admin.payments.show', $bill->id)
+                            ->with('error', 'Thông tin thanh toán không tồn tại cho bill ' . $bill->bill_number . '. Vui lòng thử lại.');
+                    }
 
-                $totalAmount = $timeCost + $productTotal;
+                    $timeCost = $paymentData['time_price'] ?? 0;
+                    $productTotal = $paymentData['product_total'] ?? 0;
+                    $totalAmount = $paymentData['total_amount'] ?? 0;
+                    $discountAmount = $paymentData['discount_amount'] ?? 0;
+                    $finalAmount = $paymentData['final_amount'] ?? 0;
+                    $paymentMethod = $paymentData['payment_method'] ?? 'cash';
 
-                $discountAmount = $bill->discount_amount ?? 0;
-                $finalAmount = $totalAmount - $discountAmount;
+                    // Tính toán chi tiết thời gian cho display
+                    $timeDetails = $this->calculateTimeChargeDetailed($bill);
+                } else {
+                    // Tính toán thông thường (xem bill đã thanh toán)
+                    $timeDetails = $this->calculateTimeChargeDetailed($bill);
+                    $timeCost = $timeDetails['totalCost'] ?? 0;
 
+                    // Tổng SP/Combo (không tính thành phần combo)
+                    $productTotal = $bill->billDetails->where('is_combo_component', false)->sum('total_price');
+
+                    $totalAmount = $timeCost + $productTotal;
+
+                    $discountAmount = $bill->discount_amount ?? 0;
+                    $finalAmount = $totalAmount - $discountAmount;
+                    $paymentMethod = $bill->payment_method;
+                }
+
+                // Lấy thông tin khuyến mãi từ note
                 $promotionInfo = $this->extractPromotionInfoFromNote($bill->note);
 
-                // QR URL
+                // Tạo QR code
                 $qrUrl = "https://img.vietqr.io/image/MB-0368015218-qr_only.png?"
                     . http_build_query([
                         'amount' => $finalAmount,
@@ -1546,15 +1571,17 @@ class BillController extends Controller
                 $bill->timeDetails = $timeDetails;
                 $bill->productTotal = $productTotal;
                 $bill->totalAmount = $totalAmount;
-                // giữ nguyên attribute DB final_amount nhưng thêm alias rõ ràng
                 $bill->finalAmount = $finalAmount;
                 $bill->discountAmount = $discountAmount;
                 $bill->promotionInfo = $promotionInfo;
                 $bill->printTime = now()->format('H:i d/m/Y');
                 $bill->staff = Auth::user()->name;
                 $bill->qrUrl = $qrUrl;
+                $bill->isPreview = $isPreview;
+                $bill->paymentMethod = $paymentMethod;
+                $bill->paymentData = $isPreview ? $paymentData : null;
 
-                // push model đã mở rộng vào mảng trả về
+                // Push model đã mở rộng vào mảng trả về
                 $billsData[] = $bill;
             }
 
@@ -1563,7 +1590,10 @@ class BillController extends Controller
                 'billsData' => $billsData,
                 'autoRedirect' => $request->auto_print == 'true',
                 'redirectUrl' => route('admin.bills.index'),
-                'staff' => Auth::user()->name
+                'staff' => Auth::user()->name,
+                'totalAmount' => array_sum(array_map(function ($bill) {
+                    return $bill->finalAmount;
+                }, $billsData))
             ]);
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Lỗi khi in nhiều hóa đơn: ' . $e->getMessage());

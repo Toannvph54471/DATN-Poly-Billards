@@ -796,68 +796,85 @@ class PaymentController extends Controller
                     $totalAmount = $isQuickBill ? $productTotal : ($timePrice + $productTotal);
                     $finalAmount = max(0,  $totalAmount - $discountAmount);
 
-                    $bill->update([
-                        'end_time' => $isQuickBill ? $bill->end_time : $endTime,
-                        'total_amount' => $totalAmount,
-                        'discount_amount' => $discountAmount,
-                        'final_amount' => $finalAmount,
-                        'payment_method' => $paymentMethod,
-                        'payment_status' => 'Paid',
-                        'status' => 'Closed',
-                        'note' => $note ?? $bill->note,
-                    ]);
-
-                    // === 7. Tạo payment ===
-                    Payment::create([
-                        'bill_id' => $bill->id,
-                        'amount' => $finalAmount,
-                        'currency' => 'VND',
-                        'payment_method' => $paymentMethod,
-                        'payment_type' => 'full',
-                        'status' => 'completed',
-                        'transaction_id' => 'BILL_' . $bill->bill_number . '_' . now()->format('YmdHis'),
-                        'paid_at' => now(),
-                        'completed_at' => now(),
-                        'processed_by' => $staffId,
-                        'note' => $note,
-                        'payment_data' => json_encode([
-                            'bill_number' => $bill->bill_number,
-                            'table' => $bill->table->table_number,
-                            'bill_type' => $isQuickBill ? 'quick' : 'regular',
-                            'actual_minutes' => $totalMinutesPlayed,
-                            'rounded_minutes' => $endedTimeUsage->duration_minutes ?? $totalMinutesPlayed,
-                            'hourly_rate' => $bill->table->tableRate->hourly_rate ?? 0,
+                    // 6. Lưu tạm thông tin thanh toán vào session
+                    session([
+                        'pending_payment_' . $billId => [
+                            'bill_id' => $billId,
+                            'payment_method' => $paymentMethod,
+                            'total_amount' => $totalAmount,
+                            'discount_amount' => $discountAmount,
+                            'final_amount' => $finalAmount,
                             'time_price' => $timePrice,
                             'product_total' => $productTotal,
-                            'discount' => $discountAmount,
-                            'final_amount' => $finalAmount,
-                            'opened_by_staff_id' => $bill->staff_id,
-                            'closed_by_staff_id' => $staffId,
-                            'opened_by_staff_name' => $bill->staff->name ?? 'N/A',
-                            'closed_by_staff_name' => Auth::user()->name,
-                        ]),
+                            'rounded_minutes' => $roundedMinutes,
+                            'total_minutes_played' => $totalMinutesPlayed,
+                            'note' => $note,
+                            'staff_id' => $staffId,
+                            'preview_time' => now(),
+                            'is_quick_bill' => $isQuickBill
+                        ]
                     ]);
 
-                    // === 8. Giải phóng bàn ===
-                    $bill->table->update(['status' => 'available']);
+                    // $bill->update([
+                    //     'end_time' => $isQuickBill ? $bill->end_time : $endTime,
+                    //     'total_amount' => $totalAmount,
+                    //     'discount_amount' => $discountAmount,
+                    //     'final_amount' => $finalAmount,
+                    //     'payment_method' => $paymentMethod,
+                    //     'payment_status' => 'Paid',
+                    //     'status' => 'Closed',
+                    //     'note' => $note ?? $bill->note,
+                    // ]);
 
-                    // === 9. Báo cáo ===
-                    $this->updateDailyReport($bill);
+                    // // === 7. Tạo payment ===
+                    // Payment::create([
+                    //     'bill_id' => $bill->id,
+                    //     'amount' => $finalAmount,
+                    //     'currency' => 'VND',
+                    //     'payment_method' => $paymentMethod,
+                    //     'payment_type' => 'full',
+                    //     'status' => 'completed',
+                    //     'transaction_id' => 'BILL_' . $bill->bill_number . '_' . now()->format('YmdHis'),
+                    //     'paid_at' => now(),
+                    //     'completed_at' => now(),
+                    //     'processed_by' => $staffId,
+                    //     'note' => $note,
+                    //     'payment_data' => json_encode([
+                    //         'bill_number' => $bill->bill_number,
+                    //         'table' => $bill->table->table_number,
+                    //         'bill_type' => $isQuickBill ? 'quick' : 'regular',
+                    //         'actual_minutes' => $totalMinutesPlayed,
+                    //         'rounded_minutes' => $endedTimeUsage->duration_minutes ?? $totalMinutesPlayed,
+                    //         'hourly_rate' => $bill->table->tableRate->hourly_rate ?? 0,
+                    //         'time_price' => $timePrice,
+                    //         'product_total' => $productTotal,
+                    //         'discount' => $discountAmount,
+                    //         'final_amount' => $finalAmount,
+                    //         'opened_by_staff_id' => $bill->staff_id,
+                    //         'closed_by_staff_id' => $staffId,
+                    //         'opened_by_staff_name' => $bill->staff->name ?? 'N/A',
+                    //         'closed_by_staff_name' => Auth::user()->name,
+                    //     ]),
+                    // ]);
 
-                    // 9. Cập nhật báo cáo hàng ngày
-                    $this->updateDailyReport($bill);
+                    // // === 8. Giải phóng bàn ===
+                    // $bill->table->update(['status' => 'available']);
+
+                    // // === 9. Báo cáo ===
+                    // $this->updateDailyReport($bill);
+
+                    // // 9. Cập nhật báo cáo hàng ngày
+                    // $this->updateDailyReport($bill);
                 }
             });
 
             return redirect()->route('admin.bills.print-multiple', [
                 'ids' => $billIds,
                 'auto_print' => 'true',
+                'preview' => 'true',
+                'payment_method' => $paymentMethod,
                 'success' => 'Thanh toán nhiều hóa đơn thành công! Nhân viên thanh toán: ' . Auth::user()->name
             ]);
-
-            // return redirect()
-            //     ->route('admin.bills.index')
-            //     ->with('success', 'Thanh toán nhiều hóa đơn thành công!');
         } catch (Exception $e) {
             Log::error('Lỗi thanh toán nhiều bill: ' . $e->getMessage(), [
                 'bill_ids' => $billIds,
@@ -1187,6 +1204,194 @@ class PaymentController extends Controller
             return redirect()
                 ->route('admin.bills.index')  // Đổi từ admin.payments.show
                 ->with('error', 'Lỗi khi xác nhận thanh toán: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Xác nhận thanh toán thành công cho nhiều bills (sau khi in bill)
+     */
+    public function confirmPaymentMultiple(Request $request)
+    {
+        $billIds = $request->billIds;
+        if (!is_array($billIds) || empty($billIds)) {
+            return redirect()->back()->with('error', 'Không có bill nào được chọn để xác nhận thanh toán.');
+        }
+
+        try {
+            return DB::transaction(function () use ($request, $billIds) {
+                $staffId = Auth::id();
+                $processedBills = [];
+                $skippedBills = [];
+
+                foreach ($billIds as $billId) {
+                    // Kiểm tra session trước
+                    $paymentData = session('pending_payment_' . $billId);
+                    if (!$paymentData) {
+                        $skippedBills[] = $billId;
+                        continue; // Hoặc throw new Exception("Không có thông tin thanh toán cho bill $billId");
+                    }
+
+                    // Validate bill tồn tại và có status đúng
+                    $bill = Bill::with(['table.tableRate', 'billDetails.product', 'billDetails.combo', 'staff'])
+                        ->whereIn('status', ['Open', 'quick'])
+                        ->where('payment_status', 'Pending')
+                        ->find($billId); // Dùng find thay findOrFail để kiểm tra manual
+
+                    if (!$bill) {
+                        throw new Exception("Bill $billId không tồn tại hoặc không thể thanh toán.");
+                    }
+
+                    $isQuickBill = $bill->status === 'quick';
+                    $endTime = now();
+
+                    // Cập nhật bill
+                    $bill->update([
+                        'end_time' => $isQuickBill ? $bill->end_time : $endTime,
+                        'total_amount' => $paymentData['total_amount'],
+                        'discount_amount' => $paymentData['discount_amount'],
+                        'final_amount' => $paymentData['final_amount'],
+                        'payment_method' => $paymentData['payment_method'],
+                        'payment_status' => 'Paid',
+                        'status' => 'Closed',
+                        'note' => $paymentData['note'] ?? $bill->note,
+                    ]);
+
+                    // Tạo payment
+                    Payment::create([
+                        'bill_id' => $bill->id,
+                        'amount' => $paymentData['final_amount'],
+                        'currency' => 'VND',
+                        'payment_method' => $paymentData['payment_method'],
+                        'payment_type' => 'full',
+                        'status' => 'completed',
+                        'transaction_id' => 'BILL_' . $bill->bill_number . '_' . now()->format('YmdHis'),
+                        'paid_at' => now(),
+                        'completed_at' => now(),
+                        'processed_by' => $staffId,
+                        'note' => $paymentData['note'],
+                        'payment_data' => json_encode([
+                            'bill_number' => $bill->bill_number,
+                            'table' => $bill->table->table_number,
+                            'bill_type' => $isQuickBill ? 'quick' : 'regular',
+                            'actual_minutes' => $paymentData['total_minutes_played'] ?? 0,
+                            'rounded_minutes' => $paymentData['rounded_minutes'] ?? 0,
+                            'hourly_rate' => $bill->table->tableRate->hourly_rate ?? 0,
+                            'time_price' => $paymentData['time_price'] ?? 0,
+                            'product_total' => $paymentData['product_total'] ?? 0,
+                            'discount' => $paymentData['discount_amount'] ?? 0,
+                            'final_amount' => $paymentData['final_amount'],
+                            'opened_by_staff_id' => $bill->staff_id,
+                            'closed_by_staff_id' => $staffId,
+                            'opened_by_staff_name' => $bill->staff->name ?? 'N/A',
+                            'closed_by_staff_name' => Auth::user()->name,
+                            'confirmed_at' => now()->format('Y-m-d H:i:s')
+                        ]),
+                    ]);
+
+                    // Giải phóng bàn
+                    $bill->table->update(['status' => 'available']);
+
+                    // Cập nhật báo cáo
+                    $this->updateDailyReport($bill);
+
+                    // Xóa session
+                    session()->forget('pending_payment_' . $billId);
+
+                    // Cập nhật user
+                    if ($bill->user_id) {
+                        $user = User::find($bill->user_id);
+                        if ($user) {
+                            $user->increment('total_visits');
+                            $user->increment('total_spent', $paymentData['final_amount']);
+                            // $user->last_visit_date = now();
+                            $this->updateCustomerType($user);
+                            $user->save();
+                        }
+                    }
+
+                    $processedBills[] = $bill->bill_number;
+                }
+
+                DB::commit();
+
+                // Log bills bị bỏ qua
+                if (!empty($skippedBills)) {
+                    Log::warning('Một số bills bị bỏ qua do thiếu session: ' . implode(', ', $skippedBills));
+                }
+
+                // Redirect
+                $billNumbers = implode(', ', $processedBills);
+                return redirect()
+                    ->route('admin.bills.index')
+                    ->with('success', "Thanh toán thành công cho các hóa đơn: $billNumbers. Nhân viên xác nhận: " . Auth::user()->name);
+            });
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Lỗi xác nhận thanh toán nhiều bills: ' . $e->getMessage(), [
+                'bill_ids' => $billIds,
+                'staff_id' => Auth::id(),
+            ]);
+
+            return redirect()
+                ->route('admin.bills.index')
+                ->with('error', 'Lỗi khi xác nhận thanh toán: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Hủy thanh toán cho nhiều bills (khách hàng quyết định thanh toán sau)
+     */
+    public function cancelPaymentMultiple(Request $request)
+    {
+        $billIds = $request->billIds;
+        if (!is_array($billIds) || empty($billIds)) {
+            return redirect()->back()->with('error', 'Không có bill nào được chọn để hủy thanh toán.');
+        }
+
+        try {
+            $processedBills = [];
+
+            foreach ($billIds as $billId) {
+                // 1. Xóa thông tin thanh toán tạm từ session cho từng bill
+                session()->forget('pending_payment_' . $billId);
+
+                // 2. Lấy bill
+                $bill = Bill::findOrFail($billId);
+
+                // 3. Nếu đã tính thời gian và không phải quick bill, cần revert lại
+                if ($bill->status !== 'quick') {
+                    $timeUsage = BillTimeUsage::where('bill_id', $billId)
+                        ->whereNotNull('end_time')
+                        ->latest()
+                        ->first();
+
+                    if ($timeUsage) {
+                        // Hoàn lại thời gian đã kết thúc
+                        $timeUsage->update([
+                            'end_time' => null,
+                            'total_price' => 0,
+                            'duration_minutes' => null
+                        ]);
+                    }
+                }
+
+                $processedBills[] = $bill->bill_number; // Theo dõi bills đã xử lý
+            }
+
+            // 4. Redirect với thông báo thành công
+            $billNumbers = implode(', ', $processedBills);
+            return redirect()
+                ->route('admin.bills.index') // Hoặc route phù hợp, ví dụ quay về danh sách bills
+                ->with('info', "Đã hủy thanh toán cho các hóa đơn: $billNumbers. Các bàn vẫn đang được sử dụng.");
+        } catch (Exception $e) {
+            Log::error('Lỗi hủy thanh toán nhiều bills: ' . $e->getMessage(), [
+                'bill_ids' => $billIds,
+                'staff_id' => Auth::id(),
+            ]);
+
+            return redirect()
+                ->route('admin.bills.index') // Hoặc route phù hợp
+                ->with('error', 'Lỗi khi hủy thanh toán: ' . $e->getMessage());
         }
     }
 

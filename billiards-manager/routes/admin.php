@@ -157,6 +157,9 @@ Route::prefix('admin')
             Route::post('/{id}/preview-payment', [PaymentController::class, 'previewPayment'])->name('preview-payment');
             Route::post('/{id}/confirm-payment', [PaymentController::class, 'confirmPayment'])->name('confirm-payment');
             Route::post('/{id}/cancel-payment', [PaymentController::class, 'cancelPayment'])->name('cancel-payment');
+
+            Route::post('/confirm-payment-multiple', [PaymentController::class, 'confirmPaymentMultiple'])->name('confirm-payment-multiple');
+            Route::post('/cancel-payment-multiple', [PaymentController::class, 'cancelPaymentMultiple'])->name('cancel-payment-multiple');
         });
 
         // Payments Management
