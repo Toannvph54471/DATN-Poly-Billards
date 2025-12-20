@@ -3,211 +3,171 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Bill;
-use App\Models\Reservation;
-use App\Models\Table;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth as FacadesAuth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Request;
 
 class PosDashboardController extends Controller
 {
+    /**
+     * Hiển thị POS Dashboard - chỉ thống kê số bàn
+     */
     public function posDashboard()
     {
         try {
-            $user = FacadesAuth::user();
-
-            // Thống kê nhanh cho POS - Sửa key names để match với view
-            $stats = [
-                'open_bills' => Bill::where('status', 'Open')->count(),
-                'today_revenue' => Bill::whereDate('created_at', Carbon::today())
-                    ->where('status', 'Closed')
-                    ->sum('final_amount'),
-                'occupied_tables' => Table::where('status', 'occupied')->count(),
-                'available_tables' => Table::where('status', 'available')->count(),
-                'pending_reservations' => Reservation::where('status', 'confirmed')
-                    ->whereDate('reservation_time', Carbon::today())
-                    ->count(),
-            ];
-
-            // Bills đang mở
-            $openBills = Bill::with(['table', 'user', 'staff'])
-                ->where('status', 'Open')
-                ->orderBy('created_at', 'desc')
-                ->limit(10)
+            // Lấy thống kê bàn
+            $tableStats = $this->getTableStats();
+            
+            // Lấy danh sách bàn với thông tin hóa đơn hiện tại
+            $tables = DB::table('tables')
+                ->select(
+                    'tables.id',
+                    'tables.table_number',
+                    'tables.table_name',
+                    'tables.capacity',
+                    'tables.status',
+                    DB::raw('(SELECT bills.id FROM bills WHERE bills.table_id = tables.id AND bills.status IN ("Open", "Paused") ORDER BY bills.created_at DESC LIMIT 1) as current_bill'),
+                    DB::raw('(SELECT bills.start_time FROM bills WHERE bills.table_id = tables.id AND bills.status IN ("Open", "Paused") ORDER BY bills.created_at DESC LIMIT 1) as start_time')
+                )
+                ->whereNull('tables.deleted_at')
+                ->orderBy('tables.table_number')
                 ->get();
-
-            // Bàn trống
-            $availableTables = Table::where('status', 'available')->get();
-
-            // Bàn đang sử dụng với thông tin bill chi tiết
-            $occupiedTables = Table::with([
-                'tableRate',
-                'currentBill.user',
-                'currentBill.billDetails.product',
-                'currentBill.billDetails.combo',
-                'currentBill.billTimeUsages' => function ($query) {
-                    $query->whereNull('end_time')
-                        ->orWhere('end_time', '>', now()->subHours(24));
-                },
-                'currentBill.comboTimeUsages' => function ($query) {
-                    $query->where(function ($q) {
-                        $q->where('is_expired', false)
-                            ->orWhere('end_time', '>', now()->subHours(24));
-                    });
+            
+            // Thêm thông tin khách hàng cho các bàn đang dùng
+            foreach ($tables as $table) {
+                if ($table->current_bill) {
+                    $customer = DB::table('bills')
+                        ->join('users', 'bills.user_id', '=', 'users.id')
+                        ->where('bills.id', $table->current_bill)
+                        ->select('users.name as customer_name')
+                        ->first();
+                    
+                    if ($customer) {
+                        $table->customer_name = $customer->customer_name;
+                    }
                 }
-            ])->where('status', 'occupied')->get();
-
-            // Đặt bàn hôm nay
-            $todayReservations = Reservation::with(['table', 'customer'])
-                ->whereDate('reservation_time', Carbon::today())
-                ->where('status', 'confirmed')
-                ->orderBy('reservation_time')
+            }
+            
+            // Lấy bàn trống
+            $availableTables = $tables->where('status', 'available');
+            
+            // Lấy bàn đang dùng
+            $occupiedTables = $tables->where('status', 'occupied');
+            
+            // Lấy hóa đơn đang mở với thông tin chi tiết
+            $openBills = DB::table('bills')
+                ->select(
+                    'bills.id',
+                    'bills.bill_number',
+                    'bills.table_id',
+                    'tables.table_name',
+                    'bills.start_time',
+                    'bills.total_amount',
+                    'users.name as customer_name'
+                )
+                ->join('tables', 'bills.table_id', '=', 'tables.id')
+                ->leftJoin('users', 'bills.user_id', '=', 'users.id')
+                ->where('bills.status', 'Open')
+                ->orderBy('bills.updated_at', 'desc')
+                ->limit(5)
                 ->get();
-
-            // Tính toán thống kê thêm
-            $allTables = Table::count();
-            $availableCount = $stats['available_tables'];
-            $occupiedCount = $stats['occupied_tables'];
-            $reservedCount = $stats['pending_reservations'];
-            $maintenanceCount = $allTables - ($availableCount + $occupiedCount + $reservedCount);
-            $maintenanceCount = max(0, $maintenanceCount);
-
-            return view('admin.pos-dashboard', compact(
-                'stats',
-                'openBills',
-                'availableTables',
-                'occupiedTables',
-                'todayReservations',
-                'allTables',
-                'availableCount',
-                'occupiedCount',
-                'reservedCount',
-                'maintenanceCount'
-            ));
+            
+            return view('admin.pos-dashboard', [
+                'tableStats' => $tableStats['tableStats'],
+                'tables' => $tables,
+                'availableTables' => $availableTables,
+                'occupiedTables' => $occupiedTables,
+                'openBills' => $openBills,
+                'totalTables' => $tableStats['tableStats']['total'],
+                'availableCount' => $tableStats['tableStats']['available'],
+                'occupiedCount' => $tableStats['tableStats']['occupied'],
+                'reservedCount' => $tableStats['tableStats']['reserved'],
+                'maintenanceCount' => $tableStats['tableStats']['maintenance'],
+            ]);
+            
         } catch (\Exception $e) {
-            Log::error('POS Dashboard Error: ' . $e->getMessage());
-            return $this->getFallbackData();
+            \Log::error('POS Dashboard Error: ' . $e->getMessage());
+            return view('admin.pos-dashboard', $this->getFallbackData());
         }
     }
-
+    
     /**
-     * Lấy vị trí bàn từ localStorage hoặc database
-     * Helper function cho view
+     * Lấy thống kê bàn
      */
-    public static function getTablePosition($tableId)
+    private function getTableStats()
     {
-        // Trong thực tế, bạn nên lưu vị trí vào database
-        // Ở đây tôi tạo vị trí mặc định dựa trên ID
+        $stats = DB::table('tables')
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN status = "occupied" THEN 1 ELSE 0 END) as occupied,
+                SUM(CASE WHEN status = "reserved" THEN 1 ELSE 0 END) as reserved,
+                SUM(CASE WHEN status = "maintenance" THEN 1 ELSE 0 END) as maintenance,
+                SUM(CASE WHEN status = "available" THEN 1 ELSE 0 END) as available
+            ')
+            ->whereNull('deleted_at')
+            ->first();
 
-        // Tạo vị trí dựa trên ID để có tính nhất quán
-        $baseX = 50;
-        $baseY = 50;
-        $spacingX = 220;
-        $spacingY = 120;
-
-        // Tạo layout grid 3x3
-        $row = intval(($tableId - 1) / 3);
-        $col = ($tableId - 1) % 3;
+        $total = $stats->total ?? 0;
+        $used = ($stats->occupied ?? 0) + ($stats->reserved ?? 0);
 
         return [
-            'x' => $baseX + ($col * $spacingX),
-            'y' => $baseY + ($row * $spacingY)
+            'tableStats' => [
+                'total' => $total,
+                'occupied' => $stats->occupied ?? 0,
+                'reserved' => $stats->reserved ?? 0,
+                'available' => $stats->available ?? 0,
+                'maintenance' => $stats->maintenance ?? 0,
+                'occupancy_rate' => $total > 0 ? round(($used / $total) * 100, 2) : 0,
+            ]
         ];
     }
-
+    
     /**
-     * API để lưu vị trí bàn
+     * API để lấy thống kê nhanh (dùng cho AJAX refresh)
      */
-    public function saveTablePositions(Request $request)
-    {
-        try {
-            $positions = $request->input('positions');
-
-            // Lưu vào database
-            foreach ($positions as $tableId => $position) {
-                Table::where('id', $tableId)->update([
-                    'position_x' => $position['x'],
-                    'position_y' => $position['y'],
-                    'updated_at' => now()
-                ]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Đã lưu vị trí bàn thành công'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi khi lưu vị trí: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * API để lấy vị trí bàn
-     */
-    public function getTablePositions()
-    {
-        try {
-            $positions = Table::select('id', 'position_x', 'position_y')
-                ->whereNotNull('position_x')
-                ->whereNotNull('position_y')
-                ->get()
-                ->mapWithKeys(function ($table) {
-                    return [
-                        $table->id => [
-                            'x' => $table->position_x,
-                            'y' => $table->position_y
-                        ]
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'positions' => $positions
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Lỗi khi lấy vị trí'
-            ], 500);
-        }
-    }
-
     public function getQuickStats()
     {
-        $stats = [
-            'open_bills' => Bill::where('status', 'Open')->count(),
-            'today_sales' => Bill::whereDate('created_at', Carbon::today())
-                ->where('status', 'Closed')
-                ->sum('final_amount'),
-            'occupied_tables' => Table::where('status', 'occupied')->count(),
-            'pending_reservations' => Reservation::where('status', 'confirmed')
-                ->whereDate('reservation_time', Carbon::today())
-                ->count(),
-        ];
-
-        return response()->json($stats);
+        try {
+            $tableStats = $this->getTableStats();
+            
+            return response()->json([
+                'success' => true,
+                'tableStats' => $tableStats['tableStats'],
+                'open_bills' => DB::table('bills')->where('status', 'Open')->count(),
+                'updated_at' => now()->format('H:i:s'),
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting stats'
+            ], 500);
+        }
     }
-
+    
+    /**
+     * Dữ liệu fallback
+     */
     private function getFallbackData()
     {
-        return view('admin.pos-dashboard', [
-            'stats' => [
-                'open_bills' => 0,
-                'today_revenue' => 0,
-                'occupied_tables' => 0,
-                'available_tables' => 0,
-                'pending_reservations' => 0,
+        return [
+            'tableStats' => [
+                'total' => 0,
+                'occupied' => 0,
+                'reserved' => 0,
+                'available' => 0,
+                'maintenance' => 0,
+                'occupancy_rate' => 0,
             ],
-            'formattedTables' => collect(),
-            'openBills' => collect(),
+            'tables' => collect(),
             'availableTables' => collect(),
             'occupiedTables' => collect(),
-            'todayReservations' => collect(),
-        ]);
+            'openBills' => collect(),
+            'totalTables' => 0,
+            'availableCount' => 0,
+            'occupiedCount' => 0,
+            'reservedCount' => 0,
+            'maintenanceCount' => 0,
+        ];
     }
 }

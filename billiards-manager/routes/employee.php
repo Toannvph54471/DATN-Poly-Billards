@@ -27,6 +27,8 @@ Route::prefix('admin')
         Route::get('/my-profile', [EmployeeController::class, 'myProfile'])->name('my-profile');
         Route::post('/{employee}/change-password', [EmployeeController::class, 'changePassword'])->name('change-password');
         Route::get('/my-schedule', [EmployeeController::class, 'mySchedule'])->name('schedule');
+
+        Route::get('/pos/quick-stats', [PosDashboardController::class, 'getQuickStats'])->name('pos.quick-stats');
         // ============================
         // TABLE ACTIONS FOR STAFF
         // ============================
