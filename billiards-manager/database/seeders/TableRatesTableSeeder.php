@@ -15,40 +15,40 @@ class TableRatesTableSeeder extends Seeder
 
         // Tạo bảng giá Regular
         TableRate::create([
-            'code' => 'REGULAR_WEEKDAY',
-            'name' => 'Giờ ngày thường (Regular)',
+            'code' => '001',
+            'name' => 'KKKing',
             'hourly_rate' => 50000,
         ]);
 
         TableRate::create([
-            'code' => 'REGULAR_WEEKEND',
-            'name' => 'Giờ cuối tuần (Regular)',
+            'code' => '002',
+            'name' => 'MRSung',
             'hourly_rate' => 60000,
         ]);
 
         // Tạo bảng giá VIP
         TableRate::create([
-            'code' => 'VIP_WEEKDAY',
-            'name' => 'Giờ ngày thường (VIP)',
+            'code' => '003',
+            'name' => 'Chinse Pool',
             'hourly_rate' => 100000,
         ]);
 
         TableRate::create([
-            'code' => 'VIP_WEEKEND',
-            'name' => 'Giờ cuối tuần (VIP)',
+            'code' => '004',
+            'name' => 'Diamond',
             'hourly_rate' => 120000,
         ]);
 
         // Nếu muốn thêm các loại bảng giá khác, ví dụ Competition
         TableRate::create([
-            'code' => 'COMPETITION_WEEKDAY',
-            'name' => 'Giờ ngày thường (Competition)',
+            'code' => '005',
+            'name' => 'Snookers',
             'hourly_rate' => 80000,
         ]);
 
         TableRate::create([
-            'code' => 'COMPETITION_WEEKEND',
-            'name' => 'Giờ cuối tuần (Competition)',
+            'code' => '006',
+            'name' => 'Bàn Vip',
             'hourly_rate' => 90000,
         ]);
     }
