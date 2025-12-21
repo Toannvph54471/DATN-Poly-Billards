@@ -226,21 +226,52 @@ class BillController extends Controller
         ];
     }
 
-    // Hàm hiển thị chi tiết hóa đơn
+    // Hiển thị bill
     public function show($id)
     {
         $bill = Bill::with([
             'table.tableRate',
             'user',
-            'staff', // Nhân viên tạo hóa đơn
-            'billTimeUsages',
+            'staff',
+            'billTimeUsages', // Tất cả session giờ
             'billDetails.product.category',
             'billDetails.combo.comboItems.product',
-            'billDetails.addedByUser', // Load thông tin nhân viên đã thêm
-            'payments',
-            'promotion'
-        ])
-            ->findOrFail($id);
+            'billDetails.addedByUser',
+            'payments.processedBy',
+            'promotion',
+            'comboTimeUsages.combo'
+        ])->findOrFail($id);
+
+        // ĐƠN GIẢN: Cộng tất cả session lại
+        $totalTimeCost = 0;
+        foreach ($bill->billTimeUsages as $timeUsage) {
+            if ($timeUsage->end_time) {
+                // Session đã kết thúc: lấy giá đã tính
+                $totalTimeCost += $timeUsage->total_price ?? 0;
+            } else {
+                // Session đang chạy: tính giá đơn giản
+                $start = \Carbon\Carbon::parse($timeUsage->start_time);
+                $minutes = $start->diffInMinutes(now());
+                $effectiveMinutes = $minutes - ($timeUsage->paused_duration ?? 0);
+                $hourlyRate = $timeUsage->hourly_rate;
+                $totalTimeCost += ($hourlyRate / 60) * max(0, $effectiveMinutes);
+            }
+        }
+
+        // Tổng sản phẩm
+        $productTotal = BillDetail::where('bill_id', $bill->id)
+            ->where('is_combo_component', false)
+            ->sum('total_price');
+
+        // Tổng tiền thực tế
+        $actualTotalAmount = $totalTimeCost + $productTotal;
+        $actualFinalAmount = $actualTotalAmount - ($bill->discount_amount ?? 0);
+
+        // Gán vào bill object
+        $bill->actual_total_amount = $actualTotalAmount;
+        $bill->actual_final_amount = $actualFinalAmount;
+        $bill->time_cost = $totalTimeCost;
+        $bill->product_total = $productTotal;
 
         return view('admin.bills.show', compact('bill'));
     }
@@ -1396,23 +1427,23 @@ class BillController extends Controller
                 'billTimeUsages',
                 'comboTimeUsages.combo'
             ])->findOrFail($id);
-            
-                // Kiểm tra nếu là success từ VNPay
-                if (request()->has('vnpay_success')) {
-                 // Xóa session pending
+
+            // Kiểm tra nếu là success từ VNPay
+            if (request()->has('vnpay_success')) {
+                // Xóa session pending
                 session()->forget([
-                'pending_vnpay_bill_id',
-                'pending_vnpay_txn_ref',
-                'pending_vnpay_amount',
-                'pending_vnpay_time'
-                 ]);
-                }
+                    'pending_vnpay_bill_id',
+                    'pending_vnpay_txn_ref',
+                    'pending_vnpay_amount',
+                    'pending_vnpay_time'
+                ]);
+            }
 
             // Kiểm tra xem có phải là preview thanh toán không
             $isPreview = request()->has('preview');
             $paymentMethod = request()->get('payment_method');
             $finalAmount = request()->get('final_amount');
-            
+
             if ($isPreview) {
                 // Lấy thông tin từ session
                 $paymentData = session('pending_payment_' . $id);
