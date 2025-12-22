@@ -445,7 +445,7 @@ class TableController extends Controller
         // Nếu không sử dụng -> được phép xóa
         $table->delete();
 
-        return response()->json(['success' => true]);
+        return redirect()->route('admin.tables.index')->with('success', 'Xóa bàn thành công!');
     }
 
 

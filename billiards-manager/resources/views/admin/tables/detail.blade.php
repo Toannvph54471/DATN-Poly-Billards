@@ -3372,53 +3372,99 @@
             @endif
         }
 
-        // Add combo to bill with improved UX
+        // Sửa hàm addComboToBill
         function addComboToBill(comboId, quantity = null) {
             @if ($table->currentBill)
                 const finalQuantity = quantity || getQuantity('.combo-quantity', comboId);
-                const button = event.target;
+                const button = event ? event.target : document.querySelector(`[data-combo-id="${comboId}"]`);
                 const originalText = button.innerHTML;
 
                 // Show loading state
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 button.disabled = true;
-
-                // Add pulse effect to button
                 button.classList.add('pulse');
 
                 fetch('{{ route('admin.bills.add-combo', $table->currentBill->id) }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        combo_id: comboId,
-                        quantity: finalQuantity
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            combo_id: comboId,
+                            quantity: finalQuantity
+                        })
                     })
-                }).then(response => {
-                    if (response.ok) {
-                        showToast('Đã thêm combo vào hóa đơn', 'success', 3000);
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1000);
-                    } else {
-                        showToast('Có lỗi xảy ra khi thêm combo', 'error', 5000);
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error(text);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success || data.message) {
+                            showToast(data.message || 'Đã thêm combo vào hóa đơn', 'success', 3000);
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        } else {
+                            throw new Error('Không có dữ liệu trả về');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        let errorMessage = 'Có lỗi xảy ra khi thêm combo';
+
+                        // Cố gắng trích xuất thông báo lỗi từ response
+                        try {
+                            const errorData = JSON.parse(error.message);
+                            if (errorData.message) {
+                                errorMessage = errorData.message;
+                            }
+                        } catch (e) {
+                            // Nếu không parse được JSON, sử dụng message gốc
+                            if (error.message && error.message.includes('error')) {
+                                errorMessage = error.message;
+                            }
+                        }
+
+                        showToast(errorMessage, 'error', 5000);
                         button.innerHTML = originalText;
                         button.disabled = false;
                         button.classList.remove('pulse');
-                    }
-                }).catch(error => {
-                    console.error('Error:', error);
-                    showToast('Có lỗi xảy ra khi thêm combo', 'error', 5000);
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                    button.classList.remove('pulse');
-                });
+                    });
             @else
                 showToast('Vui lòng tạo hóa đơn trước khi thêm combo', 'warning', 5000);
             @endif
         }
+
+        // Sửa lại phần gán sự kiện cho button thêm combo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup mobile panels
+            setupMobilePanels();
+
+            // Product buttons
+            document.querySelectorAll('.add-product-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const productId = this.getAttribute('data-product-id');
+                    addProductToBill(productId);
+                });
+            });
+
+            // Combo buttons - FIXED: Sửa để gọi hàm đúng cách
+            document.querySelectorAll('.add-combo-btn').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const comboId = this.getAttribute('data-combo-id');
+                    addComboToBill(comboId);
+                });
+            });
+
+            // ... phần còn lại của DOMContentLoaded
+        });
 
         // Event listeners for buttons
         document.addEventListener('DOMContentLoaded', function() {
