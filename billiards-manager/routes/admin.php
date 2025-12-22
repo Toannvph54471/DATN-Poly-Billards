@@ -97,7 +97,7 @@ Route::prefix('admin')
 
             Route::get('/{id}', [ComboController::class, 'show'])->name('show');
             Route::get('/{id}/edit', [ComboController::class, 'edit'])->name('edit');
-            Route::post('/{id}', [ComboController::class, 'update'])->name('update');
+            Route::put('/{id}', [ComboController::class, 'update'])->name('update');
             Route::delete('/{id}', [ComboController::class, 'destroy'])->name('destroy');
         });
 
