@@ -902,7 +902,7 @@
                         @endif
                     </div>
 
-                    <form action="{{ route('admin.payments.process-payment', $bill->id) }}" method="POST"
+                    <form action="{{ route('admin.bills.preview-payment', $bill->id) }}" method="POST"
                         id="paymentForm">
                         @csrf
 
@@ -1004,8 +1004,8 @@
                                 Quay lại
                             </button>
                             <button type="submit" class="btn btn-primary" id="submit_btn">
-                                <i class="fas fa-check-circle"></i>
-                                Xác nhận thanh toán
+                                <i class="fas fa-print"></i>
+                                In hóa đơn & Xác nhận thanh toán
                             </button>
                         </div>
                     </form>
@@ -1275,33 +1275,52 @@
             }
 
             return Swal.fire({
-                title: 'Xác nhận thanh toán',
+                title: 'Xác nhận in hóa đơn',
                 html: `
-                    <div style="text-align: center;">
-                        <div style="font-size: 32px; color: #059669; margin-bottom: 12px;">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <p style="margin-bottom: 8px; font-size: 16px; color: #374151;">Bạn có chắc muốn thanh toán?</p>
-                        <p style="font-size: 20px; font-weight: 700; color: #059669; margin-bottom: 12px;">
-                            ${formatCurrency(finalAmount)}
-                        </p>
-                        <p style="color: #6b7280; margin-bottom: 12px;">
-                            Phương thức: <strong>${paymentMethodText}</strong>
-                        </p>
-                        ${currentDiscount > 0 ? `
-                                <div style="background: #f0fdf4; padding: 8px; border-radius: 6px; margin: 12px 0; border: 1px solid #059669;">
-                                    <p style="margin: 0; color: #065f46; font-weight: 600; font-size: 14px;">
-                                        <i class="fas fa-tag"></i> Đã áp dụng mã giảm giá: -${formatCurrency(currentDiscount)}
-                                    </p>
-                                </div>
-                            ` : ''}
-                    </div>
-                `,
+            <div style="text-align: center;">
+                <div style="font-size: 32px; color: #4f46e5; margin-bottom: 12px;">
+                    <i class="fas fa-print"></i>
+                </div>
+                <p style="margin-bottom: 8px; font-size: 16px; color: #374151;">
+                    <strong>Bạn sắp in hóa đơn để khách hàng thanh toán</strong>
+                </p>
+                <div style="background: #f0f9ff; padding: 12px; border-radius: 8px; margin: 16px 0; border: 1px solid #3b82f6;">
+                    <p style="font-size: 20px; font-weight: 700; color: #059669; margin-bottom: 8px;">
+                        ${formatCurrency(finalAmount)}
+                    </p>
+                    <p style="color: #6b7280; margin-bottom: 4px;">
+                        Phương thức: <strong>${paymentMethodText}</strong>
+                    </p>
+                    <p style="color: #6b7280; font-size: 13px;">
+                        Số hóa đơn: <strong>{{ $bill->bill_number }}</strong>
+                    </p>
+                </div>
+                ${currentDiscount > 0 ? `
+                                    <div style="background: #f0fdf4; padding: 8px; border-radius: 6px; margin: 12px 0; border: 1px solid #059669;">
+                                        <p style="margin: 0; color: #065f46; font-weight: 600; font-size: 14px;">
+                                            <i class="fas fa-tag"></i> Đã áp dụng mã giảm giá: -${formatCurrency(currentDiscount)}
+                                        </p>
+                                    </div>
+                                ` : ''}
+                <div style="background: #fefce8; padding: 12px; border-radius: 6px; margin-top: 16px; border: 1px solid #eab308;">
+                    <p style="margin: 0; color: #854d0e; font-size: 13px; font-weight: 600;">
+                        <i class="fas fa-info-circle"></i> Lưu ý:
+                    </p>
+                    <p style="margin: 4px 0 0 0; color: #854d0e; font-size: 12px;">
+                        Hệ thống sẽ in hóa đơn trước. Sau đó nhân viên xác nhận với khách hàng:
+                        <br>• Đã thanh toán → Xác nhận hoàn tất
+                        <br>• Chưa thanh toán → Hủy và thanh toán sau
+                    </p>
+                </div>
+            </div>
+        `,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Xác nhận thanh toán',
-                cancelButtonText: 'Hủy',
+                confirmButtonText: 'Tiếp tục in hóa đơn',
+                cancelButtonText: 'Hủy bỏ',
                 reverseButtons: true,
+                confirmButtonColor: '#4f46e5',
+                cancelButtonColor: '#6b7280',
                 customClass: {
                     confirmButton: 'swal2-confirm',
                     cancelButton: 'swal2-deny'

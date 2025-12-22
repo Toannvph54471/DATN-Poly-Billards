@@ -468,38 +468,76 @@ class BillController extends Controller
                 ->where('bill_id', $billId)
                 ->firstOrFail();
 
-            // Kiểm tra xem bill có đang ở trạng thái có thể xóa sản phẩm không
+            $currentUser = Auth::user();
+            $currentUserId = $currentUser->id;
+            $currentUserRole = $currentUser->role_id;
+
+            // 1. Kiểm tra xem bill có đang ở trạng thái có thể xóa sản phẩm không
             if (!in_array($bill->status, ['Open', 'quick'])) {
                 return redirect()->back()->with('error', 'Chỉ có thể xóa sản phẩm khỏi bill đang mở');
             }
 
-            // KHÔNG cho phép xóa nếu là thành phần của combo
+            // 2. Kiểm tra quyền xóa - Chỉ người thêm sản phẩm mới được xóa
+            $addedBy = $billDetail->added_by;
+
+            // Admin (role_id = 1) có quyền xóa tất cả
+            $isAdmin = ($currentUserRole == 1);
+
+            // Manager (role_id = 2) có quyền xóa tất cả
+            $isManager = ($currentUserRole == 2);
+
+            // Kiểm tra xem current user có phải là người thêm sản phẩm không
+            $isAddedByCurrentUser = ($addedBy == $currentUserId);
+
+            // Trường hợp đặc biệt: nếu added_by là null, cho phép nhân viên tạo bill được xóa
+            $isBillCreator = ($addedBy === null && $bill->staff_id == $currentUserId);
+
+            // Kiểm tra quyền
+            if (!$isAdmin && !$isManager && !$isAddedByCurrentUser && !$isBillCreator) {
+                // Lấy thông tin người thêm sản phẩm để hiển thị thông báo
+                $addedByUser = null;
+                if ($addedBy) {
+                    $addedByUser = User::find($addedBy);
+                }
+
+                $addedByName = $addedByUser ? $addedByUser->name : 'Nhân viên khác';
+
+                return redirect()->back()->with(
+                    'error',
+                    "Bạn không có quyền xóa sản phẩm này. Sản phẩm được thêm bởi: {$addedByName}"
+                );
+            }
+
+            // 3. KHÔNG cho phép xóa nếu là thành phần của combo
             if ($billDetail->is_combo_component) {
                 return redirect()->back()->with('error', 'Không thể xóa sản phẩm là thành phần của combo');
             }
 
-            // KHÔNG cho phép xóa nếu là combo
+            // 4. KHÔNG cho phép xóa nếu là combo
             if ($billDetail->combo_id) {
                 return redirect()->back()->with('error', 'Không thể xóa combo bằng chức năng này. Vui lòng sử dụng chức năng xóa combo.');
             }
 
-            // Chỉ xử lý với sản phẩm thông thường
+            // 5. Chỉ xử lý với sản phẩm thông thường
             if ($billDetail->product_id) {
                 // Hoàn trả tồn kho
                 $product = Product::find($billDetail->product_id);
                 if ($product) {
                     $product->increment('stock_quantity', $billDetail->quantity);
-                    Log::info("Restored stock for product: {$product->name}, quantity: {$billDetail->quantity}");
+                    Log::info("Restored stock for product: {$product->name}, quantity: {$billDetail->quantity}, restored by user: {$currentUserId}");
                 }
             }
 
-            // Xóa bản ghi bill detail
+            // 6. Xóa bản ghi bill detail
             $billDetail->delete();
 
-            // Cập nhật lại tổng tiền bill
+            // 7. Cập nhật lại tổng tiền bill
             $this->calculateBillTotal($bill);
 
             DB::commit();
+
+            // Ghi log hành động xóa
+            Log::info("Product removed from bill by user {$currentUserId} (Role: {$currentUserRole}): BillDetail ID {$billDetailId}, Added by: {$addedBy}");
 
             return redirect()->back()->with('success', 'Xóa sản phẩm khỏi bill thành công');
         } catch (Exception $e) {
@@ -1359,35 +1397,57 @@ class BillController extends Controller
                 'comboTimeUsages.combo'
             ])->findOrFail($id);
 
-            // Tính toán chi phí với thông tin chi tiết
-            $timeDetails = $this->calculateTimeChargeDetailed($bill);
-            $timeCost = $timeDetails['totalCost'];
+            // Kiểm tra xem có phải là preview thanh toán không
+            $isPreview = request()->has('preview');
+            $paymentMethod = request()->get('payment_method');
+            $finalAmount = request()->get('final_amount');
 
-            $productTotal = BillDetail::where('bill_id', $bill->id)
-                ->where('is_combo_component', false)
-                ->sum('total_price');
+            if ($isPreview) {
+                // Lấy thông tin từ session
+                $paymentData = session('pending_payment_' . $id);
 
-            $totalAmount = $timeCost + $productTotal;
+                if (!$paymentData) {
+                    return redirect()
+                        ->route('admin.payments.show', $id)
+                        ->with('error', 'Thông tin thanh toán không tồn tại. Vui lòng thử lại.');
+                }
 
-            // SỬ DỤNG DISCOUNT_AMOUNT TỪ BILL
-            $discountAmount = $bill->discount_amount ?? 0;
-            $finalAmount = $totalAmount - $discountAmount;
+                $timeCost = $paymentData['time_price'] ?? 0;
+                $productTotal = $paymentData['product_total'] ?? 0;
+                $totalAmount = $paymentData['total_amount'] ?? 0;
+                $discountAmount = $paymentData['discount_amount'] ?? 0;
+                $finalAmount = $paymentData['final_amount'] ?? 0;
+                $paymentMethod = $paymentData['payment_method'] ?? 'cash';
+
+                // Tính toán chi tiết thời gian cho display
+                $timeDetails = $this->calculateTimeChargeDetailed($bill);
+            } else {
+                // Tính toán thông thường (xem bill đã thanh toán)
+                $timeDetails = $this->calculateTimeChargeDetailed($bill);
+                $timeCost = $timeDetails['totalCost'];
+                $productTotal = BillDetail::where('bill_id', $bill->id)
+                    ->where('is_combo_component', false)
+                    ->sum('total_price');
+                $totalAmount = $timeCost + $productTotal;
+                $discountAmount = $bill->discount_amount ?? 0;
+                $finalAmount = $totalAmount - $discountAmount;
+                $paymentMethod = $bill->payment_method;
+            }
 
             // Lấy thông tin khuyến mãi từ note
             $promotionInfo = $this->extractPromotionInfoFromNote($bill->note);
 
-            // TẠO QR CODE DỮ LIỆU (quan trọng: thêm số tiền vào dữ liệu QR)
+            // Tạo QR code
             $qrData = [
                 'bill_number' => $bill->bill_number,
                 'amount' => $finalAmount,
                 'currency' => 'VND',
-                'account' => '0368015218', // Số tài khoản của bạn
+                'account' => '0368015218',
                 'bank' => 'MBBank',
                 'content' => "TT Bill {$bill->bill_number}"
             ];
 
-            // Tạo URL QR code với thông tin tiền tệ
-            $qrUrl = "https://img.vietqr.io/image/MB-0368015218-qr_only.png"
+            $qrUrl = "https://img.vietqr.io/image/MB-0368015218-qr_only.png?"
                 . http_build_query([
                     'amount' => $finalAmount,
                     'addInfo' => "TT Bill {$bill->bill_number}"
@@ -1405,26 +1465,14 @@ class BillController extends Controller
                 'promotionInfo' => $promotionInfo,
                 'printTime' => now()->format('H:i d/m/Y'),
                 'staff' => Auth::user()->name,
-                'qrUrl' => $qrUrl, // THÊM QR URL
-                'qrData' => $qrData // THÊM QR DATA
+                'qrUrl' => $qrUrl,
+                'qrData' => $qrData,
+                'isPreview' => $isPreview, // Thêm flag để biết là preview
+                'paymentMethod' => $paymentMethod,
+                'paymentData' => $isPreview ? $paymentData : null
             ];
 
-            // Auto redirect logic
-            $autoRedirect = session()->has('redirect_after_print');
-            if ($autoRedirect) {
-                $redirectUrl = session('redirect_after_print');
-                session()->forget('redirect_after_print');
-
-                return view('admin.bills.print', array_merge($billData, [
-                    'autoRedirect' => true,
-                    'redirectUrl' => $redirectUrl
-                ]));
-            }
-
-            return view('admin.bills.print', array_merge($billData, [
-                'autoRedirect' => false,
-                'redirectUrl' => route('admin.bills.index')
-            ]));
+            return view('admin.bills.print', $billData);
         } catch (Exception $e) {
             return redirect()->back()->with('error', 'Lỗi khi in hóa đơn: ' . $e->getMessage());
         }
