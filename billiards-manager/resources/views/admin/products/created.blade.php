@@ -154,20 +154,6 @@
                         @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 
-                    <div class="md:col-span-2">
-                        <label for="image" class="block text-sm font-medium text-gray-700 mb-2">
-                            Hình ảnh
-                        </label>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition"
-                             onclick="document.getElementById('image').click()">
-                            <input type="file" name="image" id="image" class="hidden" accept="image/*">
-                            <div id="image-preview" class="hidden mt-4">
-                                <img id="preview" class="mx-auto max-h-48 rounded-lg">
-                            </div>
-                            <p class="text-gray-500">Kéo thả hoặc click để tải ảnh lên</p>
-                        </div>
-                        @error('image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
                 </div>
 
                 <div class="mt-8 flex justify-end space-x-3">

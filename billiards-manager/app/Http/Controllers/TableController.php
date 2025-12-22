@@ -473,7 +473,10 @@ class TableController extends Controller
             'currentBill.billDetails.combo',
             'currentBill.billTimeUsages' => function ($query) {
                 $query->whereNull('end_time')
-                    ->orWhere('end_time', '>', now()->subHours(24));
+                    ->orWhere('end_time', '>', now()->subHours(24))
+                    ->with(['bill' => function ($q) {
+                        $q->with('table'); // Load table thông qua bill
+                    }]);
             },
             'currentBill.comboTimeUsages' => function ($query) {
                 $query->where(function ($q) {
@@ -498,7 +501,22 @@ class TableController extends Controller
             }
         }
 
-        return view('admin.tables.detail', compact('table', 'combos', 'products', 'timeInfo'));
+        // Nếu có currentBill, lấy tất cả billTimeUsages của bill này
+        $timeUsages = collect();
+        if ($table->currentBill) {
+            $timeUsages = $table->currentBill->billTimeUsages()
+                ->where(function ($query) {
+                    $query->whereNull('end_time')
+                        ->orWhere('end_time', '>', now()->subHours(24));
+                })
+                ->with(['bill' => function ($q) {
+                    $q->with('table');
+                }])
+                ->orderBy('start_time', 'asc')
+                ->get();
+        }
+
+        return view('admin.tables.detail', compact('table', 'combos', 'products', 'timeInfo', 'timeUsages'));
     }
 
     // Thêm vào TableController

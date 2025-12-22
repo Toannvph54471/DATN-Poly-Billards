@@ -65,4 +65,16 @@ class BillTimeUsage extends Model
 
         return max(0, $baseDuration - $pausedMinutes);
     }
+
+    public function table()
+    {
+        return $this->hasOneThrough(
+            Table::class,
+            Bill::class,
+            'id', // Foreign key on bills table
+            'id', // Foreign key on tables table
+            'bill_id', // Local key on bill_time_usage table
+            'table_id' // Local key on bills table
+        );
+    }
 }

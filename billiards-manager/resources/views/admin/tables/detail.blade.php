@@ -2130,9 +2130,13 @@
                                             $totalPrice = 0;
                                         @endphp
 
-                                        <!-- Hiển thị lịch sử chuyển bàn nếu có -->
-                                        @if ($timeUsages->count() > 1)
-                                            <div class="transfer-history">
+                                        @if ($timeUsages && $timeUsages->count() > 1)
+                                            @php
+                                                $totalMinutes = 0;
+                                                $totalPrice = 0;
+                                            @endphp
+
+                                            <div class="transfer-history mt-6">
                                                 <h4 class="text-md font-medium mb-3 text-gray-700">
                                                     <i class="fas fa-exchange-alt mr-2"></i>Lịch sử chuyển bàn
                                                 </h4>
@@ -2142,6 +2146,10 @@
                                                         @if ($index > 0)
                                                             @php
                                                                 $previousUsage = $timeUsages[$index - 1];
+                                                                // Lấy thông tin bàn từ bill
+                                                                $previousTable = $previousUsage->bill->table ?? null;
+                                                                $currentTable = $timeUsage->bill->table ?? null;
+
                                                                 if ($previousUsage->duration_minutes) {
                                                                     $totalMinutes += $previousUsage->duration_minutes;
                                                                 }
@@ -2169,16 +2177,23 @@
 
                                                                         <div
                                                                             class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                                            <!-- Bàn cũ -->
                                                                             <div class="bg-white p-2 rounded border">
                                                                                 <div
                                                                                     class="text-xs text-gray-500 mb-1">
                                                                                     Từ bàn</div>
                                                                                 <div class="font-medium">
-                                                                                    {{ $previousUsage->table->table_number ?? 'N/A' }}
-                                                                                    <span
-                                                                                        class="text-xs text-gray-500 ml-1">
-                                                                                        ({{ number_format($previousUsage->hourly_rate) }}₫/h)
-                                                                                    </span>
+                                                                                    @if ($previousTable)
+                                                                                        {{ $previousTable->table_number }}
+                                                                                        -
+                                                                                        {{ $previousTable->table_name }}
+                                                                                        <span
+                                                                                            class="text-xs text-gray-500 ml-1">
+                                                                                            ({{ number_format($previousUsage->hourly_rate) }}₫/h)
+                                                                                        </span>
+                                                                                    @else
+                                                                                        N/A
+                                                                                    @endif
                                                                                 </div>
                                                                                 @if ($previousUsage->end_time)
                                                                                     <div
@@ -2186,25 +2201,39 @@
                                                                                         {{ \Carbon\Carbon::parse($previousUsage->start_time)->format('H:i') }}
                                                                                         →
                                                                                         {{ \Carbon\Carbon::parse($previousUsage->end_time)->format('H:i') }}
+                                                                                        ({{ $previousUsage->duration_minutes ?? 0 }}
+                                                                                        phút)
                                                                                     </div>
                                                                                 @endif
                                                                             </div>
 
+                                                                            <!-- Bàn mới -->
                                                                             <div class="bg-white p-2 rounded border">
                                                                                 <div
                                                                                     class="text-xs text-gray-500 mb-1">
                                                                                     Sang bàn</div>
                                                                                 <div class="font-medium">
-                                                                                    {{ $timeUsage->table->table_number ?? 'N/A' }}
-                                                                                    <span
-                                                                                        class="text-xs text-gray-500 ml-1">
-                                                                                        ({{ number_format($timeUsage->hourly_rate) }}₫/h)
-                                                                                    </span>
+                                                                                    @if ($currentTable)
+                                                                                        {{ $currentTable->table_number }}
+                                                                                        -
+                                                                                        {{ $currentTable->table_name }}
+                                                                                        <span
+                                                                                            class="text-xs text-gray-500 ml-1">
+                                                                                            ({{ number_format($timeUsage->hourly_rate) }}₫/h)
+                                                                                        </span>
+                                                                                    @else
+                                                                                        N/A
+                                                                                    @endif
                                                                                 </div>
                                                                                 <div
                                                                                     class="text-xs text-gray-500 mt-1">
                                                                                     Bắt đầu:
                                                                                     {{ \Carbon\Carbon::parse($timeUsage->start_time)->format('H:i') }}
+                                                                                    @if (!$timeUsage->end_time)
+                                                                                        <span
+                                                                                            class="text-green-600 font-medium">(Đang
+                                                                                            chơi)</span>
+                                                                                    @endif
                                                                                 </div>
                                                                             </div>
                                                                         </div>
@@ -2299,7 +2328,7 @@
                 function confirmDeleteProduct(productName, quantity, formId) {
                     if (confirm(
                             `Bạn có chắc chắn muốn xóa sản phẩm:\n\n"${productName}"\nSố lượng: ${quantity}\n\nSản phẩm sẽ được hoàn trả lại kho.`
-                            )) {
+                        )) {
                         // Thêm loading state
                         const form = document.getElementById(formId);
                         const button = form.querySelector('button');

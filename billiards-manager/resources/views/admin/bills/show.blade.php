@@ -506,7 +506,7 @@
                             @endphp
                             <div class="flex justify-between">
                                 <span>
-                                    Session {{ $index + 1 }}:
+                                    Lần {{ $index + 1 }}:
                                     {{ $start->format('H:i') }} -
                                     {{ $timeUsage->end_time ? $end->format('H:i') : 'Đang chạy' }}
                                     ({{ number_format($minutes) }} phút)
