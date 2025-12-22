@@ -89,7 +89,7 @@ class EmployeeController extends Controller
         ]);
 
         // ✔ Tạo Employee
-        Employee::create([
+        $employee = Employee::create([
             'user_id'       => $user->id,
             'employee_code' => $request->employee_code,
             'name'          => $request->name,
@@ -102,6 +102,9 @@ class EmployeeController extends Controller
             'end_date'      => $request->end_date,
             'status'        => $request->status,
         ]);
+
+        // Auto-generate QR Token for immediate use
+        $employee->generateQrToken();
 
         // Commit thành công
         DB::commit();

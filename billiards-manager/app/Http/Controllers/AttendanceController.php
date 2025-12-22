@@ -62,24 +62,112 @@ class AttendanceController extends Controller
             ], 400);
         }
 
-        // Check if already checked in today
+        // 1. Kiểm tra chấm công hiện tại & Tự động đóng các phiên treo (Smart Check-in)
         $existingAttendance = Attendance::where('employee_id', $employee->id)
             ->whereDate('check_in', today())
             ->whereNull('check_out')
             ->first();
 
         if ($existingAttendance) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Bạn đã check-in rồi.',
-            ], 400);
+            // Tìm ca làm việc ứng với lần check-in cũ
+            $allShifts = \App\Models\EmployeeShift::where('employee_id', $employee->id)
+                ->whereDate('shift_date', today())
+                ->with('shift')
+                ->get();
+            
+            $oldShift = null;
+            $checkInTime = Carbon::parse($existingAttendance->check_in);
+            
+            // Tìm ca phù hợp nhất với giờ check-in cũ
+            foreach ($allShifts as $s) {
+                 if (!$s->shift) continue;
+                 $start = Carbon::parse(today()->format('Y-m-d') . ' ' . $s->shift->start_time);
+                 $end = Carbon::parse(today()->format('Y-m-d') . ' ' . $s->shift->end_time);
+                 if ($end->lt($start)) $end->addDay();
+                 
+                 // Nếu check-in nằm trong khoảng [Giờ vào - 30p, Giờ ra]
+                 if ($checkInTime->between($start->copy()->subMinutes(30), $end)) {
+                     $oldShift = $s;
+                     break;
+                 }
+            }
+            // Nếu không tìm thấy, lấy ca đầu tiên làm mặc định
+            if (!$oldShift && $allShifts->isNotEmpty()) $oldShift = $allShifts->first();
+            
+            $shouldAutoClose = false;
+            $closeTime = now();
+            
+            if ($oldShift && $oldShift->shift) {
+                 $end = Carbon::parse(today()->format('Y-m-d') . ' ' . $oldShift->shift->end_time);
+                 if ($end->lt($oldShift->shift->start_time)) $end->addDay();
+                 
+                 // Logic: Nếu hiện tại đã quá giờ kết thúc ca 30 phút -> Coi như quên Check-out
+                 if (now()->gt($end->copy()->addMinutes(30))) {
+                     $shouldAutoClose = true;
+                     $closeTime = $end; // Đóng phiên tại thời điểm kết thúc ca (tránh trả thừa lương)
+                 }
+            } else {
+                 // Không có ca Đóng nếu đã treo quá 12 tiếng
+                 if (now()->diffInHours($checkInTime) > 12) {
+                     $shouldAutoClose = true;
+                 }
+            }
+            
+            if ($shouldAutoClose) {
+                // Tính toán lương cho phiên cũ trước khi đóng
+                $calc = WorkingTimeCalculator::calculate($existingAttendance, $oldShift, $closeTime);
+                $existingAttendance->update([
+                    'check_out' => $closeTime,
+                    'total_minutes' => $calc['total_minutes'],
+                    'early_minutes' => $calc['early_minutes'],
+                    'status' => 'Present',
+                    'notes' => trim($existingAttendance->notes . ' [Tự động Check-out: Quên quét mã]')
+                ]);
+                $this->updateShiftStatus($employee->id, 'completed');
+            } else {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Bạn đã check-in rồi (Ca hiện tại chưa kết thúc).',
+                ], 400);
+            }
         }
 
-        // Check for assigned shift today
-        $employeeShift = \App\Models\EmployeeShift::where('employee_id', $employee->id)
+        // 2. Chọn Ca làm việc cho lần Check-in MỚI này
+        // Tìm ca phù hợp nhất với giờ hiện tại (thay vì luôn lấy ca đầu tiên)
+        $todayShifts = \App\Models\EmployeeShift::where('employee_id', $employee->id)
             ->whereDate('shift_date', today())
             ->with('shift')
-            ->first();
+            ->get();
+
+        $employeeShift = null;
+        $now = now();
+        
+        // Ưu tiên 1: Ca đang diễn ra hoặc sắp bắt đầu (Trong khoảng [Start - 15p, End])
+        foreach ($todayShifts as $s) {
+            if (!$s->shift) continue;
+            $start = Carbon::parse(today()->format('Y-m-d') . ' ' . $s->shift->start_time);
+            $end = Carbon::parse(today()->format('Y-m-d') . ' ' . $s->shift->end_time);
+            if ($end->lt($start)) $end->addDay();
+            
+            if ($now->between($start->copy()->subMinutes(15), $end)) {
+                $employeeShift = $s;
+                break;
+            }
+        }
+        
+        // Ưu tiên 2: Nếu không thấy, tìm ca sắp tới gần nhất
+        if (!$employeeShift) {
+             $employeeShift = $todayShifts->filter(function($s) use ($now) {
+                 if (!$s->shift) return false;
+                 $start = Carbon::parse(today()->format('Y-m-d') . ' ' . $s->shift->start_time);
+                 return $start->gt($now);
+             })->sortBy('shift.start_time')->first();
+             
+             // Nếu vẫn không có, lấy ca vừa kết thúc gần nhất (để báo lỗi "Hết giờ")
+             if (!$employeeShift) {
+                  $employeeShift = $todayShifts->sortByDesc('shift.start_time')->first();
+             }
+        }
 
         if (!$employeeShift) {
             return response()->json([
@@ -88,9 +176,8 @@ class AttendanceController extends Controller
             ], 403);
         }
 
-        // Check for Late
-        $now = now();
-        // Use shift start time from the assigned shift
+        // Kiểm tra đi muộn (Late)
+        // Tính lại mốc thời gian dựa trên ca đã chọn
         $shiftStartTime = Carbon::parse(today()->format('Y-m-d') . ' ' . $employeeShift->shift->start_time);
         $shiftEndTime = Carbon::parse(today()->format('Y-m-d') . ' ' . $employeeShift->shift->end_time);
 
@@ -98,7 +185,7 @@ class AttendanceController extends Controller
             $shiftEndTime->addDay();
         }
 
-        // Validate 1: Check if Shift Ended
+        // Validate 1: Kiểm tra nếu ca đã kết thúc
         if ($now->gt($shiftEndTime)) {
             return response()->json([
                 'status' => 'error',
@@ -106,7 +193,7 @@ class AttendanceController extends Controller
             ], 403);
         }
 
-        // Validate 2: Check if Too Early (> 15 minutes)
+        // Validate 2: Kiểm tra nếu đến quá sớm (> 15 phút)
         $earlyLimit = $shiftStartTime->copy()->subMinutes(15);
         if ($now->lt($earlyLimit)) {
              return response()->json([
@@ -125,19 +212,19 @@ class AttendanceController extends Controller
             ], 403);
         }
 
-        // Calculate late minutes (if any, but < threshold)
+        // Tính số phút đi muộn (nếu có, nhưng < ngưỡng 15p)
         $lateMinutes = 0;
         if ($now->gt($shiftStartTime)) {
             $lateMinutes = $shiftStartTime->diffInMinutes($now);
         }
 
-        // Create Attendance
+        // Tạo bản ghi Check-in (Attendance)
         $attendance = Attendance::create([
             'employee_id' => $employee->id,
             'check_in' => $now,
             'status' => $lateMinutes > 0 ? 'Late' : 'Present',
             'late_minutes' => $lateMinutes,
-            'approval_status' => 'none' // No approval needed if on time or within threshold
+            'approval_status' => 'none' // Không cần duyệt nếu đúng giờ hoặc muộn nhẹ
         ]);
 
         $this->updateShiftStatus($employee->id, 'active');
@@ -148,7 +235,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Check-in thành công!',
+            'message' => "Check-in thành công! Xin chào {$employee->name}.",
             'data' => $attendance
         ]);
     }
@@ -228,28 +315,20 @@ class AttendanceController extends Controller
 
         $now = now();
         
-        // Find the shift based on Check-in Date (to handle crossover days correctly if needed)
-        // Note: Using today() for check_in date as this is "live" checkout.
+        // Tìm ca làm việc ứng với Ngày Check-in (để xử lý trường hợp ca qua đêm nếu cần)
         $employeeShift = \App\Models\EmployeeShift::where('employee_id', $employee->id)
             ->whereDate('shift_date', $attendance->check_in) 
             ->with('shift')
             ->first();
 
-        // Calculate Billable Time using Service
+        // Tính toán giờ công bằng Service chung
         $calculation = WorkingTimeCalculator::calculate($attendance, $employeeShift);
         
-        // Save Actual Checkout Time (Truth)
-        // Note: Calculation uses this time (via now()) for bounds, but returns capped minutes.
+        // Lưu thời gian Check-out thực tế
         $attendance->check_out = now();
         $attendance->total_minutes = $calculation['total_minutes'];
         $attendance->early_minutes = $calculation['early_minutes'];
-        // $attendance->late_minutes is already set at Check-in, but Service recalculates it too. 
-        // We probably shouldn't overwrite late_minutes on checkout unless we want to "fix" it?
-        // Check-in sets 'late_minutes' based on START time.
-        // Service returns 'late_minutes'. Let's keep consistency.
-        // But check-in logic sets it and status 'Late'.
-        // Service just calculates duration.
-        // Let's only update total/early on checkout.
+        // Lưu ý: late_minutes đã được tính lúc Check-in nên không ghi đè ở đây để giữ nguyên trạng thái gốc.
 
         $attendance->save();
         $this->updateShiftStatus($employee->id, 'completed');
@@ -259,7 +338,7 @@ class AttendanceController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Check-out thành công! Tổng thời gian tính lương: ' . round($attendance->total_minutes / 60, 2) . ' giờ.',
+            'message' => "Check-out thành công! Tạm biệt {$employee->name}. Tổng thời gian: " . round($attendance->total_minutes / 60, 2) . ' giờ.',
             'data' => $attendance
         ]);
     }
@@ -268,27 +347,25 @@ class AttendanceController extends Controller
     {
         $attendance = Attendance::findOrFail($id);
         
-        // 1. Approve
+        // 1. Duyệt
         $attendance->approval_status = 'approved';
         $attendance->approved_by = Auth::id();
         $attendance->approved_at = now();
-        $attendance->save(); // Save status first
+        $attendance->save(); // Lưu trạng thái trước
 
-        // 2. Recalculate Payroll if checked out OR if checked in (future checkout will handle it, but for Monitor we might want to know?)
-        // Currently monitor doesn't show salary until checkout.
-        // However, if they ARE checked out, we must recalculate.
+        // 2. Tính lại lương (nếu đã check-out)
+        // Nếu đã check-out, cần tính lại total_minutes vì giờ Bắt Đầu có thể thay đổi (được tính từ đầu ca)
         
         if ($attendance->check_out) {
              $checkoutTime = Carbon::parse($attendance->check_out);
-             // Find Shift
+             // Tìm ca
              $employeeShift = \App\Models\EmployeeShift::where('employee_id', $attendance->employee_id)
                 ->whereDate('shift_date', $attendance->check_in)
                 ->with('shift')
                 ->first();
                 
              if ($employeeShift && $employeeShift->shift) {
-                 // Recalculate using unified service
-                 // Note: attendance has check_out set, so it will be used.
+                 // Tính lại bằng service
                  $calculation = WorkingTimeCalculator::calculate($attendance, $employeeShift);
                  
                  $attendance->total_minutes = $calculation['total_minutes'];
@@ -313,28 +390,28 @@ class AttendanceController extends Controller
 
     public function monitor()
     {
-        // Get pending late requests
+        // Lấy danh sách xin đi muộn đang chờ duyệt
         $pendingLate = Attendance::with('employee')
             ->where('approval_status', 'pending')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get ALL shifts for today
+        // Lấy TẤT CẢ ca làm việc hôm nay
         $todayShifts = \App\Models\EmployeeShift::whereDate('shift_date', today())
             ->with(['employee', 'shift'])
             ->get();
             
-        // Pre-fetch attendances for today to avoid N+1 and calculate live stats
+        // Pre-fetch dữ liệu chấm công hôm nay để tránh lỗi N+1
         $attendances = Attendance::whereDate('check_in', today())
             ->get()
             ->keyBy('employee_id');
 
         foreach ($todayShifts as $shift) {
             $att = $attendances->get($shift->employee_id);
-            $shift->attendance = $att; // Attach manually for View
+            $shift->attendance = $att; // Gán thủ công để View hiển thị
             
             if ($att && !$att->check_out) {
-                 // Calculate Live Billable Time
+                 // Tính thời gian làm việc thực tế (Live)
                  $calc = WorkingTimeCalculator::calculate($att, $shift, now());
                  $shift->live_billable_minutes = $calc['total_minutes'];
             }
@@ -343,7 +420,7 @@ class AttendanceController extends Controller
         return view('admin.attendance.monitor', compact('pendingLate', 'todayShifts'));
     }
     
-    // Helper for simulator to get token
+    // Helper lấy token cho máy giả lập
     public function getTestToken($employeeId)
     {
         $employee = Employee::findOrFail($employeeId);
@@ -367,7 +444,7 @@ class AttendanceController extends Controller
 
         $employee = $user->employee;
         
-        // Generate a new token if one doesn't exist or is expired
+        // Tạo token mới nếu chưa có hoặc đã hết hạn
         if (!$employee->qr_token || $employee->qr_token_expires_at < now()) {
             $employee->generateQrToken();
         }
@@ -378,7 +455,8 @@ class AttendanceController extends Controller
     public function adminCheckout(Request $request, $id)
     {
         $request->validate([
-            'reason' => 'required|string|max:255'
+            'reason' => 'required|string|max:255',
+            'checkout_time' => 'nullable|date'
         ]);
 
         $attendance = Attendance::findOrFail($id);
@@ -387,31 +465,22 @@ class AttendanceController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Nhân viên này đã check-out rồi.']);
         }
 
-        $checkoutTime = now(); // Use Now as Checkout Time
+        // Ưu tiên dùng thời gian Admin nhập, nếu không thì dùng thời gian hiện tại
+        $checkoutTime = $request->checkout_time ? Carbon::parse($request->checkout_time) : now();
         $checkInTime = \Carbon\Carbon::parse($attendance->check_in);
 
-        // Find Shift
+        // Validation: Thời gian check-out không thể trước check-in
+        if ($checkoutTime->lt($checkInTime)) {
+             return response()->json(['status' => 'error', 'message' => 'Thời gian check-out không thể trước thời gian check-in (' . $checkInTime->format('H:i d/m/Y') . ').']);
+        }
+
+        // Tìm ca làm việc
         $employeeShift = \App\Models\EmployeeShift::where('employee_id', $attendance->employee_id)
-            ->whereDate('shift_date', $checkInTime) // Match Check-in date
+            ->whereDate('shift_date', $checkInTime) // Khớp ngày check-in
             ->with('shift')
             ->first();
 
-        if ($employeeShift && $employeeShift->shift) {
-             $calculation = WorkingTimeCalculator::calculate($attendance, $employeeShift, $checkoutTime);
-             $minutes = $calculation['total_minutes'];
-             $earlyMinutes = $calculation['early_minutes'];
-        } else {
-             $minutes = 0; // Or raw minutes? The service handles "No Shift" as raw.
-             $calculation = WorkingTimeCalculator::calculate($attendance, null, $checkoutTime); // No shift passed?
-             // Wait, we fetched $employeeShift just above.
-             // If validation says $attendance but no shift?
-             // Existing code calculates minutes = 0 if start > end.
-             // Let's iterate:
-             // If we found a shift, pass it.
-             // If not, pass null (and Service does raw calc).
-        }
-        
-        // Re-do the logic cleanly:
+        // Tính toán lại giờ công
         $calculation = WorkingTimeCalculator::calculate($attendance, $employeeShift, $checkoutTime);
         $minutes = $calculation['total_minutes'];
         $earlyMinutes = $calculation['early_minutes'];
@@ -424,13 +493,11 @@ class AttendanceController extends Controller
             'admin_checkout_reason' => $request->reason
         ]);
         
-        // Removing old early minute calc block entirely as it is handled above.
-        
         $attendance->save();
         
         $this->updateShiftStatus($attendance->employee_id, 'completed');
 
-        \App\Models\ActivityLog::log('admin_checkout', "Admin checked out for employee ID {$attendance->employee_id}.", ['attendance_id' => $attendance->id, 'reason' => $request->reason, 'admin_id' => Auth::id()]);
+        \App\Models\ActivityLog::log('admin_checkout', "Admin checked out for employee ID {$attendance->employee_id} at {$checkoutTime}.", ['attendance_id' => $attendance->id, 'reason' => $request->reason, 'admin_id' => Auth::id()]);
 
         return response()->json(['status' => 'success', 'message' => 'Đã check-out hộ nhân viên thành công. Giờ công: ' . round($minutes / 60, 2) . 'h']);
     }
