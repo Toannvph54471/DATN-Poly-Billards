@@ -1313,6 +1313,12 @@ class BillController extends Controller
                     'staff_id' => Auth::id()
                 ]);
 
+                if (Auth::user()->role->slug === 'employee') {
+                    return redirect()
+                        ->route('admin.bills.index')
+                        ->with('success', "Đã chuyển bàn {$sourceTable->table_number} → {$targetTable->table_number} thành công");
+                }
+
                 return redirect()
                     ->route('admin.tables.index')
                     ->with('success', "Đã chuyển bàn {$sourceTable->table_number} → {$targetTable->table_number} thành công");

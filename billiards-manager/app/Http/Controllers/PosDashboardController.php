@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class PosDashboardController extends Controller
 {
@@ -17,22 +18,27 @@ class PosDashboardController extends Controller
         try {
             // Lấy thống kê bàn
             $tableStats = $this->getTableStats();
-            
-            // Lấy danh sách bàn với thông tin hóa đơn hiện tại
+
+            // Lấy danh sách bàn với thông tin hóa đơn hiện tại VÀ thông tin loại bàn
             $tables = DB::table('tables')
+                ->leftJoin('table_rates', 'tables.table_rate_id', '=', 'table_rates.id')
                 ->select(
                     'tables.id',
                     'tables.table_number',
                     'tables.table_name',
                     'tables.capacity',
                     'tables.status',
+                    'tables.table_rate_id',
+                    'table_rates.name as rate_name', // Thêm tên loại bàn
+                    'table_rates.hourly_rate', // Thêm giá theo giờ
+                    'table_rates.code as rate_code', // Thêm mã loại bàn
                     DB::raw('(SELECT bills.id FROM bills WHERE bills.table_id = tables.id AND bills.status IN ("Open", "Paused") ORDER BY bills.created_at DESC LIMIT 1) as current_bill'),
                     DB::raw('(SELECT bills.start_time FROM bills WHERE bills.table_id = tables.id AND bills.status IN ("Open", "Paused") ORDER BY bills.created_at DESC LIMIT 1) as start_time')
                 )
                 ->whereNull('tables.deleted_at')
                 ->orderBy('tables.table_number')
                 ->get();
-            
+
             // Thêm thông tin khách hàng cho các bàn đang dùng
             foreach ($tables as $table) {
                 if ($table->current_bill) {
@@ -41,37 +47,41 @@ class PosDashboardController extends Controller
                         ->where('bills.id', $table->current_bill)
                         ->select('users.name as customer_name')
                         ->first();
-                    
+
                     if ($customer) {
                         $table->customer_name = $customer->customer_name;
                     }
                 }
             }
-            
+
             // Lấy bàn trống
             $availableTables = $tables->where('status', 'available');
-            
+
             // Lấy bàn đang dùng
             $occupiedTables = $tables->where('status', 'occupied');
-            
-            // Lấy hóa đơn đang mở với thông tin chi tiết
+
+            // Lấy hóa đơn đang mở với thông tin chi tiết (bao gồm loại bàn)
             $openBills = DB::table('bills')
                 ->select(
                     'bills.id',
                     'bills.bill_number',
                     'bills.table_id',
                     'tables.table_name',
+                    'tables.table_rate_id',
+                    'table_rates.name as rate_name', // Thêm thông tin loại bàn
+                    'table_rates.hourly_rate', // Thêm giá theo giờ
                     'bills.start_time',
                     'bills.total_amount',
                     'users.name as customer_name'
                 )
                 ->join('tables', 'bills.table_id', '=', 'tables.id')
+                ->leftJoin('table_rates', 'tables.table_rate_id', '=', 'table_rates.id') // LEFT JOIN với table_rates
                 ->leftJoin('users', 'bills.user_id', '=', 'users.id')
                 ->where('bills.status', 'Open')
                 ->orderBy('bills.updated_at', 'desc')
                 ->limit(5)
                 ->get();
-            
+
             return view('admin.pos-dashboard', [
                 'tableStats' => $tableStats['tableStats'],
                 'tables' => $tables,
@@ -84,13 +94,12 @@ class PosDashboardController extends Controller
                 'reservedCount' => $tableStats['tableStats']['reserved'],
                 'maintenanceCount' => $tableStats['tableStats']['maintenance'],
             ]);
-            
         } catch (\Exception $e) {
-            \Log::error('POS Dashboard Error: ' . $e->getMessage());
+            Log::error('POS Dashboard Error: ' . $e->getMessage());
             return view('admin.pos-dashboard', $this->getFallbackData());
         }
     }
-    
+
     /**
      * Lấy thống kê bàn
      */
@@ -121,7 +130,7 @@ class PosDashboardController extends Controller
             ]
         ];
     }
-    
+
     /**
      * API để lấy thống kê nhanh (dùng cho AJAX refresh)
      */
@@ -129,14 +138,13 @@ class PosDashboardController extends Controller
     {
         try {
             $tableStats = $this->getTableStats();
-            
+
             return response()->json([
                 'success' => true,
                 'tableStats' => $tableStats['tableStats'],
                 'open_bills' => DB::table('bills')->where('status', 'Open')->count(),
                 'updated_at' => now()->format('H:i:s'),
             ]);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -144,7 +152,7 @@ class PosDashboardController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Dữ liệu fallback
      */

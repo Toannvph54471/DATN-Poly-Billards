@@ -184,11 +184,6 @@
                                     <i class="fas fa-sign-in-alt mr-2 text-blue-500 group-hover:scale-110 transition-transform"></i>
                                     <span class="font-semibold">Đăng nhập</span>
                                 </a>
-                                <a href="{{ route('register') }}" 
-                                   class="flex items-center bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold px-6 py-2.5 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-                                    <i class="fas fa-user-plus mr-2"></i>
-                                    <span>Đăng ký</span>
-                                </a>
                             </div>
                         @endauth
                     </div>
