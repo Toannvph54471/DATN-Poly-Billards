@@ -9,13 +9,13 @@ use App\Models\EmployeeShift;
 class WorkingTimeCalculator
 {
     /**
-     * Calculate billable working time.
+     * Tính toán thời gian làm việc có lương (Billable Time).
      * 
-     * Rules:
-     * 1. Billable Start = Max(Shift Start, Check In)
-     *    EXCEPTION: If Late is APPROVED, Billable Start = Shift Start
-     * 2. Billable End = Min(Shift End, Check Out)
-     * 3. Duration = Billable End - Billable Start
+     * Quy tắc:
+     * 1. Bắt đầu tính lương = Max(Giờ Vào Ca, Giờ Check-in Thực tế)
+     *    NGOẠI LỆ: Nếu Đi muộn được DUYỆT (Approved) -> Bắt đầu tính từ Giờ Vào Ca (coi như đúng giờ).
+     * 2. Kết thúc tính lương = Min(Giờ Kết Thúc Ca, Giờ Check-out Thực tế)
+     * 3. Tổng thời gian = Kết thúc - Bắt đầu
      */
     public static function calculate(
         Attendance $attendance, 
@@ -29,19 +29,19 @@ class WorkingTimeCalculator
         $result = [
             'total_minutes' => 0,
             'total_hours' => 0,
-            'status' => $attendance->status ?? 'Present', // Preserve existing if set
+            'status' => $attendance->status ?? 'Present', // Giữ nguyên trạng thái cũ
             'early_minutes' => 0,
             'late_minutes' => 0,
-            'payroll_start' => $checkIn, // Default to raw if no shift
-            'payroll_end' => $checkOut,  // Default to raw if no shift
+            'payroll_start' => $checkIn, // Mặc định là Check-in thực nếu không có ca
+            'payroll_end' => $checkOut,  // Mặc định là Check-out thực nếu không có ca
         ];
 
-        // 1. Resolve Shift limits
+        // 1. Phân giải giới hạn Ca làm việc
         $shiftStart = null;
         $shiftEnd = null;
 
         if ($shift && $shift->shift) {
-            // Reconstruct shift date/time
+            // Tái tạo thời gian ca làm việc từ ngày phân công
             $shiftDate = Carbon::parse($shift->shift_date);
             $shiftStart = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $shift->shift->start_time);
             $shiftEnd = Carbon::parse($shiftDate->format('Y-m-d') . ' ' . $shift->shift->end_time);
@@ -49,47 +49,32 @@ class WorkingTimeCalculator
             if ($shiftEnd->lt($shiftStart)) {
                 $shiftEnd->addDay();
             }
-        } else {
-             // Fallback: Use standard 8-17 or just use raw check-in/out
-             // Logic without shift is tricky. We'll stick to raw.
         }
 
         if ($shiftStart && $shiftEnd) {
             
-            // --- Determine Payroll Start ---
+            // --- Xác định Thời điểm Bắt đầu tính lương ---
             $payrollStart = $checkIn->copy();
             
-            // Core Logic: Billable starts at Shift Start if checked in earlier.
+            // Logic Cốt lõi: Lương bắt đầu từ Giờ Vào Ca (nếu đến sớm hơn).
             if ($payrollStart->lt($shiftStart)) {
                 $payrollStart = $shiftStart;
             }
 
-            // Exception: If Late Reason Approved => Billable starts at Shift Start (System treats as if worked from start)
-            // But verify: Does "Approved" mean "Forgiven Late Fee" only, or "Paid for missed time"?
-            // Usually Approved Late = Paid from ARRIVAL, but No Fine.
-            // BUT User requirement: "Tự động trừ 20k". "Duyệt -> Tính full".
-            // Let's re-read user intent in previous context or just assume "Standard".
-            // Requirement says: "Thời gian làm = thời điểm bắt đầu ca (hoặc check-in hợp lệ)".
-            // "Checkout hộ phải dùng cùng công thức".
-            // Let's stick to SAFE logic:
-            // - If checked in Late 15m -> Paid for Actual (minus 15).
-            // - Only if User requested "Approved Late = Paid for missed time" explicitly. 
-            // - Code reads: `if ($attendance->approval_status === 'approved') { $payrollTimeStart = $shiftStart; }`
-            // - So YES, existing code implies Approved Late = Paid from Shift Start. We will KEEP this.
-            
+            // Ngoại lệ: Nếu lý do đi muộn đã được DUYỆT -> Tính lương từ đầu ca (như check-in đúng giờ)
             if ($attendance->approval_status === 'approved') {
                 $payrollStart = $shiftStart;
             }
 
-            // --- Determine Payroll End ---
+            // --- Xác định Thời điểm Kết thúc tính lương ---
             $payrollEnd = $checkOut->copy();
             
-            // Core Logic: Billable ends at Shift End if checked out later.
+            // Logic Cốt lõi: Lương kết thúc tại Giờ Kết Thúc Ca (nếu về muộn hơn/OT không phép).
             if ($payrollEnd->gt($shiftEnd)) {
                 $payrollEnd = $shiftEnd;
             }
 
-            // --- Calculation ---
+            // --- Tính toán thời lượng ---
             $minutes = 0;
             if ($payrollStart->lt($payrollEnd)) {
                 $minutes = $payrollStart->diffInMinutes($payrollEnd);
@@ -100,20 +85,20 @@ class WorkingTimeCalculator
             $result['payroll_start'] = $payrollStart;
             $result['payroll_end'] = $payrollEnd;
 
-            // --- Auxiliary Metrics ---
+            // --- Các chỉ số phụ ---
             
-            // Early Minutes (Leaving before Shift End)
+            // Phút về sớm (Check-out trước Giờ Kết Thúc Ca)
             if ($checkOut->lt($shiftEnd)) {
                 $result['early_minutes'] = $checkOut->diffInMinutes($shiftEnd);
             }
 
-            // Late Minutes (Arriving after Shift Start)
-            // Note: This is "physical" late, regardless of approval
+            // Phút đi muộn (Check-in sau Giờ Vào Ca)
+            // Lưu ý: Tính theo giờ thực tế, bất kể có được duyệt hay không
             if ($checkIn->gt($shiftStart)) {
                 $result['late_minutes'] = $checkIn->diffInMinutes($shiftStart);
             }
         } else {
-            // No Shift ? Raw calculation
+            // Trường hợp Không có Ca: Tính theo giờ thực tế check-in/out
             $minutes = $checkIn->diffInMinutes($checkOut);
             $result['total_minutes'] = $minutes;
             $result['total_hours'] = round($minutes / 60, 2);

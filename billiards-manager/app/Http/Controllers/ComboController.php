@@ -223,6 +223,39 @@ class ComboController extends Controller
             ->with('success', 'Xóa combo thành công');
     }
 
+    public function trash()
+    {
+        $combos = Combo::onlyTrashed()->latest('deleted_at')->paginate(15);
+        return view('admin.combos.trash', compact('combos'));
+    }
+
+    public function restore($id)
+    {
+        $combo = Combo::withTrashed()->findOrFail($id);
+        $combo->restore();
+
+        return redirect()->route('admin.combos.trash')
+            ->with('success', 'Khôi phục combo thành công');
+    }
+
+    public function forceDelete($id)
+    {
+        try {
+            $combo = Combo::withTrashed()->findOrFail($id);
+            
+            // Xóa các quan hệ nếu cần (ví dụ comboItems sẽ tự xóa nếu set cascade ở DB, 
+            // nhưng ở đây ta dùng Eloquent để đảm bảo)
+            $combo->comboItems()->delete(); // Hard delete items
+            
+            $combo->forceDelete();
+
+            return redirect()->route('admin.combos.trash')
+                ->with('success', 'Xóa vĩnh viễn combo thành công');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Không thể xóa: ' . $e->getMessage()]);
+        }
+    }
+
     // ============ API ENDPOINTS ============
 
     /**

@@ -164,6 +164,11 @@
             <h3 class="text-lg font-bold mb-4">Check-out hộ nhân viên</h3>
             <p class="text-sm text-gray-600 mb-4">Bạn đang thực hiện check-out cho nhân viên này. Vui lòng nhập lý do.</p>
             <input type="hidden" id="checkoutEmployeeId">
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian Check-out thực tế</label>
+                <input type="datetime-local" id="checkoutTime" class="w-full border rounded p-2">
+                <p class="text-xs text-gray-500 mt-1">Mặc định là thời gian hiện tại.</p>
+            </div>
             <textarea id="checkoutReason" class="w-full border rounded p-2 mb-4" rows="3" placeholder="Nhập lý do (bắt buộc)..."></textarea>
             <div class="flex justify-end gap-2">
                 <button onclick="closeCheckoutModal()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Hủy</button>
@@ -249,6 +254,12 @@
     function openCheckoutModal(id) {
         document.getElementById('checkoutEmployeeId').value = id;
         document.getElementById('checkoutReason').value = '';
+        
+        // Set default time to now
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('checkoutTime').value = now.toISOString().slice(0, 16);
+        
         document.getElementById('checkoutModal').classList.remove('hidden');
     }
 
@@ -259,9 +270,15 @@
     function submitAdminCheckout() {
         const id = document.getElementById('checkoutEmployeeId').value;
         const reason = document.getElementById('checkoutReason').value;
+        const checkoutTime = document.getElementById('checkoutTime').value;
 
         if (!reason.trim()) {
             Swal.fire('Chú ý', 'Vui lòng nhập lý do check-out.', 'warning');
+            return;
+        }
+
+        if (!checkoutTime) {
+            Swal.fire('Chú ý', 'Vui lòng chọn thời gian check-out.', 'warning');
             return;
         }
 
@@ -282,7 +299,10 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ reason: reason })
+                    body: JSON.stringify({ 
+                        reason: reason,
+                        checkout_time: checkoutTime
+                    })
                 })
                 .then(res => res.json())
                 .then(data => {

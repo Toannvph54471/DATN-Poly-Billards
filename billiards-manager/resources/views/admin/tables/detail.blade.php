@@ -2179,22 +2179,6 @@
                                                                             class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                                                                             <!-- Bàn cũ -->
                                                                             <div class="bg-white p-2 rounded border">
-                                                                                <div
-                                                                                    class="text-xs text-gray-500 mb-1">
-                                                                                    Từ bàn</div>
-                                                                                <div class="font-medium">
-                                                                                    @if ($previousTable)
-                                                                                        {{ $previousTable->table_number }}
-                                                                                        -
-                                                                                        {{ $previousTable->table_name }}
-                                                                                        <span
-                                                                                            class="text-xs text-gray-500 ml-1">
-                                                                                            ({{ number_format($previousUsage->hourly_rate) }}₫/h)
-                                                                                        </span>
-                                                                                    @else
-                                                                                        N/A
-                                                                                    @endif
-                                                                                </div>
                                                                                 @if ($previousUsage->end_time)
                                                                                     <div
                                                                                         class="text-xs text-gray-500 mt-1">

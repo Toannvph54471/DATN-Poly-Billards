@@ -94,14 +94,14 @@ Route::prefix('admin')
             Route::get('/', [ComboController::class, 'index'])->name('index');
             Route::get('/create', [ComboController::class, 'create'])->name('create');
             Route::post('/', [ComboController::class, 'store'])->name('store');
-            Route::get('/{id}', [ComboController::class, 'show'])->name('show');
-            Route::get('/{id}/edit', [ComboController::class, 'edit'])->name('edit');
-            Route::post('/{id}', [ComboController::class, 'update'])->name('update');
-            Route::delete('/{id}', [ComboController::class, 'destroy'])->name('destroy');
-
             Route::get('/trash', [ComboController::class, 'trash'])->name('trash');
             Route::post('/restore/{id}', [ComboController::class, 'restore'])->name('restore');
             Route::delete('/force-delete/{id}', [ComboController::class, 'forceDelete'])->name('forceDelete');
+
+            Route::get('/{id}', [ComboController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [ComboController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [ComboController::class, 'update'])->name('update');
+            Route::delete('/{id}', [ComboController::class, 'destroy'])->name('destroy');
         });
 
         // Tables Management

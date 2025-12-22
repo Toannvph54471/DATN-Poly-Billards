@@ -51,5 +51,5 @@ class TableRatesTableSeeder extends Seeder
             'name' => 'Bàn Vip',
             'hourly_rate' => 90000,
         ]);
-    }
+    }   
 }
